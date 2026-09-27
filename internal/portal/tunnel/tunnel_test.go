@@ -39,8 +39,15 @@ func TestPeersCanReachPortal(t *testing.T) {
 	}()
 	portalPort := listenPort(t, portal)
 
+	// Register the client on the portal before it starts handshaking, as
+	// real enrollment does; otherwise the first handshake is rejected and
+	// WireGuard waits 5 seconds before retrying.
 	clientKey, _ := wgtypes.GeneratePrivateKey()
 	clientAddr := netip.MustParseAddr("100.64.42.2")
+	pub := clientKey.PublicKey()
+	if err := portal.AddPeer(pub[:], clientAddr); err != nil {
+		t.Fatal(err)
+	}
 	client, err := Start(clientKey[:], clientAddr, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -54,8 +61,8 @@ func TestPeersCanReachPortal(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	dial := func() (string, error) {
-		ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	dial := func(timeout time.Duration) (string, error) {
+		ctx, cancel := context.WithTimeout(t.Context(), timeout)
 		defer cancel()
 		c, err := client.net.DialContextTCPAddrPort(ctx, netip.AddrPortFrom(portalAddr, 8080))
 		if err != nil {
@@ -67,11 +74,7 @@ func TestPeersCanReachPortal(t *testing.T) {
 		return string(b), err
 	}
 
-	pub := clientKey.PublicKey()
-	if err := portal.AddPeer(pub[:], clientAddr); err != nil {
-		t.Fatal(err)
-	}
-	if got, err := dial(); err != nil || got != "hello" {
+	if got, err := dial(15 * time.Second); err != nil || got != "hello" {
 		t.Fatalf("dial as peer: %q, %v", got, err)
 	}
 	if n, _ := portal.PeerCount(); n != 1 {
@@ -81,7 +84,7 @@ func TestPeersCanReachPortal(t *testing.T) {
 	if err := portal.RemovePeer(pub[:]); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := dial(); err == nil {
+	if _, err := dial(5 * time.Second); err == nil {
 		t.Fatal("removed peer could still reach the portal")
 	}
 }
