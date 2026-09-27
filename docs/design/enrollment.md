@@ -73,6 +73,8 @@ Tokens are created in the portal by an admin.
 - The portal stores only a **hash** of the secret, never the secret itself.
 - Tokens can be revoked before use. Creation, use, and revocation are recorded
   in the audit log.
+- Both enrollment endpoints (`CheckToken` and `Enroll`) require the full
+  token, including its secret, and are rate-limited per source address.
 
 The token is a single string the admin copies to the host. It encodes:
 
@@ -107,42 +109,50 @@ Admin                     Client (Proxmox host)                  Portal
   │ 1. Create token ───────────────────────────────────────────────►│
   │◄──────────────────────────────────────────────── token string ──│
   │ 2. ezdr enroll <token> ─────►│                                  │
-  │                   3. Check prerequisites                        │
-  │                   4. Show planned changes; confirm              │
-  │                   5. Generate WireGuard key pair                │
-  │                              │ 6. HTTPS Enroll(token, pubkey,   │
-  │                              │    host facts) ─────────────────►│ 7. Validate token,
+  │                              │ 3. HTTPS CheckToken(token) ─────►│ validate only;
+  │                              │◄──── tunnel range, endpoint ─────│ token not used
+  │                   4. Check prerequisites                        │
+  │                   5. Show planned changes; confirm              │
+  │                   6. Generate WireGuard key pair                │
+  │                              │ 7. HTTPS Enroll(token, pubkey,   │
+  │                              │    host facts) ─────────────────►│ 8. Validate token,
   │                              │                                  │    register host,
-  │                              │◄──────── 8. Peer config ─────────│    assign tunnel IP
-  │                   9. Configure ezdr0, start service             │
-  │                              │ 10. Stream opens through ───────►│
+  │                              │◄──────── 9. Peer config ─────────│    assign tunnel IP
+  │                  10. Configure ezdr0, start service             │
+  │                              │ 11. Stream opens through ───────►│
   │                              │     the tunnel                   │ host shown online
 ```
 
 1. The admin creates a token in the portal.
 2. The admin runs `ezdr enroll <token>` as root on the host.
-3. The client checks prerequisites (section 4.1).
-4. The client lists the changes it will make (interface, files, service) and
+3. The client calls `CheckToken` over HTTPS. The portal confirms the token is
+   valid **without using it** and returns the tunnel range and the portal's
+   WireGuard endpoint. This lets the client run all checks before anything is
+   committed on either side.
+4. The client checks prerequisites (section 4.1).
+5. The client lists the changes it will make (interface, files, service) and
    asks for confirmation. `--yes` skips the prompt for automation.
-5. The client generates a WireGuard key pair. The private key is written to
+6. The client generates a WireGuard key pair. The private key is written to
    `/etc/ezdr/` (mode `0600`) and never leaves the host.
-6. The client calls `Enroll` over HTTPS with the token ID and secret, its
+7. The client calls `Enroll` over HTTPS with the token ID and secret, its
    WireGuard public key, and host facts: hostname, `/etc/machine-id`, Proxmox
    VE version, and client version.
-7. The portal validates the token (exists, unused, unexpired, secret matches),
-   marks it used, registers the host, and assigns a tunnel address. These steps
-   happen in one database transaction, so a token can never enroll two hosts.
-8. The portal returns the peer configuration: host ID, the client's tunnel
+8. The portal validates the token again (exists, unused, unexpired, secret
+   matches), marks it used, registers the host, and assigns a tunnel address.
+   These steps happen in one database transaction, so a token can never enroll
+   two hosts.
+9. The portal returns the peer configuration: host ID, the client's tunnel
    address, the portal's WireGuard public key and endpoint, and the client API
    address inside the tunnel.
-9. The client writes its configuration, creates `ezdr0`, and enables and starts
-   the `ezdr` systemd service.
-10. The service opens the command stream through the tunnel (section 6). The
+10. The client writes its configuration, creates `ezdr0`, and enables and
+    starts the `ezdr` systemd service.
+11. The service opens the command stream through the tunnel (section 6). The
     portal marks the host online.
 
-If any step after 7 fails, the admin deletes the half-enrolled host in the
-portal and enrolls again with a new token. The client command reports clearly
-which step failed.
+If a prerequisite check fails, nothing has changed and the token is still
+valid: fix the problem and run `ezdr enroll` again. If any step after 8 fails,
+the admin deletes the half-enrolled host in the portal and enrolls again with a
+new token. The client command reports clearly which step failed.
 
 ### 4.1 Prerequisite checks
 
@@ -152,6 +162,8 @@ Before making changes, `ezdr enroll` verifies:
 - The host runs Proxmox VE 9.x.
 - The WireGuard kernel module can be loaded.
 - The system clock is synchronized.
+- The tunnel range (from `CheckToken`) doesn't overlap any existing address or
+  route on the host.
 - The host is not already enrolled (unless `--force` is given, which removes
   the old local configuration first).
 
@@ -165,14 +177,21 @@ list-and-confirm approach.
 
 ## 5. Tunnel addressing and isolation
 
-- Tunnel addresses come from a configurable IPv4 range, by default the small
-  `/28` `100.64.0.0/28`, within `100.64.0.0/10` (shared address space). It's
-  unlikely to overlap typical LAN ranges such as `10.0.0.0/8` or
-  `192.168.0.0/16`, and a small range keeps the footprint on the host's routing
-  table minimal.
-- The portal takes the first usable address (`100.64.0.1`); each host gets the
+- Tunnel addresses come from a configurable IPv4 range. The default is the
+  small `100.64.42.0/28`, inside `100.64.0.0/10` (shared address space):
+  - It's unlikely to overlap typical LAN ranges such as `10.0.0.0/8` or
+    `192.168.0.0/16`.
+  - It deliberately avoids the start of `100.64.0.0/10`. Other overlay tools
+    that allocate addresses in order, such as Headscale, begin at
+    `100.64.0.1`.
+  - A small range keeps the footprint on the host's routing table minimal.
+- The portal takes the first usable address (`100.64.42.1`); each host gets the
   next free one. The default range leaves 13 addresses for hosts. Larger
   deployments can configure a bigger range before enrolling hosts.
+- Hosts that also run Tailscale, NetBird, or another tool using
+  `100.64.0.0/10` may still conflict. Enrollment refuses to proceed if the
+  tunnel range overlaps an existing route on the host (see section 4.1). The
+  admin then chooses a different range in the portal settings.
 - On the portal, each peer's allowed IPs are exactly that host's `/32`. On each
   client, the portal peer's allowed IPs are exactly the portal's `/32`.
 - The portal does not forward packets between peers. **Clients cannot reach
