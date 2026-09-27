@@ -41,12 +41,14 @@ Differences between the hosts exercise EZDR's storage and network mapping:
 
 | | Primary | DR |
 | --- | --- | --- |
-| ZFS pool | `tank` | `tank-dr` |
-| Proxmox storage ID | `tank` | `tank-dr` |
-| Guest bridge (VLAN-aware) | `vmbr0` | `vmbr1` |
-| Isolated test-failover bridge | — | `vmbr99` (no physical port) |
+| ZFS pool and Proxmox storage ID | `local-zfs` | `tank-dr` |
+| Guest bridge (internal, VLAN-aware) | `vmbr1` | `vmbr2` |
+| Isolated test-failover bridge | — | `vmbr99` |
 
-Use the same VLAN tags at both sites.
+Create the guest bridges **without a physical port** (`bridge-ports none`).
+Test guests then stay off your real network: no DHCP leases or stray VLAN tags
+on the LAN. Leave the management bridge (`vmbr0`) unchanged. Use the same VLAN
+tags at both sites.
 
 ### After installation
 
@@ -54,7 +56,10 @@ Use the same VLAN tags at both sites.
 2. Cap the ZFS ARC at 2 GB by adding `options zfs zfs_arc_max=2147483648` to
    `/etc/modprobe.d/zfs.conf`, then run `update-initramfs -u` and reboot.
 3. On the primary, create a few small Debian or Alpine LXC containers and one
-   small VM. Containers run well nested; the VM exercises zvol replication.
+   small VM on the guest bridge, with static addresses. Containers run well
+   nested; the VM exercises zvol replication. A Debian cloud image
+   (`debian-13-genericcloud-amd64.qcow2`) imported with `import-from` makes a
+   small, quick-booting VM.
 4. Snapshot both outer VMs after a clean install and again after the pool and
    workloads are set up, so you can roll back between experiments.
 
