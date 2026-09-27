@@ -1,0 +1,13 @@
+# Internal, deployment-specific notes. Never commit.
+/docs/internal/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.wg.conf
+wg*.conf
