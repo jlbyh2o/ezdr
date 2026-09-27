@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file ezdr/inventory/v1/inventory.proto.
  */
 export const file_ezdr_inventory_v1_inventory: GenFile = /*@__PURE__*/
-  fileDesc("CiFlemRyL2ludmVudG9yeS92MS9pbnZlbnRvcnkucHJvdG8SEWV6ZHIuaW52ZW50b3J5LnYxIu8CCglJbnZlbnRvcnkSMAoMY29sbGVjdGVkX2F0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIpCgRob3N0GAIgASgLMhsuZXpkci5pbnZlbnRvcnkudjEuSG9zdEluZm8SKAoGZ3Vlc3RzGAMgAygLMhguZXpkci5pbnZlbnRvcnkudjEuR3Vlc3QSLAoIc3RvcmFnZXMYBCADKAsyGi5lemRyLmludmVudG9yeS52MS5TdG9yYWdlEi0KCXpmc19wb29scxgFIAMoCzIaLmV6ZHIuaW52ZW50b3J5LnYxLlpmc1Bvb2wSMwoMemZzX2RhdGFzZXRzGAYgAygLMh0uZXpkci5pbnZlbnRvcnkudjEuWmZzRGF0YXNldBI3CgppbnRlcmZhY2VzGAcgAygLMiMuZXpkci5pbnZlbnRvcnkudjEuTmV0d29ya0ludGVyZmFjZRIQCgh3YXJuaW5ncxgIIAMoCSKNAQoISG9zdEluZm8SEAoIaG9zdG5hbWUYASABKAkSEwoLcHZlX3ZlcnNpb24YAiABKAkSDgoGa2VybmVsGAMgASgJEhMKC3pmc192ZXJzaW9uGAQgASgJEhEKCWNwdV9tb2RlbBgFIAEoCRIMCgRjcHVzGAYgASgNEhQKDG1lbW9yeV9ieXRlcxgHIAEoBCLhAgoFR3Vlc3QSDAoEdm1pZBgBIAEoDRIqCgR0eXBlGAIgASgOMhwuZXpkci5pbnZlbnRvcnkudjEuR3Vlc3RUeXBlEgwKBG5hbWUYAyABKAkSDgoGc3RhdHVzGAQgASgJEg0KBWNvcmVzGAUgASgNEhQKDG1lbW9yeV9ieXRlcxgGIAEoBBIOCgZvbmJvb3QYByABKAgSDwoHc3RhcnR1cBgIIAEoCRIQCgh0ZW1wbGF0ZRgJIAEoCBIMCgR0YWdzGAogAygJEgwKBGxvY2sYCyABKAkSJgoFZGlza3MYDCADKAsyFy5lemRyLmludmVudG9yeS52MS5EaXNrEiQKBG5pY3MYDSADKAsyFi5lemRyLmludmVudG9yeS52MS5OaWMSEwoLcGFzc3Rocm91Z2gYDiABKAgSDQoFcmVhZHkYDyABKAgSGgoScmVhZGluZXNzX3dhcm5pbmdzGBAgAygJIp4BCgREaXNrEgsKA2tleRgBIAEoCRIPCgdzdG9yYWdlGAIgASgJEg4KBnZvbHVtZRgDIAEoCRISCgpzaXplX2J5dGVzGAQgASgEEhMKC3pmc19kYXRhc2V0GAUgASgJEi8KCXJlYWRpbmVzcxgGIAEoDjIcLmV6ZHIuaW52ZW50b3J5LnYxLlJlYWRpbmVzcxIOCgZyZWFzb24YByABKAkiYgoDTmljEgsKA2tleRgBIAEoCRIOCgZicmlkZ2UYAiABKAkSEAoIdmxhbl90YWcYAyABKA0SCwoDbWFjGAQgASgJEg0KBW1vZGVsGAUgASgJEhAKCGZpcmV3YWxsGAYgASgIIqgBCgdTdG9yYWdlEgoKAmlkGAEgASgJEgwKBHR5cGUYAiABKAkSDwoHY29udGVudBgDIAMoCRIQCgh6ZnNfcG9vbBgEIAEoCRITCgt0b3RhbF9ieXRlcxgFIAEoBBISCgp1c2VkX2J5dGVzGAYgASgEEhcKD2F2YWlsYWJsZV9ieXRlcxgHIAEoBBIOCgZhY3RpdmUYCCABKAgSDgoGc2hhcmVkGAkgASgIIocBCgdaZnNQb29sEgwKBG5hbWUYASABKAkSDgoGaGVhbHRoGAIgASgJEhIKCnNpemVfYnl0ZXMYAyABKAQSFwoPYWxsb2NhdGVkX2J5dGVzGAQgASgEEhIKCmZyZWVfYnl0ZXMYBSABKAQSHQoVZnJhZ21lbnRhdGlvbl9wZXJjZW50GAYgASgNIpoBCgpaZnNEYXRhc2V0EgwKBG5hbWUYASABKAkSDAoEdHlwZRgCIAEoCRISCgp1c2VkX2J5dGVzGAMgASgEEhgKEHJlZmVyZW5jZWRfYnl0ZXMYBCABKAQSGQoRdm9sdW1lX3NpemVfYnl0ZXMYBSABKAQSEwoLY29tcHJlc3Npb24YBiABKAkSEgoKZW5jcnlwdGlvbhgHIAEoCSLaAQoQTmV0d29ya0ludGVyZmFjZRIMCgRuYW1lGAEgASgJEgwKBHR5cGUYAiABKAkSDgoGYWN0aXZlGAMgASgIEhEKCWF1dG9zdGFydBgEIAEoCBIUCgxicmlkZ2VfcG9ydHMYBSADKAkSEgoKdmxhbl9hd2FyZRgGIAEoCBIPCgd2bGFuX2lkGAcgASgNEhcKD3ZsYW5fcmF3X2RldmljZRgIIAEoCRIUCgxib25kX21lbWJlcnMYCSADKAkSDAoEY2lkchgKIAEoCRIPCgdnYXRld2F5GAsgASgJKlQKCUd1ZXN0VHlwZRIaChZHVUVTVF9UWVBFX1VOU1BFQ0lGSUVEEAASEQoNR1VFU1RfVFlQRV9WTRABEhgKFEdVRVNUX1RZUEVfQ09OVEFJTkVSEAIqeAoJUmVhZGluZXNzEhkKFVJFQURJTkVTU19VTlNQRUNJRklFRBAAEhgKFFJFQURJTkVTU19SRVBMSUNBQkxFEAESHAoYUkVBRElORVNTX05PVF9SRVBMSUNBQkxFEAISGAoUUkVBRElORVNTX05PVF9ORUVERUQQA0LRAQoVY29tLmV6ZHIuaW52ZW50b3J5LnYxQg5JbnZlbnRvcnlQcm90b1ABWkJnaXRodWIuY29tL2psYnloMm8vZXpkci9pbnRlcm5hbC9nZW4vZXpkci9pbnZlbnRvcnkvdjE7aW52ZW50b3J5djGiAgNFSViqAhFFemRyLkludmVudG9yeS5WMcoCEUV6ZHJcSW52ZW50b3J5XFYx4gIdRXpkclxJbnZlbnRvcnlcVjFcR1BCTWV0YWRhdGHqAhNFemRyOjpJbnZlbnRvcnk6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
+  fileDesc("CiFlemRyL2ludmVudG9yeS92MS9pbnZlbnRvcnkucHJvdG8SEWV6ZHIuaW52ZW50b3J5LnYxIpgDCglJbnZlbnRvcnkSMAoMY29sbGVjdGVkX2F0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIpCgRob3N0GAIgASgLMhsuZXpkci5pbnZlbnRvcnkudjEuSG9zdEluZm8SKAoGZ3Vlc3RzGAMgAygLMhguZXpkci5pbnZlbnRvcnkudjEuR3Vlc3QSLAoIc3RvcmFnZXMYBCADKAsyGi5lemRyLmludmVudG9yeS52MS5TdG9yYWdlEi0KCXpmc19wb29scxgFIAMoCzIaLmV6ZHIuaW52ZW50b3J5LnYxLlpmc1Bvb2wSMwoMemZzX2RhdGFzZXRzGAYgAygLMh0uZXpkci5pbnZlbnRvcnkudjEuWmZzRGF0YXNldBI3CgppbnRlcmZhY2VzGAcgAygLMiMuZXpkci5pbnZlbnRvcnkudjEuTmV0d29ya0ludGVyZmFjZRIQCgh3YXJuaW5ncxgIIAMoCRInCgV6cmVwbBgJIAEoCzIYLmV6ZHIuaW52ZW50b3J5LnYxLlpyZXBsIo0BCghIb3N0SW5mbxIQCghob3N0bmFtZRgBIAEoCRITCgtwdmVfdmVyc2lvbhgCIAEoCRIOCgZrZXJuZWwYAyABKAkSEwoLemZzX3ZlcnNpb24YBCABKAkSEQoJY3B1X21vZGVsGAUgASgJEgwKBGNwdXMYBiABKA0SFAoMbWVtb3J5X2J5dGVzGAcgASgEIuECCgVHdWVzdBIMCgR2bWlkGAEgASgNEioKBHR5cGUYAiABKA4yHC5lemRyLmludmVudG9yeS52MS5HdWVzdFR5cGUSDAoEbmFtZRgDIAEoCRIOCgZzdGF0dXMYBCABKAkSDQoFY29yZXMYBSABKA0SFAoMbWVtb3J5X2J5dGVzGAYgASgEEg4KBm9uYm9vdBgHIAEoCBIPCgdzdGFydHVwGAggASgJEhAKCHRlbXBsYXRlGAkgASgIEgwKBHRhZ3MYCiADKAkSDAoEbG9jaxgLIAEoCRImCgVkaXNrcxgMIAMoCzIXLmV6ZHIuaW52ZW50b3J5LnYxLkRpc2sSJAoEbmljcxgNIAMoCzIWLmV6ZHIuaW52ZW50b3J5LnYxLk5pYxITCgtwYXNzdGhyb3VnaBgOIAEoCBINCgVyZWFkeRgPIAEoCBIaChJyZWFkaW5lc3Nfd2FybmluZ3MYECADKAkingEKBERpc2sSCwoDa2V5GAEgASgJEg8KB3N0b3JhZ2UYAiABKAkSDgoGdm9sdW1lGAMgASgJEhIKCnNpemVfYnl0ZXMYBCABKAQSEwoLemZzX2RhdGFzZXQYBSABKAkSLwoJcmVhZGluZXNzGAYgASgOMhwuZXpkci5pbnZlbnRvcnkudjEuUmVhZGluZXNzEg4KBnJlYXNvbhgHIAEoCSJiCgNOaWMSCwoDa2V5GAEgASgJEg4KBmJyaWRnZRgCIAEoCRIQCgh2bGFuX3RhZxgDIAEoDRILCgNtYWMYBCABKAkSDQoFbW9kZWwYBSABKAkSEAoIZmlyZXdhbGwYBiABKAgiqAEKB1N0b3JhZ2USCgoCaWQYASABKAkSDAoEdHlwZRgCIAEoCRIPCgdjb250ZW50GAMgAygJEhAKCHpmc19wb29sGAQgASgJEhMKC3RvdGFsX2J5dGVzGAUgASgEEhIKCnVzZWRfYnl0ZXMYBiABKAQSFwoPYXZhaWxhYmxlX2J5dGVzGAcgASgEEg4KBmFjdGl2ZRgIIAEoCBIOCgZzaGFyZWQYCSABKAgihwEKB1pmc1Bvb2wSDAoEbmFtZRgBIAEoCRIOCgZoZWFsdGgYAiABKAkSEgoKc2l6ZV9ieXRlcxgDIAEoBBIXCg9hbGxvY2F0ZWRfYnl0ZXMYBCABKAQSEgoKZnJlZV9ieXRlcxgFIAEoBBIdChVmcmFnbWVudGF0aW9uX3BlcmNlbnQYBiABKA0imgEKClpmc0RhdGFzZXQSDAoEbmFtZRgBIAEoCRIMCgR0eXBlGAIgASgJEhIKCnVzZWRfYnl0ZXMYAyABKAQSGAoQcmVmZXJlbmNlZF9ieXRlcxgEIAEoBBIZChF2b2x1bWVfc2l6ZV9ieXRlcxgFIAEoBBITCgtjb21wcmVzc2lvbhgGIAEoCRISCgplbmNyeXB0aW9uGAcgASgJItoBChBOZXR3b3JrSW50ZXJmYWNlEgwKBG5hbWUYASABKAkSDAoEdHlwZRgCIAEoCRIOCgZhY3RpdmUYAyABKAgSEQoJYXV0b3N0YXJ0GAQgASgIEhQKDGJyaWRnZV9wb3J0cxgFIAMoCRISCgp2bGFuX2F3YXJlGAYgASgIEg8KB3ZsYW5faWQYByABKA0SFwoPdmxhbl9yYXdfZGV2aWNlGAggASgJEhQKDGJvbmRfbWVtYmVycxgJIAMoCRIMCgRjaWRyGAogASgJEg8KB2dhdGV3YXkYCyABKAkiagoFWnJlcGwSDwoHdmVyc2lvbhgBIAEoCRIPCgdydW5uaW5nGAIgASgIEhQKDGNvbmZpZ19lcnJvchgDIAEoCRIpCgRqb2JzGAQgAygLMhsuZXpkci5pbnZlbnRvcnkudjEuWnJlcGxKb2IingQKCFpyZXBsSm9iEgwKBG5hbWUYASABKAkSDAoEdHlwZRgCIAEoCRIMCgRmaWxlGAMgASgJEg8KB21hbmFnZWQYBCABKAgSEQoJdHJhbnNwb3J0GAUgASgJEhYKDmxpc3Rlbl9hZGRyZXNzGAYgASgJEhcKD2xpc3Rlbl9mcmVlYmluZBgHIAEoCBIXCg9jb25uZWN0X2FkZHJlc3MYCCABKAkSEQoJc2VydmVyX2NuGAkgASgJEhIKCmNsaWVudF9jbnMYCiADKAkSMwoLZmlsZXN5c3RlbXMYCyADKAsyHi5lemRyLmludmVudG9yeS52MS5acmVwbEZpbHRlchIZChFzbmFwc2hvdHRpbmdfdHlwZRgMIAEoCRIXCg9zbmFwc2hvdF9wcmVmaXgYDSABKAkSIQoZc25hcHNob3RfaW50ZXJ2YWxfc2Vjb25kcxgOIAEoDRIYChBpbnRlcnZhbF9zZWNvbmRzGA8gASgNEg8KB3Jvb3RfZnMYECABKAkSKgoEc2VuZBgRIAEoCzIcLmV6ZHIuaW52ZW50b3J5LnYxLlpyZXBsU2VuZBI2CgtrZWVwX3NlbmRlchgSIAMoCzIhLmV6ZHIuaW52ZW50b3J5LnYxLlpyZXBsUHJ1bmVSdWxlEjgKDWtlZXBfcmVjZWl2ZXIYEyADKAsyIS5lemRyLmludmVudG9yeS52MS5acmVwbFBydW5lUnVsZSIvCgtacmVwbEZpbHRlchIPCgdwYXR0ZXJuGAEgASgJEg8KB2luY2x1ZGUYAiABKAgibAoJWnJlcGxTZW5kEhEKCWVuY3J5cHRlZBgBIAEoCBILCgNyYXcYAiABKAgSEgoKY29tcHJlc3NlZBgDIAEoCBIUCgxsYXJnZV9ibG9ja3MYBCABKAgSFQoNZW1iZWRkZWRfZGF0YRgFIAEoCCJaCg5acmVwbFBydW5lUnVsZRIMCgR0eXBlGAEgASgJEgwKBGdyaWQYAiABKAkSDQoFcmVnZXgYAyABKAkSDgoGbmVnYXRlGAQgASgIEg0KBWNvdW50GAUgASgNKlQKCUd1ZXN0VHlwZRIaChZHVUVTVF9UWVBFX1VOU1BFQ0lGSUVEEAASEQoNR1VFU1RfVFlQRV9WTRABEhgKFEdVRVNUX1RZUEVfQ09OVEFJTkVSEAIqeAoJUmVhZGluZXNzEhkKFVJFQURJTkVTU19VTlNQRUNJRklFRBAAEhgKFFJFQURJTkVTU19SRVBMSUNBQkxFEAESHAoYUkVBRElORVNTX05PVF9SRVBMSUNBQkxFEAISGAoUUkVBRElORVNTX05PVF9ORUVERUQQA0LRAQoVY29tLmV6ZHIuaW52ZW50b3J5LnYxQg5JbnZlbnRvcnlQcm90b1ABWkJnaXRodWIuY29tL2psYnloMm8vZXpkci9pbnRlcm5hbC9nZW4vZXpkci9pbnZlbnRvcnkvdjE7aW52ZW50b3J5djGiAgNFSViqAhFFemRyLkludmVudG9yeS5WMcoCEUV6ZHJcSW52ZW50b3J5XFYx4gIdRXpkclxJbnZlbnRvcnlcVjFcR1BCTWV0YWRhdGHqAhNFemRyOjpJbnZlbnRvcnk6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
  * Inventory describes one Proxmox VE host. See docs/design/inventory.md.
@@ -62,6 +62,14 @@ export type Inventory = Message<"ezdr.inventory.v1.Inventory"> & {
    * @generated from field: repeated string warnings = 8;
    */
   warnings: string[];
+
+  /**
+   * zrepl on this host, including jobs not managed by EZDR, so an existing
+   * setup can be adopted by a DR plan.
+   *
+   * @generated from field: ezdr.inventory.v1.Zrepl zrepl = 9;
+   */
+  zrepl?: Zrepl | undefined;
 };
 
 /**
@@ -543,6 +551,283 @@ export type NetworkInterface = Message<"ezdr.inventory.v1.NetworkInterface"> & {
  */
 export const NetworkInterfaceSchema: GenMessage<NetworkInterface> = /*@__PURE__*/
   messageDesc(file_ezdr_inventory_v1_inventory, 8);
+
+/**
+ * @generated from message ezdr.inventory.v1.Zrepl
+ */
+export type Zrepl = Message<"ezdr.inventory.v1.Zrepl"> & {
+  /**
+   * Installed version, such as "v0.6.1"; empty when zrepl isn't installed.
+   *
+   * @generated from field: string version = 1;
+   */
+  version: string;
+
+  /**
+   * @generated from field: bool running = 2;
+   */
+  running: boolean;
+
+  /**
+   * Why the configuration couldn't be read. Jobs from the files that could be
+   * read are still listed.
+   *
+   * @generated from field: string config_error = 3;
+   */
+  configError: string;
+
+  /**
+   * @generated from field: repeated ezdr.inventory.v1.ZreplJob jobs = 4;
+   */
+  jobs: ZreplJob[];
+};
+
+/**
+ * Describes the message ezdr.inventory.v1.Zrepl.
+ * Use `create(ZreplSchema)` to create a new message.
+ */
+export const ZreplSchema: GenMessage<Zrepl> = /*@__PURE__*/
+  messageDesc(file_ezdr_inventory_v1_inventory, 9);
+
+/**
+ * ZreplJob summarizes one job from the zrepl configuration.
+ *
+ * @generated from message ezdr.inventory.v1.ZreplJob
+ */
+export type ZreplJob = Message<"ezdr.inventory.v1.ZreplJob"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * zrepl job type: "source", "pull", "push", "sink", or "snap".
+   *
+   * @generated from field: string type = 2;
+   */
+  type: string;
+
+  /**
+   * Configuration file the job is defined in.
+   *
+   * @generated from field: string file = 3;
+   */
+  file: string;
+
+  /**
+   * True for jobs in EZDR's own jobs file.
+   *
+   * @generated from field: bool managed = 4;
+   */
+  managed: boolean;
+
+  /**
+   * Transport type, such as "tls" or "tcp".
+   *
+   * @generated from field: string transport = 5;
+   */
+  transport: string;
+
+  /**
+   * Serving jobs (source, sink): the address listened on.
+   *
+   * @generated from field: string listen_address = 6;
+   */
+  listenAddress: string;
+
+  /**
+   * @generated from field: bool listen_freebind = 7;
+   */
+  listenFreebind: boolean;
+
+  /**
+   * Connecting jobs (pull, push): the address connected to.
+   *
+   * @generated from field: string connect_address = 8;
+   */
+  connectAddress: string;
+
+  /**
+   * TLS names: the expected server name (connecting jobs), or the client
+   * names allowed to connect (serving jobs).
+   *
+   * @generated from field: string server_cn = 9;
+   */
+  serverCn: string;
+
+  /**
+   * @generated from field: repeated string client_cns = 10;
+   */
+  clientCns: string[];
+
+  /**
+   * Filesystem filter (source, push, snap), in configuration order.
+   *
+   * @generated from field: repeated ezdr.inventory.v1.ZreplFilter filesystems = 11;
+   */
+  filesystems: ZreplFilter[];
+
+  /**
+   * Snapshotting: type ("periodic", "cron", or "manual"), prefix, and
+   * interval in seconds for periodic snapshots.
+   *
+   * @generated from field: string snapshotting_type = 12;
+   */
+  snapshottingType: string;
+
+  /**
+   * @generated from field: string snapshot_prefix = 13;
+   */
+  snapshotPrefix: string;
+
+  /**
+   * @generated from field: uint32 snapshot_interval_seconds = 14;
+   */
+  snapshotIntervalSeconds: number;
+
+  /**
+   * Pull jobs: replication interval in seconds (0 when manual).
+   *
+   * @generated from field: uint32 interval_seconds = 15;
+   */
+  intervalSeconds: number;
+
+  /**
+   * Receiving jobs (pull, sink): the receive dataset.
+   *
+   * @generated from field: string root_fs = 16;
+   */
+  rootFs: string;
+
+  /**
+   * @generated from field: ezdr.inventory.v1.ZreplSend send = 17;
+   */
+  send?: ZreplSend | undefined;
+
+  /**
+   * Pruning rules for jobs that prune (pull, push, snap).
+   *
+   * @generated from field: repeated ezdr.inventory.v1.ZreplPruneRule keep_sender = 18;
+   */
+  keepSender: ZreplPruneRule[];
+
+  /**
+   * @generated from field: repeated ezdr.inventory.v1.ZreplPruneRule keep_receiver = 19;
+   */
+  keepReceiver: ZreplPruneRule[];
+};
+
+/**
+ * Describes the message ezdr.inventory.v1.ZreplJob.
+ * Use `create(ZreplJobSchema)` to create a new message.
+ */
+export const ZreplJobSchema: GenMessage<ZreplJob> = /*@__PURE__*/
+  messageDesc(file_ezdr_inventory_v1_inventory, 10);
+
+/**
+ * ZreplFilter is one filesystem filter entry: a dataset, or a subtree when the
+ * pattern ends in "<".
+ *
+ * @generated from message ezdr.inventory.v1.ZreplFilter
+ */
+export type ZreplFilter = Message<"ezdr.inventory.v1.ZreplFilter"> & {
+  /**
+   * @generated from field: string pattern = 1;
+   */
+  pattern: string;
+
+  /**
+   * @generated from field: bool include = 2;
+   */
+  include: boolean;
+};
+
+/**
+ * Describes the message ezdr.inventory.v1.ZreplFilter.
+ * Use `create(ZreplFilterSchema)` to create a new message.
+ */
+export const ZreplFilterSchema: GenMessage<ZreplFilter> = /*@__PURE__*/
+  messageDesc(file_ezdr_inventory_v1_inventory, 11);
+
+/**
+ * @generated from message ezdr.inventory.v1.ZreplSend
+ */
+export type ZreplSend = Message<"ezdr.inventory.v1.ZreplSend"> & {
+  /**
+   * @generated from field: bool encrypted = 1;
+   */
+  encrypted: boolean;
+
+  /**
+   * @generated from field: bool raw = 2;
+   */
+  raw: boolean;
+
+  /**
+   * @generated from field: bool compressed = 3;
+   */
+  compressed: boolean;
+
+  /**
+   * @generated from field: bool large_blocks = 4;
+   */
+  largeBlocks: boolean;
+
+  /**
+   * @generated from field: bool embedded_data = 5;
+   */
+  embeddedData: boolean;
+};
+
+/**
+ * Describes the message ezdr.inventory.v1.ZreplSend.
+ * Use `create(ZreplSendSchema)` to create a new message.
+ */
+export const ZreplSendSchema: GenMessage<ZreplSend> = /*@__PURE__*/
+  messageDesc(file_ezdr_inventory_v1_inventory, 12);
+
+/**
+ * ZreplPruneRule is one pruning rule, such as a grid restricted to a regex.
+ *
+ * @generated from message ezdr.inventory.v1.ZreplPruneRule
+ */
+export type ZreplPruneRule = Message<"ezdr.inventory.v1.ZreplPruneRule"> & {
+  /**
+   * Rule type, such as "grid", "regex", "not_replicated", or "last_n".
+   *
+   * @generated from field: string type = 1;
+   */
+  type: string;
+
+  /**
+   * @generated from field: string grid = 2;
+   */
+  grid: string;
+
+  /**
+   * @generated from field: string regex = 3;
+   */
+  regex: string;
+
+  /**
+   * @generated from field: bool negate = 4;
+   */
+  negate: boolean;
+
+  /**
+   * Count for "last_n".
+   *
+   * @generated from field: uint32 count = 5;
+   */
+  count: number;
+};
+
+/**
+ * Describes the message ezdr.inventory.v1.ZreplPruneRule.
+ * Use `create(ZreplPruneRuleSchema)` to create a new message.
+ */
+export const ZreplPruneRuleSchema: GenMessage<ZreplPruneRule> = /*@__PURE__*/
+  messageDesc(file_ezdr_inventory_v1_inventory, 13);
 
 /**
  * @generated from enum ezdr.inventory.v1.GuestType

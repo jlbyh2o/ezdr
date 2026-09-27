@@ -603,6 +603,18 @@ function NetworkCard({ spec, update }: { spec: PlanSpec; update: Update }) {
               }
             />
           </Field>
+          <Field id="listen-address" label="Primary listens on (optional)">
+            <Input
+              id="listen-address"
+              value={existing.listenAddress}
+              placeholder="All addresses"
+              onChange={(e) =>
+                update((s) => {
+                  if (s.network?.path.case === 'existing') s.network.path.value.listenAddress = e.target.value.trim()
+                })
+              }
+            />
+          </Field>
         </div>
       )}
       {tunnel && (

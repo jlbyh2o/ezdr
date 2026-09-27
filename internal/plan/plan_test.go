@@ -244,6 +244,9 @@ func TestNetworkValidation(t *testing.T) {
 		"no network":  {func(s *planv1.PlanSpec, _ *Context) { s.Network = nil }, "choose how the DR host reaches"},
 		"no address":  {func(s *planv1.PlanSpec, _ *Context) { s.GetNetwork().GetExisting().PrimaryAddress = "" }, "primary's address"},
 		"bad address": {func(s *planv1.PlanSpec, _ *Context) { s.GetNetwork().GetExisting().PrimaryAddress = "not an address!" }, "primary's address"},
+		"bad listen": {func(s *planv1.PlanSpec, _ *Context) {
+			s.GetNetwork().GetExisting().ListenAddress = "primary.example.com"
+		}, "listen address must be an IP"},
 		"low port":    {func(s *planv1.PlanSpec, _ *Context) { s.GetNetwork().GetExisting().Port = 80 }, "between 1024 and 65535"},
 		"port in use": {func(_ *planv1.PlanSpec, c *Context) { c.UsedPorts = map[uint32]string{8888: "Other"} }, `already used by plan "Other"`},
 		"tunnel listener": {func(s *planv1.PlanSpec, _ *Context) {
@@ -274,6 +277,14 @@ func TestNetworkValidation(t *testing.T) {
 				t.Errorf("want error containing %q, got:\n%s", tc.want, errs)
 			}
 		})
+	}
+}
+
+func TestListenAddressWarning(t *testing.T) {
+	s, c := validSpec(), ctxFor(primaryInv(), drInv())
+	s.GetNetwork().GetExisting().ListenAddress = "198.51.100.7"
+	if w := messages(Validate(s, c), planv1.Severity_SEVERITY_WARNING); !strings.Contains(w, "isn't an address of any") {
+		t.Errorf("want a warning about the listen address, got:\n%s", w)
 	}
 }
 

@@ -389,6 +389,13 @@ func validateReplicationNetwork(spec *planv1.PlanSpec, primary *inventoryv1.Inve
 		if _, err := netip.ParseAddr(addr); err != nil && !hostPattern.MatchString(addr) {
 			is.errorf(0, "enter the primary's address as seen from the DR host (an IP address or DNS name)")
 		}
+		if l := n.Existing.GetListenAddress(); l != "" {
+			if ip, err := netip.ParseAddr(l); err != nil {
+				is.errorf(0, "the primary's listen address must be an IP address, or empty to listen on all addresses")
+			} else if !hasAddress(primary, ip) {
+				is.warnf(0, "%s isn't an address of any of the primary's network interfaces; zrepl can't accept connections until it is", l)
+			}
+		}
 	case *planv1.ReplicationNetwork_Tunnel:
 		validateTunnel(spec, n.Tunnel, ctx, is)
 	default:
@@ -410,6 +417,16 @@ func validateReplicationNetwork(spec *planv1.PlanSpec, primary *inventoryv1.Inve
 		is.warnf(0, "this plan uses %d zrepl ports on the primary (%d-%d): one per storage mapping and encryption kind",
 			len(groups), base, base+uint32(len(groups))-1) //nolint:gosec // few groups
 	}
+}
+
+// hasAddress reports whether one of inv's network interfaces has ip.
+func hasAddress(inv *inventoryv1.Inventory, ip netip.Addr) bool {
+	for _, iface := range inv.GetInterfaces() {
+		if p, err := netip.ParsePrefix(iface.GetCidr()); err == nil && p.Addr() == ip {
+			return true
+		}
+	}
+	return false
 }
 
 func validateTunnel(spec *planv1.PlanSpec, t *planv1.EzdrTunnel, ctx Context, is *issues) {

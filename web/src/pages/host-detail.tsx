@@ -14,10 +14,12 @@ import {
   GuestType,
   type Inventory,
   Readiness,
+  type ZreplJob,
+  type ZreplPruneRule,
 } from '@/gen/ezdr/inventory/v1/inventory_pb'
 import type { GetHostInventoryResponse } from '@/gen/ezdr/portal/v1/portal_pb'
 import { errorMessage, hostClient } from '@/lib/api'
-import { formatBytes, formatRelative } from '@/lib/format'
+import { formatBytes, formatDuration, formatRelative } from '@/lib/format'
 import { usePoll } from '@/lib/use-poll'
 import { PageHeader } from '@/pages/layout'
 
@@ -109,6 +111,7 @@ function InventoryView({ inv, guestPlans }: { inv: Inventory; guestPlans: GuestP
           </TabsTrigger>
           <TabsTrigger value="storage">Storage</TabsTrigger>
           <TabsTrigger value="network">Network</TabsTrigger>
+          <TabsTrigger value="zrepl">zrepl</TabsTrigger>
         </TabsList>
         <TabsContent value="guests">
           <GuestsTable guests={inv.guests} plans={guestPlans} />
@@ -118,6 +121,9 @@ function InventoryView({ inv, guestPlans }: { inv: Inventory; guestPlans: GuestP
         </TabsContent>
         <TabsContent value="network">
           <NetworkTable inv={inv} />
+        </TabsContent>
+        <TabsContent value="zrepl">
+          <ZreplView inv={inv} />
         </TabsContent>
       </Tabs>
     </>
@@ -352,4 +358,133 @@ function NetworkTable({ inv }: { inv: Inventory }) {
       </TableBody>
     </Table>
   )
+}
+
+function ZreplView({ inv }: { inv: Inventory }) {
+  const z = inv.zrepl
+  if (!z) return <p className="text-sm text-muted-foreground">This host's client doesn't report zrepl details yet.</p>
+  return (
+    <div className="grid gap-4">
+      <Card>
+        <CardContent className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
+          <Fact label="Version" value={z.version || 'not installed'} />
+          <Fact label="Service" value={z.version ? (z.running ? 'running' : 'stopped') : '—'} />
+          <Fact label="Jobs" value={`${z.jobs.length} (${z.jobs.filter((j) => j.managed).length} managed by EZDR)`} />
+        </CardContent>
+      </Card>
+      {z.configError && (
+        <Alert variant="destructive">
+          <CircleAlert />
+          <AlertTitle>Part of the zrepl configuration couldn't be read</AlertTitle>
+          <AlertDescription className="font-mono text-xs break-all">{z.configError}</AlertDescription>
+        </Alert>
+      )}
+      {z.jobs.length > 0 && (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Job</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Network</TableHead>
+              <TableHead>Details</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {z.jobs.map((j) => (
+              <TableRow key={j.name} className="align-top">
+                <TableCell>
+                  <div className="font-mono text-xs">{j.name}</div>
+                  <div className="mt-1">
+                    {j.managed ? <Badge>EZDR</Badge> : <Badge variant="secondary">Hand-written</Badge>}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground break-all">{j.file}</div>
+                </TableCell>
+                <TableCell className="text-xs">{j.type}</TableCell>
+                <TableCell className="text-xs">
+                  <ZreplNetwork job={j} />
+                </TableCell>
+                <TableCell className="text-xs">
+                  <ZreplDetails job={j} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </div>
+  )
+}
+
+function ZreplNetwork({ job: j }: { job: ZreplJob }) {
+  return (
+    <div className="grid gap-1">
+      {j.listenAddress && (
+        <div>
+          {j.transport} listen <span className="font-mono">{j.listenAddress}</span>
+          {j.listenFreebind && ' (freebind)'}
+        </div>
+      )}
+      {j.connectAddress && (
+        <div>
+          {j.transport} connect <span className="font-mono">{j.connectAddress}</span>
+        </div>
+      )}
+      {j.clientCns.length > 0 && <div className="text-muted-foreground">clients: {j.clientCns.join(', ')}</div>}
+      {j.serverCn && <div className="text-muted-foreground">server: {j.serverCn}</div>}
+    </div>
+  )
+}
+
+function ZreplDetails({ job: j }: { job: ZreplJob }) {
+  const send = j.send
+  const flags = send
+    ? [send.raw && 'raw', send.encrypted && 'encrypted', send.compressed && 'compressed', send.largeBlocks && 'large blocks', send.embeddedData && 'embedded data'].filter(Boolean)
+    : []
+  return (
+    <div className="grid gap-1">
+      {j.snapshottingType && (
+        <div>
+          snapshots: {j.snapshottingType}
+          {j.snapshotIntervalSeconds > 0 && ` every ${formatDuration(j.snapshotIntervalSeconds)}`}
+          {j.snapshotPrefix && (
+            <>
+              , prefix <span className="font-mono">{j.snapshotPrefix}</span>
+            </>
+          )}
+        </div>
+      )}
+      {j.filesystems.length > 0 && (
+        <div>
+          filesystems:{' '}
+          {j.filesystems.map((f, i) => (
+            <span key={f.pattern} className="font-mono">
+              {i > 0 && ', '}
+              {f.include ? '' : '−'}
+              {f.pattern}
+            </span>
+          ))}
+        </div>
+      )}
+      {j.rootFs && (
+        <div>
+          receive into <span className="font-mono">{j.rootFs}</span>
+          {j.intervalSeconds > 0 && `, every ${formatDuration(j.intervalSeconds)}`}
+        </div>
+      )}
+      {flags.length > 0 && <div>send: {flags.join(', ')}</div>}
+      {j.keepSender.length > 0 && <div>keep on sender: {pruneSummary(j.keepSender)}</div>}
+      {j.keepReceiver.length > 0 && <div>keep on receiver: {pruneSummary(j.keepReceiver)}</div>}
+    </div>
+  )
+}
+
+function pruneSummary(rules: ZreplPruneRule[]): string {
+  return rules
+    .map((r) => {
+      if (r.type === 'grid') return `${r.grid}${r.regex ? ` (${r.regex})` : ''}`
+      if (r.type === 'regex') return `${r.negate ? 'not ' : ''}${r.regex}`
+      if (r.type === 'last_n') return `last ${r.count}`
+      return r.type
+    })
+    .join('; ')
 }

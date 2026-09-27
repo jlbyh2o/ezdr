@@ -135,7 +135,10 @@ type Inventory struct {
 	Interfaces  []*NetworkInterface    `protobuf:"bytes,7,rep,name=interfaces,proto3" json:"interfaces,omitempty"`
 	// Problems during collection, such as a guest whose configuration could not
 	// be read. The rest of the inventory is still valid.
-	Warnings      []string `protobuf:"bytes,8,rep,name=warnings,proto3" json:"warnings,omitempty"`
+	Warnings []string `protobuf:"bytes,8,rep,name=warnings,proto3" json:"warnings,omitempty"`
+	// zrepl on this host, including jobs not managed by EZDR, so an existing
+	// setup can be adopted by a DR plan.
+	Zrepl         *Zrepl `protobuf:"bytes,9,opt,name=zrepl,proto3" json:"zrepl,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -222,6 +225,13 @@ func (x *Inventory) GetInterfaces() []*NetworkInterface {
 func (x *Inventory) GetWarnings() []string {
 	if x != nil {
 		return x.Warnings
+	}
+	return nil
+}
+
+func (x *Inventory) GetZrepl() *Zrepl {
+	if x != nil {
+		return x.Zrepl
 	}
 	return nil
 }
@@ -1082,11 +1092,494 @@ func (x *NetworkInterface) GetGateway() string {
 	return ""
 }
 
+type Zrepl struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Installed version, such as "v0.6.1"; empty when zrepl isn't installed.
+	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	Running bool   `protobuf:"varint,2,opt,name=running,proto3" json:"running,omitempty"`
+	// Why the configuration couldn't be read. Jobs from the files that could be
+	// read are still listed.
+	ConfigError   string      `protobuf:"bytes,3,opt,name=config_error,json=configError,proto3" json:"config_error,omitempty"`
+	Jobs          []*ZreplJob `protobuf:"bytes,4,rep,name=jobs,proto3" json:"jobs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Zrepl) Reset() {
+	*x = Zrepl{}
+	mi := &file_ezdr_inventory_v1_inventory_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Zrepl) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Zrepl) ProtoMessage() {}
+
+func (x *Zrepl) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_inventory_v1_inventory_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Zrepl.ProtoReflect.Descriptor instead.
+func (*Zrepl) Descriptor() ([]byte, []int) {
+	return file_ezdr_inventory_v1_inventory_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *Zrepl) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *Zrepl) GetRunning() bool {
+	if x != nil {
+		return x.Running
+	}
+	return false
+}
+
+func (x *Zrepl) GetConfigError() string {
+	if x != nil {
+		return x.ConfigError
+	}
+	return ""
+}
+
+func (x *Zrepl) GetJobs() []*ZreplJob {
+	if x != nil {
+		return x.Jobs
+	}
+	return nil
+}
+
+// ZreplJob summarizes one job from the zrepl configuration.
+type ZreplJob struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// zrepl job type: "source", "pull", "push", "sink", or "snap".
+	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	// Configuration file the job is defined in.
+	File string `protobuf:"bytes,3,opt,name=file,proto3" json:"file,omitempty"`
+	// True for jobs in EZDR's own jobs file.
+	Managed bool `protobuf:"varint,4,opt,name=managed,proto3" json:"managed,omitempty"`
+	// Transport type, such as "tls" or "tcp".
+	Transport string `protobuf:"bytes,5,opt,name=transport,proto3" json:"transport,omitempty"`
+	// Serving jobs (source, sink): the address listened on.
+	ListenAddress  string `protobuf:"bytes,6,opt,name=listen_address,json=listenAddress,proto3" json:"listen_address,omitempty"`
+	ListenFreebind bool   `protobuf:"varint,7,opt,name=listen_freebind,json=listenFreebind,proto3" json:"listen_freebind,omitempty"`
+	// Connecting jobs (pull, push): the address connected to.
+	ConnectAddress string `protobuf:"bytes,8,opt,name=connect_address,json=connectAddress,proto3" json:"connect_address,omitempty"`
+	// TLS names: the expected server name (connecting jobs), or the client
+	// names allowed to connect (serving jobs).
+	ServerCn  string   `protobuf:"bytes,9,opt,name=server_cn,json=serverCn,proto3" json:"server_cn,omitempty"`
+	ClientCns []string `protobuf:"bytes,10,rep,name=client_cns,json=clientCns,proto3" json:"client_cns,omitempty"`
+	// Filesystem filter (source, push, snap), in configuration order.
+	Filesystems []*ZreplFilter `protobuf:"bytes,11,rep,name=filesystems,proto3" json:"filesystems,omitempty"`
+	// Snapshotting: type ("periodic", "cron", or "manual"), prefix, and
+	// interval in seconds for periodic snapshots.
+	SnapshottingType        string `protobuf:"bytes,12,opt,name=snapshotting_type,json=snapshottingType,proto3" json:"snapshotting_type,omitempty"`
+	SnapshotPrefix          string `protobuf:"bytes,13,opt,name=snapshot_prefix,json=snapshotPrefix,proto3" json:"snapshot_prefix,omitempty"`
+	SnapshotIntervalSeconds uint32 `protobuf:"varint,14,opt,name=snapshot_interval_seconds,json=snapshotIntervalSeconds,proto3" json:"snapshot_interval_seconds,omitempty"`
+	// Pull jobs: replication interval in seconds (0 when manual).
+	IntervalSeconds uint32 `protobuf:"varint,15,opt,name=interval_seconds,json=intervalSeconds,proto3" json:"interval_seconds,omitempty"`
+	// Receiving jobs (pull, sink): the receive dataset.
+	RootFs string     `protobuf:"bytes,16,opt,name=root_fs,json=rootFs,proto3" json:"root_fs,omitempty"`
+	Send   *ZreplSend `protobuf:"bytes,17,opt,name=send,proto3" json:"send,omitempty"`
+	// Pruning rules for jobs that prune (pull, push, snap).
+	KeepSender    []*ZreplPruneRule `protobuf:"bytes,18,rep,name=keep_sender,json=keepSender,proto3" json:"keep_sender,omitempty"`
+	KeepReceiver  []*ZreplPruneRule `protobuf:"bytes,19,rep,name=keep_receiver,json=keepReceiver,proto3" json:"keep_receiver,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ZreplJob) Reset() {
+	*x = ZreplJob{}
+	mi := &file_ezdr_inventory_v1_inventory_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ZreplJob) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZreplJob) ProtoMessage() {}
+
+func (x *ZreplJob) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_inventory_v1_inventory_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZreplJob.ProtoReflect.Descriptor instead.
+func (*ZreplJob) Descriptor() ([]byte, []int) {
+	return file_ezdr_inventory_v1_inventory_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ZreplJob) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ZreplJob) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *ZreplJob) GetFile() string {
+	if x != nil {
+		return x.File
+	}
+	return ""
+}
+
+func (x *ZreplJob) GetManaged() bool {
+	if x != nil {
+		return x.Managed
+	}
+	return false
+}
+
+func (x *ZreplJob) GetTransport() string {
+	if x != nil {
+		return x.Transport
+	}
+	return ""
+}
+
+func (x *ZreplJob) GetListenAddress() string {
+	if x != nil {
+		return x.ListenAddress
+	}
+	return ""
+}
+
+func (x *ZreplJob) GetListenFreebind() bool {
+	if x != nil {
+		return x.ListenFreebind
+	}
+	return false
+}
+
+func (x *ZreplJob) GetConnectAddress() string {
+	if x != nil {
+		return x.ConnectAddress
+	}
+	return ""
+}
+
+func (x *ZreplJob) GetServerCn() string {
+	if x != nil {
+		return x.ServerCn
+	}
+	return ""
+}
+
+func (x *ZreplJob) GetClientCns() []string {
+	if x != nil {
+		return x.ClientCns
+	}
+	return nil
+}
+
+func (x *ZreplJob) GetFilesystems() []*ZreplFilter {
+	if x != nil {
+		return x.Filesystems
+	}
+	return nil
+}
+
+func (x *ZreplJob) GetSnapshottingType() string {
+	if x != nil {
+		return x.SnapshottingType
+	}
+	return ""
+}
+
+func (x *ZreplJob) GetSnapshotPrefix() string {
+	if x != nil {
+		return x.SnapshotPrefix
+	}
+	return ""
+}
+
+func (x *ZreplJob) GetSnapshotIntervalSeconds() uint32 {
+	if x != nil {
+		return x.SnapshotIntervalSeconds
+	}
+	return 0
+}
+
+func (x *ZreplJob) GetIntervalSeconds() uint32 {
+	if x != nil {
+		return x.IntervalSeconds
+	}
+	return 0
+}
+
+func (x *ZreplJob) GetRootFs() string {
+	if x != nil {
+		return x.RootFs
+	}
+	return ""
+}
+
+func (x *ZreplJob) GetSend() *ZreplSend {
+	if x != nil {
+		return x.Send
+	}
+	return nil
+}
+
+func (x *ZreplJob) GetKeepSender() []*ZreplPruneRule {
+	if x != nil {
+		return x.KeepSender
+	}
+	return nil
+}
+
+func (x *ZreplJob) GetKeepReceiver() []*ZreplPruneRule {
+	if x != nil {
+		return x.KeepReceiver
+	}
+	return nil
+}
+
+// ZreplFilter is one filesystem filter entry: a dataset, or a subtree when the
+// pattern ends in "<".
+type ZreplFilter struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Pattern       string                 `protobuf:"bytes,1,opt,name=pattern,proto3" json:"pattern,omitempty"`
+	Include       bool                   `protobuf:"varint,2,opt,name=include,proto3" json:"include,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ZreplFilter) Reset() {
+	*x = ZreplFilter{}
+	mi := &file_ezdr_inventory_v1_inventory_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ZreplFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZreplFilter) ProtoMessage() {}
+
+func (x *ZreplFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_inventory_v1_inventory_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZreplFilter.ProtoReflect.Descriptor instead.
+func (*ZreplFilter) Descriptor() ([]byte, []int) {
+	return file_ezdr_inventory_v1_inventory_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ZreplFilter) GetPattern() string {
+	if x != nil {
+		return x.Pattern
+	}
+	return ""
+}
+
+func (x *ZreplFilter) GetInclude() bool {
+	if x != nil {
+		return x.Include
+	}
+	return false
+}
+
+type ZreplSend struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Encrypted     bool                   `protobuf:"varint,1,opt,name=encrypted,proto3" json:"encrypted,omitempty"`
+	Raw           bool                   `protobuf:"varint,2,opt,name=raw,proto3" json:"raw,omitempty"`
+	Compressed    bool                   `protobuf:"varint,3,opt,name=compressed,proto3" json:"compressed,omitempty"`
+	LargeBlocks   bool                   `protobuf:"varint,4,opt,name=large_blocks,json=largeBlocks,proto3" json:"large_blocks,omitempty"`
+	EmbeddedData  bool                   `protobuf:"varint,5,opt,name=embedded_data,json=embeddedData,proto3" json:"embedded_data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ZreplSend) Reset() {
+	*x = ZreplSend{}
+	mi := &file_ezdr_inventory_v1_inventory_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ZreplSend) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZreplSend) ProtoMessage() {}
+
+func (x *ZreplSend) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_inventory_v1_inventory_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZreplSend.ProtoReflect.Descriptor instead.
+func (*ZreplSend) Descriptor() ([]byte, []int) {
+	return file_ezdr_inventory_v1_inventory_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ZreplSend) GetEncrypted() bool {
+	if x != nil {
+		return x.Encrypted
+	}
+	return false
+}
+
+func (x *ZreplSend) GetRaw() bool {
+	if x != nil {
+		return x.Raw
+	}
+	return false
+}
+
+func (x *ZreplSend) GetCompressed() bool {
+	if x != nil {
+		return x.Compressed
+	}
+	return false
+}
+
+func (x *ZreplSend) GetLargeBlocks() bool {
+	if x != nil {
+		return x.LargeBlocks
+	}
+	return false
+}
+
+func (x *ZreplSend) GetEmbeddedData() bool {
+	if x != nil {
+		return x.EmbeddedData
+	}
+	return false
+}
+
+// ZreplPruneRule is one pruning rule, such as a grid restricted to a regex.
+type ZreplPruneRule struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Rule type, such as "grid", "regex", "not_replicated", or "last_n".
+	Type   string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	Grid   string `protobuf:"bytes,2,opt,name=grid,proto3" json:"grid,omitempty"`
+	Regex  string `protobuf:"bytes,3,opt,name=regex,proto3" json:"regex,omitempty"`
+	Negate bool   `protobuf:"varint,4,opt,name=negate,proto3" json:"negate,omitempty"`
+	// Count for "last_n".
+	Count         uint32 `protobuf:"varint,5,opt,name=count,proto3" json:"count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ZreplPruneRule) Reset() {
+	*x = ZreplPruneRule{}
+	mi := &file_ezdr_inventory_v1_inventory_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ZreplPruneRule) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZreplPruneRule) ProtoMessage() {}
+
+func (x *ZreplPruneRule) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_inventory_v1_inventory_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZreplPruneRule.ProtoReflect.Descriptor instead.
+func (*ZreplPruneRule) Descriptor() ([]byte, []int) {
+	return file_ezdr_inventory_v1_inventory_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ZreplPruneRule) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *ZreplPruneRule) GetGrid() string {
+	if x != nil {
+		return x.Grid
+	}
+	return ""
+}
+
+func (x *ZreplPruneRule) GetRegex() string {
+	if x != nil {
+		return x.Regex
+	}
+	return ""
+}
+
+func (x *ZreplPruneRule) GetNegate() bool {
+	if x != nil {
+		return x.Negate
+	}
+	return false
+}
+
+func (x *ZreplPruneRule) GetCount() uint32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
 var File_ezdr_inventory_v1_inventory_proto protoreflect.FileDescriptor
 
 const file_ezdr_inventory_v1_inventory_proto_rawDesc = "" +
 	"\n" +
-	"!ezdr/inventory/v1/inventory.proto\x12\x11ezdr.inventory.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc1\x03\n" +
+	"!ezdr/inventory/v1/inventory.proto\x12\x11ezdr.inventory.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf1\x03\n" +
 	"\tInventory\x12=\n" +
 	"\fcollected_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\vcollectedAt\x12/\n" +
 	"\x04host\x18\x02 \x01(\v2\x1b.ezdr.inventory.v1.HostInfoR\x04host\x120\n" +
@@ -1097,7 +1590,8 @@ const file_ezdr_inventory_v1_inventory_proto_rawDesc = "" +
 	"\n" +
 	"interfaces\x18\a \x03(\v2#.ezdr.inventory.v1.NetworkInterfaceR\n" +
 	"interfaces\x12\x1a\n" +
-	"\bwarnings\x18\b \x03(\tR\bwarnings\"\xd4\x01\n" +
+	"\bwarnings\x18\b \x03(\tR\bwarnings\x12.\n" +
+	"\x05zrepl\x18\t \x01(\v2\x18.ezdr.inventory.v1.ZreplR\x05zrepl\"\xd4\x01\n" +
 	"\bHostInfo\x12\x1a\n" +
 	"\bhostname\x18\x01 \x01(\tR\bhostname\x12\x1f\n" +
 	"\vpve_version\x18\x02 \x01(\tR\n" +
@@ -1189,7 +1683,52 @@ const file_ezdr_inventory_v1_inventory_proto_rawDesc = "" +
 	"\fbond_members\x18\t \x03(\tR\vbondMembers\x12\x12\n" +
 	"\x04cidr\x18\n" +
 	" \x01(\tR\x04cidr\x12\x18\n" +
-	"\agateway\x18\v \x01(\tR\agateway*T\n" +
+	"\agateway\x18\v \x01(\tR\agateway\"\x8f\x01\n" +
+	"\x05Zrepl\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\x12\x18\n" +
+	"\arunning\x18\x02 \x01(\bR\arunning\x12!\n" +
+	"\fconfig_error\x18\x03 \x01(\tR\vconfigError\x12/\n" +
+	"\x04jobs\x18\x04 \x03(\v2\x1b.ezdr.inventory.v1.ZreplJobR\x04jobs\"\x89\x06\n" +
+	"\bZreplJob\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\x12\x12\n" +
+	"\x04file\x18\x03 \x01(\tR\x04file\x12\x18\n" +
+	"\amanaged\x18\x04 \x01(\bR\amanaged\x12\x1c\n" +
+	"\ttransport\x18\x05 \x01(\tR\ttransport\x12%\n" +
+	"\x0elisten_address\x18\x06 \x01(\tR\rlistenAddress\x12'\n" +
+	"\x0flisten_freebind\x18\a \x01(\bR\x0elistenFreebind\x12'\n" +
+	"\x0fconnect_address\x18\b \x01(\tR\x0econnectAddress\x12\x1b\n" +
+	"\tserver_cn\x18\t \x01(\tR\bserverCn\x12\x1d\n" +
+	"\n" +
+	"client_cns\x18\n" +
+	" \x03(\tR\tclientCns\x12@\n" +
+	"\vfilesystems\x18\v \x03(\v2\x1e.ezdr.inventory.v1.ZreplFilterR\vfilesystems\x12+\n" +
+	"\x11snapshotting_type\x18\f \x01(\tR\x10snapshottingType\x12'\n" +
+	"\x0fsnapshot_prefix\x18\r \x01(\tR\x0esnapshotPrefix\x12:\n" +
+	"\x19snapshot_interval_seconds\x18\x0e \x01(\rR\x17snapshotIntervalSeconds\x12)\n" +
+	"\x10interval_seconds\x18\x0f \x01(\rR\x0fintervalSeconds\x12\x17\n" +
+	"\aroot_fs\x18\x10 \x01(\tR\x06rootFs\x120\n" +
+	"\x04send\x18\x11 \x01(\v2\x1c.ezdr.inventory.v1.ZreplSendR\x04send\x12B\n" +
+	"\vkeep_sender\x18\x12 \x03(\v2!.ezdr.inventory.v1.ZreplPruneRuleR\n" +
+	"keepSender\x12F\n" +
+	"\rkeep_receiver\x18\x13 \x03(\v2!.ezdr.inventory.v1.ZreplPruneRuleR\fkeepReceiver\"A\n" +
+	"\vZreplFilter\x12\x18\n" +
+	"\apattern\x18\x01 \x01(\tR\apattern\x12\x18\n" +
+	"\ainclude\x18\x02 \x01(\bR\ainclude\"\xa3\x01\n" +
+	"\tZreplSend\x12\x1c\n" +
+	"\tencrypted\x18\x01 \x01(\bR\tencrypted\x12\x10\n" +
+	"\x03raw\x18\x02 \x01(\bR\x03raw\x12\x1e\n" +
+	"\n" +
+	"compressed\x18\x03 \x01(\bR\n" +
+	"compressed\x12!\n" +
+	"\flarge_blocks\x18\x04 \x01(\bR\vlargeBlocks\x12#\n" +
+	"\rembedded_data\x18\x05 \x01(\bR\fembeddedData\"|\n" +
+	"\x0eZreplPruneRule\x12\x12\n" +
+	"\x04type\x18\x01 \x01(\tR\x04type\x12\x12\n" +
+	"\x04grid\x18\x02 \x01(\tR\x04grid\x12\x14\n" +
+	"\x05regex\x18\x03 \x01(\tR\x05regex\x12\x16\n" +
+	"\x06negate\x18\x04 \x01(\bR\x06negate\x12\x14\n" +
+	"\x05count\x18\x05 \x01(\rR\x05count*T\n" +
 	"\tGuestType\x12\x1a\n" +
 	"\x16GUEST_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rGUEST_TYPE_VM\x10\x01\x12\x18\n" +
@@ -1214,7 +1753,7 @@ func file_ezdr_inventory_v1_inventory_proto_rawDescGZIP() []byte {
 }
 
 var file_ezdr_inventory_v1_inventory_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_ezdr_inventory_v1_inventory_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_ezdr_inventory_v1_inventory_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_ezdr_inventory_v1_inventory_proto_goTypes = []any{
 	(GuestType)(0),                // 0: ezdr.inventory.v1.GuestType
 	(Readiness)(0),                // 1: ezdr.inventory.v1.Readiness
@@ -1227,25 +1766,36 @@ var file_ezdr_inventory_v1_inventory_proto_goTypes = []any{
 	(*ZfsPool)(nil),               // 8: ezdr.inventory.v1.ZfsPool
 	(*ZfsDataset)(nil),            // 9: ezdr.inventory.v1.ZfsDataset
 	(*NetworkInterface)(nil),      // 10: ezdr.inventory.v1.NetworkInterface
-	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
+	(*Zrepl)(nil),                 // 11: ezdr.inventory.v1.Zrepl
+	(*ZreplJob)(nil),              // 12: ezdr.inventory.v1.ZreplJob
+	(*ZreplFilter)(nil),           // 13: ezdr.inventory.v1.ZreplFilter
+	(*ZreplSend)(nil),             // 14: ezdr.inventory.v1.ZreplSend
+	(*ZreplPruneRule)(nil),        // 15: ezdr.inventory.v1.ZreplPruneRule
+	(*timestamppb.Timestamp)(nil), // 16: google.protobuf.Timestamp
 }
 var file_ezdr_inventory_v1_inventory_proto_depIdxs = []int32{
-	11, // 0: ezdr.inventory.v1.Inventory.collected_at:type_name -> google.protobuf.Timestamp
+	16, // 0: ezdr.inventory.v1.Inventory.collected_at:type_name -> google.protobuf.Timestamp
 	3,  // 1: ezdr.inventory.v1.Inventory.host:type_name -> ezdr.inventory.v1.HostInfo
 	4,  // 2: ezdr.inventory.v1.Inventory.guests:type_name -> ezdr.inventory.v1.Guest
 	7,  // 3: ezdr.inventory.v1.Inventory.storages:type_name -> ezdr.inventory.v1.Storage
 	8,  // 4: ezdr.inventory.v1.Inventory.zfs_pools:type_name -> ezdr.inventory.v1.ZfsPool
 	9,  // 5: ezdr.inventory.v1.Inventory.zfs_datasets:type_name -> ezdr.inventory.v1.ZfsDataset
 	10, // 6: ezdr.inventory.v1.Inventory.interfaces:type_name -> ezdr.inventory.v1.NetworkInterface
-	0,  // 7: ezdr.inventory.v1.Guest.type:type_name -> ezdr.inventory.v1.GuestType
-	5,  // 8: ezdr.inventory.v1.Guest.disks:type_name -> ezdr.inventory.v1.Disk
-	6,  // 9: ezdr.inventory.v1.Guest.nics:type_name -> ezdr.inventory.v1.Nic
-	1,  // 10: ezdr.inventory.v1.Disk.readiness:type_name -> ezdr.inventory.v1.Readiness
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	11, // 7: ezdr.inventory.v1.Inventory.zrepl:type_name -> ezdr.inventory.v1.Zrepl
+	0,  // 8: ezdr.inventory.v1.Guest.type:type_name -> ezdr.inventory.v1.GuestType
+	5,  // 9: ezdr.inventory.v1.Guest.disks:type_name -> ezdr.inventory.v1.Disk
+	6,  // 10: ezdr.inventory.v1.Guest.nics:type_name -> ezdr.inventory.v1.Nic
+	1,  // 11: ezdr.inventory.v1.Disk.readiness:type_name -> ezdr.inventory.v1.Readiness
+	12, // 12: ezdr.inventory.v1.Zrepl.jobs:type_name -> ezdr.inventory.v1.ZreplJob
+	13, // 13: ezdr.inventory.v1.ZreplJob.filesystems:type_name -> ezdr.inventory.v1.ZreplFilter
+	14, // 14: ezdr.inventory.v1.ZreplJob.send:type_name -> ezdr.inventory.v1.ZreplSend
+	15, // 15: ezdr.inventory.v1.ZreplJob.keep_sender:type_name -> ezdr.inventory.v1.ZreplPruneRule
+	15, // 16: ezdr.inventory.v1.ZreplJob.keep_receiver:type_name -> ezdr.inventory.v1.ZreplPruneRule
+	17, // [17:17] is the sub-list for method output_type
+	17, // [17:17] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_ezdr_inventory_v1_inventory_proto_init() }
@@ -1259,7 +1809,7 @@ func file_ezdr_inventory_v1_inventory_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ezdr_inventory_v1_inventory_proto_rawDesc), len(file_ezdr_inventory_v1_inventory_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   9,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

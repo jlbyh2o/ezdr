@@ -419,7 +419,10 @@ type ExistingNetwork struct {
 	PrimaryAddress string `protobuf:"bytes,1,opt,name=primary_address,json=primaryAddress,proto3" json:"primary_address,omitempty"`
 	// First zrepl port. A plan uses one port per source job, counting up from
 	// this one.
-	Port          uint32 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Port uint32 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	// Address the primary's zrepl listens on (an IP address). Empty means all
+	// addresses.
+	ListenAddress string `protobuf:"bytes,3,opt,name=listen_address,json=listenAddress,proto3" json:"listen_address,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -466,6 +469,13 @@ func (x *ExistingNetwork) GetPort() uint32 {
 		return x.Port
 	}
 	return 0
+}
+
+func (x *ExistingNetwork) GetListenAddress() string {
+	if x != nil {
+		return x.ListenAddress
+	}
+	return ""
 }
 
 // EzdrTunnel replicates over an EZDR-managed WireGuard tunnel between the
@@ -947,10 +957,11 @@ const file_ezdr_plan_v1_plan_proto_rawDesc = "" +
 	"\x12ReplicationNetwork\x12;\n" +
 	"\bexisting\x18\x01 \x01(\v2\x1d.ezdr.plan.v1.ExistingNetworkH\x00R\bexisting\x122\n" +
 	"\x06tunnel\x18\x02 \x01(\v2\x18.ezdr.plan.v1.EzdrTunnelH\x00R\x06tunnelB\x06\n" +
-	"\x04path\"N\n" +
+	"\x04path\"u\n" +
 	"\x0fExistingNetwork\x12'\n" +
 	"\x0fprimary_address\x18\x01 \x01(\tR\x0eprimaryAddress\x12\x12\n" +
-	"\x04port\x18\x02 \x01(\rR\x04port\"\xe9\x01\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12%\n" +
+	"\x0elisten_address\x18\x03 \x01(\tR\rlistenAddress\"\xe9\x01\n" +
 	"\n" +
 	"EzdrTunnel\x12=\n" +
 	"\blistener\x18\x01 \x01(\x0e2!.ezdr.plan.v1.EzdrTunnel.ListenerR\blistener\x12\x1a\n" +

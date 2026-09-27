@@ -41,6 +41,9 @@ message ExistingNetwork {
   // First zrepl port. A plan uses one port per source job, counting up from
   // this one.
   uint32 port = 2;
+  // Address the primary's zrepl listens on (an IP address). Empty means all
+  // addresses.
+  string listen_address = 3;
 }
 
 // EzdrTunnel replicates over an EZDR-managed WireGuard tunnel between the

@@ -16,6 +16,9 @@ message Inventory {
   // Problems during collection, such as a guest whose configuration could not
   // be read. The rest of the inventory is still valid.
   repeated string warnings = 8;
+  // zrepl on this host, including jobs not managed by EZDR, so an existing
+  // setup can be adopted by a DR plan.
+  Zrepl zrepl = 9;
 }
 
 message HostInfo {
@@ -138,4 +141,77 @@ message NetworkInterface {
   // Address in CIDR notation.
   string cidr = 10;
   string gateway = 11;
+}
+
+message Zrepl {
+  // Installed version, such as "v0.6.1"; empty when zrepl isn't installed.
+  string version = 1;
+  bool running = 2;
+  // Why the configuration couldn't be read. Jobs from the files that could be
+  // read are still listed.
+  string config_error = 3;
+  repeated ZreplJob jobs = 4;
+}
+
+// ZreplJob summarizes one job from the zrepl configuration.
+message ZreplJob {
+  string name = 1;
+  // zrepl job type: "source", "pull", "push", "sink", or "snap".
+  string type = 2;
+  // Configuration file the job is defined in.
+  string file = 3;
+  // True for jobs in EZDR's own jobs file.
+  bool managed = 4;
+  // Transport type, such as "tls" or "tcp".
+  string transport = 5;
+  // Serving jobs (source, sink): the address listened on.
+  string listen_address = 6;
+  bool listen_freebind = 7;
+  // Connecting jobs (pull, push): the address connected to.
+  string connect_address = 8;
+  // TLS names: the expected server name (connecting jobs), or the client
+  // names allowed to connect (serving jobs).
+  string server_cn = 9;
+  repeated string client_cns = 10;
+  // Filesystem filter (source, push, snap), in configuration order.
+  repeated ZreplFilter filesystems = 11;
+  // Snapshotting: type ("periodic", "cron", or "manual"), prefix, and
+  // interval in seconds for periodic snapshots.
+  string snapshotting_type = 12;
+  string snapshot_prefix = 13;
+  uint32 snapshot_interval_seconds = 14;
+  // Pull jobs: replication interval in seconds (0 when manual).
+  uint32 interval_seconds = 15;
+  // Receiving jobs (pull, sink): the receive dataset.
+  string root_fs = 16;
+  ZreplSend send = 17;
+  // Pruning rules for jobs that prune (pull, push, snap).
+  repeated ZreplPruneRule keep_sender = 18;
+  repeated ZreplPruneRule keep_receiver = 19;
+}
+
+// ZreplFilter is one filesystem filter entry: a dataset, or a subtree when the
+// pattern ends in "<".
+message ZreplFilter {
+  string pattern = 1;
+  bool include = 2;
+}
+
+message ZreplSend {
+  bool encrypted = 1;
+  bool raw = 2;
+  bool compressed = 3;
+  bool large_blocks = 4;
+  bool embedded_data = 5;
+}
+
+// ZreplPruneRule is one pruning rule, such as a grid restricted to a regex.
+message ZreplPruneRule {
+  // Rule type, such as "grid", "regex", "not_replicated", or "last_n".
+  string type = 1;
+  string grid = 2;
+  string regex = 3;
+  bool negate = 4;
+  // Count for "last_n".
+  uint32 count = 5;
 }

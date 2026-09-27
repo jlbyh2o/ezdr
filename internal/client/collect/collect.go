@@ -14,6 +14,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/jlbyh2o/ezdr/internal/client/zrepl"
 	inventoryv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/inventory/v1"
 )
 
@@ -32,6 +33,8 @@ type Sources struct {
 	ZFSVersion func() string
 	Hostname   func() (string, error)
 	Now        func() time.Time
+	// Zrepl describes zrepl and its configured jobs; nil skips it.
+	Zrepl func(ctx context.Context) *inventoryv1.Zrepl
 }
 
 // LocalSources returns sources for this host using api.
@@ -50,6 +53,7 @@ func LocalSources(api API) Sources {
 		},
 		Hostname: os.Hostname,
 		Now:      time.Now,
+		Zrepl:    zrepl.NewApplier().Detect,
 	}
 }
 
@@ -89,6 +93,9 @@ func Collect(ctx context.Context, src Sources) (*inventoryv1.Inventory, error) {
 	collectGuests(ctx, src, node, inv, storages, warn)
 	collectZFS(ctx, src, node, inv, warn)
 	collectNetwork(ctx, src, node, inv, warn)
+	if src.Zrepl != nil {
+		inv.Zrepl = src.Zrepl(ctx)
+	}
 	return inv, nil
 }
 

@@ -79,6 +79,10 @@ func Jobs(p Plan, primary, dr *Host) (sources []*clientv1.SourceJob, pulls []*cl
 	switch n := p.Spec.GetNetwork().GetPath().(type) {
 	case *planv1.ReplicationNetwork_Existing:
 		connectHost = n.Existing.PrimaryAddress
+		// A specific listen address may not be up when zrepl starts (for
+		// example, a VPN address), so it's bound with freebind.
+		listenHost = n.Existing.ListenAddress
+		freebind = listenHost != ""
 	case *planv1.ReplicationNetwork_Tunnel:
 		for _, h := range []*Host{primary, dr} {
 			if !h.SiteAddress.IsValid() || len(h.SitePublicKey) != 32 {

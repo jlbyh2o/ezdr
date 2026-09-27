@@ -138,10 +138,11 @@ Each plan chooses how the DR host reaches the primary's zrepl `source` job.
 The hosts can already reach each other, for example over a router
 site-to-site VPN or a private link.
 
-- **Plan settings:** the primary's address as seen from the DR host, and the
-  port (default 8888).
-- The primary's `source` job listens on that port on all addresses, or on a
-  specific address if set. TLS authentication (section 4.3) rejects anyone
+- **Plan settings:** the primary's address as seen from the DR host, the
+  port (default 8888), and optionally the address the primary listens on.
+- The primary's `source` job listens on that port on all addresses, or only
+  on the listen address if set (with `listen_freebind`, so zrepl can bind
+  before the address is up). TLS authentication (section 4.3) rejects anyone
   but the plan's DR host.
 
 ### 4.2 EZDR tunnel
@@ -195,17 +196,24 @@ Inventory gains a **zrepl** section: installed version, whether the service
 runs, and a summary of each existing job (name, type, listen or connect
 address, `root_fs`, prefix, interval, filesystem filter, and pruning grids).
 
-In the plan editor, **Adopt existing zrepl setup** fills in the receive
-dataset, snapshot prefix, interval, retention, network path, and address from
-the detected jobs. It also selects the guests whose disks the old filter
-replicates.
+On a draft plan, **Adopt existing zrepl setup** picks a detected source job
+on the primary and the pull job on the DR host that connects to it. It fills
+in the receive dataset, snapshot prefix, interval, retention, and the
+existing-network settings (address, port, and listen address) from those
+jobs, and selects the guests whose disks the old filter replicates. The plan
+records the adopted job names, so activating it runs a takeover instead of a
+plain activation. Removing the adoption, or changing a setting that
+incremental sends depend on (receive dataset or prefix), turns it back into
+an ordinary plan; the editor warns first.
 
 ### 5.2 Preflight
 
 When an adopted plan is activated, both clients run a preflight and report:
 
-- For each protected dataset: the newest snapshot common to both hosts. A
-  dataset without one needs a **full send**, which is listed with its size.
+- For each protected dataset: the newest snapshot common to both hosts,
+  matched by GUID. A bookmark on the primary counts as a common base too,
+  since zrepl can send incrementally from it. A dataset without one needs a
+  **full send**, which is listed with its size.
 - Datasets the old job replicates that the plan doesn't include. These stop
   being replicated.
 - The old jobs' holds and bookmarks that step 6 will release (from
@@ -233,10 +241,17 @@ After one confirmation, the portal runs these steps:
    doesn't cover this: it only releases markers superseded by newer ones,
    not those of removed jobs.
 
+Steps 2 and 3 edit the main `zrepl.yml` structurally: they remove the adopted
+jobs, add the `include` entry, and keep everything else (global settings,
+other jobs, comments). The old jobs' certificate and key files are left in
+place.
+
 The main `zrepl.yml` files are backed up before step 2. If any step before
 step 6 fails, both hosts' configurations are restored and the old setup
-resumes. Progress and results are shown in the portal and recorded in the
-audit log.
+resumes. An upgrade from step 1 is kept: zrepl 0.7 runs 0.6 configurations
+unchanged, and downgrading during a failure would add risk. The plan's alerts
+are muted during the switch-over. Progress and results are shown in the
+portal and recorded in the audit log.
 
 ## 6. Activation
 

@@ -56,6 +56,13 @@ func TestDesired(t *testing.T) {
 		t.Errorf("pull job = %v", pj)
 	}
 
+	// A specific listen address is bound with freebind.
+	p.Spec.GetNetwork().GetExisting().ListenAddress = "192.0.2.12"
+	src, _ = Desired("p1", []Plan{p}, hosts)
+	if j := src.SourceJobs[0]; j.ListenAddress != "192.0.2.12:8888" || !j.ListenFreebind {
+		t.Errorf("source job with listen address = %v", j)
+	}
+
 	// Unrelated hosts get nothing.
 	if other, _ := Desired("x", []Plan{p}, hosts); len(other.SourceJobs)+len(other.PullJobs) != 0 {
 		t.Errorf("unrelated host got jobs: %v", other)
