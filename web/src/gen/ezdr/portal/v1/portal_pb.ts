@@ -4,6 +4,8 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Inventory } from "../../inventory/v1/inventory_pb";
+import { file_ezdr_inventory_v1_inventory } from "../../inventory/v1/inventory_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file ezdr/portal/v1/portal.proto.
  */
 export const file_ezdr_portal_v1_portal: GenFile = /*@__PURE__*/
-  fileDesc("ChtlemRyL3BvcnRhbC92MS9wb3J0YWwucHJvdG8SDmV6ZHIucG9ydGFsLnYxIhcKFUdldFNldHVwU3RhdHVzUmVxdWVzdCIwChZHZXRTZXR1cFN0YXR1c1Jlc3BvbnNlEhYKDnNldHVwX3JlcXVpcmVkGAEgASgIIk4KFENvbXBsZXRlU2V0dXBSZXF1ZXN0EhIKCnNldHVwX2NvZGUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSEAoIcGFzc3dvcmQYAyABKAkiFwoVQ29tcGxldGVTZXR1cFJlc3BvbnNlIjIKDExvZ2luUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJUCg1Mb2dpblJlc3BvbnNlEhQKDGNoYWxsZW5nZV9pZBgBIAEoCRItCgp0b3RwX3NldHVwGAIgASgLMhkuZXpkci5wb3J0YWwudjEuVG90cFNldHVwIigKCVRvdHBTZXR1cBIOCgZzZWNyZXQYASABKAkSCwoDdXJsGAIgASgJIjcKEVZlcmlmeVRvdHBSZXF1ZXN0EhQKDGNoYWxsZW5nZV9pZBgBIAEoCRIMCgRjb2RlGAIgASgJIlAKElZlcmlmeVRvdHBSZXNwb25zZRIiCgR1c2VyGAEgASgLMhQuZXpkci5wb3J0YWwudjEuVXNlchIWCg5yZWNvdmVyeV9jb2RlcxgCIAMoCSIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIhcKFUdldEN1cnJlbnRVc2VyUmVxdWVzdCI8ChZHZXRDdXJyZW50VXNlclJlc3BvbnNlEiIKBHVzZXIYASABKAsyFC5lemRyLnBvcnRhbC52MS5Vc2VyIiQKBFVzZXISCgoCaWQYASABKAkSEAoIdXNlcm5hbWUYAiABKAkiPgoSQ3JlYXRlVG9rZW5SZXF1ZXN0EhMKC2Rlc2NyaXB0aW9uGAEgASgJEhMKC3R0bF9zZWNvbmRzGAIgASgNIowBChNDcmVhdGVUb2tlblJlc3BvbnNlEi4KBXRva2VuGAEgASgLMh8uZXpkci5wb3J0YWwudjEuRW5yb2xsbWVudFRva2VuEhQKDHRva2VuX3N0cmluZxgCIAEoCRIXCg9pbnN0YWxsX2NvbW1hbmQYAyABKAkSFgoOZW5yb2xsX2NvbW1hbmQYBCABKAkiEwoRTGlzdFRva2Vuc1JlcXVlc3QiRQoSTGlzdFRva2Vuc1Jlc3BvbnNlEi8KBnRva2VucxgBIAMoCzIfLmV6ZHIucG9ydGFsLnYxLkVucm9sbG1lbnRUb2tlbiIgChJSZXZva2VUb2tlblJlcXVlc3QSCgoCaWQYASABKAkiFQoTUmV2b2tlVG9rZW5SZXNwb25zZSKUAgoPRW5yb2xsbWVudFRva2VuEgoKAmlkGAEgASgJEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhIKCmNyZWF0ZWRfYnkYAyABKAkSLgoKY3JlYXRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKZXhwaXJlc19hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKwoHdXNlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKcmV2b2tlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHaG9zdF9pZBgIIAEoCSISChBMaXN0SG9zdHNSZXF1ZXN0IjgKEUxpc3RIb3N0c1Jlc3BvbnNlEiMKBWhvc3RzGAEgAygLMhQuZXpkci5wb3J0YWwudjEuSG9zdCIfChFEZWxldGVIb3N0UmVxdWVzdBIKCgJpZBgBIAEoCSIUChJEZWxldGVIb3N0UmVzcG9uc2UijgIKBEhvc3QSCgoCaWQYASABKAkSEAoIaG9zdG5hbWUYAiABKAkSEgoKbWFjaGluZV9pZBgDIAEoCRITCgtwdmVfdmVyc2lvbhgEIAEoCRIWCg5jbGllbnRfdmVyc2lvbhgFIAEoCRIWCg50dW5uZWxfYWRkcmVzcxgGIAEoCRIvCgtlbnJvbGxlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMAoMbGFzdF9zZWVuX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZvbmxpbmUYCSABKAgSHAoUZHVwbGljYXRlX21hY2hpbmVfaWQYCiABKAgiJwoWTGlzdEF1ZGl0RXZlbnRzUmVxdWVzdBINCgVsaW1pdBgBIAEoDSJFChdMaXN0QXVkaXRFdmVudHNSZXNwb25zZRIqCgZldmVudHMYASADKAsyGi5lemRyLnBvcnRhbC52MS5BdWRpdEV2ZW50Io0BCgpBdWRpdEV2ZW50EigKBHRpbWUYASABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg0KBWFjdG9yGAIgASgJEg4KBmFjdGlvbhgDIAEoCRIOCgZ0YXJnZXQYBCABKAkSFgoOc291cmNlX2FkZHJlc3MYBSABKAkSDgoGZGV0YWlsGAYgASgJMs0BCgxTZXR1cFNlcnZpY2USXwoOR2V0U2V0dXBTdGF0dXMSJS5lemRyLnBvcnRhbC52MS5HZXRTZXR1cFN0YXR1c1JlcXVlc3QaJi5lemRyLnBvcnRhbC52MS5HZXRTZXR1cFN0YXR1c1Jlc3BvbnNlElwKDUNvbXBsZXRlU2V0dXASJC5lemRyLnBvcnRhbC52MS5Db21wbGV0ZVNldHVwUmVxdWVzdBolLmV6ZHIucG9ydGFsLnYxLkNvbXBsZXRlU2V0dXBSZXNwb25zZTLSAgoLQXV0aFNlcnZpY2USRAoFTG9naW4SHC5lemRyLnBvcnRhbC52MS5Mb2dpblJlcXVlc3QaHS5lemRyLnBvcnRhbC52MS5Mb2dpblJlc3BvbnNlElMKClZlcmlmeVRvdHASIS5lemRyLnBvcnRhbC52MS5WZXJpZnlUb3RwUmVxdWVzdBoiLmV6ZHIucG9ydGFsLnYxLlZlcmlmeVRvdHBSZXNwb25zZRJHCgZMb2dvdXQSHS5lemRyLnBvcnRhbC52MS5Mb2dvdXRSZXF1ZXN0Gh4uZXpkci5wb3J0YWwudjEuTG9nb3V0UmVzcG9uc2USXwoOR2V0Q3VycmVudFVzZXISJS5lemRyLnBvcnRhbC52MS5HZXRDdXJyZW50VXNlclJlcXVlc3QaJi5lemRyLnBvcnRhbC52MS5HZXRDdXJyZW50VXNlclJlc3BvbnNlMpMCCgxUb2tlblNlcnZpY2USVgoLQ3JlYXRlVG9rZW4SIi5lemRyLnBvcnRhbC52MS5DcmVhdGVUb2tlblJlcXVlc3QaIy5lemRyLnBvcnRhbC52MS5DcmVhdGVUb2tlblJlc3BvbnNlElMKCkxpc3RUb2tlbnMSIS5lemRyLnBvcnRhbC52MS5MaXN0VG9rZW5zUmVxdWVzdBoiLmV6ZHIucG9ydGFsLnYxLkxpc3RUb2tlbnNSZXNwb25zZRJWCgtSZXZva2VUb2tlbhIiLmV6ZHIucG9ydGFsLnYxLlJldm9rZVRva2VuUmVxdWVzdBojLmV6ZHIucG9ydGFsLnYxLlJldm9rZVRva2VuUmVzcG9uc2UytAEKC0hvc3RTZXJ2aWNlElAKCUxpc3RIb3N0cxIgLmV6ZHIucG9ydGFsLnYxLkxpc3RIb3N0c1JlcXVlc3QaIS5lemRyLnBvcnRhbC52MS5MaXN0SG9zdHNSZXNwb25zZRJTCgpEZWxldGVIb3N0EiEuZXpkci5wb3J0YWwudjEuRGVsZXRlSG9zdFJlcXVlc3QaIi5lemRyLnBvcnRhbC52MS5EZWxldGVIb3N0UmVzcG9uc2UycgoMQXVkaXRTZXJ2aWNlEmIKD0xpc3RBdWRpdEV2ZW50cxImLmV6ZHIucG9ydGFsLnYxLkxpc3RBdWRpdEV2ZW50c1JlcXVlc3QaJy5lemRyLnBvcnRhbC52MS5MaXN0QXVkaXRFdmVudHNSZXNwb25zZUK5AQoSY29tLmV6ZHIucG9ydGFsLnYxQgtQb3J0YWxQcm90b1ABWjxnaXRodWIuY29tL2psYnloMm8vZXpkci9pbnRlcm5hbC9nZW4vZXpkci9wb3J0YWwvdjE7cG9ydGFsdjGiAgNFUFiqAg5FemRyLlBvcnRhbC5WMcoCDkV6ZHJcUG9ydGFsXFYx4gIaRXpkclxQb3J0YWxcVjFcR1BCTWV0YWRhdGHqAhBFemRyOjpQb3J0YWw6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
+  fileDesc("ChtlemRyL3BvcnRhbC92MS9wb3J0YWwucHJvdG8SDmV6ZHIucG9ydGFsLnYxIhcKFUdldFNldHVwU3RhdHVzUmVxdWVzdCIwChZHZXRTZXR1cFN0YXR1c1Jlc3BvbnNlEhYKDnNldHVwX3JlcXVpcmVkGAEgASgIIk4KFENvbXBsZXRlU2V0dXBSZXF1ZXN0EhIKCnNldHVwX2NvZGUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSEAoIcGFzc3dvcmQYAyABKAkiFwoVQ29tcGxldGVTZXR1cFJlc3BvbnNlIjIKDExvZ2luUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJUCg1Mb2dpblJlc3BvbnNlEhQKDGNoYWxsZW5nZV9pZBgBIAEoCRItCgp0b3RwX3NldHVwGAIgASgLMhkuZXpkci5wb3J0YWwudjEuVG90cFNldHVwIigKCVRvdHBTZXR1cBIOCgZzZWNyZXQYASABKAkSCwoDdXJsGAIgASgJIjcKEVZlcmlmeVRvdHBSZXF1ZXN0EhQKDGNoYWxsZW5nZV9pZBgBIAEoCRIMCgRjb2RlGAIgASgJIlAKElZlcmlmeVRvdHBSZXNwb25zZRIiCgR1c2VyGAEgASgLMhQuZXpkci5wb3J0YWwudjEuVXNlchIWCg5yZWNvdmVyeV9jb2RlcxgCIAMoCSIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIhcKFUdldEN1cnJlbnRVc2VyUmVxdWVzdCI8ChZHZXRDdXJyZW50VXNlclJlc3BvbnNlEiIKBHVzZXIYASABKAsyFC5lemRyLnBvcnRhbC52MS5Vc2VyIiQKBFVzZXISCgoCaWQYASABKAkSEAoIdXNlcm5hbWUYAiABKAkiPgoSQ3JlYXRlVG9rZW5SZXF1ZXN0EhMKC2Rlc2NyaXB0aW9uGAEgASgJEhMKC3R0bF9zZWNvbmRzGAIgASgNIowBChNDcmVhdGVUb2tlblJlc3BvbnNlEi4KBXRva2VuGAEgASgLMh8uZXpkci5wb3J0YWwudjEuRW5yb2xsbWVudFRva2VuEhQKDHRva2VuX3N0cmluZxgCIAEoCRIXCg9pbnN0YWxsX2NvbW1hbmQYAyABKAkSFgoOZW5yb2xsX2NvbW1hbmQYBCABKAkiEwoRTGlzdFRva2Vuc1JlcXVlc3QiRQoSTGlzdFRva2Vuc1Jlc3BvbnNlEi8KBnRva2VucxgBIAMoCzIfLmV6ZHIucG9ydGFsLnYxLkVucm9sbG1lbnRUb2tlbiIgChJSZXZva2VUb2tlblJlcXVlc3QSCgoCaWQYASABKAkiFQoTUmV2b2tlVG9rZW5SZXNwb25zZSKUAgoPRW5yb2xsbWVudFRva2VuEgoKAmlkGAEgASgJEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhIKCmNyZWF0ZWRfYnkYAyABKAkSLgoKY3JlYXRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKZXhwaXJlc19hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKwoHdXNlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKcmV2b2tlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHaG9zdF9pZBgIIAEoCSIqChdHZXRIb3N0SW52ZW50b3J5UmVxdWVzdBIPCgdob3N0X2lkGAEgASgJItABChhHZXRIb3N0SW52ZW50b3J5UmVzcG9uc2USIgoEaG9zdBgBIAEoCzIULmV6ZHIucG9ydGFsLnYxLkhvc3QSLwoJaW52ZW50b3J5GAIgASgLMhwuZXpkci5pbnZlbnRvcnkudjEuSW52ZW50b3J5Ei4KCmNoYW5nZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC3JlY2VpdmVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIqChdSZWZyZXNoSW52ZW50b3J5UmVxdWVzdBIPCgdob3N0X2lkGAEgASgJIhoKGFJlZnJlc2hJbnZlbnRvcnlSZXNwb25zZSISChBMaXN0SG9zdHNSZXF1ZXN0IjgKEUxpc3RIb3N0c1Jlc3BvbnNlEiMKBWhvc3RzGAEgAygLMhQuZXpkci5wb3J0YWwudjEuSG9zdCIfChFEZWxldGVIb3N0UmVxdWVzdBIKCgJpZBgBIAEoCSIUChJEZWxldGVIb3N0UmVzcG9uc2Ui1AIKBEhvc3QSCgoCaWQYASABKAkSEAoIaG9zdG5hbWUYAiABKAkSEgoKbWFjaGluZV9pZBgDIAEoCRITCgtwdmVfdmVyc2lvbhgEIAEoCRIWCg5jbGllbnRfdmVyc2lvbhgFIAEoCRIWCg50dW5uZWxfYWRkcmVzcxgGIAEoCRIvCgtlbnJvbGxlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMAoMbGFzdF9zZWVuX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZvbmxpbmUYCSABKAgSHAoUZHVwbGljYXRlX21hY2hpbmVfaWQYCiABKAgSEwoLZ3Vlc3RfY291bnQYCyABKA0SGAoQZ3Vlc3RzX25vdF9yZWFkeRgMIAEoDRIVCg1oYXNfaW52ZW50b3J5GA0gASgIIicKFkxpc3RBdWRpdEV2ZW50c1JlcXVlc3QSDQoFbGltaXQYASABKA0iRQoXTGlzdEF1ZGl0RXZlbnRzUmVzcG9uc2USKgoGZXZlbnRzGAEgAygLMhouZXpkci5wb3J0YWwudjEuQXVkaXRFdmVudCKNAQoKQXVkaXRFdmVudBIoCgR0aW1lGAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBINCgVhY3RvchgCIAEoCRIOCgZhY3Rpb24YAyABKAkSDgoGdGFyZ2V0GAQgASgJEhYKDnNvdXJjZV9hZGRyZXNzGAUgASgJEg4KBmRldGFpbBgGIAEoCTLNAQoMU2V0dXBTZXJ2aWNlEl8KDkdldFNldHVwU3RhdHVzEiUuZXpkci5wb3J0YWwudjEuR2V0U2V0dXBTdGF0dXNSZXF1ZXN0GiYuZXpkci5wb3J0YWwudjEuR2V0U2V0dXBTdGF0dXNSZXNwb25zZRJcCg1Db21wbGV0ZVNldHVwEiQuZXpkci5wb3J0YWwudjEuQ29tcGxldGVTZXR1cFJlcXVlc3QaJS5lemRyLnBvcnRhbC52MS5Db21wbGV0ZVNldHVwUmVzcG9uc2Uy0gIKC0F1dGhTZXJ2aWNlEkQKBUxvZ2luEhwuZXpkci5wb3J0YWwudjEuTG9naW5SZXF1ZXN0Gh0uZXpkci5wb3J0YWwudjEuTG9naW5SZXNwb25zZRJTCgpWZXJpZnlUb3RwEiEuZXpkci5wb3J0YWwudjEuVmVyaWZ5VG90cFJlcXVlc3QaIi5lemRyLnBvcnRhbC52MS5WZXJpZnlUb3RwUmVzcG9uc2USRwoGTG9nb3V0Eh0uZXpkci5wb3J0YWwudjEuTG9nb3V0UmVxdWVzdBoeLmV6ZHIucG9ydGFsLnYxLkxvZ291dFJlc3BvbnNlEl8KDkdldEN1cnJlbnRVc2VyEiUuZXpkci5wb3J0YWwudjEuR2V0Q3VycmVudFVzZXJSZXF1ZXN0GiYuZXpkci5wb3J0YWwudjEuR2V0Q3VycmVudFVzZXJSZXNwb25zZTKTAgoMVG9rZW5TZXJ2aWNlElYKC0NyZWF0ZVRva2VuEiIuZXpkci5wb3J0YWwudjEuQ3JlYXRlVG9rZW5SZXF1ZXN0GiMuZXpkci5wb3J0YWwudjEuQ3JlYXRlVG9rZW5SZXNwb25zZRJTCgpMaXN0VG9rZW5zEiEuZXpkci5wb3J0YWwudjEuTGlzdFRva2Vuc1JlcXVlc3QaIi5lemRyLnBvcnRhbC52MS5MaXN0VG9rZW5zUmVzcG9uc2USVgoLUmV2b2tlVG9rZW4SIi5lemRyLnBvcnRhbC52MS5SZXZva2VUb2tlblJlcXVlc3QaIy5lemRyLnBvcnRhbC52MS5SZXZva2VUb2tlblJlc3BvbnNlMoIDCgtIb3N0U2VydmljZRJQCglMaXN0SG9zdHMSIC5lemRyLnBvcnRhbC52MS5MaXN0SG9zdHNSZXF1ZXN0GiEuZXpkci5wb3J0YWwudjEuTGlzdEhvc3RzUmVzcG9uc2USUwoKRGVsZXRlSG9zdBIhLmV6ZHIucG9ydGFsLnYxLkRlbGV0ZUhvc3RSZXF1ZXN0GiIuZXpkci5wb3J0YWwudjEuRGVsZXRlSG9zdFJlc3BvbnNlEmUKEEdldEhvc3RJbnZlbnRvcnkSJy5lemRyLnBvcnRhbC52MS5HZXRIb3N0SW52ZW50b3J5UmVxdWVzdBooLmV6ZHIucG9ydGFsLnYxLkdldEhvc3RJbnZlbnRvcnlSZXNwb25zZRJlChBSZWZyZXNoSW52ZW50b3J5EicuZXpkci5wb3J0YWwudjEuUmVmcmVzaEludmVudG9yeVJlcXVlc3QaKC5lemRyLnBvcnRhbC52MS5SZWZyZXNoSW52ZW50b3J5UmVzcG9uc2UycgoMQXVkaXRTZXJ2aWNlEmIKD0xpc3RBdWRpdEV2ZW50cxImLmV6ZHIucG9ydGFsLnYxLkxpc3RBdWRpdEV2ZW50c1JlcXVlc3QaJy5lemRyLnBvcnRhbC52MS5MaXN0QXVkaXRFdmVudHNSZXNwb25zZUK5AQoSY29tLmV6ZHIucG9ydGFsLnYxQgtQb3J0YWxQcm90b1ABWjxnaXRodWIuY29tL2psYnloMm8vZXpkci9pbnRlcm5hbC9nZW4vZXpkci9wb3J0YWwvdjE7cG9ydGFsdjGiAgNFUFiqAg5FemRyLlBvcnRhbC5WMcoCDkV6ZHJcUG9ydGFsXFYx4gIaRXpkclxQb3J0YWxcVjFcR1BCTWV0YWRhdGHqAhBFemRyOjpQb3J0YWw6OlYxYgZwcm90bzM", [file_ezdr_inventory_v1_inventory, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message ezdr.portal.v1.GetSetupStatusRequest
@@ -464,6 +466,91 @@ export const EnrollmentTokenSchema: GenMessage<EnrollmentToken> = /*@__PURE__*/
   messageDesc(file_ezdr_portal_v1_portal, 20);
 
 /**
+ * @generated from message ezdr.portal.v1.GetHostInventoryRequest
+ */
+export type GetHostInventoryRequest = Message<"ezdr.portal.v1.GetHostInventoryRequest"> & {
+  /**
+   * @generated from field: string host_id = 1;
+   */
+  hostId: string;
+};
+
+/**
+ * Describes the message ezdr.portal.v1.GetHostInventoryRequest.
+ * Use `create(GetHostInventoryRequestSchema)` to create a new message.
+ */
+export const GetHostInventoryRequestSchema: GenMessage<GetHostInventoryRequest> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 21);
+
+/**
+ * @generated from message ezdr.portal.v1.GetHostInventoryResponse
+ */
+export type GetHostInventoryResponse = Message<"ezdr.portal.v1.GetHostInventoryResponse"> & {
+  /**
+   * @generated from field: ezdr.portal.v1.Host host = 1;
+   */
+  host?: Host | undefined;
+
+  /**
+   * Unset until the host has reported inventory.
+   *
+   * @generated from field: ezdr.inventory.v1.Inventory inventory = 2;
+   */
+  inventory?: Inventory | undefined;
+
+  /**
+   * When the inventory last differed from the previous report.
+   *
+   * @generated from field: google.protobuf.Timestamp changed_at = 3;
+   */
+  changedAt?: Timestamp | undefined;
+
+  /**
+   * When the portal last received a report.
+   *
+   * @generated from field: google.protobuf.Timestamp received_at = 4;
+   */
+  receivedAt?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message ezdr.portal.v1.GetHostInventoryResponse.
+ * Use `create(GetHostInventoryResponseSchema)` to create a new message.
+ */
+export const GetHostInventoryResponseSchema: GenMessage<GetHostInventoryResponse> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 22);
+
+/**
+ * @generated from message ezdr.portal.v1.RefreshInventoryRequest
+ */
+export type RefreshInventoryRequest = Message<"ezdr.portal.v1.RefreshInventoryRequest"> & {
+  /**
+   * @generated from field: string host_id = 1;
+   */
+  hostId: string;
+};
+
+/**
+ * Describes the message ezdr.portal.v1.RefreshInventoryRequest.
+ * Use `create(RefreshInventoryRequestSchema)` to create a new message.
+ */
+export const RefreshInventoryRequestSchema: GenMessage<RefreshInventoryRequest> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 23);
+
+/**
+ * @generated from message ezdr.portal.v1.RefreshInventoryResponse
+ */
+export type RefreshInventoryResponse = Message<"ezdr.portal.v1.RefreshInventoryResponse"> & {
+};
+
+/**
+ * Describes the message ezdr.portal.v1.RefreshInventoryResponse.
+ * Use `create(RefreshInventoryResponseSchema)` to create a new message.
+ */
+export const RefreshInventoryResponseSchema: GenMessage<RefreshInventoryResponse> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 24);
+
+/**
  * @generated from message ezdr.portal.v1.ListHostsRequest
  */
 export type ListHostsRequest = Message<"ezdr.portal.v1.ListHostsRequest"> & {
@@ -474,7 +561,7 @@ export type ListHostsRequest = Message<"ezdr.portal.v1.ListHostsRequest"> & {
  * Use `create(ListHostsRequestSchema)` to create a new message.
  */
 export const ListHostsRequestSchema: GenMessage<ListHostsRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 21);
+  messageDesc(file_ezdr_portal_v1_portal, 25);
 
 /**
  * @generated from message ezdr.portal.v1.ListHostsResponse
@@ -491,7 +578,7 @@ export type ListHostsResponse = Message<"ezdr.portal.v1.ListHostsResponse"> & {
  * Use `create(ListHostsResponseSchema)` to create a new message.
  */
 export const ListHostsResponseSchema: GenMessage<ListHostsResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 22);
+  messageDesc(file_ezdr_portal_v1_portal, 26);
 
 /**
  * @generated from message ezdr.portal.v1.DeleteHostRequest
@@ -508,7 +595,7 @@ export type DeleteHostRequest = Message<"ezdr.portal.v1.DeleteHostRequest"> & {
  * Use `create(DeleteHostRequestSchema)` to create a new message.
  */
 export const DeleteHostRequestSchema: GenMessage<DeleteHostRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 23);
+  messageDesc(file_ezdr_portal_v1_portal, 27);
 
 /**
  * @generated from message ezdr.portal.v1.DeleteHostResponse
@@ -521,7 +608,7 @@ export type DeleteHostResponse = Message<"ezdr.portal.v1.DeleteHostResponse"> & 
  * Use `create(DeleteHostResponseSchema)` to create a new message.
  */
 export const DeleteHostResponseSchema: GenMessage<DeleteHostResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 24);
+  messageDesc(file_ezdr_portal_v1_portal, 28);
 
 /**
  * @generated from message ezdr.portal.v1.Host
@@ -578,6 +665,23 @@ export type Host = Message<"ezdr.portal.v1.Host"> & {
    * @generated from field: bool duplicate_machine_id = 10;
    */
   duplicateMachineId: boolean;
+
+  /**
+   * From the latest inventory; zero until inventory is reported.
+   *
+   * @generated from field: uint32 guest_count = 11;
+   */
+  guestCount: number;
+
+  /**
+   * @generated from field: uint32 guests_not_ready = 12;
+   */
+  guestsNotReady: number;
+
+  /**
+   * @generated from field: bool has_inventory = 13;
+   */
+  hasInventory: boolean;
 };
 
 /**
@@ -585,7 +689,7 @@ export type Host = Message<"ezdr.portal.v1.Host"> & {
  * Use `create(HostSchema)` to create a new message.
  */
 export const HostSchema: GenMessage<Host> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 25);
+  messageDesc(file_ezdr_portal_v1_portal, 29);
 
 /**
  * @generated from message ezdr.portal.v1.ListAuditEventsRequest
@@ -602,7 +706,7 @@ export type ListAuditEventsRequest = Message<"ezdr.portal.v1.ListAuditEventsRequ
  * Use `create(ListAuditEventsRequestSchema)` to create a new message.
  */
 export const ListAuditEventsRequestSchema: GenMessage<ListAuditEventsRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 26);
+  messageDesc(file_ezdr_portal_v1_portal, 30);
 
 /**
  * @generated from message ezdr.portal.v1.ListAuditEventsResponse
@@ -619,7 +723,7 @@ export type ListAuditEventsResponse = Message<"ezdr.portal.v1.ListAuditEventsRes
  * Use `create(ListAuditEventsResponseSchema)` to create a new message.
  */
 export const ListAuditEventsResponseSchema: GenMessage<ListAuditEventsResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 27);
+  messageDesc(file_ezdr_portal_v1_portal, 31);
 
 /**
  * @generated from message ezdr.portal.v1.AuditEvent
@@ -661,7 +765,7 @@ export type AuditEvent = Message<"ezdr.portal.v1.AuditEvent"> & {
  * Use `create(AuditEventSchema)` to create a new message.
  */
 export const AuditEventSchema: GenMessage<AuditEvent> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 28);
+  messageDesc(file_ezdr_portal_v1_portal, 32);
 
 /**
  * SetupService creates the first administrator on a new portal.
@@ -785,6 +889,24 @@ export const HostService: GenService<{
     methodKind: "unary";
     input: typeof DeleteHostRequestSchema;
     output: typeof DeleteHostResponseSchema;
+  },
+  /**
+   * @generated from rpc ezdr.portal.v1.HostService.GetHostInventory
+   */
+  getHostInventory: {
+    methodKind: "unary";
+    input: typeof GetHostInventoryRequestSchema;
+    output: typeof GetHostInventoryResponseSchema;
+  },
+  /**
+   * RefreshInventory asks an online host to report its inventory now.
+   *
+   * @generated from rpc ezdr.portal.v1.HostService.RefreshInventory
+   */
+  refreshInventory: {
+    methodKind: "unary";
+    input: typeof RefreshInventoryRequestSchema;
+    output: typeof RefreshInventoryResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_ezdr_portal_v1_portal, 3);

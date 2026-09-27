@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package ezdr.client.v1;
 
+import "ezdr/inventory/v1/inventory.proto";
+
 // ClientService is served only on the portal's tunnel listener. The portal
 // identifies the calling host by its tunnel source address.
 service ClientService {
@@ -11,6 +13,12 @@ service ClientService {
 
   // ReportStatus reports the client's health and applied configuration.
   rpc ReportStatus(ReportStatusRequest) returns (ReportStatusResponse);
+
+  // ReportInventory sends the host's current inventory.
+  rpc ReportInventory(ReportInventoryRequest) returns (ReportInventoryResponse);
+
+  // AckAction reports the outcome of an action.
+  rpc AckAction(AckActionRequest) returns (AckActionResponse);
 }
 
 message SubscribeRequest {
@@ -21,8 +29,20 @@ message SubscribeResponse {
   oneof message {
     Heartbeat heartbeat = 1;
     DesiredState desired_state = 2;
+    Action action = 3;
   }
 }
+
+// Action is a one-off operation the portal asks the host to perform.
+message Action {
+  string id = 1;
+  oneof kind {
+    RefreshInventory refresh_inventory = 2;
+  }
+}
+
+// RefreshInventory asks the host to collect and report inventory now.
+message RefreshInventory {}
 
 message Heartbeat {}
 
@@ -38,3 +58,17 @@ message ReportStatusRequest {
 }
 
 message ReportStatusResponse {}
+
+message ReportInventoryRequest {
+  ezdr.inventory.v1.Inventory inventory = 1;
+}
+
+message ReportInventoryResponse {}
+
+message AckActionRequest {
+  string action_id = 1;
+  bool succeeded = 2;
+  string message = 3;
+}
+
+message AckActionResponse {}

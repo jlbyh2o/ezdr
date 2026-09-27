@@ -66,7 +66,8 @@ func PublicHandler(d *api.Deps, ui fs.FS) http.Handler {
 // listener.
 func TunnelHandler(d *api.Deps) http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle(clientv1connect.NewClientServiceHandler(api.ClientService{Deps: d}))
+	mux.Handle(clientv1connect.NewClientServiceHandler(api.ClientService{Deps: d},
+		connect.WithReadMaxBytes(16<<20))) // inventories of large hosts
 	return api.WithTunnelHost(d.Store, mux)
 }
 

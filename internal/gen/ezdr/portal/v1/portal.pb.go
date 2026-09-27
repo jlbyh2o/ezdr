@@ -7,6 +7,7 @@
 package portalv1
 
 import (
+	v1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/inventory/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -1055,6 +1056,201 @@ func (x *EnrollmentToken) GetHostId() string {
 	return ""
 }
 
+type GetHostInventoryRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	HostId        string                 `protobuf:"bytes,1,opt,name=host_id,json=hostId,proto3" json:"host_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetHostInventoryRequest) Reset() {
+	*x = GetHostInventoryRequest{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetHostInventoryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetHostInventoryRequest) ProtoMessage() {}
+
+func (x *GetHostInventoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetHostInventoryRequest.ProtoReflect.Descriptor instead.
+func (*GetHostInventoryRequest) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *GetHostInventoryRequest) GetHostId() string {
+	if x != nil {
+		return x.HostId
+	}
+	return ""
+}
+
+type GetHostInventoryResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Host  *Host                  `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	// Unset until the host has reported inventory.
+	Inventory *v1.Inventory `protobuf:"bytes,2,opt,name=inventory,proto3" json:"inventory,omitempty"`
+	// When the inventory last differed from the previous report.
+	ChangedAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=changed_at,json=changedAt,proto3" json:"changed_at,omitempty"`
+	// When the portal last received a report.
+	ReceivedAt    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=received_at,json=receivedAt,proto3" json:"received_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetHostInventoryResponse) Reset() {
+	*x = GetHostInventoryResponse{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetHostInventoryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetHostInventoryResponse) ProtoMessage() {}
+
+func (x *GetHostInventoryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetHostInventoryResponse.ProtoReflect.Descriptor instead.
+func (*GetHostInventoryResponse) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *GetHostInventoryResponse) GetHost() *Host {
+	if x != nil {
+		return x.Host
+	}
+	return nil
+}
+
+func (x *GetHostInventoryResponse) GetInventory() *v1.Inventory {
+	if x != nil {
+		return x.Inventory
+	}
+	return nil
+}
+
+func (x *GetHostInventoryResponse) GetChangedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ChangedAt
+	}
+	return nil
+}
+
+func (x *GetHostInventoryResponse) GetReceivedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ReceivedAt
+	}
+	return nil
+}
+
+type RefreshInventoryRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	HostId        string                 `protobuf:"bytes,1,opt,name=host_id,json=hostId,proto3" json:"host_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RefreshInventoryRequest) Reset() {
+	*x = RefreshInventoryRequest{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RefreshInventoryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshInventoryRequest) ProtoMessage() {}
+
+func (x *RefreshInventoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshInventoryRequest.ProtoReflect.Descriptor instead.
+func (*RefreshInventoryRequest) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *RefreshInventoryRequest) GetHostId() string {
+	if x != nil {
+		return x.HostId
+	}
+	return ""
+}
+
+type RefreshInventoryResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RefreshInventoryResponse) Reset() {
+	*x = RefreshInventoryResponse{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RefreshInventoryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshInventoryResponse) ProtoMessage() {}
+
+func (x *RefreshInventoryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshInventoryResponse.ProtoReflect.Descriptor instead.
+func (*RefreshInventoryResponse) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{24}
+}
+
 type ListHostsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1063,7 +1259,7 @@ type ListHostsRequest struct {
 
 func (x *ListHostsRequest) Reset() {
 	*x = ListHostsRequest{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[21]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1075,7 +1271,7 @@ func (x *ListHostsRequest) String() string {
 func (*ListHostsRequest) ProtoMessage() {}
 
 func (x *ListHostsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[21]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1088,7 +1284,7 @@ func (x *ListHostsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListHostsRequest.ProtoReflect.Descriptor instead.
 func (*ListHostsRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{21}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{25}
 }
 
 type ListHostsResponse struct {
@@ -1100,7 +1296,7 @@ type ListHostsResponse struct {
 
 func (x *ListHostsResponse) Reset() {
 	*x = ListHostsResponse{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[22]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1112,7 +1308,7 @@ func (x *ListHostsResponse) String() string {
 func (*ListHostsResponse) ProtoMessage() {}
 
 func (x *ListHostsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[22]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1125,7 +1321,7 @@ func (x *ListHostsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListHostsResponse.ProtoReflect.Descriptor instead.
 func (*ListHostsResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{22}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ListHostsResponse) GetHosts() []*Host {
@@ -1144,7 +1340,7 @@ type DeleteHostRequest struct {
 
 func (x *DeleteHostRequest) Reset() {
 	*x = DeleteHostRequest{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[23]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1156,7 +1352,7 @@ func (x *DeleteHostRequest) String() string {
 func (*DeleteHostRequest) ProtoMessage() {}
 
 func (x *DeleteHostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[23]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1169,7 +1365,7 @@ func (x *DeleteHostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteHostRequest.ProtoReflect.Descriptor instead.
 func (*DeleteHostRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{23}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *DeleteHostRequest) GetId() string {
@@ -1187,7 +1383,7 @@ type DeleteHostResponse struct {
 
 func (x *DeleteHostResponse) Reset() {
 	*x = DeleteHostResponse{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[24]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1199,7 +1395,7 @@ func (x *DeleteHostResponse) String() string {
 func (*DeleteHostResponse) ProtoMessage() {}
 
 func (x *DeleteHostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[24]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1212,7 +1408,7 @@ func (x *DeleteHostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteHostResponse.ProtoReflect.Descriptor instead.
 func (*DeleteHostResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{24}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{28}
 }
 
 type Host struct {
@@ -1228,13 +1424,17 @@ type Host struct {
 	Online        bool                   `protobuf:"varint,9,opt,name=online,proto3" json:"online,omitempty"`
 	// Set when another host was enrolled with the same machine ID.
 	DuplicateMachineId bool `protobuf:"varint,10,opt,name=duplicate_machine_id,json=duplicateMachineId,proto3" json:"duplicate_machine_id,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// From the latest inventory; zero until inventory is reported.
+	GuestCount     uint32 `protobuf:"varint,11,opt,name=guest_count,json=guestCount,proto3" json:"guest_count,omitempty"`
+	GuestsNotReady uint32 `protobuf:"varint,12,opt,name=guests_not_ready,json=guestsNotReady,proto3" json:"guests_not_ready,omitempty"`
+	HasInventory   bool   `protobuf:"varint,13,opt,name=has_inventory,json=hasInventory,proto3" json:"has_inventory,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Host) Reset() {
 	*x = Host{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[25]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1246,7 +1446,7 @@ func (x *Host) String() string {
 func (*Host) ProtoMessage() {}
 
 func (x *Host) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[25]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1259,7 +1459,7 @@ func (x *Host) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Host.ProtoReflect.Descriptor instead.
 func (*Host) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{25}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *Host) GetId() string {
@@ -1332,6 +1532,27 @@ func (x *Host) GetDuplicateMachineId() bool {
 	return false
 }
 
+func (x *Host) GetGuestCount() uint32 {
+	if x != nil {
+		return x.GuestCount
+	}
+	return 0
+}
+
+func (x *Host) GetGuestsNotReady() uint32 {
+	if x != nil {
+		return x.GuestsNotReady
+	}
+	return 0
+}
+
+func (x *Host) GetHasInventory() bool {
+	if x != nil {
+		return x.HasInventory
+	}
+	return false
+}
+
 type ListAuditEventsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Limit         uint32                 `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
@@ -1341,7 +1562,7 @@ type ListAuditEventsRequest struct {
 
 func (x *ListAuditEventsRequest) Reset() {
 	*x = ListAuditEventsRequest{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[26]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1353,7 +1574,7 @@ func (x *ListAuditEventsRequest) String() string {
 func (*ListAuditEventsRequest) ProtoMessage() {}
 
 func (x *ListAuditEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[26]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1366,7 +1587,7 @@ func (x *ListAuditEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAuditEventsRequest.ProtoReflect.Descriptor instead.
 func (*ListAuditEventsRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{26}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ListAuditEventsRequest) GetLimit() uint32 {
@@ -1385,7 +1606,7 @@ type ListAuditEventsResponse struct {
 
 func (x *ListAuditEventsResponse) Reset() {
 	*x = ListAuditEventsResponse{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[27]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1397,7 +1618,7 @@ func (x *ListAuditEventsResponse) String() string {
 func (*ListAuditEventsResponse) ProtoMessage() {}
 
 func (x *ListAuditEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[27]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1410,7 +1631,7 @@ func (x *ListAuditEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAuditEventsResponse.ProtoReflect.Descriptor instead.
 func (*ListAuditEventsResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{27}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ListAuditEventsResponse) GetEvents() []*AuditEvent {
@@ -1434,7 +1655,7 @@ type AuditEvent struct {
 
 func (x *AuditEvent) Reset() {
 	*x = AuditEvent{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[28]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1446,7 +1667,7 @@ func (x *AuditEvent) String() string {
 func (*AuditEvent) ProtoMessage() {}
 
 func (x *AuditEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[28]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1459,7 +1680,7 @@ func (x *AuditEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuditEvent.ProtoReflect.Descriptor instead.
 func (*AuditEvent) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{28}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *AuditEvent) GetTime() *timestamppb.Timestamp {
@@ -1508,7 +1729,7 @@ var File_ezdr_portal_v1_portal_proto protoreflect.FileDescriptor
 
 const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\n" +
-	"\x1bezdr/portal/v1/portal.proto\x12\x0eezdr.portal.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x17\n" +
+	"\x1bezdr/portal/v1/portal.proto\x12\x0eezdr.portal.v1\x1a!ezdr/inventory/v1/inventory.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x17\n" +
 	"\x15GetSetupStatusRequest\"?\n" +
 	"\x16GetSetupStatusResponse\x12%\n" +
 	"\x0esetup_required\x18\x01 \x01(\bR\rsetupRequired\"m\n" +
@@ -1569,13 +1790,25 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\aused_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x06usedAt\x129\n" +
 	"\n" +
 	"revoked_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\trevokedAt\x12\x17\n" +
-	"\ahost_id\x18\b \x01(\tR\x06hostId\"\x12\n" +
+	"\ahost_id\x18\b \x01(\tR\x06hostId\"2\n" +
+	"\x17GetHostInventoryRequest\x12\x17\n" +
+	"\ahost_id\x18\x01 \x01(\tR\x06hostId\"\xf8\x01\n" +
+	"\x18GetHostInventoryResponse\x12(\n" +
+	"\x04host\x18\x01 \x01(\v2\x14.ezdr.portal.v1.HostR\x04host\x12:\n" +
+	"\tinventory\x18\x02 \x01(\v2\x1c.ezdr.inventory.v1.InventoryR\tinventory\x129\n" +
+	"\n" +
+	"changed_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tchangedAt\x12;\n" +
+	"\vreceived_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"receivedAt\"2\n" +
+	"\x17RefreshInventoryRequest\x12\x17\n" +
+	"\ahost_id\x18\x01 \x01(\tR\x06hostId\"\x1a\n" +
+	"\x18RefreshInventoryResponse\"\x12\n" +
 	"\x10ListHostsRequest\"?\n" +
 	"\x11ListHostsResponse\x12*\n" +
 	"\x05hosts\x18\x01 \x03(\v2\x14.ezdr.portal.v1.HostR\x05hosts\"#\n" +
 	"\x11DeleteHostRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x14\n" +
-	"\x12DeleteHostResponse\"\x85\x03\n" +
+	"\x12DeleteHostResponse\"\xf5\x03\n" +
 	"\x04Host\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\bhostname\x18\x02 \x01(\tR\bhostname\x12\x1d\n" +
@@ -1591,7 +1824,11 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"lastSeenAt\x12\x16\n" +
 	"\x06online\x18\t \x01(\bR\x06online\x120\n" +
 	"\x14duplicate_machine_id\x18\n" +
-	" \x01(\bR\x12duplicateMachineId\".\n" +
+	" \x01(\bR\x12duplicateMachineId\x12\x1f\n" +
+	"\vguest_count\x18\v \x01(\rR\n" +
+	"guestCount\x12(\n" +
+	"\x10guests_not_ready\x18\f \x01(\rR\x0eguestsNotReady\x12#\n" +
+	"\rhas_inventory\x18\r \x01(\bR\fhasInventory\".\n" +
 	"\x16ListAuditEventsRequest\x12\x14\n" +
 	"\x05limit\x18\x01 \x01(\rR\x05limit\"M\n" +
 	"\x17ListAuditEventsResponse\x122\n" +
@@ -1617,11 +1854,13 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\vCreateToken\x12\".ezdr.portal.v1.CreateTokenRequest\x1a#.ezdr.portal.v1.CreateTokenResponse\x12S\n" +
 	"\n" +
 	"ListTokens\x12!.ezdr.portal.v1.ListTokensRequest\x1a\".ezdr.portal.v1.ListTokensResponse\x12V\n" +
-	"\vRevokeToken\x12\".ezdr.portal.v1.RevokeTokenRequest\x1a#.ezdr.portal.v1.RevokeTokenResponse2\xb4\x01\n" +
+	"\vRevokeToken\x12\".ezdr.portal.v1.RevokeTokenRequest\x1a#.ezdr.portal.v1.RevokeTokenResponse2\x82\x03\n" +
 	"\vHostService\x12P\n" +
 	"\tListHosts\x12 .ezdr.portal.v1.ListHostsRequest\x1a!.ezdr.portal.v1.ListHostsResponse\x12S\n" +
 	"\n" +
-	"DeleteHost\x12!.ezdr.portal.v1.DeleteHostRequest\x1a\".ezdr.portal.v1.DeleteHostResponse2r\n" +
+	"DeleteHost\x12!.ezdr.portal.v1.DeleteHostRequest\x1a\".ezdr.portal.v1.DeleteHostResponse\x12e\n" +
+	"\x10GetHostInventory\x12'.ezdr.portal.v1.GetHostInventoryRequest\x1a(.ezdr.portal.v1.GetHostInventoryResponse\x12e\n" +
+	"\x10RefreshInventory\x12'.ezdr.portal.v1.RefreshInventoryRequest\x1a(.ezdr.portal.v1.RefreshInventoryResponse2r\n" +
 	"\fAuditService\x12b\n" +
 	"\x0fListAuditEvents\x12&.ezdr.portal.v1.ListAuditEventsRequest\x1a'.ezdr.portal.v1.ListAuditEventsResponseB\xb9\x01\n" +
 	"\x12com.ezdr.portal.v1B\vPortalProtoP\x01Z<github.com/jlbyh2o/ezdr/internal/gen/ezdr/portal/v1;portalv1\xa2\x02\x03EPX\xaa\x02\x0eEzdr.Portal.V1\xca\x02\x0eEzdr\\Portal\\V1\xe2\x02\x1aEzdr\\Portal\\V1\\GPBMetadata\xea\x02\x10Ezdr::Portal::V1b\x06proto3"
@@ -1638,38 +1877,43 @@ func file_ezdr_portal_v1_portal_proto_rawDescGZIP() []byte {
 	return file_ezdr_portal_v1_portal_proto_rawDescData
 }
 
-var file_ezdr_portal_v1_portal_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_ezdr_portal_v1_portal_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_ezdr_portal_v1_portal_proto_goTypes = []any{
-	(*GetSetupStatusRequest)(nil),   // 0: ezdr.portal.v1.GetSetupStatusRequest
-	(*GetSetupStatusResponse)(nil),  // 1: ezdr.portal.v1.GetSetupStatusResponse
-	(*CompleteSetupRequest)(nil),    // 2: ezdr.portal.v1.CompleteSetupRequest
-	(*CompleteSetupResponse)(nil),   // 3: ezdr.portal.v1.CompleteSetupResponse
-	(*LoginRequest)(nil),            // 4: ezdr.portal.v1.LoginRequest
-	(*LoginResponse)(nil),           // 5: ezdr.portal.v1.LoginResponse
-	(*TotpSetup)(nil),               // 6: ezdr.portal.v1.TotpSetup
-	(*VerifyTotpRequest)(nil),       // 7: ezdr.portal.v1.VerifyTotpRequest
-	(*VerifyTotpResponse)(nil),      // 8: ezdr.portal.v1.VerifyTotpResponse
-	(*LogoutRequest)(nil),           // 9: ezdr.portal.v1.LogoutRequest
-	(*LogoutResponse)(nil),          // 10: ezdr.portal.v1.LogoutResponse
-	(*GetCurrentUserRequest)(nil),   // 11: ezdr.portal.v1.GetCurrentUserRequest
-	(*GetCurrentUserResponse)(nil),  // 12: ezdr.portal.v1.GetCurrentUserResponse
-	(*User)(nil),                    // 13: ezdr.portal.v1.User
-	(*CreateTokenRequest)(nil),      // 14: ezdr.portal.v1.CreateTokenRequest
-	(*CreateTokenResponse)(nil),     // 15: ezdr.portal.v1.CreateTokenResponse
-	(*ListTokensRequest)(nil),       // 16: ezdr.portal.v1.ListTokensRequest
-	(*ListTokensResponse)(nil),      // 17: ezdr.portal.v1.ListTokensResponse
-	(*RevokeTokenRequest)(nil),      // 18: ezdr.portal.v1.RevokeTokenRequest
-	(*RevokeTokenResponse)(nil),     // 19: ezdr.portal.v1.RevokeTokenResponse
-	(*EnrollmentToken)(nil),         // 20: ezdr.portal.v1.EnrollmentToken
-	(*ListHostsRequest)(nil),        // 21: ezdr.portal.v1.ListHostsRequest
-	(*ListHostsResponse)(nil),       // 22: ezdr.portal.v1.ListHostsResponse
-	(*DeleteHostRequest)(nil),       // 23: ezdr.portal.v1.DeleteHostRequest
-	(*DeleteHostResponse)(nil),      // 24: ezdr.portal.v1.DeleteHostResponse
-	(*Host)(nil),                    // 25: ezdr.portal.v1.Host
-	(*ListAuditEventsRequest)(nil),  // 26: ezdr.portal.v1.ListAuditEventsRequest
-	(*ListAuditEventsResponse)(nil), // 27: ezdr.portal.v1.ListAuditEventsResponse
-	(*AuditEvent)(nil),              // 28: ezdr.portal.v1.AuditEvent
-	(*timestamppb.Timestamp)(nil),   // 29: google.protobuf.Timestamp
+	(*GetSetupStatusRequest)(nil),    // 0: ezdr.portal.v1.GetSetupStatusRequest
+	(*GetSetupStatusResponse)(nil),   // 1: ezdr.portal.v1.GetSetupStatusResponse
+	(*CompleteSetupRequest)(nil),     // 2: ezdr.portal.v1.CompleteSetupRequest
+	(*CompleteSetupResponse)(nil),    // 3: ezdr.portal.v1.CompleteSetupResponse
+	(*LoginRequest)(nil),             // 4: ezdr.portal.v1.LoginRequest
+	(*LoginResponse)(nil),            // 5: ezdr.portal.v1.LoginResponse
+	(*TotpSetup)(nil),                // 6: ezdr.portal.v1.TotpSetup
+	(*VerifyTotpRequest)(nil),        // 7: ezdr.portal.v1.VerifyTotpRequest
+	(*VerifyTotpResponse)(nil),       // 8: ezdr.portal.v1.VerifyTotpResponse
+	(*LogoutRequest)(nil),            // 9: ezdr.portal.v1.LogoutRequest
+	(*LogoutResponse)(nil),           // 10: ezdr.portal.v1.LogoutResponse
+	(*GetCurrentUserRequest)(nil),    // 11: ezdr.portal.v1.GetCurrentUserRequest
+	(*GetCurrentUserResponse)(nil),   // 12: ezdr.portal.v1.GetCurrentUserResponse
+	(*User)(nil),                     // 13: ezdr.portal.v1.User
+	(*CreateTokenRequest)(nil),       // 14: ezdr.portal.v1.CreateTokenRequest
+	(*CreateTokenResponse)(nil),      // 15: ezdr.portal.v1.CreateTokenResponse
+	(*ListTokensRequest)(nil),        // 16: ezdr.portal.v1.ListTokensRequest
+	(*ListTokensResponse)(nil),       // 17: ezdr.portal.v1.ListTokensResponse
+	(*RevokeTokenRequest)(nil),       // 18: ezdr.portal.v1.RevokeTokenRequest
+	(*RevokeTokenResponse)(nil),      // 19: ezdr.portal.v1.RevokeTokenResponse
+	(*EnrollmentToken)(nil),          // 20: ezdr.portal.v1.EnrollmentToken
+	(*GetHostInventoryRequest)(nil),  // 21: ezdr.portal.v1.GetHostInventoryRequest
+	(*GetHostInventoryResponse)(nil), // 22: ezdr.portal.v1.GetHostInventoryResponse
+	(*RefreshInventoryRequest)(nil),  // 23: ezdr.portal.v1.RefreshInventoryRequest
+	(*RefreshInventoryResponse)(nil), // 24: ezdr.portal.v1.RefreshInventoryResponse
+	(*ListHostsRequest)(nil),         // 25: ezdr.portal.v1.ListHostsRequest
+	(*ListHostsResponse)(nil),        // 26: ezdr.portal.v1.ListHostsResponse
+	(*DeleteHostRequest)(nil),        // 27: ezdr.portal.v1.DeleteHostRequest
+	(*DeleteHostResponse)(nil),       // 28: ezdr.portal.v1.DeleteHostResponse
+	(*Host)(nil),                     // 29: ezdr.portal.v1.Host
+	(*ListAuditEventsRequest)(nil),   // 30: ezdr.portal.v1.ListAuditEventsRequest
+	(*ListAuditEventsResponse)(nil),  // 31: ezdr.portal.v1.ListAuditEventsResponse
+	(*AuditEvent)(nil),               // 32: ezdr.portal.v1.AuditEvent
+	(*timestamppb.Timestamp)(nil),    // 33: google.protobuf.Timestamp
+	(*v1.Inventory)(nil),             // 34: ezdr.inventory.v1.Inventory
 }
 var file_ezdr_portal_v1_portal_proto_depIdxs = []int32{
 	6,  // 0: ezdr.portal.v1.LoginResponse.totp_setup:type_name -> ezdr.portal.v1.TotpSetup
@@ -1677,44 +1921,52 @@ var file_ezdr_portal_v1_portal_proto_depIdxs = []int32{
 	13, // 2: ezdr.portal.v1.GetCurrentUserResponse.user:type_name -> ezdr.portal.v1.User
 	20, // 3: ezdr.portal.v1.CreateTokenResponse.token:type_name -> ezdr.portal.v1.EnrollmentToken
 	20, // 4: ezdr.portal.v1.ListTokensResponse.tokens:type_name -> ezdr.portal.v1.EnrollmentToken
-	29, // 5: ezdr.portal.v1.EnrollmentToken.created_at:type_name -> google.protobuf.Timestamp
-	29, // 6: ezdr.portal.v1.EnrollmentToken.expires_at:type_name -> google.protobuf.Timestamp
-	29, // 7: ezdr.portal.v1.EnrollmentToken.used_at:type_name -> google.protobuf.Timestamp
-	29, // 8: ezdr.portal.v1.EnrollmentToken.revoked_at:type_name -> google.protobuf.Timestamp
-	25, // 9: ezdr.portal.v1.ListHostsResponse.hosts:type_name -> ezdr.portal.v1.Host
-	29, // 10: ezdr.portal.v1.Host.enrolled_at:type_name -> google.protobuf.Timestamp
-	29, // 11: ezdr.portal.v1.Host.last_seen_at:type_name -> google.protobuf.Timestamp
-	28, // 12: ezdr.portal.v1.ListAuditEventsResponse.events:type_name -> ezdr.portal.v1.AuditEvent
-	29, // 13: ezdr.portal.v1.AuditEvent.time:type_name -> google.protobuf.Timestamp
-	0,  // 14: ezdr.portal.v1.SetupService.GetSetupStatus:input_type -> ezdr.portal.v1.GetSetupStatusRequest
-	2,  // 15: ezdr.portal.v1.SetupService.CompleteSetup:input_type -> ezdr.portal.v1.CompleteSetupRequest
-	4,  // 16: ezdr.portal.v1.AuthService.Login:input_type -> ezdr.portal.v1.LoginRequest
-	7,  // 17: ezdr.portal.v1.AuthService.VerifyTotp:input_type -> ezdr.portal.v1.VerifyTotpRequest
-	9,  // 18: ezdr.portal.v1.AuthService.Logout:input_type -> ezdr.portal.v1.LogoutRequest
-	11, // 19: ezdr.portal.v1.AuthService.GetCurrentUser:input_type -> ezdr.portal.v1.GetCurrentUserRequest
-	14, // 20: ezdr.portal.v1.TokenService.CreateToken:input_type -> ezdr.portal.v1.CreateTokenRequest
-	16, // 21: ezdr.portal.v1.TokenService.ListTokens:input_type -> ezdr.portal.v1.ListTokensRequest
-	18, // 22: ezdr.portal.v1.TokenService.RevokeToken:input_type -> ezdr.portal.v1.RevokeTokenRequest
-	21, // 23: ezdr.portal.v1.HostService.ListHosts:input_type -> ezdr.portal.v1.ListHostsRequest
-	23, // 24: ezdr.portal.v1.HostService.DeleteHost:input_type -> ezdr.portal.v1.DeleteHostRequest
-	26, // 25: ezdr.portal.v1.AuditService.ListAuditEvents:input_type -> ezdr.portal.v1.ListAuditEventsRequest
-	1,  // 26: ezdr.portal.v1.SetupService.GetSetupStatus:output_type -> ezdr.portal.v1.GetSetupStatusResponse
-	3,  // 27: ezdr.portal.v1.SetupService.CompleteSetup:output_type -> ezdr.portal.v1.CompleteSetupResponse
-	5,  // 28: ezdr.portal.v1.AuthService.Login:output_type -> ezdr.portal.v1.LoginResponse
-	8,  // 29: ezdr.portal.v1.AuthService.VerifyTotp:output_type -> ezdr.portal.v1.VerifyTotpResponse
-	10, // 30: ezdr.portal.v1.AuthService.Logout:output_type -> ezdr.portal.v1.LogoutResponse
-	12, // 31: ezdr.portal.v1.AuthService.GetCurrentUser:output_type -> ezdr.portal.v1.GetCurrentUserResponse
-	15, // 32: ezdr.portal.v1.TokenService.CreateToken:output_type -> ezdr.portal.v1.CreateTokenResponse
-	17, // 33: ezdr.portal.v1.TokenService.ListTokens:output_type -> ezdr.portal.v1.ListTokensResponse
-	19, // 34: ezdr.portal.v1.TokenService.RevokeToken:output_type -> ezdr.portal.v1.RevokeTokenResponse
-	22, // 35: ezdr.portal.v1.HostService.ListHosts:output_type -> ezdr.portal.v1.ListHostsResponse
-	24, // 36: ezdr.portal.v1.HostService.DeleteHost:output_type -> ezdr.portal.v1.DeleteHostResponse
-	27, // 37: ezdr.portal.v1.AuditService.ListAuditEvents:output_type -> ezdr.portal.v1.ListAuditEventsResponse
-	26, // [26:38] is the sub-list for method output_type
-	14, // [14:26] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	33, // 5: ezdr.portal.v1.EnrollmentToken.created_at:type_name -> google.protobuf.Timestamp
+	33, // 6: ezdr.portal.v1.EnrollmentToken.expires_at:type_name -> google.protobuf.Timestamp
+	33, // 7: ezdr.portal.v1.EnrollmentToken.used_at:type_name -> google.protobuf.Timestamp
+	33, // 8: ezdr.portal.v1.EnrollmentToken.revoked_at:type_name -> google.protobuf.Timestamp
+	29, // 9: ezdr.portal.v1.GetHostInventoryResponse.host:type_name -> ezdr.portal.v1.Host
+	34, // 10: ezdr.portal.v1.GetHostInventoryResponse.inventory:type_name -> ezdr.inventory.v1.Inventory
+	33, // 11: ezdr.portal.v1.GetHostInventoryResponse.changed_at:type_name -> google.protobuf.Timestamp
+	33, // 12: ezdr.portal.v1.GetHostInventoryResponse.received_at:type_name -> google.protobuf.Timestamp
+	29, // 13: ezdr.portal.v1.ListHostsResponse.hosts:type_name -> ezdr.portal.v1.Host
+	33, // 14: ezdr.portal.v1.Host.enrolled_at:type_name -> google.protobuf.Timestamp
+	33, // 15: ezdr.portal.v1.Host.last_seen_at:type_name -> google.protobuf.Timestamp
+	32, // 16: ezdr.portal.v1.ListAuditEventsResponse.events:type_name -> ezdr.portal.v1.AuditEvent
+	33, // 17: ezdr.portal.v1.AuditEvent.time:type_name -> google.protobuf.Timestamp
+	0,  // 18: ezdr.portal.v1.SetupService.GetSetupStatus:input_type -> ezdr.portal.v1.GetSetupStatusRequest
+	2,  // 19: ezdr.portal.v1.SetupService.CompleteSetup:input_type -> ezdr.portal.v1.CompleteSetupRequest
+	4,  // 20: ezdr.portal.v1.AuthService.Login:input_type -> ezdr.portal.v1.LoginRequest
+	7,  // 21: ezdr.portal.v1.AuthService.VerifyTotp:input_type -> ezdr.portal.v1.VerifyTotpRequest
+	9,  // 22: ezdr.portal.v1.AuthService.Logout:input_type -> ezdr.portal.v1.LogoutRequest
+	11, // 23: ezdr.portal.v1.AuthService.GetCurrentUser:input_type -> ezdr.portal.v1.GetCurrentUserRequest
+	14, // 24: ezdr.portal.v1.TokenService.CreateToken:input_type -> ezdr.portal.v1.CreateTokenRequest
+	16, // 25: ezdr.portal.v1.TokenService.ListTokens:input_type -> ezdr.portal.v1.ListTokensRequest
+	18, // 26: ezdr.portal.v1.TokenService.RevokeToken:input_type -> ezdr.portal.v1.RevokeTokenRequest
+	25, // 27: ezdr.portal.v1.HostService.ListHosts:input_type -> ezdr.portal.v1.ListHostsRequest
+	27, // 28: ezdr.portal.v1.HostService.DeleteHost:input_type -> ezdr.portal.v1.DeleteHostRequest
+	21, // 29: ezdr.portal.v1.HostService.GetHostInventory:input_type -> ezdr.portal.v1.GetHostInventoryRequest
+	23, // 30: ezdr.portal.v1.HostService.RefreshInventory:input_type -> ezdr.portal.v1.RefreshInventoryRequest
+	30, // 31: ezdr.portal.v1.AuditService.ListAuditEvents:input_type -> ezdr.portal.v1.ListAuditEventsRequest
+	1,  // 32: ezdr.portal.v1.SetupService.GetSetupStatus:output_type -> ezdr.portal.v1.GetSetupStatusResponse
+	3,  // 33: ezdr.portal.v1.SetupService.CompleteSetup:output_type -> ezdr.portal.v1.CompleteSetupResponse
+	5,  // 34: ezdr.portal.v1.AuthService.Login:output_type -> ezdr.portal.v1.LoginResponse
+	8,  // 35: ezdr.portal.v1.AuthService.VerifyTotp:output_type -> ezdr.portal.v1.VerifyTotpResponse
+	10, // 36: ezdr.portal.v1.AuthService.Logout:output_type -> ezdr.portal.v1.LogoutResponse
+	12, // 37: ezdr.portal.v1.AuthService.GetCurrentUser:output_type -> ezdr.portal.v1.GetCurrentUserResponse
+	15, // 38: ezdr.portal.v1.TokenService.CreateToken:output_type -> ezdr.portal.v1.CreateTokenResponse
+	17, // 39: ezdr.portal.v1.TokenService.ListTokens:output_type -> ezdr.portal.v1.ListTokensResponse
+	19, // 40: ezdr.portal.v1.TokenService.RevokeToken:output_type -> ezdr.portal.v1.RevokeTokenResponse
+	26, // 41: ezdr.portal.v1.HostService.ListHosts:output_type -> ezdr.portal.v1.ListHostsResponse
+	28, // 42: ezdr.portal.v1.HostService.DeleteHost:output_type -> ezdr.portal.v1.DeleteHostResponse
+	22, // 43: ezdr.portal.v1.HostService.GetHostInventory:output_type -> ezdr.portal.v1.GetHostInventoryResponse
+	24, // 44: ezdr.portal.v1.HostService.RefreshInventory:output_type -> ezdr.portal.v1.RefreshInventoryResponse
+	31, // 45: ezdr.portal.v1.AuditService.ListAuditEvents:output_type -> ezdr.portal.v1.ListAuditEventsResponse
+	32, // [32:46] is the sub-list for method output_type
+	18, // [18:32] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_ezdr_portal_v1_portal_proto_init() }
@@ -1728,7 +1980,7 @@ func file_ezdr_portal_v1_portal_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ezdr_portal_v1_portal_proto_rawDesc), len(file_ezdr_portal_v1_portal_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   29,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   5,
 		},

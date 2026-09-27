@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package ezdr.inventory.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// Inventory describes one Proxmox VE host. See docs/design/inventory.md.
+message Inventory {
+  google.protobuf.Timestamp collected_at = 1;
+  HostInfo host = 2;
+  repeated Guest guests = 3;
+  repeated Storage storages = 4;
+  repeated ZfsPool zfs_pools = 5;
+  repeated ZfsDataset zfs_datasets = 6;
+  repeated NetworkInterface interfaces = 7;
+  // Problems during collection, such as a guest whose configuration could not
+  // be read. The rest of the inventory is still valid.
+  repeated string warnings = 8;
+}
+
+message HostInfo {
+  string hostname = 1;
+  string pve_version = 2;
+  string kernel = 3;
+  string zfs_version = 4;
+  string cpu_model = 5;
+  uint32 cpus = 6;
+  uint64 memory_bytes = 7;
+}
+
+enum GuestType {
+  GUEST_TYPE_UNSPECIFIED = 0;
+  GUEST_TYPE_VM = 1;
+  GUEST_TYPE_CONTAINER = 2;
+}
+
+message Guest {
+  uint32 vmid = 1;
+  GuestType type = 2;
+  string name = 3;
+  // Proxmox status, such as "running" or "stopped".
+  string status = 4;
+  uint32 cores = 5;
+  uint64 memory_bytes = 6;
+  bool onboot = 7;
+  // Proxmox startup setting, such as "order=1,up=30".
+  string startup = 8;
+  bool template = 9;
+  repeated string tags = 10;
+  // Proxmox lock, such as "backup" or "migrate"; empty when unlocked.
+  string lock = 11;
+  repeated Disk disks = 12;
+  repeated Nic nics = 13;
+  bool passthrough = 14;
+  // True when every disk is replicable or not needed.
+  bool ready = 15;
+  // Non-blocking concerns, such as passthrough or ISO media.
+  repeated string readiness_warnings = 16;
+}
+
+enum Readiness {
+  READINESS_UNSPECIFIED = 0;
+  READINESS_REPLICABLE = 1;
+  READINESS_NOT_REPLICABLE = 2;
+  READINESS_NOT_NEEDED = 3;
+}
+
+message Disk {
+  // Configuration key, such as "scsi0", "rootfs", or "mp0".
+  string key = 1;
+  // Storage ID; empty for passthrough devices and bind mounts.
+  string storage = 2;
+  // Volume name within the storage, or the device or host path.
+  string volume = 3;
+  uint64 size_bytes = 4;
+  // ZFS dataset or zvol backing the disk, for ZFS storage.
+  string zfs_dataset = 5;
+  Readiness readiness = 6;
+  string reason = 7;
+}
+
+message Nic {
+  string key = 1;
+  string bridge = 2;
+  // 0 when untagged.
+  uint32 vlan_tag = 3;
+  string mac = 4;
+  string model = 5;
+  bool firewall = 6;
+}
+
+message Storage {
+  string id = 1;
+  string type = 2;
+  repeated string content = 3;
+  // ZFS pool or dataset for "zfspool" storage.
+  string zfs_pool = 4;
+  uint64 total_bytes = 5;
+  uint64 used_bytes = 6;
+  uint64 available_bytes = 7;
+  bool active = 8;
+  bool shared = 9;
+}
+
+message ZfsPool {
+  string name = 1;
+  string health = 2;
+  uint64 size_bytes = 3;
+  uint64 allocated_bytes = 4;
+  uint64 free_bytes = 5;
+  uint32 fragmentation_percent = 6;
+}
+
+message ZfsDataset {
+  string name = 1;
+  // "filesystem" or "volume".
+  string type = 2;
+  uint64 used_bytes = 3;
+  uint64 referenced_bytes = 4;
+  // Volume size for zvols; 0 for filesystems.
+  uint64 volume_size_bytes = 5;
+  string compression = 6;
+  // Encryption algorithm, or "off".
+  string encryption = 7;
+}
+
+message NetworkInterface {
+  string name = 1;
+  // Proxmox type, such as "bridge", "eth", "bond", or "vlan".
+  string type = 2;
+  bool active = 3;
+  bool autostart = 4;
+  repeated string bridge_ports = 5;
+  bool vlan_aware = 6;
+  uint32 vlan_id = 7;
+  string vlan_raw_device = 8;
+  repeated string bond_members = 9;
+  // Address in CIDR notation.
+  string cidr = 10;
+  string gateway = 11;
+}

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package ezdr.portal.v1;
 
+import "ezdr/inventory/v1/inventory.proto";
 import "google/protobuf/timestamp.proto";
 
 // SetupService creates the first administrator on a new portal.
@@ -133,7 +134,30 @@ message EnrollmentToken {
 service HostService {
   rpc ListHosts(ListHostsRequest) returns (ListHostsResponse);
   rpc DeleteHost(DeleteHostRequest) returns (DeleteHostResponse);
+  rpc GetHostInventory(GetHostInventoryRequest) returns (GetHostInventoryResponse);
+  // RefreshInventory asks an online host to report its inventory now.
+  rpc RefreshInventory(RefreshInventoryRequest) returns (RefreshInventoryResponse);
 }
+
+message GetHostInventoryRequest {
+  string host_id = 1;
+}
+
+message GetHostInventoryResponse {
+  Host host = 1;
+  // Unset until the host has reported inventory.
+  ezdr.inventory.v1.Inventory inventory = 2;
+  // When the inventory last differed from the previous report.
+  google.protobuf.Timestamp changed_at = 3;
+  // When the portal last received a report.
+  google.protobuf.Timestamp received_at = 4;
+}
+
+message RefreshInventoryRequest {
+  string host_id = 1;
+}
+
+message RefreshInventoryResponse {}
 
 message ListHostsRequest {}
 
@@ -159,6 +183,10 @@ message Host {
   bool online = 9;
   // Set when another host was enrolled with the same machine ID.
   bool duplicate_machine_id = 10;
+  // From the latest inventory; zero until inventory is reported.
+  uint32 guest_count = 11;
+  uint32 guests_not_ready = 12;
+  bool has_inventory = 13;
 }
 
 // AuditService lists audit log entries, newest first.

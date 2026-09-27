@@ -7,9 +7,12 @@ import (
 	"net/http"
 	"time"
 
+	"google.golang.org/protobuf/proto"
+
 	"connectrpc.com/connect"
 
 	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
+	"github.com/jlbyh2o/ezdr/internal/inventory"
 	"github.com/jlbyh2o/ezdr/internal/portal/store"
 )
 
@@ -48,7 +51,7 @@ type ClientService struct{ *Deps }
 // Subscribe streams desired state and heartbeats to a host.
 func (s ClientService) Subscribe(ctx context.Context, req *connect.Request[clientv1.SubscribeRequest], stream *connect.ServerStream[clientv1.SubscribeResponse]) error {
 	h := hostFrom(ctx)
-	ctx, release := s.Hub.connect(ctx, h.ID)
+	ctx, outbox, release := s.Hub.connect(ctx, h.ID)
 	defer release()
 	slog.Info("host connected", "host", h.Hostname, "id", h.ID)
 	defer slog.Info("host disconnected", "host", h.Hostname, "id", h.ID)
@@ -74,6 +77,10 @@ func (s ClientService) Subscribe(ctx context.Context, req *connect.Request[clien
 		select {
 		case <-ctx.Done():
 			return nil
+		case msg := <-outbox:
+			if err := stream.Send(msg); err != nil {
+				return err
+			}
 		case <-ticker.C:
 			heartbeat := &clientv1.SubscribeResponse{Message: &clientv1.SubscribeResponse_Heartbeat{
 				Heartbeat: &clientv1.Heartbeat{},
@@ -92,4 +99,45 @@ func (s ClientService) ReportStatus(ctx context.Context, req *connect.Request[cl
 		return nil, internalError(err)
 	}
 	return connect.NewResponse(&clientv1.ReportStatusResponse{}), nil
+}
+
+// ReportInventory stores a host's inventory.
+func (s ClientService) ReportInventory(ctx context.Context, req *connect.Request[clientv1.ReportInventoryRequest]) (*connect.Response[clientv1.ReportInventoryResponse], error) {
+	h := hostFrom(ctx)
+	inv := req.Msg.GetInventory()
+	if inv == nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("inventory is required"))
+	}
+	data, err := proto.Marshal(inv)
+	if err != nil {
+		return nil, internalError(err)
+	}
+	collected := time.Now()
+	if inv.GetCollectedAt() != nil {
+		collected = inv.GetCollectedAt().AsTime()
+	}
+	changed, err := s.Store.PutInventory(ctx, store.Inventory{
+		HostID: h.ID, Data: data, Hash: inventory.Hash(inv), CollectedAt: collected,
+		GuestCount: len(inv.GetGuests()), GuestsNotReady: inventory.NotReady(inv),
+	})
+	if err != nil {
+		return nil, internalError(err)
+	}
+	if changed {
+		slog.Info("inventory updated", "host", h.Hostname, "guests", len(inv.GetGuests()),
+			"not_ready", inventory.NotReady(inv), "warnings", len(inv.GetWarnings()))
+	}
+	return connect.NewResponse(&clientv1.ReportInventoryResponse{}), nil
+}
+
+// AckAction records the outcome of an action.
+func (s ClientService) AckAction(ctx context.Context, req *connect.Request[clientv1.AckActionRequest]) (*connect.Response[clientv1.AckActionResponse], error) {
+	h := hostFrom(ctx)
+	m := req.Msg
+	if m.Succeeded {
+		slog.Info("action completed", "host", h.Hostname, "action", m.ActionId)
+	} else {
+		slog.Warn("action failed", "host", h.Hostname, "action", m.ActionId, "message", m.Message)
+	}
+	return connect.NewResponse(&clientv1.AckActionResponse{}), nil
 }

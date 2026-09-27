@@ -8,7 +8,10 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/proto"
 
+	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
+	inventoryv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/inventory/v1"
 	portalv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/portal/v1"
 	"github.com/jlbyh2o/ezdr/internal/portal/auth"
 	"github.com/jlbyh2o/ezdr/internal/portal/store"
@@ -114,14 +117,62 @@ func (s HostService) ListHosts(ctx context.Context, _ *connect.Request[portalv1.
 	}
 	resp := &portalv1.ListHostsResponse{}
 	for _, h := range hosts {
-		resp.Hosts = append(resp.Hosts, &portalv1.Host{
-			Id: h.ID, Hostname: h.Hostname, MachineId: h.MachineID, PveVersion: h.PVEVersion,
-			ClientVersion: h.ClientVersion, TunnelAddress: h.TunnelAddress.String(),
-			EnrolledAt: ts(h.EnrolledAt), LastSeenAt: ts(h.LastSeenAt),
-			Online: s.Hub.Online(h.ID), DuplicateMachineId: h.DuplicateMachineID,
-		})
+		resp.Hosts = append(resp.Hosts, s.hostMsg(h))
 	}
 	return connect.NewResponse(resp), nil
+}
+
+func (s HostService) hostMsg(h store.Host) *portalv1.Host {
+	return &portalv1.Host{
+		Id: h.ID, Hostname: h.Hostname, MachineId: h.MachineID, PveVersion: h.PVEVersion,
+		ClientVersion: h.ClientVersion, TunnelAddress: h.TunnelAddress.String(),
+		EnrolledAt: ts(h.EnrolledAt), LastSeenAt: ts(h.LastSeenAt),
+		Online: s.Hub.Online(h.ID), DuplicateMachineId: h.DuplicateMachineID,
+		HasInventory: h.HasInventory, GuestCount: uint32(h.GuestCount), //nolint:gosec // small counts
+		GuestsNotReady: uint32(h.GuestsNotReady), //nolint:gosec // small counts
+	}
+}
+
+// GetHostInventory returns a host and its latest inventory.
+func (s HostService) GetHostInventory(ctx context.Context, req *connect.Request[portalv1.GetHostInventoryRequest]) (*connect.Response[portalv1.GetHostInventoryResponse], error) {
+	h, err := s.Store.HostByID(ctx, req.Msg.HostId)
+	if errors.Is(err, store.ErrNotFound) {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("host not found"))
+	}
+	if err != nil {
+		return nil, internalError(err)
+	}
+	resp := &portalv1.GetHostInventoryResponse{Host: s.hostMsg(h)}
+	inv, err := s.Store.HostInventory(ctx, h.ID)
+	switch {
+	case errors.Is(err, store.ErrNotFound):
+	case err != nil:
+		return nil, internalError(err)
+	default:
+		resp.Inventory = &inventoryv1.Inventory{}
+		if err := proto.Unmarshal(inv.Data, resp.Inventory); err != nil {
+			return nil, internalError(err)
+		}
+		resp.ChangedAt, resp.ReceivedAt = ts(inv.ChangedAt), ts(inv.ReceivedAt)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+// RefreshInventory asks an online host to report its inventory now.
+func (s HostService) RefreshInventory(ctx context.Context, req *connect.Request[portalv1.RefreshInventoryRequest]) (*connect.Response[portalv1.RefreshInventoryResponse], error) {
+	if _, err := s.Store.HostByID(ctx, req.Msg.HostId); errors.Is(err, store.ErrNotFound) {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("host not found"))
+	} else if err != nil {
+		return nil, internalError(err)
+	}
+	action := &clientv1.SubscribeResponse{Message: &clientv1.SubscribeResponse_Action{Action: &clientv1.Action{
+		Id:   store.NewID(),
+		Kind: &clientv1.Action_RefreshInventory{RefreshInventory: &clientv1.RefreshInventory{}},
+	}}}
+	if !s.Hub.Send(req.Msg.HostId, action) {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("host is offline"))
+	}
+	return connect.NewResponse(&portalv1.RefreshInventoryResponse{}), nil
 }
 
 // DeleteHost removes a host and its WireGuard peer, cutting it off at once.

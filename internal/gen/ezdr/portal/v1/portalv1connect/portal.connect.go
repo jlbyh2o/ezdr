@@ -68,6 +68,12 @@ const (
 	HostServiceListHostsProcedure = "/ezdr.portal.v1.HostService/ListHosts"
 	// HostServiceDeleteHostProcedure is the fully-qualified name of the HostService's DeleteHost RPC.
 	HostServiceDeleteHostProcedure = "/ezdr.portal.v1.HostService/DeleteHost"
+	// HostServiceGetHostInventoryProcedure is the fully-qualified name of the HostService's
+	// GetHostInventory RPC.
+	HostServiceGetHostInventoryProcedure = "/ezdr.portal.v1.HostService/GetHostInventory"
+	// HostServiceRefreshInventoryProcedure is the fully-qualified name of the HostService's
+	// RefreshInventory RPC.
+	HostServiceRefreshInventoryProcedure = "/ezdr.portal.v1.HostService/RefreshInventory"
 	// AuditServiceListAuditEventsProcedure is the fully-qualified name of the AuditService's
 	// ListAuditEvents RPC.
 	AuditServiceListAuditEventsProcedure = "/ezdr.portal.v1.AuditService/ListAuditEvents"
@@ -443,6 +449,9 @@ func (UnimplementedTokenServiceHandler) RevokeToken(context.Context, *connect.Re
 type HostServiceClient interface {
 	ListHosts(context.Context, *connect.Request[v1.ListHostsRequest]) (*connect.Response[v1.ListHostsResponse], error)
 	DeleteHost(context.Context, *connect.Request[v1.DeleteHostRequest]) (*connect.Response[v1.DeleteHostResponse], error)
+	GetHostInventory(context.Context, *connect.Request[v1.GetHostInventoryRequest]) (*connect.Response[v1.GetHostInventoryResponse], error)
+	// RefreshInventory asks an online host to report its inventory now.
+	RefreshInventory(context.Context, *connect.Request[v1.RefreshInventoryRequest]) (*connect.Response[v1.RefreshInventoryResponse], error)
 }
 
 // NewHostServiceClient constructs a client for the ezdr.portal.v1.HostService service. By default,
@@ -468,13 +477,27 @@ func NewHostServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(hostServiceMethods.ByName("DeleteHost")),
 			connect.WithClientOptions(opts...),
 		),
+		getHostInventory: connect.NewClient[v1.GetHostInventoryRequest, v1.GetHostInventoryResponse](
+			httpClient,
+			baseURL+HostServiceGetHostInventoryProcedure,
+			connect.WithSchema(hostServiceMethods.ByName("GetHostInventory")),
+			connect.WithClientOptions(opts...),
+		),
+		refreshInventory: connect.NewClient[v1.RefreshInventoryRequest, v1.RefreshInventoryResponse](
+			httpClient,
+			baseURL+HostServiceRefreshInventoryProcedure,
+			connect.WithSchema(hostServiceMethods.ByName("RefreshInventory")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // hostServiceClient implements HostServiceClient.
 type hostServiceClient struct {
-	listHosts  *connect.Client[v1.ListHostsRequest, v1.ListHostsResponse]
-	deleteHost *connect.Client[v1.DeleteHostRequest, v1.DeleteHostResponse]
+	listHosts        *connect.Client[v1.ListHostsRequest, v1.ListHostsResponse]
+	deleteHost       *connect.Client[v1.DeleteHostRequest, v1.DeleteHostResponse]
+	getHostInventory *connect.Client[v1.GetHostInventoryRequest, v1.GetHostInventoryResponse]
+	refreshInventory *connect.Client[v1.RefreshInventoryRequest, v1.RefreshInventoryResponse]
 }
 
 // ListHosts calls ezdr.portal.v1.HostService.ListHosts.
@@ -487,10 +510,23 @@ func (c *hostServiceClient) DeleteHost(ctx context.Context, req *connect.Request
 	return c.deleteHost.CallUnary(ctx, req)
 }
 
+// GetHostInventory calls ezdr.portal.v1.HostService.GetHostInventory.
+func (c *hostServiceClient) GetHostInventory(ctx context.Context, req *connect.Request[v1.GetHostInventoryRequest]) (*connect.Response[v1.GetHostInventoryResponse], error) {
+	return c.getHostInventory.CallUnary(ctx, req)
+}
+
+// RefreshInventory calls ezdr.portal.v1.HostService.RefreshInventory.
+func (c *hostServiceClient) RefreshInventory(ctx context.Context, req *connect.Request[v1.RefreshInventoryRequest]) (*connect.Response[v1.RefreshInventoryResponse], error) {
+	return c.refreshInventory.CallUnary(ctx, req)
+}
+
 // HostServiceHandler is an implementation of the ezdr.portal.v1.HostService service.
 type HostServiceHandler interface {
 	ListHosts(context.Context, *connect.Request[v1.ListHostsRequest]) (*connect.Response[v1.ListHostsResponse], error)
 	DeleteHost(context.Context, *connect.Request[v1.DeleteHostRequest]) (*connect.Response[v1.DeleteHostResponse], error)
+	GetHostInventory(context.Context, *connect.Request[v1.GetHostInventoryRequest]) (*connect.Response[v1.GetHostInventoryResponse], error)
+	// RefreshInventory asks an online host to report its inventory now.
+	RefreshInventory(context.Context, *connect.Request[v1.RefreshInventoryRequest]) (*connect.Response[v1.RefreshInventoryResponse], error)
 }
 
 // NewHostServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -512,12 +548,28 @@ func NewHostServiceHandler(svc HostServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(hostServiceMethods.ByName("DeleteHost")),
 		connect.WithHandlerOptions(opts...),
 	)
+	hostServiceGetHostInventoryHandler := connect.NewUnaryHandler(
+		HostServiceGetHostInventoryProcedure,
+		svc.GetHostInventory,
+		connect.WithSchema(hostServiceMethods.ByName("GetHostInventory")),
+		connect.WithHandlerOptions(opts...),
+	)
+	hostServiceRefreshInventoryHandler := connect.NewUnaryHandler(
+		HostServiceRefreshInventoryProcedure,
+		svc.RefreshInventory,
+		connect.WithSchema(hostServiceMethods.ByName("RefreshInventory")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/ezdr.portal.v1.HostService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case HostServiceListHostsProcedure:
 			hostServiceListHostsHandler.ServeHTTP(w, r)
 		case HostServiceDeleteHostProcedure:
 			hostServiceDeleteHostHandler.ServeHTTP(w, r)
+		case HostServiceGetHostInventoryProcedure:
+			hostServiceGetHostInventoryHandler.ServeHTTP(w, r)
+		case HostServiceRefreshInventoryProcedure:
+			hostServiceRefreshInventoryHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -533,6 +585,14 @@ func (UnimplementedHostServiceHandler) ListHosts(context.Context, *connect.Reque
 
 func (UnimplementedHostServiceHandler) DeleteHost(context.Context, *connect.Request[v1.DeleteHostRequest]) (*connect.Response[v1.DeleteHostResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.HostService.DeleteHost is not implemented"))
+}
+
+func (UnimplementedHostServiceHandler) GetHostInventory(context.Context, *connect.Request[v1.GetHostInventoryRequest]) (*connect.Response[v1.GetHostInventoryResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.HostService.GetHostInventory is not implemented"))
+}
+
+func (UnimplementedHostServiceHandler) RefreshInventory(context.Context, *connect.Request[v1.RefreshInventoryRequest]) (*connect.Response[v1.RefreshInventoryResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.HostService.RefreshInventory is not implemented"))
 }
 
 // AuditServiceClient is a client for the ezdr.portal.v1.AuditService service.

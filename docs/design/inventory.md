@@ -9,8 +9,9 @@
 
 - The client reads inventory from the **local Proxmox VE API** using a
   dedicated **read-only API token**, and from `zfs` for dataset details.
-- It collects **every 60 seconds** and sends the inventory to the portal only
-  when it **changed**, plus whenever the command stream reconnects.
+- It collects **every 60 seconds** and sends the inventory to the portal when
+  its structure **changed**, whenever the command stream reconnects, and at
+  least every 15 minutes to refresh usage figures.
 - A **Refresh** button in the portal asks a host for an immediate update. It is
   the first **action** sent over the command stream, which later phases
   (test failover, failover) reuse.
@@ -114,10 +115,15 @@ must also exist at the DR site.
 
 ## 5. Reporting
 
-- The client collects every 60 seconds and hashes the inventory (SHA-256 of
-  its deterministic protobuf encoding, excluding the collection time).
+- The client collects every 60 seconds and hashes the inventory's structure
+  (SHA-256 of its deterministic protobuf encoding). The collection time and
+  usage figures (space used, free, and fragmentation) are excluded: they change
+  constantly on a busy host and would otherwise make every check a "change."
 - It calls `ReportInventory` when the hash changes, when a new command stream
-  opens, and when the portal sends a **Refresh inventory** action.
+  opens, when the portal sends a **Refresh inventory** action, and at least
+  every 15 minutes so usage figures stay fresh.
+- The portal computes the same hash, so a host's "last changed" time reflects
+  structural changes only.
 - Collection problems (for example, one guest's configuration could not be
   read) are reported in the inventory's `warnings` list rather than failing
   the whole report.

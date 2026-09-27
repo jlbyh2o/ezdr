@@ -4,13 +4,15 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Inventory } from "../../inventory/v1/inventory_pb";
+import { file_ezdr_inventory_v1_inventory } from "../../inventory/v1/inventory_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file ezdr/client/v1/client.proto.
  */
 export const file_ezdr_client_v1_client: GenFile = /*@__PURE__*/
-  fileDesc("ChtlemRyL2NsaWVudC92MS9jbGllbnQucHJvdG8SDmV6ZHIuY2xpZW50LnYxIioKEFN1YnNjcmliZVJlcXVlc3QSFgoOY2xpZW50X3ZlcnNpb24YASABKAkihQEKEVN1YnNjcmliZVJlc3BvbnNlEi4KCWhlYXJ0YmVhdBgBIAEoCzIZLmV6ZHIuY2xpZW50LnYxLkhlYXJ0YmVhdEgAEjUKDWRlc2lyZWRfc3RhdGUYAiABKAsyHC5lemRyLmNsaWVudC52MS5EZXNpcmVkU3RhdGVIAEIJCgdtZXNzYWdlIgsKCUhlYXJ0YmVhdCIiCgxEZXNpcmVkU3RhdGUSEgoKZ2VuZXJhdGlvbhgBIAEoBCJJChNSZXBvcnRTdGF0dXNSZXF1ZXN0EhYKDmNsaWVudF92ZXJzaW9uGAEgASgJEhoKEmFwcGxpZWRfZ2VuZXJhdGlvbhgCIAEoBCIWChRSZXBvcnRTdGF0dXNSZXNwb25zZTK+AQoNQ2xpZW50U2VydmljZRJSCglTdWJzY3JpYmUSIC5lemRyLmNsaWVudC52MS5TdWJzY3JpYmVSZXF1ZXN0GiEuZXpkci5jbGllbnQudjEuU3Vic2NyaWJlUmVzcG9uc2UwARJZCgxSZXBvcnRTdGF0dXMSIy5lemRyLmNsaWVudC52MS5SZXBvcnRTdGF0dXNSZXF1ZXN0GiQuZXpkci5jbGllbnQudjEuUmVwb3J0U3RhdHVzUmVzcG9uc2VCuQEKEmNvbS5lemRyLmNsaWVudC52MUILQ2xpZW50UHJvdG9QAVo8Z2l0aHViLmNvbS9qbGJ5aDJvL2V6ZHIvaW50ZXJuYWwvZ2VuL2V6ZHIvY2xpZW50L3YxO2NsaWVudHYxogIDRUNYqgIORXpkci5DbGllbnQuVjHKAg5FemRyXENsaWVudFxWMeICGkV6ZHJcQ2xpZW50XFYxXEdQQk1ldGFkYXRh6gIQRXpkcjo6Q2xpZW50OjpWMWIGcHJvdG8z");
+  fileDesc("ChtlemRyL2NsaWVudC92MS9jbGllbnQucHJvdG8SDmV6ZHIuY2xpZW50LnYxIioKEFN1YnNjcmliZVJlcXVlc3QSFgoOY2xpZW50X3ZlcnNpb24YASABKAkirwEKEVN1YnNjcmliZVJlc3BvbnNlEi4KCWhlYXJ0YmVhdBgBIAEoCzIZLmV6ZHIuY2xpZW50LnYxLkhlYXJ0YmVhdEgAEjUKDWRlc2lyZWRfc3RhdGUYAiABKAsyHC5lemRyLmNsaWVudC52MS5EZXNpcmVkU3RhdGVIABIoCgZhY3Rpb24YAyABKAsyFi5lemRyLmNsaWVudC52MS5BY3Rpb25IAEIJCgdtZXNzYWdlIlsKBkFjdGlvbhIKCgJpZBgBIAEoCRI9ChFyZWZyZXNoX2ludmVudG9yeRgCIAEoCzIgLmV6ZHIuY2xpZW50LnYxLlJlZnJlc2hJbnZlbnRvcnlIAEIGCgRraW5kIhIKEFJlZnJlc2hJbnZlbnRvcnkiCwoJSGVhcnRiZWF0IiIKDERlc2lyZWRTdGF0ZRISCgpnZW5lcmF0aW9uGAEgASgEIkkKE1JlcG9ydFN0YXR1c1JlcXVlc3QSFgoOY2xpZW50X3ZlcnNpb24YASABKAkSGgoSYXBwbGllZF9nZW5lcmF0aW9uGAIgASgEIhYKFFJlcG9ydFN0YXR1c1Jlc3BvbnNlIkkKFlJlcG9ydEludmVudG9yeVJlcXVlc3QSLwoJaW52ZW50b3J5GAEgASgLMhwuZXpkci5pbnZlbnRvcnkudjEuSW52ZW50b3J5IhkKF1JlcG9ydEludmVudG9yeVJlc3BvbnNlIkkKEEFja0FjdGlvblJlcXVlc3QSEQoJYWN0aW9uX2lkGAEgASgJEhEKCXN1Y2NlZWRlZBgCIAEoCBIPCgdtZXNzYWdlGAMgASgJIhMKEUFja0FjdGlvblJlc3BvbnNlMvQCCg1DbGllbnRTZXJ2aWNlElIKCVN1YnNjcmliZRIgLmV6ZHIuY2xpZW50LnYxLlN1YnNjcmliZVJlcXVlc3QaIS5lemRyLmNsaWVudC52MS5TdWJzY3JpYmVSZXNwb25zZTABElkKDFJlcG9ydFN0YXR1cxIjLmV6ZHIuY2xpZW50LnYxLlJlcG9ydFN0YXR1c1JlcXVlc3QaJC5lemRyLmNsaWVudC52MS5SZXBvcnRTdGF0dXNSZXNwb25zZRJiCg9SZXBvcnRJbnZlbnRvcnkSJi5lemRyLmNsaWVudC52MS5SZXBvcnRJbnZlbnRvcnlSZXF1ZXN0GicuZXpkci5jbGllbnQudjEuUmVwb3J0SW52ZW50b3J5UmVzcG9uc2USUAoJQWNrQWN0aW9uEiAuZXpkci5jbGllbnQudjEuQWNrQWN0aW9uUmVxdWVzdBohLmV6ZHIuY2xpZW50LnYxLkFja0FjdGlvblJlc3BvbnNlQrkBChJjb20uZXpkci5jbGllbnQudjFCC0NsaWVudFByb3RvUAFaPGdpdGh1Yi5jb20vamxieWgyby9lemRyL2ludGVybmFsL2dlbi9lemRyL2NsaWVudC92MTtjbGllbnR2MaICA0VDWKoCDkV6ZHIuQ2xpZW50LlYxygIORXpkclxDbGllbnRcVjHiAhpFemRyXENsaWVudFxWMVxHUEJNZXRhZGF0YeoCEEV6ZHI6OkNsaWVudDo6VjFiBnByb3RvMw", [file_ezdr_inventory_v1_inventory]);
 
 /**
  * @generated from message ezdr.client.v1.SubscribeRequest
@@ -48,6 +50,12 @@ export type SubscribeResponse = Message<"ezdr.client.v1.SubscribeResponse"> & {
      */
     value: DesiredState;
     case: "desiredState";
+  } | {
+    /**
+     * @generated from field: ezdr.client.v1.Action action = 3;
+     */
+    value: Action;
+    case: "action";
   } | { case: undefined; value?: undefined };
 };
 
@@ -57,6 +65,51 @@ export type SubscribeResponse = Message<"ezdr.client.v1.SubscribeResponse"> & {
  */
 export const SubscribeResponseSchema: GenMessage<SubscribeResponse> = /*@__PURE__*/
   messageDesc(file_ezdr_client_v1_client, 1);
+
+/**
+ * Action is a one-off operation the portal asks the host to perform.
+ *
+ * @generated from message ezdr.client.v1.Action
+ */
+export type Action = Message<"ezdr.client.v1.Action"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from oneof ezdr.client.v1.Action.kind
+   */
+  kind: {
+    /**
+     * @generated from field: ezdr.client.v1.RefreshInventory refresh_inventory = 2;
+     */
+    value: RefreshInventory;
+    case: "refreshInventory";
+  } | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message ezdr.client.v1.Action.
+ * Use `create(ActionSchema)` to create a new message.
+ */
+export const ActionSchema: GenMessage<Action> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 2);
+
+/**
+ * RefreshInventory asks the host to collect and report inventory now.
+ *
+ * @generated from message ezdr.client.v1.RefreshInventory
+ */
+export type RefreshInventory = Message<"ezdr.client.v1.RefreshInventory"> & {
+};
+
+/**
+ * Describes the message ezdr.client.v1.RefreshInventory.
+ * Use `create(RefreshInventorySchema)` to create a new message.
+ */
+export const RefreshInventorySchema: GenMessage<RefreshInventory> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 3);
 
 /**
  * @generated from message ezdr.client.v1.Heartbeat
@@ -69,7 +122,7 @@ export type Heartbeat = Message<"ezdr.client.v1.Heartbeat"> & {
  * Use `create(HeartbeatSchema)` to create a new message.
  */
 export const HeartbeatSchema: GenMessage<Heartbeat> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 2);
+  messageDesc(file_ezdr_client_v1_client, 4);
 
 /**
  * DesiredState is the full configuration the host should have. It is empty in
@@ -89,7 +142,7 @@ export type DesiredState = Message<"ezdr.client.v1.DesiredState"> & {
  * Use `create(DesiredStateSchema)` to create a new message.
  */
 export const DesiredStateSchema: GenMessage<DesiredState> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 3);
+  messageDesc(file_ezdr_client_v1_client, 5);
 
 /**
  * @generated from message ezdr.client.v1.ReportStatusRequest
@@ -111,7 +164,7 @@ export type ReportStatusRequest = Message<"ezdr.client.v1.ReportStatusRequest"> 
  * Use `create(ReportStatusRequestSchema)` to create a new message.
  */
 export const ReportStatusRequestSchema: GenMessage<ReportStatusRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 4);
+  messageDesc(file_ezdr_client_v1_client, 6);
 
 /**
  * @generated from message ezdr.client.v1.ReportStatusResponse
@@ -124,7 +177,77 @@ export type ReportStatusResponse = Message<"ezdr.client.v1.ReportStatusResponse"
  * Use `create(ReportStatusResponseSchema)` to create a new message.
  */
 export const ReportStatusResponseSchema: GenMessage<ReportStatusResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 5);
+  messageDesc(file_ezdr_client_v1_client, 7);
+
+/**
+ * @generated from message ezdr.client.v1.ReportInventoryRequest
+ */
+export type ReportInventoryRequest = Message<"ezdr.client.v1.ReportInventoryRequest"> & {
+  /**
+   * @generated from field: ezdr.inventory.v1.Inventory inventory = 1;
+   */
+  inventory?: Inventory | undefined;
+};
+
+/**
+ * Describes the message ezdr.client.v1.ReportInventoryRequest.
+ * Use `create(ReportInventoryRequestSchema)` to create a new message.
+ */
+export const ReportInventoryRequestSchema: GenMessage<ReportInventoryRequest> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 8);
+
+/**
+ * @generated from message ezdr.client.v1.ReportInventoryResponse
+ */
+export type ReportInventoryResponse = Message<"ezdr.client.v1.ReportInventoryResponse"> & {
+};
+
+/**
+ * Describes the message ezdr.client.v1.ReportInventoryResponse.
+ * Use `create(ReportInventoryResponseSchema)` to create a new message.
+ */
+export const ReportInventoryResponseSchema: GenMessage<ReportInventoryResponse> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 9);
+
+/**
+ * @generated from message ezdr.client.v1.AckActionRequest
+ */
+export type AckActionRequest = Message<"ezdr.client.v1.AckActionRequest"> & {
+  /**
+   * @generated from field: string action_id = 1;
+   */
+  actionId: string;
+
+  /**
+   * @generated from field: bool succeeded = 2;
+   */
+  succeeded: boolean;
+
+  /**
+   * @generated from field: string message = 3;
+   */
+  message: string;
+};
+
+/**
+ * Describes the message ezdr.client.v1.AckActionRequest.
+ * Use `create(AckActionRequestSchema)` to create a new message.
+ */
+export const AckActionRequestSchema: GenMessage<AckActionRequest> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 10);
+
+/**
+ * @generated from message ezdr.client.v1.AckActionResponse
+ */
+export type AckActionResponse = Message<"ezdr.client.v1.AckActionResponse"> & {
+};
+
+/**
+ * Describes the message ezdr.client.v1.AckActionResponse.
+ * Use `create(AckActionResponseSchema)` to create a new message.
+ */
+export const AckActionResponseSchema: GenMessage<AckActionResponse> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 11);
 
 /**
  * ClientService is served only on the portal's tunnel listener. The portal
@@ -153,6 +276,26 @@ export const ClientService: GenService<{
     methodKind: "unary";
     input: typeof ReportStatusRequestSchema;
     output: typeof ReportStatusResponseSchema;
+  },
+  /**
+   * ReportInventory sends the host's current inventory.
+   *
+   * @generated from rpc ezdr.client.v1.ClientService.ReportInventory
+   */
+  reportInventory: {
+    methodKind: "unary";
+    input: typeof ReportInventoryRequestSchema;
+    output: typeof ReportInventoryResponseSchema;
+  },
+  /**
+   * AckAction reports the outcome of an action.
+   *
+   * @generated from rpc ezdr.client.v1.ClientService.AckAction
+   */
+  ackAction: {
+    methodKind: "unary";
+    input: typeof AckActionRequestSchema;
+    output: typeof AckActionResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_ezdr_client_v1_client, 0);

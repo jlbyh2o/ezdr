@@ -80,12 +80,18 @@ func subscribe(ctx context.Context, api clientv1connect.ClientServiceClient) (bo
 	watchdog := time.AfterFunc(streamTimeout, func() { cancel(errStreamTimeout) })
 	defer watchdog.Stop()
 
+	refresh := make(chan string, 1)
+	go inventoryLoop(ctx, api, refresh)
+
 	received := false
 	for stream.Receive() {
 		watchdog.Reset(streamTimeout)
 		if !received {
 			slog.Info("connected to portal")
 			received = true
+		}
+		if a := stream.Msg().GetAction(); a != nil {
+			handleAction(ctx, api, a, refresh)
 		}
 		if ds := stream.Msg().GetDesiredState(); ds != nil {
 			// Phase 1 has nothing to apply; acknowledge the generation.
@@ -104,4 +110,26 @@ func subscribe(ctx context.Context, api clientv1connect.ClientServiceClient) (bo
 		return received, err
 	}
 	return received, errors.New("stream closed by portal")
+}
+
+// handleAction dispatches an action from the portal. Unknown kinds are
+// rejected, so the client only ever performs operations it knows.
+func handleAction(ctx context.Context, api clientv1connect.ClientServiceClient, a *clientv1.Action, refresh chan<- string) {
+	fail := func(msg string) {
+		_, err := api.AckAction(ctx, connect.NewRequest(&clientv1.AckActionRequest{ActionId: a.Id, Message: msg}))
+		if err != nil {
+			slog.Warn("acknowledge action", "action", a.Id, "err", err)
+		}
+	}
+	switch a.Kind.(type) {
+	case *clientv1.Action_RefreshInventory:
+		select {
+		case refresh <- a.Id:
+		default:
+			fail("an inventory refresh is already in progress")
+		}
+	default:
+		slog.Warn("rejected unsupported action", "action", a.Id)
+		fail("unsupported action; upgrade the ezdr client")
+	}
 }

@@ -256,3 +256,61 @@ func TestSecrets(t *testing.T) {
 		t.Errorf("secret = %q, want v2", v)
 	}
 }
+
+func TestInventory(t *testing.T) {
+	s := openTest(t)
+	ctx := context.Background()
+	if _, err := s.CreateToken(ctx, Token{ID: "t", SecretHash: []byte("s"), CreatedBy: "admin",
+		ExpiresAt: time.Now().Add(time.Hour)}); err != nil {
+		t.Fatal(err)
+	}
+	h, err := s.EnrollHost(ctx, "t", []byte("s"), newHost("a1", "m1"), seqAlloc(netip.MustParseAddr("100.64.42.2")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.HostInventory(ctx, h.ID); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("no inventory yet: err = %v", err)
+	}
+
+	now := time.Now()
+	s.now = func() time.Time { return now }
+	put := func(hash string, guests int) bool {
+		t.Helper()
+		changed, err := s.PutInventory(ctx, Inventory{HostID: h.ID, Data: []byte("inv-" + hash), Hash: []byte(hash),
+			CollectedAt: s.now(), GuestCount: guests, GuestsNotReady: 1})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return changed
+	}
+	if !put("h1", 3) {
+		t.Error("first inventory not reported as changed")
+	}
+	first := now
+	now = now.Add(time.Minute)
+	if put("h1", 3) {
+		t.Error("identical inventory reported as changed")
+	}
+	inv, err := s.HostInventory(ctx, h.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !inv.ChangedAt.Equal(first.Truncate(time.Millisecond)) || !inv.ReceivedAt.After(inv.ChangedAt) {
+		t.Errorf("changed_at = %v, received_at = %v", inv.ChangedAt, inv.ReceivedAt)
+	}
+	now = now.Add(time.Minute)
+	if !put("h2", 4) {
+		t.Error("new inventory not reported as changed")
+	}
+
+	hosts, _ := s.ListHosts(ctx)
+	if !hosts[0].HasInventory || hosts[0].GuestCount != 4 || hosts[0].GuestsNotReady != 1 {
+		t.Errorf("host counts = %+v", hosts[0])
+	}
+	if err := s.DeleteHost(ctx, h.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.HostInventory(ctx, h.ID); !errors.Is(err, ErrNotFound) {
+		t.Error("inventory not removed with host")
+	}
+}

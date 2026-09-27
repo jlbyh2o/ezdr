@@ -5,6 +5,7 @@ import { ErrorAlert } from '@/components/error-alert'
 import type { User } from '@/gen/ezdr/portal/v1/portal_pb'
 import { authClient, errorMessage, isUnauthenticated, setupClient } from '@/lib/api'
 import { AuditPage } from '@/pages/audit'
+import { HostDetailPage } from '@/pages/host-detail'
 import { HostsPage } from '@/pages/hosts'
 import { Layout } from '@/pages/layout'
 import { LoginPage } from '@/pages/login'
@@ -66,6 +67,7 @@ function App() {
           <Routes>
             <Route element={<Layout user={state.user} onSignOut={() => void signOut()} />}>
               <Route path="/hosts" element={<HostsPage />} />
+              <Route path="/hosts/:id" element={<HostDetailPage />} />
               <Route path="/tokens" element={<TokensPage />} />
               <Route path="/audit" element={<AuditPage />} />
               <Route path="*" element={<Navigate to="/hosts" replace />} />

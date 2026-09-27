@@ -1,4 +1,5 @@
 import { TriangleAlert } from 'lucide-react'
+import { Link } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
 import {
@@ -40,6 +41,7 @@ export function HostsPage() {
             <TableRow>
               <TableHead>Host</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Guests</TableHead>
               <TableHead>Tunnel address</TableHead>
               <TableHead>Proxmox VE</TableHead>
               <TableHead>Client</TableHead>
@@ -51,7 +53,9 @@ export function HostsPage() {
             {data.map((h) => (
               <TableRow key={h.id}>
                 <TableCell className="font-medium">
-                  {h.hostname}
+                  <Link to={`/hosts/${h.id}`} className="hover:underline">
+                    {h.hostname}
+                  </Link>
                   {h.duplicateMachineId && (
                     <div className="flex items-center gap-1 text-xs text-amber-600">
                       <TriangleAlert className="size-3" /> Same machine ID as another host; remove the stale one.
@@ -65,6 +69,18 @@ export function HostsPage() {
                     <Badge variant="secondary" title={`Last seen ${formatDateTime(h.lastSeenAt)}`}>
                       Offline · {formatRelative(h.lastSeenAt)}
                     </Badge>
+                  )}
+                </TableCell>
+                <TableCell className="text-xs">
+                  {!h.hasInventory ? (
+                    <span className="text-muted-foreground">—</span>
+                  ) : (
+                    <>
+                      {h.guestCount}
+                      {h.guestsNotReady > 0 && (
+                        <span className="text-destructive"> · {h.guestsNotReady} not ready</span>
+                      )}
+                    </>
                   )}
                 </TableCell>
                 <TableCell className="font-mono text-xs">{h.tunnelAddress}</TableCell>

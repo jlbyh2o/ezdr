@@ -38,6 +38,11 @@ const (
 	// ClientServiceReportStatusProcedure is the fully-qualified name of the ClientService's
 	// ReportStatus RPC.
 	ClientServiceReportStatusProcedure = "/ezdr.client.v1.ClientService/ReportStatus"
+	// ClientServiceReportInventoryProcedure is the fully-qualified name of the ClientService's
+	// ReportInventory RPC.
+	ClientServiceReportInventoryProcedure = "/ezdr.client.v1.ClientService/ReportInventory"
+	// ClientServiceAckActionProcedure is the fully-qualified name of the ClientService's AckAction RPC.
+	ClientServiceAckActionProcedure = "/ezdr.client.v1.ClientService/AckAction"
 )
 
 // ClientServiceClient is a client for the ezdr.client.v1.ClientService service.
@@ -47,6 +52,10 @@ type ClientServiceClient interface {
 	Subscribe(context.Context, *connect.Request[v1.SubscribeRequest]) (*connect.ServerStreamForClient[v1.SubscribeResponse], error)
 	// ReportStatus reports the client's health and applied configuration.
 	ReportStatus(context.Context, *connect.Request[v1.ReportStatusRequest]) (*connect.Response[v1.ReportStatusResponse], error)
+	// ReportInventory sends the host's current inventory.
+	ReportInventory(context.Context, *connect.Request[v1.ReportInventoryRequest]) (*connect.Response[v1.ReportInventoryResponse], error)
+	// AckAction reports the outcome of an action.
+	AckAction(context.Context, *connect.Request[v1.AckActionRequest]) (*connect.Response[v1.AckActionResponse], error)
 }
 
 // NewClientServiceClient constructs a client for the ezdr.client.v1.ClientService service. By
@@ -72,13 +81,27 @@ func NewClientServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(clientServiceMethods.ByName("ReportStatus")),
 			connect.WithClientOptions(opts...),
 		),
+		reportInventory: connect.NewClient[v1.ReportInventoryRequest, v1.ReportInventoryResponse](
+			httpClient,
+			baseURL+ClientServiceReportInventoryProcedure,
+			connect.WithSchema(clientServiceMethods.ByName("ReportInventory")),
+			connect.WithClientOptions(opts...),
+		),
+		ackAction: connect.NewClient[v1.AckActionRequest, v1.AckActionResponse](
+			httpClient,
+			baseURL+ClientServiceAckActionProcedure,
+			connect.WithSchema(clientServiceMethods.ByName("AckAction")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // clientServiceClient implements ClientServiceClient.
 type clientServiceClient struct {
-	subscribe    *connect.Client[v1.SubscribeRequest, v1.SubscribeResponse]
-	reportStatus *connect.Client[v1.ReportStatusRequest, v1.ReportStatusResponse]
+	subscribe       *connect.Client[v1.SubscribeRequest, v1.SubscribeResponse]
+	reportStatus    *connect.Client[v1.ReportStatusRequest, v1.ReportStatusResponse]
+	reportInventory *connect.Client[v1.ReportInventoryRequest, v1.ReportInventoryResponse]
+	ackAction       *connect.Client[v1.AckActionRequest, v1.AckActionResponse]
 }
 
 // Subscribe calls ezdr.client.v1.ClientService.Subscribe.
@@ -91,6 +114,16 @@ func (c *clientServiceClient) ReportStatus(ctx context.Context, req *connect.Req
 	return c.reportStatus.CallUnary(ctx, req)
 }
 
+// ReportInventory calls ezdr.client.v1.ClientService.ReportInventory.
+func (c *clientServiceClient) ReportInventory(ctx context.Context, req *connect.Request[v1.ReportInventoryRequest]) (*connect.Response[v1.ReportInventoryResponse], error) {
+	return c.reportInventory.CallUnary(ctx, req)
+}
+
+// AckAction calls ezdr.client.v1.ClientService.AckAction.
+func (c *clientServiceClient) AckAction(ctx context.Context, req *connect.Request[v1.AckActionRequest]) (*connect.Response[v1.AckActionResponse], error) {
+	return c.ackAction.CallUnary(ctx, req)
+}
+
 // ClientServiceHandler is an implementation of the ezdr.client.v1.ClientService service.
 type ClientServiceHandler interface {
 	// Subscribe opens the command stream. The portal sends the current desired
@@ -98,6 +131,10 @@ type ClientServiceHandler interface {
 	Subscribe(context.Context, *connect.Request[v1.SubscribeRequest], *connect.ServerStream[v1.SubscribeResponse]) error
 	// ReportStatus reports the client's health and applied configuration.
 	ReportStatus(context.Context, *connect.Request[v1.ReportStatusRequest]) (*connect.Response[v1.ReportStatusResponse], error)
+	// ReportInventory sends the host's current inventory.
+	ReportInventory(context.Context, *connect.Request[v1.ReportInventoryRequest]) (*connect.Response[v1.ReportInventoryResponse], error)
+	// AckAction reports the outcome of an action.
+	AckAction(context.Context, *connect.Request[v1.AckActionRequest]) (*connect.Response[v1.AckActionResponse], error)
 }
 
 // NewClientServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -119,12 +156,28 @@ func NewClientServiceHandler(svc ClientServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(clientServiceMethods.ByName("ReportStatus")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientServiceReportInventoryHandler := connect.NewUnaryHandler(
+		ClientServiceReportInventoryProcedure,
+		svc.ReportInventory,
+		connect.WithSchema(clientServiceMethods.ByName("ReportInventory")),
+		connect.WithHandlerOptions(opts...),
+	)
+	clientServiceAckActionHandler := connect.NewUnaryHandler(
+		ClientServiceAckActionProcedure,
+		svc.AckAction,
+		connect.WithSchema(clientServiceMethods.ByName("AckAction")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/ezdr.client.v1.ClientService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClientServiceSubscribeProcedure:
 			clientServiceSubscribeHandler.ServeHTTP(w, r)
 		case ClientServiceReportStatusProcedure:
 			clientServiceReportStatusHandler.ServeHTTP(w, r)
+		case ClientServiceReportInventoryProcedure:
+			clientServiceReportInventoryHandler.ServeHTTP(w, r)
+		case ClientServiceAckActionProcedure:
+			clientServiceAckActionHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -140,4 +193,12 @@ func (UnimplementedClientServiceHandler) Subscribe(context.Context, *connect.Req
 
 func (UnimplementedClientServiceHandler) ReportStatus(context.Context, *connect.Request[v1.ReportStatusRequest]) (*connect.Response[v1.ReportStatusResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.client.v1.ClientService.ReportStatus is not implemented"))
+}
+
+func (UnimplementedClientServiceHandler) ReportInventory(context.Context, *connect.Request[v1.ReportInventoryRequest]) (*connect.Response[v1.ReportInventoryResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.client.v1.ClientService.ReportInventory is not implemented"))
+}
+
+func (UnimplementedClientServiceHandler) AckAction(context.Context, *connect.Request[v1.AckActionRequest]) (*connect.Response[v1.AckActionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.client.v1.ClientService.AckAction is not implemented"))
 }

@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"sync"
+
+	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
 )
 
 // Hub tracks which hosts have an open command stream, so the portal can show
@@ -14,6 +16,8 @@ type Hub struct {
 
 type hubConn struct {
 	cancel context.CancelFunc
+	// send queues messages for the stream; Subscribe writes them out.
+	send chan *clientv1.SubscribeResponse
 }
 
 // NewHub returns an empty Hub.
@@ -22,17 +26,18 @@ func NewHub() *Hub {
 }
 
 // connect registers a stream for hostID. The returned context is canceled
-// when the host is disconnected; release must be called when the stream ends.
-func (h *Hub) connect(ctx context.Context, hostID string) (context.Context, func()) {
+// when the host is disconnected, and the channel delivers messages to send on
+// the stream. release must be called when the stream ends.
+func (h *Hub) connect(ctx context.Context, hostID string) (context.Context, <-chan *clientv1.SubscribeResponse, func()) {
 	ctx, cancel := context.WithCancel(ctx)
-	c := &hubConn{cancel: cancel}
+	c := &hubConn{cancel: cancel, send: make(chan *clientv1.SubscribeResponse, 16)}
 	h.mu.Lock()
 	if h.conns[hostID] == nil {
 		h.conns[hostID] = make(map[*hubConn]struct{})
 	}
 	h.conns[hostID][c] = struct{}{}
 	h.mu.Unlock()
-	return ctx, func() {
+	return ctx, c.send, func() {
 		cancel()
 		h.mu.Lock()
 		delete(h.conns[hostID], c)
@@ -57,4 +62,19 @@ func (h *Hub) Disconnect(hostID string) {
 	for c := range h.conns[hostID] {
 		c.cancel()
 	}
+}
+
+// Send queues msg on one of hostID's open streams. It reports false if the
+// host has no open stream or its queue is full.
+func (h *Hub) Send(hostID string, msg *clientv1.SubscribeResponse) bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for c := range h.conns[hostID] {
+		select {
+		case c.send <- msg:
+			return true
+		default:
+		}
+	}
+	return false
 }

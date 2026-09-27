@@ -20,3 +20,15 @@ export function formatRelative(ts?: Timestamp): string {
   if (abs < 86400) return rtf.format(Math.round(seconds / 3600), 'hour')
   return rtf.format(Math.round(seconds / 86400), 'day')
 }
+
+export function formatBytes(n: bigint | number): string {
+  let v = Number(n)
+  if (!v) return '0 B'
+  const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']
+  let i = 0
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024
+    i++
+  }
+  return `${v >= 10 || i === 0 ? v.toFixed(0) : v.toFixed(1)} ${units[i]}`
+}

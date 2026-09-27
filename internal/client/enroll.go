@@ -13,6 +13,7 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/jlbyh2o/ezdr/internal/client/pve"
 	enrollv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/enroll/v1"
 	"github.com/jlbyh2o/ezdr/internal/gen/ezdr/enroll/v1/enrollv1connect"
 	"github.com/jlbyh2o/ezdr/internal/token"
@@ -80,6 +81,7 @@ func Enroll(ctx context.Context, opts EnrollOptions) error {
 	fmt.Fprintf(out, "  • Create WireGuard interface %s (address from %s) connected to %s\n",
 		InterfaceName, prefix, check.Msg.WireguardEndpoint)
 	fmt.Fprintf(out, "  • Write configuration and a private key to %s\n", ConfigDir)
+	fmt.Fprintf(out, "  • Create a read-only Proxmox VE API user and token (%s, role %s) for inventory\n", pve.TokenID, pve.Role)
 	fmt.Fprintf(out, "  • Enable and start the %s systemd service\n", ServiceName)
 	if !opts.Yes {
 		ok, err := confirm(out, "\nContinue? [y/N] ")
@@ -130,6 +132,10 @@ func Enroll(ctx context.Context, opts EnrollOptions) error {
 	}
 	if err := cfg.Save(ConfigDir); err != nil {
 		return localSetupFailed("save configuration", err)
+	}
+	if _, err := pve.EnsureToken(ctx); err != nil {
+		// Not fatal: the service retries, and enrollment is otherwise complete.
+		fmt.Fprintf(out, "Warning: could not create the Proxmox VE API token (%v); the service will retry.\n", err)
 	}
 	if err := EnsureInterface(cfg, key); err != nil {
 		return localSetupFailed("set up WireGuard", err)
