@@ -195,7 +195,7 @@ func (f *fakeRunner) run(_ context.Context, name string, args ...string) ([]byte
 	call := strings.Join(append([]string{name}, args...), " ")
 	f.calls = append(f.calls, call)
 	switch {
-	case call == "zrepl version":
+	case call == "zrepl version --show client":
 		return []byte("client: zrepl version=v0.7.0 go=go1.25"), nil
 	case call == "zrepl configcheck" && f.failCheck:
 		return []byte("bad"), errors.New("exit status 1")

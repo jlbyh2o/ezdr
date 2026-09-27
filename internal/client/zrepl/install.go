@@ -25,7 +25,9 @@ var versionPattern = regexp.MustCompile(`version=(v[0-9][^ ]*)`)
 // Version returns the installed zrepl version, or "" if zrepl isn't
 // installed.
 func (a *Applier) Version(ctx context.Context) string {
-	out, err := a.Run(ctx, "zrepl", "version")
+	// --show client reports the installed binary without contacting the
+	// daemon, which may be restarting.
+	out, err := a.Run(ctx, "zrepl", "version", "--show", "client")
 	if err != nil {
 		return ""
 	}
