@@ -9,6 +9,12 @@ linters:
     - misspell
     - revive
   settings:
+    errcheck:
+      # Writing CLI output: there is nothing useful to do with an error.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
     misspell:
       locale: US
 

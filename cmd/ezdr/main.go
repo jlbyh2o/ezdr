@@ -3,17 +3,31 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"flag"
 	"fmt"
+	"io"
+	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
+	"github.com/jlbyh2o/ezdr/internal/client"
 	"github.com/jlbyh2o/ezdr/internal/version"
 )
 
-const usage = `Usage: ezdr <command>
+const usage = `Usage: ezdr <command> [options]
 
 Commands:
-  version   Print version information
-  help      Show this help
+  enroll <token>   Join this host to an EZDR portal
+  status           Show enrollment and connection status
+  unenroll         Remove EZDR from this host
+  run              Run the client service (used by systemd)
+  version          Print version information
+  help             Show this help
+
+Run "ezdr <command> -h" for command options.
 `
 
 func main() {
@@ -21,13 +35,81 @@ func main() {
 		fmt.Fprint(os.Stderr, usage)
 		os.Exit(2)
 	}
-	switch os.Args[1] {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	cmd, args := os.Args[1], os.Args[2:]
+	var err error
+	switch cmd {
+	case "enroll":
+		err = enroll(ctx, args)
+	case "status":
+		err = client.Status(ctx, os.Stdout)
+	case "unenroll":
+		err = unenroll(ctx, args)
+	case "run":
+		err = client.Run(ctx)
 	case "version":
 		fmt.Println("ezdr", version.String())
 	case "help", "-h", "--help":
 		fmt.Print(usage)
 	default:
-		fmt.Fprintf(os.Stderr, "ezdr: unknown command %q\n\n%s", os.Args[1], usage)
+		fmt.Fprintf(os.Stderr, "ezdr: unknown command %q\n\n%s", cmd, usage)
 		os.Exit(2)
 	}
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			os.Exit(2)
+		}
+		if cmd == "run" {
+			slog.Error("client exited", "err", err)
+		} else {
+			fmt.Fprintf(os.Stderr, "\nezdr %s: %v\n", cmd, err)
+		}
+		os.Exit(1)
+	}
+}
+
+func enroll(ctx context.Context, args []string) error {
+	fs := flag.NewFlagSet("enroll", flag.ContinueOnError)
+	yes := fs.Bool("yes", false, "don't ask for confirmation")
+	fs.BoolVar(yes, "y", false, "shorthand for -yes")
+	force := fs.Bool("force", false, "replace an existing enrollment on this host")
+	fs.Usage = func() {
+		fmt.Fprintln(fs.Output(), "Usage: ezdr enroll [options] <token>")
+		fs.PrintDefaults()
+	}
+	if err := fs.Parse(reorder(args)); err != nil {
+		return err
+	}
+	if fs.NArg() != 1 {
+		fs.Usage()
+		return flag.ErrHelp
+	}
+	return client.Enroll(ctx, client.EnrollOptions{
+		Token: fs.Arg(0), Yes: *yes, Force: *force, Out: os.Stdout,
+	})
+}
+
+func unenroll(ctx context.Context, args []string) error {
+	fs := flag.NewFlagSet("unenroll", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	return client.Unenroll(ctx, os.Stdout)
+}
+
+// reorder moves flags before positional arguments, so both
+// "ezdr enroll --yes TOKEN" and "ezdr enroll TOKEN --yes" work.
+func reorder(args []string) []string {
+	var flags, rest []string
+	for _, a := range args {
+		if len(a) > 1 && a[0] == '-' {
+			flags = append(flags, a)
+		} else {
+			rest = append(rest, a)
+		}
+	}
+	return append(flags, rest...)
 }
