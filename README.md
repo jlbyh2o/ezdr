@@ -27,6 +27,12 @@ roadmap.
 - [Documentation index](docs/README.md)
 - [Architecture](docs/architecture.md)
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, commit
+conventions, and the DCO sign-off requirement. Report security issues as
+described in [SECURITY.md](SECURITY.md).
+
 ## License
 
 EZDR is licensed under the [GNU Affero General Public License v3.0](LICENSE).

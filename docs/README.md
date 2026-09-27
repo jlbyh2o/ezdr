@@ -8,6 +8,10 @@ and managing disaster recovery between Proxmox VE hosts that use ZFS storage.
 | Document | Description |
 | --- | --- |
 | [Architecture](architecture.md) | High-level design: components, data flows, security model, and roadmap. |
+| [Test lab](development/test-lab.md) | Recommended nested Proxmox VE lab for development and testing. |
+
+See also [CONTRIBUTING.md](../CONTRIBUTING.md) for development setup and
+conventions.
 
 ## Status
 

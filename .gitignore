@@ -1,6 +1,11 @@
 # Internal, deployment-specific notes. Never commit.
 /docs/internal/
 
+# Build output
+/bin/
+/dist/
+coverage.out
+
 # Secrets and local configuration
 .env
 .env.*
@@ -11,3 +16,8 @@
 *.p12
 *.wg.conf
 wg*.conf
+
+# Editors and OS files
+.idea/
+.vscode/
+.DS_Store

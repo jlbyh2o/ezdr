@@ -1,0 +1,9 @@
+services:
+  portal:
+    image: ghcr.io/jlbyh2o/ezdr-portal:latest
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:8080"

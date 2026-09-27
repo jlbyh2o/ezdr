@@ -1,0 +1,8 @@
+# Development toolchain. Run `mise install` to install these versions.
+# CI uses the same file, so keep versions here rather than in workflows.
+
+[tools]
+go = "1.27.1"
+node = "24.21.0"
+pnpm = "11.24.0"
+golangci-lint = "2.14.0"
