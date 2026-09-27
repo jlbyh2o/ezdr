@@ -2,6 +2,7 @@ import { Code, ConnectError, createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 
 import {
+  AlertService,
   AuditService,
   AuthService,
   HostService,
@@ -19,6 +20,7 @@ export const hostClient = createClient(HostService, transport)
 export const tokenClient = createClient(TokenService, transport)
 export const auditClient = createClient(AuditService, transport)
 export const planClient = createClient(PlanService, transport)
+export const alertClient = createClient(AlertService, transport)
 
 export function errorMessage(err: unknown): string {
   if (err instanceof ConnectError) {

@@ -10,6 +10,7 @@ import (
 	v1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/inventory/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -1026,11 +1027,302 @@ func (*AckActionResponse) Descriptor() ([]byte, []int) {
 	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{16}
 }
 
+type ReportReplicationRequest struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CollectedAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=collected_at,json=collectedAt,proto3" json:"collected_at,omitempty"`
+	Jobs        []*JobStatus           `protobuf:"bytes,2,rep,name=jobs,proto3" json:"jobs,omitempty"`
+	// Set when zrepl's status could not be read at all.
+	Error         string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReportReplicationRequest) Reset() {
+	*x = ReportReplicationRequest{}
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReportReplicationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReportReplicationRequest) ProtoMessage() {}
+
+func (x *ReportReplicationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReportReplicationRequest.ProtoReflect.Descriptor instead.
+func (*ReportReplicationRequest) Descriptor() ([]byte, []int) {
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ReportReplicationRequest) GetCollectedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CollectedAt
+	}
+	return nil
+}
+
+func (x *ReportReplicationRequest) GetJobs() []*JobStatus {
+	if x != nil {
+		return x.Jobs
+	}
+	return nil
+}
+
+func (x *ReportReplicationRequest) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+type ReportReplicationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReportReplicationResponse) Reset() {
+	*x = ReportReplicationResponse{}
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReportReplicationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReportReplicationResponse) ProtoMessage() {}
+
+func (x *ReportReplicationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReportReplicationResponse.ProtoReflect.Descriptor instead.
+func (*ReportReplicationResponse) Descriptor() ([]byte, []int) {
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{18}
+}
+
+// JobStatus is one of EZDR's zrepl jobs, from `zrepl status`.
+type JobStatus struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// "source" or "pull".
+	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	// State of the latest replication attempt (pull jobs), such as "done",
+	// "planning", or "replicating".
+	State             string                 `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`
+	AttemptStartedAt  *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=attempt_started_at,json=attemptStartedAt,proto3" json:"attempt_started_at,omitempty"`
+	AttemptFinishedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=attempt_finished_at,json=attemptFinishedAt,proto3" json:"attempt_finished_at,omitempty"`
+	// Job-level problems: planning, connection, snapshotting, or pruning
+	// errors.
+	Errors        []string         `protobuf:"bytes,6,rep,name=errors,proto3" json:"errors,omitempty"`
+	Datasets      []*DatasetStatus `protobuf:"bytes,7,rep,name=datasets,proto3" json:"datasets,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JobStatus) Reset() {
+	*x = JobStatus{}
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JobStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JobStatus) ProtoMessage() {}
+
+func (x *JobStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JobStatus.ProtoReflect.Descriptor instead.
+func (*JobStatus) Descriptor() ([]byte, []int) {
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *JobStatus) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *JobStatus) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *JobStatus) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+func (x *JobStatus) GetAttemptStartedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.AttemptStartedAt
+	}
+	return nil
+}
+
+func (x *JobStatus) GetAttemptFinishedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.AttemptFinishedAt
+	}
+	return nil
+}
+
+func (x *JobStatus) GetErrors() []string {
+	if x != nil {
+		return x.Errors
+	}
+	return nil
+}
+
+func (x *JobStatus) GetDatasets() []*DatasetStatus {
+	if x != nil {
+		return x.Datasets
+	}
+	return nil
+}
+
+type DatasetStatus struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Source dataset name on the primary.
+	Dataset string `protobuf:"bytes,1,opt,name=dataset,proto3" json:"dataset,omitempty"`
+	// Newest snapshot with the plan's prefix present on this host (for pull
+	// jobs: the newest replicated snapshot).
+	LatestSnapshot   string                 `protobuf:"bytes,2,opt,name=latest_snapshot,json=latestSnapshot,proto3" json:"latest_snapshot,omitempty"`
+	LatestSnapshotAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=latest_snapshot_at,json=latestSnapshotAt,proto3" json:"latest_snapshot_at,omitempty"`
+	// State in the latest attempt, such as "done" or "stepping".
+	State           string `protobuf:"bytes,4,opt,name=state,proto3" json:"state,omitempty"`
+	Error           string `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
+	BytesExpected   uint64 `protobuf:"varint,6,opt,name=bytes_expected,json=bytesExpected,proto3" json:"bytes_expected,omitempty"`
+	BytesReplicated uint64 `protobuf:"varint,7,opt,name=bytes_replicated,json=bytesReplicated,proto3" json:"bytes_replicated,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *DatasetStatus) Reset() {
+	*x = DatasetStatus{}
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DatasetStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DatasetStatus) ProtoMessage() {}
+
+func (x *DatasetStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DatasetStatus.ProtoReflect.Descriptor instead.
+func (*DatasetStatus) Descriptor() ([]byte, []int) {
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *DatasetStatus) GetDataset() string {
+	if x != nil {
+		return x.Dataset
+	}
+	return ""
+}
+
+func (x *DatasetStatus) GetLatestSnapshot() string {
+	if x != nil {
+		return x.LatestSnapshot
+	}
+	return ""
+}
+
+func (x *DatasetStatus) GetLatestSnapshotAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LatestSnapshotAt
+	}
+	return nil
+}
+
+func (x *DatasetStatus) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+func (x *DatasetStatus) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *DatasetStatus) GetBytesExpected() uint64 {
+	if x != nil {
+		return x.BytesExpected
+	}
+	return 0
+}
+
+func (x *DatasetStatus) GetBytesReplicated() uint64 {
+	if x != nil {
+		return x.BytesReplicated
+	}
+	return 0
+}
+
 var File_ezdr_client_v1_client_proto protoreflect.FileDescriptor
 
 const file_ezdr_client_v1_client_proto_rawDesc = "" +
 	"\n" +
-	"\x1bezdr/client/v1/client.proto\x12\x0eezdr.client.v1\x1a!ezdr/inventory/v1/inventory.proto\"9\n" +
+	"\x1bezdr/client/v1/client.proto\x12\x0eezdr.client.v1\x1a!ezdr/inventory/v1/inventory.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"9\n" +
 	"\x10SubscribeRequest\x12%\n" +
 	"\x0eclient_version\x18\x01 \x01(\tR\rclientVersion\"\xd0\x01\n" +
 	"\x11SubscribeResponse\x129\n" +
@@ -1092,12 +1384,34 @@ const file_ezdr_client_v1_client_proto_rawDesc = "" +
 	"\taction_id\x18\x01 \x01(\tR\bactionId\x12\x1c\n" +
 	"\tsucceeded\x18\x02 \x01(\bR\tsucceeded\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\"\x13\n" +
-	"\x11AckActionResponse2\xf4\x02\n" +
+	"\x11AckActionResponse\"\x9e\x01\n" +
+	"\x18ReportReplicationRequest\x12=\n" +
+	"\fcollected_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\vcollectedAt\x12-\n" +
+	"\x04jobs\x18\x02 \x03(\v2\x19.ezdr.client.v1.JobStatusR\x04jobs\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\x1b\n" +
+	"\x19ReportReplicationResponse\"\xb2\x02\n" +
+	"\tJobStatus\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\x12\x14\n" +
+	"\x05state\x18\x03 \x01(\tR\x05state\x12H\n" +
+	"\x12attempt_started_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x10attemptStartedAt\x12J\n" +
+	"\x13attempt_finished_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x11attemptFinishedAt\x12\x16\n" +
+	"\x06errors\x18\x06 \x03(\tR\x06errors\x129\n" +
+	"\bdatasets\x18\a \x03(\v2\x1d.ezdr.client.v1.DatasetStatusR\bdatasets\"\x9a\x02\n" +
+	"\rDatasetStatus\x12\x18\n" +
+	"\adataset\x18\x01 \x01(\tR\adataset\x12'\n" +
+	"\x0flatest_snapshot\x18\x02 \x01(\tR\x0elatestSnapshot\x12H\n" +
+	"\x12latest_snapshot_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x10latestSnapshotAt\x12\x14\n" +
+	"\x05state\x18\x04 \x01(\tR\x05state\x12\x14\n" +
+	"\x05error\x18\x05 \x01(\tR\x05error\x12%\n" +
+	"\x0ebytes_expected\x18\x06 \x01(\x04R\rbytesExpected\x12)\n" +
+	"\x10bytes_replicated\x18\a \x01(\x04R\x0fbytesReplicated2\xde\x03\n" +
 	"\rClientService\x12R\n" +
 	"\tSubscribe\x12 .ezdr.client.v1.SubscribeRequest\x1a!.ezdr.client.v1.SubscribeResponse0\x01\x12Y\n" +
 	"\fReportStatus\x12#.ezdr.client.v1.ReportStatusRequest\x1a$.ezdr.client.v1.ReportStatusResponse\x12b\n" +
 	"\x0fReportInventory\x12&.ezdr.client.v1.ReportInventoryRequest\x1a'.ezdr.client.v1.ReportInventoryResponse\x12P\n" +
-	"\tAckAction\x12 .ezdr.client.v1.AckActionRequest\x1a!.ezdr.client.v1.AckActionResponseB\xb9\x01\n" +
+	"\tAckAction\x12 .ezdr.client.v1.AckActionRequest\x1a!.ezdr.client.v1.AckActionResponse\x12h\n" +
+	"\x11ReportReplication\x12(.ezdr.client.v1.ReportReplicationRequest\x1a).ezdr.client.v1.ReportReplicationResponseB\xb9\x01\n" +
 	"\x12com.ezdr.client.v1B\vClientProtoP\x01Z<github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1;clientv1\xa2\x02\x03ECX\xaa\x02\x0eEzdr.Client.V1\xca\x02\x0eEzdr\\Client\\V1\xe2\x02\x1aEzdr\\Client\\V1\\GPBMetadata\xea\x02\x10Ezdr::Client::V1b\x06proto3"
 
 var (
@@ -1112,26 +1426,31 @@ func file_ezdr_client_v1_client_proto_rawDescGZIP() []byte {
 	return file_ezdr_client_v1_client_proto_rawDescData
 }
 
-var file_ezdr_client_v1_client_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_ezdr_client_v1_client_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_ezdr_client_v1_client_proto_goTypes = []any{
-	(*SubscribeRequest)(nil),        // 0: ezdr.client.v1.SubscribeRequest
-	(*SubscribeResponse)(nil),       // 1: ezdr.client.v1.SubscribeResponse
-	(*Action)(nil),                  // 2: ezdr.client.v1.Action
-	(*RefreshInventory)(nil),        // 3: ezdr.client.v1.RefreshInventory
-	(*Heartbeat)(nil),               // 4: ezdr.client.v1.Heartbeat
-	(*DesiredState)(nil),            // 5: ezdr.client.v1.DesiredState
-	(*Zrepl)(nil),                   // 6: ezdr.client.v1.Zrepl
-	(*Peer)(nil),                    // 7: ezdr.client.v1.Peer
-	(*SourceJob)(nil),               // 8: ezdr.client.v1.SourceJob
-	(*PullJob)(nil),                 // 9: ezdr.client.v1.PullJob
-	(*RetentionTier)(nil),           // 10: ezdr.client.v1.RetentionTier
-	(*ReportStatusRequest)(nil),     // 11: ezdr.client.v1.ReportStatusRequest
-	(*ReportStatusResponse)(nil),    // 12: ezdr.client.v1.ReportStatusResponse
-	(*ReportInventoryRequest)(nil),  // 13: ezdr.client.v1.ReportInventoryRequest
-	(*ReportInventoryResponse)(nil), // 14: ezdr.client.v1.ReportInventoryResponse
-	(*AckActionRequest)(nil),        // 15: ezdr.client.v1.AckActionRequest
-	(*AckActionResponse)(nil),       // 16: ezdr.client.v1.AckActionResponse
-	(*v1.Inventory)(nil),            // 17: ezdr.inventory.v1.Inventory
+	(*SubscribeRequest)(nil),          // 0: ezdr.client.v1.SubscribeRequest
+	(*SubscribeResponse)(nil),         // 1: ezdr.client.v1.SubscribeResponse
+	(*Action)(nil),                    // 2: ezdr.client.v1.Action
+	(*RefreshInventory)(nil),          // 3: ezdr.client.v1.RefreshInventory
+	(*Heartbeat)(nil),                 // 4: ezdr.client.v1.Heartbeat
+	(*DesiredState)(nil),              // 5: ezdr.client.v1.DesiredState
+	(*Zrepl)(nil),                     // 6: ezdr.client.v1.Zrepl
+	(*Peer)(nil),                      // 7: ezdr.client.v1.Peer
+	(*SourceJob)(nil),                 // 8: ezdr.client.v1.SourceJob
+	(*PullJob)(nil),                   // 9: ezdr.client.v1.PullJob
+	(*RetentionTier)(nil),             // 10: ezdr.client.v1.RetentionTier
+	(*ReportStatusRequest)(nil),       // 11: ezdr.client.v1.ReportStatusRequest
+	(*ReportStatusResponse)(nil),      // 12: ezdr.client.v1.ReportStatusResponse
+	(*ReportInventoryRequest)(nil),    // 13: ezdr.client.v1.ReportInventoryRequest
+	(*ReportInventoryResponse)(nil),   // 14: ezdr.client.v1.ReportInventoryResponse
+	(*AckActionRequest)(nil),          // 15: ezdr.client.v1.AckActionRequest
+	(*AckActionResponse)(nil),         // 16: ezdr.client.v1.AckActionResponse
+	(*ReportReplicationRequest)(nil),  // 17: ezdr.client.v1.ReportReplicationRequest
+	(*ReportReplicationResponse)(nil), // 18: ezdr.client.v1.ReportReplicationResponse
+	(*JobStatus)(nil),                 // 19: ezdr.client.v1.JobStatus
+	(*DatasetStatus)(nil),             // 20: ezdr.client.v1.DatasetStatus
+	(*v1.Inventory)(nil),              // 21: ezdr.inventory.v1.Inventory
+	(*timestamppb.Timestamp)(nil),     // 22: google.protobuf.Timestamp
 }
 var file_ezdr_client_v1_client_proto_depIdxs = []int32{
 	4,  // 0: ezdr.client.v1.SubscribeResponse.heartbeat:type_name -> ezdr.client.v1.Heartbeat
@@ -1145,20 +1464,28 @@ var file_ezdr_client_v1_client_proto_depIdxs = []int32{
 	7,  // 8: ezdr.client.v1.PullJob.peer:type_name -> ezdr.client.v1.Peer
 	10, // 9: ezdr.client.v1.PullJob.primary_retention:type_name -> ezdr.client.v1.RetentionTier
 	10, // 10: ezdr.client.v1.PullJob.dr_retention:type_name -> ezdr.client.v1.RetentionTier
-	17, // 11: ezdr.client.v1.ReportInventoryRequest.inventory:type_name -> ezdr.inventory.v1.Inventory
-	0,  // 12: ezdr.client.v1.ClientService.Subscribe:input_type -> ezdr.client.v1.SubscribeRequest
-	11, // 13: ezdr.client.v1.ClientService.ReportStatus:input_type -> ezdr.client.v1.ReportStatusRequest
-	13, // 14: ezdr.client.v1.ClientService.ReportInventory:input_type -> ezdr.client.v1.ReportInventoryRequest
-	15, // 15: ezdr.client.v1.ClientService.AckAction:input_type -> ezdr.client.v1.AckActionRequest
-	1,  // 16: ezdr.client.v1.ClientService.Subscribe:output_type -> ezdr.client.v1.SubscribeResponse
-	12, // 17: ezdr.client.v1.ClientService.ReportStatus:output_type -> ezdr.client.v1.ReportStatusResponse
-	14, // 18: ezdr.client.v1.ClientService.ReportInventory:output_type -> ezdr.client.v1.ReportInventoryResponse
-	16, // 19: ezdr.client.v1.ClientService.AckAction:output_type -> ezdr.client.v1.AckActionResponse
-	16, // [16:20] is the sub-list for method output_type
-	12, // [12:16] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	21, // 11: ezdr.client.v1.ReportInventoryRequest.inventory:type_name -> ezdr.inventory.v1.Inventory
+	22, // 12: ezdr.client.v1.ReportReplicationRequest.collected_at:type_name -> google.protobuf.Timestamp
+	19, // 13: ezdr.client.v1.ReportReplicationRequest.jobs:type_name -> ezdr.client.v1.JobStatus
+	22, // 14: ezdr.client.v1.JobStatus.attempt_started_at:type_name -> google.protobuf.Timestamp
+	22, // 15: ezdr.client.v1.JobStatus.attempt_finished_at:type_name -> google.protobuf.Timestamp
+	20, // 16: ezdr.client.v1.JobStatus.datasets:type_name -> ezdr.client.v1.DatasetStatus
+	22, // 17: ezdr.client.v1.DatasetStatus.latest_snapshot_at:type_name -> google.protobuf.Timestamp
+	0,  // 18: ezdr.client.v1.ClientService.Subscribe:input_type -> ezdr.client.v1.SubscribeRequest
+	11, // 19: ezdr.client.v1.ClientService.ReportStatus:input_type -> ezdr.client.v1.ReportStatusRequest
+	13, // 20: ezdr.client.v1.ClientService.ReportInventory:input_type -> ezdr.client.v1.ReportInventoryRequest
+	15, // 21: ezdr.client.v1.ClientService.AckAction:input_type -> ezdr.client.v1.AckActionRequest
+	17, // 22: ezdr.client.v1.ClientService.ReportReplication:input_type -> ezdr.client.v1.ReportReplicationRequest
+	1,  // 23: ezdr.client.v1.ClientService.Subscribe:output_type -> ezdr.client.v1.SubscribeResponse
+	12, // 24: ezdr.client.v1.ClientService.ReportStatus:output_type -> ezdr.client.v1.ReportStatusResponse
+	14, // 25: ezdr.client.v1.ClientService.ReportInventory:output_type -> ezdr.client.v1.ReportInventoryResponse
+	16, // 26: ezdr.client.v1.ClientService.AckAction:output_type -> ezdr.client.v1.AckActionResponse
+	18, // 27: ezdr.client.v1.ClientService.ReportReplication:output_type -> ezdr.client.v1.ReportReplicationResponse
+	23, // [23:28] is the sub-list for method output_type
+	18, // [18:23] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_ezdr_client_v1_client_proto_init() }
@@ -1180,7 +1507,7 @@ func file_ezdr_client_v1_client_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ezdr_client_v1_client_proto_rawDesc), len(file_ezdr_client_v1_client_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

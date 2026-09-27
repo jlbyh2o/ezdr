@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"sync"
+	"time"
 
 	"connectrpc.com/connect"
 
@@ -25,6 +26,8 @@ type applier struct {
 	wake      chan struct{}
 	lastGen   uint64
 	lastError string
+	// current is the zrepl configuration last applied successfully.
+	current *clientv1.Zrepl
 }
 
 func newApplier(api clientv1connect.ClientServiceClient, cert string) *applier {
@@ -76,6 +79,9 @@ func (a *applier) run(ctx context.Context) {
 		}
 		a.mu.Lock()
 		a.lastGen, a.lastError = ds.Generation, errText
+		if errText == "" {
+			a.current = ds.GetZrepl()
+		}
 		a.mu.Unlock()
 		a.report(ctx)
 	}
@@ -93,5 +99,31 @@ func (a *applier) report(ctx context.Context) {
 	req.ZreplVersion = a.zrepl.Version(ctx)
 	if _, err := a.api.ReportStatus(ctx, connect.NewRequest(req)); err != nil && ctx.Err() == nil {
 		slog.Warn("report status", "err", err)
+	}
+}
+
+// statusInterval is how often replication status is reported.
+const statusInterval = time.Minute
+
+// statusLoop reports the replication status of the applied pull jobs every
+// minute until ctx is canceled.
+func (a *applier) statusLoop(ctx context.Context) {
+	ticker := time.NewTicker(statusInterval)
+	defer ticker.Stop()
+	for {
+		a.mu.Lock()
+		z := a.current
+		a.mu.Unlock()
+		if len(z.GetPullJobs()) > 0 {
+			st := a.zrepl.Status(ctx, z)
+			if _, err := a.api.ReportReplication(ctx, connect.NewRequest(st)); err != nil && ctx.Err() == nil {
+				slog.Warn("report replication status", "err", err)
+			}
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
 	}
 }

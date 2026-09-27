@@ -140,6 +140,14 @@ func validateGeneral(spec *planv1.PlanSpec, ctx Context, is *issues) {
 			}
 		}
 	}
+	// Snapshots and pulls run on independent schedules, so replicated data is
+	// normally up to about two intervals old.
+	if spec.RpoAlertSeconds > 0 && spec.RpoAlertSeconds <= 2*spec.IntervalSeconds {
+		is.warnf(0, "the RPO alert threshold (%s) is at most twice the snapshot interval (%s); "+
+			"snapshots and replication run on independent schedules, so replicated data is normally up to "+
+			"about two intervals old and alerts would fire during normal operation",
+			Duration(spec.RpoAlertSeconds), Duration(spec.IntervalSeconds))
+	}
 	if len(spec.PrimaryRetention) > 0 && Span(spec.PrimaryRetention) < uint64(spec.IntervalSeconds) {
 		is.errorf(0, "the primary must keep snapshots for at least one snapshot interval")
 	}

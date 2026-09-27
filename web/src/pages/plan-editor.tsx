@@ -38,6 +38,7 @@ import {
 } from '@/gen/ezdr/plan/v1/plan_pb'
 import { type GetHostInventoryResponse, type Host, type Plan, PlanState } from '@/gen/ezdr/portal/v1/portal_pb'
 import { HostStatusPanel, PlanActions, StateBadge } from '@/pages/plan-actions'
+import { PlanStatusCard } from '@/pages/plan-status'
 import { errorMessage, hostClient, planClient } from '@/lib/api'
 import { drPresets, grid, primaryPresets, splitPeriod, units } from '@/lib/retention'
 import { PageHeader } from '@/pages/layout'
@@ -210,6 +211,7 @@ export function PlanEditorPage() {
       <ErrorAlert message={error} />
       <div className="grid items-start gap-4 lg:grid-cols-[1fr_320px]">
         <div className="grid gap-4">
+          {plan && <PlanStatusCard plan={plan} />}
           <GeneralCard spec={spec} hosts={hosts} update={update} updateAndSuggest={updateAndSuggest} />
           {primaryInv && (
             <GuestsCard spec={spec} inv={primaryInv} guestPlans={primary?.guestPlans ?? {}} planId={id} updateAndSuggest={updateAndSuggest} />
@@ -605,6 +607,23 @@ function ScheduleCard({ spec, update }: { spec: PlanSpec; update: Update }) {
               {m === 60 ? '1 hour' : `${m} min`}
             </Button>
           ))}
+        </div>
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="rpo-alert">RPO alert threshold (minutes)</Label>
+        <div className="flex items-center gap-2">
+          <Input
+            id="rpo-alert"
+            type="number"
+            min={1}
+            className="w-24"
+            placeholder={String(Math.round((spec.intervalSeconds * 3) / 60))}
+            value={spec.rpoAlertSeconds ? Math.round(spec.rpoAlertSeconds / 60) : ''}
+            onChange={(e) => update((s) => (s.rpoAlertSeconds = Math.max(0, Math.round(Number(e.target.value) * 60))))}
+          />
+          <span className="text-xs text-muted-foreground">
+            Alert when the newest replicated snapshot is older than this. Empty means 3× the snapshot interval.
+          </span>
         </div>
       </div>
       <RetentionEditor

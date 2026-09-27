@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react'
 import { Link } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
+import { HealthBadge } from '@/components/health-badge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -31,6 +32,7 @@ export function PlansPage() {
             <TableRow>
               <TableHead>Plan</TableHead>
               <TableHead>State</TableHead>
+              <TableHead>Health</TableHead>
               <TableHead>Primary → DR</TableHead>
               <TableHead>Guests</TableHead>
               <TableHead>Snapshots</TableHead>
@@ -47,6 +49,9 @@ export function PlansPage() {
                 </TableCell>
                 <TableCell>
                   <StateBadge state={p.state} pending={p.pendingChanges} />
+                </TableCell>
+                <TableCell>
+                  <HealthBadge state={p.health?.state} title={p.health?.message} />
                 </TableCell>
                 <TableCell className="text-sm">
                   {p.primaryHostname} → {p.drHostname}

@@ -6,13 +6,15 @@ import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegen
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Inventory } from "../../inventory/v1/inventory_pb";
 import { file_ezdr_inventory_v1_inventory } from "../../inventory/v1/inventory_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file ezdr/client/v1/client.proto.
  */
 export const file_ezdr_client_v1_client: GenFile = /*@__PURE__*/
-  fileDesc("ChtlemRyL2NsaWVudC92MS9jbGllbnQucHJvdG8SDmV6ZHIuY2xpZW50LnYxIioKEFN1YnNjcmliZVJlcXVlc3QSFgoOY2xpZW50X3ZlcnNpb24YASABKAkirwEKEVN1YnNjcmliZVJlc3BvbnNlEi4KCWhlYXJ0YmVhdBgBIAEoCzIZLmV6ZHIuY2xpZW50LnYxLkhlYXJ0YmVhdEgAEjUKDWRlc2lyZWRfc3RhdGUYAiABKAsyHC5lemRyLmNsaWVudC52MS5EZXNpcmVkU3RhdGVIABIoCgZhY3Rpb24YAyABKAsyFi5lemRyLmNsaWVudC52MS5BY3Rpb25IAEIJCgdtZXNzYWdlIlsKBkFjdGlvbhIKCgJpZBgBIAEoCRI9ChFyZWZyZXNoX2ludmVudG9yeRgCIAEoCzIgLmV6ZHIuY2xpZW50LnYxLlJlZnJlc2hJbnZlbnRvcnlIAEIGCgRraW5kIhIKEFJlZnJlc2hJbnZlbnRvcnkiCwoJSGVhcnRiZWF0IkgKDERlc2lyZWRTdGF0ZRISCgpnZW5lcmF0aW9uGAEgASgEEiQKBXpyZXBsGAIgASgLMhUuZXpkci5jbGllbnQudjEuWnJlcGwiYwoFWnJlcGwSLgoLc291cmNlX2pvYnMYASADKAsyGS5lemRyLmNsaWVudC52MS5Tb3VyY2VKb2ISKgoJcHVsbF9qb2JzGAIgAygLMhcuZXpkci5jbGllbnQudjEuUHVsbEpvYiItCgRQZWVyEgwKBG5hbWUYASABKAkSFwoPY2VydGlmaWNhdGVfcGVtGAIgASgJIq0BCglTb3VyY2VKb2ISDAoEbmFtZRgBIAEoCRIQCghkYXRhc2V0cxgCIAMoCRIXCg9zbmFwc2hvdF9wcmVmaXgYAyABKAkSGAoQaW50ZXJ2YWxfc2Vjb25kcxgEIAEoDRIWCg5saXN0ZW5fYWRkcmVzcxgFIAEoCRIiCgRwZWVyGAYgASgLMhQuZXpkci5jbGllbnQudjEuUGVlchIRCgllbmNyeXB0ZWQYByABKAgihwIKB1B1bGxKb2ISDAoEbmFtZRgBIAEoCRIPCgdhZGRyZXNzGAIgASgJEiIKBHBlZXIYAyABKAsyFC5lemRyLmNsaWVudC52MS5QZWVyEhcKD3JlY2VpdmVfZGF0YXNldBgEIAEoCRIYChBpbnRlcnZhbF9zZWNvbmRzGAUgASgNEhcKD3NuYXBzaG90X3ByZWZpeBgGIAEoCRI4ChFwcmltYXJ5X3JldGVudGlvbhgHIAMoCzIdLmV6ZHIuY2xpZW50LnYxLlJldGVudGlvblRpZXISMwoMZHJfcmV0ZW50aW9uGAggAygLMh0uZXpkci5jbGllbnQudjEuUmV0ZW50aW9uVGllciJICg1SZXRlbnRpb25UaWVyEg0KBWNvdW50GAEgASgNEhYKDnBlcmlvZF9zZWNvbmRzGAIgASgNEhAKCGtlZXBfYWxsGAMgASgIIpABChNSZXBvcnRTdGF0dXNSZXF1ZXN0EhYKDmNsaWVudF92ZXJzaW9uGAEgASgJEhoKEmFwcGxpZWRfZ2VuZXJhdGlvbhgCIAEoBBITCgthcHBseV9lcnJvchgDIAEoCRIZChF6cmVwbF9jZXJ0aWZpY2F0ZRgEIAEoCRIVCg16cmVwbF92ZXJzaW9uGAUgASgJIhYKFFJlcG9ydFN0YXR1c1Jlc3BvbnNlIkkKFlJlcG9ydEludmVudG9yeVJlcXVlc3QSLwoJaW52ZW50b3J5GAEgASgLMhwuZXpkci5pbnZlbnRvcnkudjEuSW52ZW50b3J5IhkKF1JlcG9ydEludmVudG9yeVJlc3BvbnNlIkkKEEFja0FjdGlvblJlcXVlc3QSEQoJYWN0aW9uX2lkGAEgASgJEhEKCXN1Y2NlZWRlZBgCIAEoCBIPCgdtZXNzYWdlGAMgASgJIhMKEUFja0FjdGlvblJlc3BvbnNlMvQCCg1DbGllbnRTZXJ2aWNlElIKCVN1YnNjcmliZRIgLmV6ZHIuY2xpZW50LnYxLlN1YnNjcmliZVJlcXVlc3QaIS5lemRyLmNsaWVudC52MS5TdWJzY3JpYmVSZXNwb25zZTABElkKDFJlcG9ydFN0YXR1cxIjLmV6ZHIuY2xpZW50LnYxLlJlcG9ydFN0YXR1c1JlcXVlc3QaJC5lemRyLmNsaWVudC52MS5SZXBvcnRTdGF0dXNSZXNwb25zZRJiCg9SZXBvcnRJbnZlbnRvcnkSJi5lemRyLmNsaWVudC52MS5SZXBvcnRJbnZlbnRvcnlSZXF1ZXN0GicuZXpkci5jbGllbnQudjEuUmVwb3J0SW52ZW50b3J5UmVzcG9uc2USUAoJQWNrQWN0aW9uEiAuZXpkci5jbGllbnQudjEuQWNrQWN0aW9uUmVxdWVzdBohLmV6ZHIuY2xpZW50LnYxLkFja0FjdGlvblJlc3BvbnNlQrkBChJjb20uZXpkci5jbGllbnQudjFCC0NsaWVudFByb3RvUAFaPGdpdGh1Yi5jb20vamxieWgyby9lemRyL2ludGVybmFsL2dlbi9lemRyL2NsaWVudC92MTtjbGllbnR2MaICA0VDWKoCDkV6ZHIuQ2xpZW50LlYxygIORXpkclxDbGllbnRcVjHiAhpFemRyXENsaWVudFxWMVxHUEJNZXRhZGF0YeoCEEV6ZHI6OkNsaWVudDo6VjFiBnByb3RvMw", [file_ezdr_inventory_v1_inventory]);
+  fileDesc("ChtlemRyL2NsaWVudC92MS9jbGllbnQucHJvdG8SDmV6ZHIuY2xpZW50LnYxIioKEFN1YnNjcmliZVJlcXVlc3QSFgoOY2xpZW50X3ZlcnNpb24YASABKAkirwEKEVN1YnNjcmliZVJlc3BvbnNlEi4KCWhlYXJ0YmVhdBgBIAEoCzIZLmV6ZHIuY2xpZW50LnYxLkhlYXJ0YmVhdEgAEjUKDWRlc2lyZWRfc3RhdGUYAiABKAsyHC5lemRyLmNsaWVudC52MS5EZXNpcmVkU3RhdGVIABIoCgZhY3Rpb24YAyABKAsyFi5lemRyLmNsaWVudC52MS5BY3Rpb25IAEIJCgdtZXNzYWdlIlsKBkFjdGlvbhIKCgJpZBgBIAEoCRI9ChFyZWZyZXNoX2ludmVudG9yeRgCIAEoCzIgLmV6ZHIuY2xpZW50LnYxLlJlZnJlc2hJbnZlbnRvcnlIAEIGCgRraW5kIhIKEFJlZnJlc2hJbnZlbnRvcnkiCwoJSGVhcnRiZWF0IkgKDERlc2lyZWRTdGF0ZRISCgpnZW5lcmF0aW9uGAEgASgEEiQKBXpyZXBsGAIgASgLMhUuZXpkci5jbGllbnQudjEuWnJlcGwiYwoFWnJlcGwSLgoLc291cmNlX2pvYnMYASADKAsyGS5lemRyLmNsaWVudC52MS5Tb3VyY2VKb2ISKgoJcHVsbF9qb2JzGAIgAygLMhcuZXpkci5jbGllbnQudjEuUHVsbEpvYiItCgRQZWVyEgwKBG5hbWUYASABKAkSFwoPY2VydGlmaWNhdGVfcGVtGAIgASgJIq0BCglTb3VyY2VKb2ISDAoEbmFtZRgBIAEoCRIQCghkYXRhc2V0cxgCIAMoCRIXCg9zbmFwc2hvdF9wcmVmaXgYAyABKAkSGAoQaW50ZXJ2YWxfc2Vjb25kcxgEIAEoDRIWCg5saXN0ZW5fYWRkcmVzcxgFIAEoCRIiCgRwZWVyGAYgASgLMhQuZXpkci5jbGllbnQudjEuUGVlchIRCgllbmNyeXB0ZWQYByABKAgihwIKB1B1bGxKb2ISDAoEbmFtZRgBIAEoCRIPCgdhZGRyZXNzGAIgASgJEiIKBHBlZXIYAyABKAsyFC5lemRyLmNsaWVudC52MS5QZWVyEhcKD3JlY2VpdmVfZGF0YXNldBgEIAEoCRIYChBpbnRlcnZhbF9zZWNvbmRzGAUgASgNEhcKD3NuYXBzaG90X3ByZWZpeBgGIAEoCRI4ChFwcmltYXJ5X3JldGVudGlvbhgHIAMoCzIdLmV6ZHIuY2xpZW50LnYxLlJldGVudGlvblRpZXISMwoMZHJfcmV0ZW50aW9uGAggAygLMh0uZXpkci5jbGllbnQudjEuUmV0ZW50aW9uVGllciJICg1SZXRlbnRpb25UaWVyEg0KBWNvdW50GAEgASgNEhYKDnBlcmlvZF9zZWNvbmRzGAIgASgNEhAKCGtlZXBfYWxsGAMgASgIIpABChNSZXBvcnRTdGF0dXNSZXF1ZXN0EhYKDmNsaWVudF92ZXJzaW9uGAEgASgJEhoKEmFwcGxpZWRfZ2VuZXJhdGlvbhgCIAEoBBITCgthcHBseV9lcnJvchgDIAEoCRIZChF6cmVwbF9jZXJ0aWZpY2F0ZRgEIAEoCRIVCg16cmVwbF92ZXJzaW9uGAUgASgJIhYKFFJlcG9ydFN0YXR1c1Jlc3BvbnNlIkkKFlJlcG9ydEludmVudG9yeVJlcXVlc3QSLwoJaW52ZW50b3J5GAEgASgLMhwuZXpkci5pbnZlbnRvcnkudjEuSW52ZW50b3J5IhkKF1JlcG9ydEludmVudG9yeVJlc3BvbnNlIkkKEEFja0FjdGlvblJlcXVlc3QSEQoJYWN0aW9uX2lkGAEgASgJEhEKCXN1Y2NlZWRlZBgCIAEoCBIPCgdtZXNzYWdlGAMgASgJIhMKEUFja0FjdGlvblJlc3BvbnNlIoQBChhSZXBvcnRSZXBsaWNhdGlvblJlcXVlc3QSMAoMY29sbGVjdGVkX2F0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBInCgRqb2JzGAIgAygLMhkuZXpkci5jbGllbnQudjEuSm9iU3RhdHVzEg0KBWVycm9yGAMgASgJIhsKGVJlcG9ydFJlcGxpY2F0aW9uUmVzcG9uc2Ui6AEKCUpvYlN0YXR1cxIMCgRuYW1lGAEgASgJEgwKBHR5cGUYAiABKAkSDQoFc3RhdGUYAyABKAkSNgoSYXR0ZW1wdF9zdGFydGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI3ChNhdHRlbXB0X2ZpbmlzaGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZlcnJvcnMYBiADKAkSLwoIZGF0YXNldHMYByADKAsyHS5lemRyLmNsaWVudC52MS5EYXRhc2V0U3RhdHVzIsEBCg1EYXRhc2V0U3RhdHVzEg8KB2RhdGFzZXQYASABKAkSFwoPbGF0ZXN0X3NuYXBzaG90GAIgASgJEjYKEmxhdGVzdF9zbmFwc2hvdF9hdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDQoFc3RhdGUYBCABKAkSDQoFZXJyb3IYBSABKAkSFgoOYnl0ZXNfZXhwZWN0ZWQYBiABKAQSGAoQYnl0ZXNfcmVwbGljYXRlZBgHIAEoBDLeAwoNQ2xpZW50U2VydmljZRJSCglTdWJzY3JpYmUSIC5lemRyLmNsaWVudC52MS5TdWJzY3JpYmVSZXF1ZXN0GiEuZXpkci5jbGllbnQudjEuU3Vic2NyaWJlUmVzcG9uc2UwARJZCgxSZXBvcnRTdGF0dXMSIy5lemRyLmNsaWVudC52MS5SZXBvcnRTdGF0dXNSZXF1ZXN0GiQuZXpkci5jbGllbnQudjEuUmVwb3J0U3RhdHVzUmVzcG9uc2USYgoPUmVwb3J0SW52ZW50b3J5EiYuZXpkci5jbGllbnQudjEuUmVwb3J0SW52ZW50b3J5UmVxdWVzdBonLmV6ZHIuY2xpZW50LnYxLlJlcG9ydEludmVudG9yeVJlc3BvbnNlElAKCUFja0FjdGlvbhIgLmV6ZHIuY2xpZW50LnYxLkFja0FjdGlvblJlcXVlc3QaIS5lemRyLmNsaWVudC52MS5BY2tBY3Rpb25SZXNwb25zZRJoChFSZXBvcnRSZXBsaWNhdGlvbhIoLmV6ZHIuY2xpZW50LnYxLlJlcG9ydFJlcGxpY2F0aW9uUmVxdWVzdBopLmV6ZHIuY2xpZW50LnYxLlJlcG9ydFJlcGxpY2F0aW9uUmVzcG9uc2VCuQEKEmNvbS5lemRyLmNsaWVudC52MUILQ2xpZW50UHJvdG9QAVo8Z2l0aHViLmNvbS9qbGJ5aDJvL2V6ZHIvaW50ZXJuYWwvZ2VuL2V6ZHIvY2xpZW50L3YxO2NsaWVudHYxogIDRUNYqgIORXpkci5DbGllbnQuVjHKAg5FemRyXENsaWVudFxWMeICGkV6ZHJcQ2xpZW50XFYxXEdQQk1ldGFkYXRh6gIQRXpkcjo6Q2xpZW50OjpWMWIGcHJvdG8z", [file_ezdr_inventory_v1_inventory, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message ezdr.client.v1.SubscribeRequest
@@ -469,6 +471,159 @@ export const AckActionResponseSchema: GenMessage<AckActionResponse> = /*@__PURE_
   messageDesc(file_ezdr_client_v1_client, 16);
 
 /**
+ * @generated from message ezdr.client.v1.ReportReplicationRequest
+ */
+export type ReportReplicationRequest = Message<"ezdr.client.v1.ReportReplicationRequest"> & {
+  /**
+   * @generated from field: google.protobuf.Timestamp collected_at = 1;
+   */
+  collectedAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: repeated ezdr.client.v1.JobStatus jobs = 2;
+   */
+  jobs: JobStatus[];
+
+  /**
+   * Set when zrepl's status could not be read at all.
+   *
+   * @generated from field: string error = 3;
+   */
+  error: string;
+};
+
+/**
+ * Describes the message ezdr.client.v1.ReportReplicationRequest.
+ * Use `create(ReportReplicationRequestSchema)` to create a new message.
+ */
+export const ReportReplicationRequestSchema: GenMessage<ReportReplicationRequest> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 17);
+
+/**
+ * @generated from message ezdr.client.v1.ReportReplicationResponse
+ */
+export type ReportReplicationResponse = Message<"ezdr.client.v1.ReportReplicationResponse"> & {
+};
+
+/**
+ * Describes the message ezdr.client.v1.ReportReplicationResponse.
+ * Use `create(ReportReplicationResponseSchema)` to create a new message.
+ */
+export const ReportReplicationResponseSchema: GenMessage<ReportReplicationResponse> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 18);
+
+/**
+ * JobStatus is one of EZDR's zrepl jobs, from `zrepl status`.
+ *
+ * @generated from message ezdr.client.v1.JobStatus
+ */
+export type JobStatus = Message<"ezdr.client.v1.JobStatus"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * "source" or "pull".
+   *
+   * @generated from field: string type = 2;
+   */
+  type: string;
+
+  /**
+   * State of the latest replication attempt (pull jobs), such as "done",
+   * "planning", or "replicating".
+   *
+   * @generated from field: string state = 3;
+   */
+  state: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp attempt_started_at = 4;
+   */
+  attemptStartedAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp attempt_finished_at = 5;
+   */
+  attemptFinishedAt?: Timestamp | undefined;
+
+  /**
+   * Job-level problems: planning, connection, snapshotting, or pruning
+   * errors.
+   *
+   * @generated from field: repeated string errors = 6;
+   */
+  errors: string[];
+
+  /**
+   * @generated from field: repeated ezdr.client.v1.DatasetStatus datasets = 7;
+   */
+  datasets: DatasetStatus[];
+};
+
+/**
+ * Describes the message ezdr.client.v1.JobStatus.
+ * Use `create(JobStatusSchema)` to create a new message.
+ */
+export const JobStatusSchema: GenMessage<JobStatus> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 19);
+
+/**
+ * @generated from message ezdr.client.v1.DatasetStatus
+ */
+export type DatasetStatus = Message<"ezdr.client.v1.DatasetStatus"> & {
+  /**
+   * Source dataset name on the primary.
+   *
+   * @generated from field: string dataset = 1;
+   */
+  dataset: string;
+
+  /**
+   * Newest snapshot with the plan's prefix present on this host (for pull
+   * jobs: the newest replicated snapshot).
+   *
+   * @generated from field: string latest_snapshot = 2;
+   */
+  latestSnapshot: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp latest_snapshot_at = 3;
+   */
+  latestSnapshotAt?: Timestamp | undefined;
+
+  /**
+   * State in the latest attempt, such as "done" or "stepping".
+   *
+   * @generated from field: string state = 4;
+   */
+  state: string;
+
+  /**
+   * @generated from field: string error = 5;
+   */
+  error: string;
+
+  /**
+   * @generated from field: uint64 bytes_expected = 6;
+   */
+  bytesExpected: bigint;
+
+  /**
+   * @generated from field: uint64 bytes_replicated = 7;
+   */
+  bytesReplicated: bigint;
+};
+
+/**
+ * Describes the message ezdr.client.v1.DatasetStatus.
+ * Use `create(DatasetStatusSchema)` to create a new message.
+ */
+export const DatasetStatusSchema: GenMessage<DatasetStatus> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 20);
+
+/**
  * ClientService is served only on the portal's tunnel listener. The portal
  * identifies the calling host by its tunnel source address.
  *
@@ -515,6 +670,16 @@ export const ClientService: GenService<{
     methodKind: "unary";
     input: typeof AckActionRequestSchema;
     output: typeof AckActionResponseSchema;
+  },
+  /**
+   * ReportReplication reports the status of EZDR's zrepl jobs on the host.
+   *
+   * @generated from rpc ezdr.client.v1.ClientService.ReportReplication
+   */
+  reportReplication: {
+    methodKind: "unary";
+    input: typeof ReportReplicationRequestSchema;
+    output: typeof ReportReplicationResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_ezdr_client_v1_client, 0);

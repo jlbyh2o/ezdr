@@ -33,6 +33,8 @@ const (
 	AuditServiceName = "ezdr.portal.v1.AuditService"
 	// PlanServiceName is the fully-qualified name of the PlanService service.
 	PlanServiceName = "ezdr.portal.v1.PlanService"
+	// AlertServiceName is the fully-qualified name of the AlertService service.
+	AlertServiceName = "ezdr.portal.v1.AlertService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -113,6 +115,20 @@ const (
 	// PlanServiceDeactivatePlanProcedure is the fully-qualified name of the PlanService's
 	// DeactivatePlan RPC.
 	PlanServiceDeactivatePlanProcedure = "/ezdr.portal.v1.PlanService/DeactivatePlan"
+	// PlanServiceGetPlanStatusProcedure is the fully-qualified name of the PlanService's GetPlanStatus
+	// RPC.
+	PlanServiceGetPlanStatusProcedure = "/ezdr.portal.v1.PlanService/GetPlanStatus"
+	// AlertServiceGetAlertSettingsProcedure is the fully-qualified name of the AlertService's
+	// GetAlertSettings RPC.
+	AlertServiceGetAlertSettingsProcedure = "/ezdr.portal.v1.AlertService/GetAlertSettings"
+	// AlertServiceUpdateAlertSettingsProcedure is the fully-qualified name of the AlertService's
+	// UpdateAlertSettings RPC.
+	AlertServiceUpdateAlertSettingsProcedure = "/ezdr.portal.v1.AlertService/UpdateAlertSettings"
+	// AlertServiceSendTestAlertProcedure is the fully-qualified name of the AlertService's
+	// SendTestAlert RPC.
+	AlertServiceSendTestAlertProcedure = "/ezdr.portal.v1.AlertService/SendTestAlert"
+	// AlertServiceListAlertsProcedure is the fully-qualified name of the AlertService's ListAlerts RPC.
+	AlertServiceListAlertsProcedure = "/ezdr.portal.v1.AlertService/ListAlerts"
 )
 
 // SetupServiceClient is a client for the ezdr.portal.v1.SetupService service.
@@ -726,6 +742,8 @@ type PlanServiceClient interface {
 	// DeactivatePlan removes the plan's jobs from its hosts and returns it to
 	// draft. Replicas and snapshots are kept.
 	DeactivatePlan(context.Context, *connect.Request[v1.DeactivatePlanRequest]) (*connect.Response[v1.DeactivatePlanResponse], error)
+	// GetPlanStatus returns an active plan's replication health.
+	GetPlanStatus(context.Context, *connect.Request[v1.GetPlanStatusRequest]) (*connect.Response[v1.GetPlanStatusResponse], error)
 }
 
 // NewPlanServiceClient constructs a client for the ezdr.portal.v1.PlanService service. By default,
@@ -823,6 +841,12 @@ func NewPlanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(planServiceMethods.ByName("DeactivatePlan")),
 			connect.WithClientOptions(opts...),
 		),
+		getPlanStatus: connect.NewClient[v1.GetPlanStatusRequest, v1.GetPlanStatusResponse](
+			httpClient,
+			baseURL+PlanServiceGetPlanStatusProcedure,
+			connect.WithSchema(planServiceMethods.ByName("GetPlanStatus")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -842,6 +866,7 @@ type planServiceClient struct {
 	pausePlan          *connect.Client[v1.PausePlanRequest, v1.PausePlanResponse]
 	resumePlan         *connect.Client[v1.ResumePlanRequest, v1.ResumePlanResponse]
 	deactivatePlan     *connect.Client[v1.DeactivatePlanRequest, v1.DeactivatePlanResponse]
+	getPlanStatus      *connect.Client[v1.GetPlanStatusRequest, v1.GetPlanStatusResponse]
 }
 
 // ListPlans calls ezdr.portal.v1.PlanService.ListPlans.
@@ -914,6 +939,11 @@ func (c *planServiceClient) DeactivatePlan(ctx context.Context, req *connect.Req
 	return c.deactivatePlan.CallUnary(ctx, req)
 }
 
+// GetPlanStatus calls ezdr.portal.v1.PlanService.GetPlanStatus.
+func (c *planServiceClient) GetPlanStatus(ctx context.Context, req *connect.Request[v1.GetPlanStatusRequest]) (*connect.Response[v1.GetPlanStatusResponse], error) {
+	return c.getPlanStatus.CallUnary(ctx, req)
+}
+
 // PlanServiceHandler is an implementation of the ezdr.portal.v1.PlanService service.
 type PlanServiceHandler interface {
 	ListPlans(context.Context, *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error)
@@ -939,6 +969,8 @@ type PlanServiceHandler interface {
 	// DeactivatePlan removes the plan's jobs from its hosts and returns it to
 	// draft. Replicas and snapshots are kept.
 	DeactivatePlan(context.Context, *connect.Request[v1.DeactivatePlanRequest]) (*connect.Response[v1.DeactivatePlanResponse], error)
+	// GetPlanStatus returns an active plan's replication health.
+	GetPlanStatus(context.Context, *connect.Request[v1.GetPlanStatusRequest]) (*connect.Response[v1.GetPlanStatusResponse], error)
 }
 
 // NewPlanServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -1032,6 +1064,12 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(planServiceMethods.ByName("DeactivatePlan")),
 		connect.WithHandlerOptions(opts...),
 	)
+	planServiceGetPlanStatusHandler := connect.NewUnaryHandler(
+		PlanServiceGetPlanStatusProcedure,
+		svc.GetPlanStatus,
+		connect.WithSchema(planServiceMethods.ByName("GetPlanStatus")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/ezdr.portal.v1.PlanService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PlanServiceListPlansProcedure:
@@ -1062,6 +1100,8 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 			planServiceResumePlanHandler.ServeHTTP(w, r)
 		case PlanServiceDeactivatePlanProcedure:
 			planServiceDeactivatePlanHandler.ServeHTTP(w, r)
+		case PlanServiceGetPlanStatusProcedure:
+			planServiceGetPlanStatusHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1125,4 +1165,158 @@ func (UnimplementedPlanServiceHandler) ResumePlan(context.Context, *connect.Requ
 
 func (UnimplementedPlanServiceHandler) DeactivatePlan(context.Context, *connect.Request[v1.DeactivatePlanRequest]) (*connect.Response[v1.DeactivatePlanResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.DeactivatePlan is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) GetPlanStatus(context.Context, *connect.Request[v1.GetPlanStatusRequest]) (*connect.Response[v1.GetPlanStatusResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.GetPlanStatus is not implemented"))
+}
+
+// AlertServiceClient is a client for the ezdr.portal.v1.AlertService service.
+type AlertServiceClient interface {
+	GetAlertSettings(context.Context, *connect.Request[v1.GetAlertSettingsRequest]) (*connect.Response[v1.GetAlertSettingsResponse], error)
+	UpdateAlertSettings(context.Context, *connect.Request[v1.UpdateAlertSettingsRequest]) (*connect.Response[v1.UpdateAlertSettingsResponse], error)
+	// SendTestAlert sends a test notification to every configured channel.
+	SendTestAlert(context.Context, *connect.Request[v1.SendTestAlertRequest]) (*connect.Response[v1.SendTestAlertResponse], error)
+	ListAlerts(context.Context, *connect.Request[v1.ListAlertsRequest]) (*connect.Response[v1.ListAlertsResponse], error)
+}
+
+// NewAlertServiceClient constructs a client for the ezdr.portal.v1.AlertService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewAlertServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) AlertServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	alertServiceMethods := v1.File_ezdr_portal_v1_portal_proto.Services().ByName("AlertService").Methods()
+	return &alertServiceClient{
+		getAlertSettings: connect.NewClient[v1.GetAlertSettingsRequest, v1.GetAlertSettingsResponse](
+			httpClient,
+			baseURL+AlertServiceGetAlertSettingsProcedure,
+			connect.WithSchema(alertServiceMethods.ByName("GetAlertSettings")),
+			connect.WithClientOptions(opts...),
+		),
+		updateAlertSettings: connect.NewClient[v1.UpdateAlertSettingsRequest, v1.UpdateAlertSettingsResponse](
+			httpClient,
+			baseURL+AlertServiceUpdateAlertSettingsProcedure,
+			connect.WithSchema(alertServiceMethods.ByName("UpdateAlertSettings")),
+			connect.WithClientOptions(opts...),
+		),
+		sendTestAlert: connect.NewClient[v1.SendTestAlertRequest, v1.SendTestAlertResponse](
+			httpClient,
+			baseURL+AlertServiceSendTestAlertProcedure,
+			connect.WithSchema(alertServiceMethods.ByName("SendTestAlert")),
+			connect.WithClientOptions(opts...),
+		),
+		listAlerts: connect.NewClient[v1.ListAlertsRequest, v1.ListAlertsResponse](
+			httpClient,
+			baseURL+AlertServiceListAlertsProcedure,
+			connect.WithSchema(alertServiceMethods.ByName("ListAlerts")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// alertServiceClient implements AlertServiceClient.
+type alertServiceClient struct {
+	getAlertSettings    *connect.Client[v1.GetAlertSettingsRequest, v1.GetAlertSettingsResponse]
+	updateAlertSettings *connect.Client[v1.UpdateAlertSettingsRequest, v1.UpdateAlertSettingsResponse]
+	sendTestAlert       *connect.Client[v1.SendTestAlertRequest, v1.SendTestAlertResponse]
+	listAlerts          *connect.Client[v1.ListAlertsRequest, v1.ListAlertsResponse]
+}
+
+// GetAlertSettings calls ezdr.portal.v1.AlertService.GetAlertSettings.
+func (c *alertServiceClient) GetAlertSettings(ctx context.Context, req *connect.Request[v1.GetAlertSettingsRequest]) (*connect.Response[v1.GetAlertSettingsResponse], error) {
+	return c.getAlertSettings.CallUnary(ctx, req)
+}
+
+// UpdateAlertSettings calls ezdr.portal.v1.AlertService.UpdateAlertSettings.
+func (c *alertServiceClient) UpdateAlertSettings(ctx context.Context, req *connect.Request[v1.UpdateAlertSettingsRequest]) (*connect.Response[v1.UpdateAlertSettingsResponse], error) {
+	return c.updateAlertSettings.CallUnary(ctx, req)
+}
+
+// SendTestAlert calls ezdr.portal.v1.AlertService.SendTestAlert.
+func (c *alertServiceClient) SendTestAlert(ctx context.Context, req *connect.Request[v1.SendTestAlertRequest]) (*connect.Response[v1.SendTestAlertResponse], error) {
+	return c.sendTestAlert.CallUnary(ctx, req)
+}
+
+// ListAlerts calls ezdr.portal.v1.AlertService.ListAlerts.
+func (c *alertServiceClient) ListAlerts(ctx context.Context, req *connect.Request[v1.ListAlertsRequest]) (*connect.Response[v1.ListAlertsResponse], error) {
+	return c.listAlerts.CallUnary(ctx, req)
+}
+
+// AlertServiceHandler is an implementation of the ezdr.portal.v1.AlertService service.
+type AlertServiceHandler interface {
+	GetAlertSettings(context.Context, *connect.Request[v1.GetAlertSettingsRequest]) (*connect.Response[v1.GetAlertSettingsResponse], error)
+	UpdateAlertSettings(context.Context, *connect.Request[v1.UpdateAlertSettingsRequest]) (*connect.Response[v1.UpdateAlertSettingsResponse], error)
+	// SendTestAlert sends a test notification to every configured channel.
+	SendTestAlert(context.Context, *connect.Request[v1.SendTestAlertRequest]) (*connect.Response[v1.SendTestAlertResponse], error)
+	ListAlerts(context.Context, *connect.Request[v1.ListAlertsRequest]) (*connect.Response[v1.ListAlertsResponse], error)
+}
+
+// NewAlertServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewAlertServiceHandler(svc AlertServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	alertServiceMethods := v1.File_ezdr_portal_v1_portal_proto.Services().ByName("AlertService").Methods()
+	alertServiceGetAlertSettingsHandler := connect.NewUnaryHandler(
+		AlertServiceGetAlertSettingsProcedure,
+		svc.GetAlertSettings,
+		connect.WithSchema(alertServiceMethods.ByName("GetAlertSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
+	alertServiceUpdateAlertSettingsHandler := connect.NewUnaryHandler(
+		AlertServiceUpdateAlertSettingsProcedure,
+		svc.UpdateAlertSettings,
+		connect.WithSchema(alertServiceMethods.ByName("UpdateAlertSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
+	alertServiceSendTestAlertHandler := connect.NewUnaryHandler(
+		AlertServiceSendTestAlertProcedure,
+		svc.SendTestAlert,
+		connect.WithSchema(alertServiceMethods.ByName("SendTestAlert")),
+		connect.WithHandlerOptions(opts...),
+	)
+	alertServiceListAlertsHandler := connect.NewUnaryHandler(
+		AlertServiceListAlertsProcedure,
+		svc.ListAlerts,
+		connect.WithSchema(alertServiceMethods.ByName("ListAlerts")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/ezdr.portal.v1.AlertService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case AlertServiceGetAlertSettingsProcedure:
+			alertServiceGetAlertSettingsHandler.ServeHTTP(w, r)
+		case AlertServiceUpdateAlertSettingsProcedure:
+			alertServiceUpdateAlertSettingsHandler.ServeHTTP(w, r)
+		case AlertServiceSendTestAlertProcedure:
+			alertServiceSendTestAlertHandler.ServeHTTP(w, r)
+		case AlertServiceListAlertsProcedure:
+			alertServiceListAlertsHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedAlertServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedAlertServiceHandler struct{}
+
+func (UnimplementedAlertServiceHandler) GetAlertSettings(context.Context, *connect.Request[v1.GetAlertSettingsRequest]) (*connect.Response[v1.GetAlertSettingsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.AlertService.GetAlertSettings is not implemented"))
+}
+
+func (UnimplementedAlertServiceHandler) UpdateAlertSettings(context.Context, *connect.Request[v1.UpdateAlertSettingsRequest]) (*connect.Response[v1.UpdateAlertSettingsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.AlertService.UpdateAlertSettings is not implemented"))
+}
+
+func (UnimplementedAlertServiceHandler) SendTestAlert(context.Context, *connect.Request[v1.SendTestAlertRequest]) (*connect.Response[v1.SendTestAlertResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.AlertService.SendTestAlert is not implemented"))
+}
+
+func (UnimplementedAlertServiceHandler) ListAlerts(context.Context, *connect.Request[v1.ListAlertsRequest]) (*connect.Response[v1.ListAlertsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.AlertService.ListAlerts is not implemented"))
 }

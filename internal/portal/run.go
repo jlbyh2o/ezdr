@@ -111,6 +111,7 @@ func Run(ctx context.Context, cfg Config, ui fs.FS) error {
 	}()
 	go func() { errc <- private.Serve(tunnelLn) }()
 	go cleanupSessions(ctx, st)
+	go api.NewAlertEngine(d).Run(ctx)
 
 	select {
 	case err := <-errc:

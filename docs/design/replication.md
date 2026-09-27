@@ -260,7 +260,7 @@ the initial replication's progress.
 
 | Alert | Fires when | Default |
 | --- | --- | --- |
-| RPO exceeded | The RPO age exceeds the plan's threshold | 3× the snapshot interval (configurable per plan) |
+| RPO exceeded | The RPO age exceeds the plan's threshold | 3× the snapshot interval (configurable per plan). Snapshots and pulls run on independent schedules, so replicated data is normally up to about 2× the interval old; lower thresholds get a validation warning. |
 | Replication failing | A job reports errors for two consecutive runs | — |
 | Host offline | A host with active plans has had no command stream for 5 minutes | — |
 | Activation or takeover failed | A step fails | — |

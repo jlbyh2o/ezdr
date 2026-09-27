@@ -276,8 +276,13 @@ func (s PlanService) ListPlans(ctx context.Context, _ *connect.Request[portalv1.
 			return nil, internalError(err)
 		}
 		errs, warns := plan.Counts(issues)
+		health, err := s.planHealth(ctx, sp)
+		if err != nil {
+			return nil, internalError(err)
+		}
 		resp.Plans = append(resp.Plans, &portalv1.PlanSummary{
-			Id: p.Id, Name: p.Spec.Name,
+			Health: health.Health,
+			Id:     p.Id, Name: p.Spec.Name,
 			PrimaryHostname: names[p.Spec.PrimaryHostId], DrHostname: names[p.Spec.DrHostId],
 			GuestCount:      uint32(len(p.Spec.Guests)), //nolint:gosec // small counts
 			IntervalSeconds: p.Spec.IntervalSeconds,

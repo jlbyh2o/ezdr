@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import { ErrorAlert } from '@/components/error-alert'
 import type { User } from '@/gen/ezdr/portal/v1/portal_pb'
 import { authClient, errorMessage, isUnauthenticated, setupClient } from '@/lib/api'
+import { AlertsPage } from '@/pages/alerts'
 import { AuditPage } from '@/pages/audit'
 import { HostDetailPage } from '@/pages/host-detail'
 import { HostsPage } from '@/pages/hosts'
@@ -11,6 +12,7 @@ import { Layout } from '@/pages/layout'
 import { LoginPage } from '@/pages/login'
 import { PlanEditorPage } from '@/pages/plan-editor'
 import { PlansPage } from '@/pages/plans'
+import { SettingsPage } from '@/pages/settings'
 import { SetupPage } from '@/pages/setup'
 import { TokensPage } from '@/pages/tokens'
 
@@ -74,7 +76,9 @@ function App() {
               <Route path="/plans/new" element={<PlanEditorPage />} />
               <Route path="/plans/:id" element={<PlanEditorPage key="edit" />} />
               <Route path="/tokens" element={<TokensPage />} />
+              <Route path="/alerts" element={<AlertsPage />} />
               <Route path="/audit" element={<AuditPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/hosts" replace />} />
             </Route>
           </Routes>

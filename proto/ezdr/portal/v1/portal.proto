@@ -246,6 +246,148 @@ service PlanService {
   // DeactivatePlan removes the plan's jobs from its hosts and returns it to
   // draft. Replicas and snapshots are kept.
   rpc DeactivatePlan(DeactivatePlanRequest) returns (DeactivatePlanResponse);
+  // GetPlanStatus returns an active plan's replication health.
+  rpc GetPlanStatus(GetPlanStatusRequest) returns (GetPlanStatusResponse);
+}
+
+enum HealthState {
+  HEALTH_STATE_UNSPECIFIED = 0;
+  // Not active, so no health.
+  HEALTH_STATE_NONE = 1;
+  HEALTH_STATE_HEALTHY = 2;
+  // The initial replication is still running.
+  HEALTH_STATE_SYNCING = 3;
+  // The newest replicated snapshot is older than the RPO alert threshold.
+  HEALTH_STATE_LAGGING = 4;
+  // zrepl reports errors.
+  HEALTH_STATE_FAILING = 5;
+  // A host is offline or hasn't reported status recently.
+  HEALTH_STATE_UNKNOWN = 6;
+}
+
+message PlanHealth {
+  HealthState state = 1;
+  string message = 2;
+  // Age of the oldest dataset's newest replicated snapshot, in seconds.
+  uint64 rpo_age_seconds = 3;
+  uint64 rpo_alert_seconds = 4;
+  google.protobuf.Timestamp last_replication_at = 5;
+}
+
+message DatasetHealth {
+  string dataset = 1;
+  string latest_snapshot = 2;
+  google.protobuf.Timestamp latest_snapshot_at = 3;
+  uint64 age_seconds = 4;
+  string state = 5;
+  string error = 6;
+  uint64 bytes_expected = 7;
+  uint64 bytes_replicated = 8;
+}
+
+message GetPlanStatusRequest {
+  string id = 1;
+}
+
+message GetPlanStatusResponse {
+  PlanHealth health = 1;
+  repeated DatasetHealth datasets = 2;
+  // Job-level errors reported by either host.
+  repeated string errors = 3;
+}
+
+// AlertService manages alert channels and lists alerts.
+service AlertService {
+  rpc GetAlertSettings(GetAlertSettingsRequest) returns (GetAlertSettingsResponse);
+  rpc UpdateAlertSettings(UpdateAlertSettingsRequest) returns (UpdateAlertSettingsResponse);
+  // SendTestAlert sends a test notification to every configured channel.
+  rpc SendTestAlert(SendTestAlertRequest) returns (SendTestAlertResponse);
+  rpc ListAlerts(ListAlertsRequest) returns (ListAlertsResponse);
+}
+
+enum SmtpSecurity {
+  SMTP_SECURITY_UNSPECIFIED = 0;
+  // STARTTLS on the submission port (usually 587).
+  SMTP_SECURITY_STARTTLS = 1;
+  // Implicit TLS (usually port 465).
+  SMTP_SECURITY_TLS = 2;
+  // No encryption; only for trusted local relays.
+  SMTP_SECURITY_NONE = 3;
+}
+
+message SmtpSettings {
+  bool enabled = 1;
+  string host = 2;
+  uint32 port = 3;
+  SmtpSecurity security = 4;
+  string username = 5;
+  // Write-only: never returned. Empty on update keeps the stored password.
+  string password = 6;
+  // Returned on read: whether a password is stored.
+  bool has_password = 7;
+  string from = 8;
+  repeated string recipients = 9;
+}
+
+message Webhook {
+  string url = 1;
+  // Write-only; empty on update keeps the stored secret.
+  string secret = 2;
+  bool has_secret = 3;
+  // Set to remove the stored secret.
+  bool clear_secret = 4;
+}
+
+message AlertSettings {
+  SmtpSettings smtp = 1;
+  repeated Webhook webhooks = 2;
+}
+
+message GetAlertSettingsRequest {}
+
+message GetAlertSettingsResponse {
+  AlertSettings settings = 1;
+}
+
+message UpdateAlertSettingsRequest {
+  AlertSettings settings = 1;
+}
+
+message UpdateAlertSettingsResponse {
+  AlertSettings settings = 1;
+}
+
+message SendTestAlertRequest {}
+
+message SendTestAlertResponse {
+  // One line per channel: what was sent or why it failed.
+  repeated string results = 1;
+}
+
+enum AlertSeverity {
+  ALERT_SEVERITY_UNSPECIFIED = 0;
+  ALERT_SEVERITY_WARNING = 1;
+  ALERT_SEVERITY_CRITICAL = 2;
+}
+
+message Alert {
+  string key = 1;
+  AlertSeverity severity = 2;
+  string title = 3;
+  string message = 4;
+  string plan_id = 5;
+  string host_id = 6;
+  google.protobuf.Timestamp fired_at = 7;
+  // Unset while the alert is firing.
+  google.protobuf.Timestamp resolved_at = 8;
+}
+
+message ListAlertsRequest {
+  uint32 limit = 1;
+}
+
+message ListAlertsResponse {
+  repeated Alert alerts = 1;
 }
 
 message HostChanges {
@@ -357,6 +499,7 @@ message PlanSummary {
   uint32 warning_count = 8;
   PlanState state = 9;
   bool pending_changes = 10;
+  PlanHealth health = 11;
 }
 
 message ListPlansRequest {}

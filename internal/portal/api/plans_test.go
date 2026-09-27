@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"net/netip"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -69,7 +70,9 @@ func planTestDeps(t *testing.T) (*Deps, context.Context, string, string) {
 		ZfsPools:   []*inventoryv1.ZfsPool{{Name: "tank", FreeBytes: 1 << 40}},
 		Interfaces: []*inventoryv1.NetworkInterface{{Name: "vmbr0", Type: "bridge", BridgePorts: []string{"nic0"}}, {Name: "vmbr99", Type: "bridge"}},
 	})
-	return &Deps{Store: st, Hub: NewHub()}, ctx, primary, dr
+	box, _ := store.NewSecretBox(bytes.Repeat([]byte{3}, 32))
+	publicURL, _ := url.Parse("https://portal.example.com")
+	return &Deps{Store: st, Box: box, Hub: NewHub(), PublicURL: publicURL}, ctx, primary, dr
 }
 
 func TestPlanServiceFlow(t *testing.T) {

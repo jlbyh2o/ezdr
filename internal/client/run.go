@@ -93,8 +93,10 @@ func subscribe(ctx context.Context, api clientv1connect.ClientServiceClient, app
 	refresh := make(chan string, 1)
 	go inventoryLoop(ctx, api, refresh)
 
-	// Report status (including the zrepl certificate) on every connection.
+	// Report status (including the zrepl certificate) on every connection,
+	// and replication status while connected.
 	go app.report(ctx)
+	go app.statusLoop(ctx)
 
 	received := false
 	for stream.Receive() {

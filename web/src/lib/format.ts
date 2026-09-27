@@ -32,3 +32,11 @@ export function formatBytes(n: bigint | number): string {
   }
   return `${v >= 10 || i === 0 ? v.toFixed(0) : v.toFixed(1)} ${units[i]}`
 }
+
+export function formatDuration(seconds: bigint | number): string {
+  const s = Number(seconds)
+  if (s < 60) return `${s}s`
+  if (s < 3600) return `${Math.round(s / 60)} min`
+  if (s < 86400) return `${(s / 3600).toFixed(s < 36000 ? 1 : 0)} h`
+  return `${(s / 86400).toFixed(1)} d`
+}

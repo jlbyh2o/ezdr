@@ -283,3 +283,54 @@ func TestApply(t *testing.T) {
 		t.Error("zrepl not restarted after removing jobs")
 	}
 }
+
+const sampleStatus = `{"Jobs":{"ezdr_abcd1234_local-zfs_pull":{"type":"pull","pull":{
+"Replication":{"WaitReconnectError":null,"Attempts":[{"State":"done","StartAt":"2026-09-27T15:35:35-06:00",
+"FinishAt":"2026-09-27T15:35:37-06:00","PlanError":null,"Filesystems":[
+{"Info":{"Name":"rpool/data/vm-201-disk-0"},"State":"done","PlanError":null,"StepError":null,
+ "Steps":[{"Info":{"BytesExpected":100,"BytesReplicated":90}}]},
+{"Info":{"Name":"rpool/data/subvol-101-disk-0"},"State":"stepping","PlanError":null,"StepError":{"Err":"receive failed"},"Steps":[]}]}]},
+"PruningSender":{"Error":"","Completed":[]},
+"PruningReceiver":{"Error":"","Completed":[{"Filesystem":"rpool/data/vm-201-disk-0","LastError":"busy"}]}}},
+"other_job":{"type":"push"}}}`
+
+func TestStatus(t *testing.T) {
+	f := &fakeRunner{}
+	a := &Applier{Paths: testPaths(t), Now: time.Now, Run: func(ctx context.Context, name string, args ...string) ([]byte, error) {
+		call := strings.Join(append([]string{name}, args...), " ")
+		switch {
+		case call == "zrepl status --mode raw":
+			return []byte(sampleStatus), nil
+		case strings.HasPrefix(call, "zfs list -H -p -t snapshot"):
+			return []byte("tank/replicated/rpool/data/vm-201-disk-0@zrepl_1\t1000\n" +
+				"tank/replicated/rpool/data/vm-201-disk-0@zrepl_2\t2000\n" +
+				"tank/replicated/rpool/data/vm-201-disk-0@manual\t3000\n" +
+				"tank/replicated/rpool/data/subvol-101-disk-0@zrepl_1\t1500\n"), nil
+		}
+		return f.run(ctx, name, args...)
+	}}
+	st := a.Status(context.Background(), sampleZrepl(t))
+	if st.Error != "" || len(st.Jobs) != 1 {
+		t.Fatalf("status = %v", st)
+	}
+	j := st.Jobs[0]
+	if j.State != "done" || j.AttemptFinishedAt == nil || len(j.Errors) != 1 || !strings.Contains(j.Errors[0], "busy") {
+		t.Errorf("job = %v", j)
+	}
+	byName := map[string]*clientv1.DatasetStatus{}
+	for _, d := range j.Datasets {
+		byName[d.Dataset] = d
+	}
+	vm := byName["rpool/data/vm-201-disk-0"]
+	if vm == nil || vm.LatestSnapshot != "zrepl_2" || vm.LatestSnapshotAt.AsTime().Unix() != 2000 || vm.BytesReplicated != 90 {
+		t.Errorf("vm dataset = %v (the manual snapshot must be ignored)", vm)
+	}
+	if ct := byName["rpool/data/subvol-101-disk-0"]; ct == nil || ct.Error != "receive failed" || ct.State != "stepping" {
+		t.Errorf("ct dataset = %v", ct)
+	}
+
+	// No pull jobs: nothing to report, and zrepl isn't queried.
+	if s := a.Status(context.Background(), &clientv1.Zrepl{}); len(s.Jobs) != 0 || s.Error != "" {
+		t.Errorf("empty status = %v", s)
+	}
+}

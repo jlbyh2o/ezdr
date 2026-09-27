@@ -3,6 +3,7 @@ syntax = "proto3";
 package ezdr.client.v1;
 
 import "ezdr/inventory/v1/inventory.proto";
+import "google/protobuf/timestamp.proto";
 
 // ClientService is served only on the portal's tunnel listener. The portal
 // identifies the calling host by its tunnel source address.
@@ -19,6 +20,9 @@ service ClientService {
 
   // AckAction reports the outcome of an action.
   rpc AckAction(AckActionRequest) returns (AckActionResponse);
+
+  // ReportReplication reports the status of EZDR's zrepl jobs on the host.
+  rpc ReportReplication(ReportReplicationRequest) returns (ReportReplicationResponse);
 }
 
 message SubscribeRequest {
@@ -129,3 +133,42 @@ message AckActionRequest {
 }
 
 message AckActionResponse {}
+
+message ReportReplicationRequest {
+  google.protobuf.Timestamp collected_at = 1;
+  repeated JobStatus jobs = 2;
+  // Set when zrepl's status could not be read at all.
+  string error = 3;
+}
+
+message ReportReplicationResponse {}
+
+// JobStatus is one of EZDR's zrepl jobs, from `zrepl status`.
+message JobStatus {
+  string name = 1;
+  // "source" or "pull".
+  string type = 2;
+  // State of the latest replication attempt (pull jobs), such as "done",
+  // "planning", or "replicating".
+  string state = 3;
+  google.protobuf.Timestamp attempt_started_at = 4;
+  google.protobuf.Timestamp attempt_finished_at = 5;
+  // Job-level problems: planning, connection, snapshotting, or pruning
+  // errors.
+  repeated string errors = 6;
+  repeated DatasetStatus datasets = 7;
+}
+
+message DatasetStatus {
+  // Source dataset name on the primary.
+  string dataset = 1;
+  // Newest snapshot with the plan's prefix present on this host (for pull
+  // jobs: the newest replicated snapshot).
+  string latest_snapshot = 2;
+  google.protobuf.Timestamp latest_snapshot_at = 3;
+  // State in the latest attempt, such as "done" or "stepping".
+  string state = 4;
+  string error = 5;
+  uint64 bytes_expected = 6;
+  uint64 bytes_replicated = 7;
+}

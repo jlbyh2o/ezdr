@@ -456,3 +456,37 @@ func TestPlanStateAndHostZrepl(t *testing.T) {
 		t.Errorf("host zrepl state = %+v", host)
 	}
 }
+
+func TestAlerts(t *testing.T) {
+	s := openTest(t)
+	ctx := context.Background()
+	now := time.Now()
+	s.now = func() time.Time { return now }
+
+	a, err := s.FireAlert(ctx, Alert{Key: "rpo:p1", Severity: "critical", Title: "RPO exceeded", Message: "m1", PlanID: "p1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.FireAlert(ctx, Alert{Key: "rpo:p1", Severity: "critical", Title: "x", Message: "x"}); !errors.Is(err, ErrConflict) {
+		t.Errorf("second firing alert with the same key: err = %v", err)
+	}
+	now = now.Add(time.Hour)
+	if err := s.UpdateAlert(ctx, a.ID, "m2", true); err != nil {
+		t.Fatal(err)
+	}
+	firing, _ := s.FiringAlerts(ctx)
+	if len(firing) != 1 || firing[0].Message != "m2" || !firing[0].LastNotifiedAt.After(firing[0].FiredAt) {
+		t.Fatalf("firing = %+v", firing)
+	}
+	if err := s.ResolveAlert(ctx, a.ID); err != nil {
+		t.Fatal(err)
+	}
+	// Once resolved, the same condition can fire again.
+	if _, err := s.FireAlert(ctx, Alert{Key: "rpo:p1", Severity: "critical", Title: "RPO exceeded", Message: "m3"}); err != nil {
+		t.Fatalf("refiring after resolve: %v", err)
+	}
+	all, _ := s.ListAlerts(ctx, 10)
+	if len(all) != 2 || !all[0].ResolvedAt.IsZero() || all[1].ResolvedAt.IsZero() {
+		t.Errorf("list = %+v (firing first)", all)
+	}
+}

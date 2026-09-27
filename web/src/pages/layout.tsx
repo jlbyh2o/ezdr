@@ -7,8 +7,10 @@ import type { User } from '@/gen/ezdr/portal/v1/portal_pb'
 const nav = [
   { to: '/hosts', label: 'Hosts' },
   { to: '/plans', label: 'DR plans' },
+  { to: '/alerts', label: 'Alerts' },
   { to: '/tokens', label: 'Enrollment tokens' },
   { to: '/audit', label: 'Audit log' },
+  { to: '/settings', label: 'Settings' },
 ]
 
 export function Layout({ user, onSignOut }: { user: User; onSignOut: () => void }) {

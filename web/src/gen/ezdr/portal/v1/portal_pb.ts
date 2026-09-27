@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file ezdr/portal/v1/portal.proto.
  */
 export const file_ezdr_portal_v1_portal: GenFile = /*@__PURE__*/
-  fileDesc("ChtlemRyL3BvcnRhbC92MS9wb3J0YWwucHJvdG8SDmV6ZHIucG9ydGFsLnYxIhcKFUdldFNldHVwU3RhdHVzUmVxdWVzdCIwChZHZXRTZXR1cFN0YXR1c1Jlc3BvbnNlEhYKDnNldHVwX3JlcXVpcmVkGAEgASgIIk4KFENvbXBsZXRlU2V0dXBSZXF1ZXN0EhIKCnNldHVwX2NvZGUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSEAoIcGFzc3dvcmQYAyABKAkiFwoVQ29tcGxldGVTZXR1cFJlc3BvbnNlIjIKDExvZ2luUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJUCg1Mb2dpblJlc3BvbnNlEhQKDGNoYWxsZW5nZV9pZBgBIAEoCRItCgp0b3RwX3NldHVwGAIgASgLMhkuZXpkci5wb3J0YWwudjEuVG90cFNldHVwIigKCVRvdHBTZXR1cBIOCgZzZWNyZXQYASABKAkSCwoDdXJsGAIgASgJIjcKEVZlcmlmeVRvdHBSZXF1ZXN0EhQKDGNoYWxsZW5nZV9pZBgBIAEoCRIMCgRjb2RlGAIgASgJIlAKElZlcmlmeVRvdHBSZXNwb25zZRIiCgR1c2VyGAEgASgLMhQuZXpkci5wb3J0YWwudjEuVXNlchIWCg5yZWNvdmVyeV9jb2RlcxgCIAMoCSIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIhcKFUdldEN1cnJlbnRVc2VyUmVxdWVzdCI8ChZHZXRDdXJyZW50VXNlclJlc3BvbnNlEiIKBHVzZXIYASABKAsyFC5lemRyLnBvcnRhbC52MS5Vc2VyIiQKBFVzZXISCgoCaWQYASABKAkSEAoIdXNlcm5hbWUYAiABKAkiPgoSQ3JlYXRlVG9rZW5SZXF1ZXN0EhMKC2Rlc2NyaXB0aW9uGAEgASgJEhMKC3R0bF9zZWNvbmRzGAIgASgNIowBChNDcmVhdGVUb2tlblJlc3BvbnNlEi4KBXRva2VuGAEgASgLMh8uZXpkci5wb3J0YWwudjEuRW5yb2xsbWVudFRva2VuEhQKDHRva2VuX3N0cmluZxgCIAEoCRIXCg9pbnN0YWxsX2NvbW1hbmQYAyABKAkSFgoOZW5yb2xsX2NvbW1hbmQYBCABKAkiEwoRTGlzdFRva2Vuc1JlcXVlc3QiRQoSTGlzdFRva2Vuc1Jlc3BvbnNlEi8KBnRva2VucxgBIAMoCzIfLmV6ZHIucG9ydGFsLnYxLkVucm9sbG1lbnRUb2tlbiIgChJSZXZva2VUb2tlblJlcXVlc3QSCgoCaWQYASABKAkiFQoTUmV2b2tlVG9rZW5SZXNwb25zZSKUAgoPRW5yb2xsbWVudFRva2VuEgoKAmlkGAEgASgJEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhIKCmNyZWF0ZWRfYnkYAyABKAkSLgoKY3JlYXRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKZXhwaXJlc19hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKwoHdXNlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKcmV2b2tlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHaG9zdF9pZBgIIAEoCSIqChdHZXRIb3N0SW52ZW50b3J5UmVxdWVzdBIPCgdob3N0X2lkGAEgASgJIusCChhHZXRIb3N0SW52ZW50b3J5UmVzcG9uc2USIgoEaG9zdBgBIAEoCzIULmV6ZHIucG9ydGFsLnYxLkhvc3QSLwoJaW52ZW50b3J5GAIgASgLMhwuZXpkci5pbnZlbnRvcnkudjEuSW52ZW50b3J5Ei4KCmNoYW5nZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC3JlY2VpdmVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBJNCgtndWVzdF9wbGFucxgFIAMoCzI4LmV6ZHIucG9ydGFsLnYxLkdldEhvc3RJbnZlbnRvcnlSZXNwb25zZS5HdWVzdFBsYW5zRW50cnkaSgoPR3Vlc3RQbGFuc0VudHJ5EgsKA2tleRgBIAEoDRImCgV2YWx1ZRgCIAEoCzIXLmV6ZHIucG9ydGFsLnYxLlBsYW5SZWY6AjgBIiMKB1BsYW5SZWYSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCSIqChdSZWZyZXNoSW52ZW50b3J5UmVxdWVzdBIPCgdob3N0X2lkGAEgASgJIhoKGFJlZnJlc2hJbnZlbnRvcnlSZXNwb25zZSISChBMaXN0SG9zdHNSZXF1ZXN0IjgKEUxpc3RIb3N0c1Jlc3BvbnNlEiMKBWhvc3RzGAEgAygLMhQuZXpkci5wb3J0YWwudjEuSG9zdCIfChFEZWxldGVIb3N0UmVxdWVzdBIKCgJpZBgBIAEoCSIUChJEZWxldGVIb3N0UmVzcG9uc2Ui6AIKBEhvc3QSCgoCaWQYASABKAkSEAoIaG9zdG5hbWUYAiABKAkSEgoKbWFjaGluZV9pZBgDIAEoCRITCgtwdmVfdmVyc2lvbhgEIAEoCRIWCg5jbGllbnRfdmVyc2lvbhgFIAEoCRIWCg50dW5uZWxfYWRkcmVzcxgGIAEoCRIvCgtlbnJvbGxlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMAoMbGFzdF9zZWVuX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZvbmxpbmUYCSABKAgSHAoUZHVwbGljYXRlX21hY2hpbmVfaWQYCiABKAgSEwoLZ3Vlc3RfY291bnQYCyABKA0SGAoQZ3Vlc3RzX25vdF9yZWFkeRgMIAEoDRIVCg1oYXNfaW52ZW50b3J5GA0gASgIEhIKCnBsYW5fY291bnQYDiABKA0iJwoWTGlzdEF1ZGl0RXZlbnRzUmVxdWVzdBINCgVsaW1pdBgBIAEoDSJFChdMaXN0QXVkaXRFdmVudHNSZXNwb25zZRIqCgZldmVudHMYASADKAsyGi5lemRyLnBvcnRhbC52MS5BdWRpdEV2ZW50Io0BCgpBdWRpdEV2ZW50EigKBHRpbWUYASABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg0KBWFjdG9yGAIgASgJEg4KBmFjdGlvbhgDIAEoCRIOCgZ0YXJnZXQYBCABKAkSFgoOc291cmNlX2FkZHJlc3MYBSABKAkSDgoGZGV0YWlsGAYgASgJIkEKC0hvc3RDaGFuZ2VzEg8KB2hvc3RfaWQYASABKAkSEAoIaG9zdG5hbWUYAiABKAkSDwoHY2hhbmdlcxgDIAMoCSInChlQcmV2aWV3UGxhbkNoYW5nZXNSZXF1ZXN0EgoKAmlkGAEgASgJIm0KGlByZXZpZXdQbGFuQ2hhbmdlc1Jlc3BvbnNlEioKBWhvc3RzGAEgAygLMhsuZXpkci5wb3J0YWwudjEuSG9zdENoYW5nZXMSIwoGaXNzdWVzGAIgAygLMhMuZXpkci5wbGFuLnYxLklzc3VlIiEKE0FjdGl2YXRlUGxhblJlcXVlc3QSCgoCaWQYASABKAkiOgoUQWN0aXZhdGVQbGFuUmVzcG9uc2USIgoEcGxhbhgBIAEoCzIULmV6ZHIucG9ydGFsLnYxLlBsYW4iJQoXQXBwbHlQbGFuQ2hhbmdlc1JlcXVlc3QSCgoCaWQYASABKAkiPgoYQXBwbHlQbGFuQ2hhbmdlc1Jlc3BvbnNlEiIKBHBsYW4YASABKAsyFC5lemRyLnBvcnRhbC52MS5QbGFuIicKGURpc2NhcmRQbGFuQ2hhbmdlc1JlcXVlc3QSCgoCaWQYASABKAkiQAoaRGlzY2FyZFBsYW5DaGFuZ2VzUmVzcG9uc2USIgoEcGxhbhgBIAEoCzIULmV6ZHIucG9ydGFsLnYxLlBsYW4iHgoQUGF1c2VQbGFuUmVxdWVzdBIKCgJpZBgBIAEoCSI3ChFQYXVzZVBsYW5SZXNwb25zZRIiCgRwbGFuGAEgASgLMhQuZXpkci5wb3J0YWwudjEuUGxhbiIfChFSZXN1bWVQbGFuUmVxdWVzdBIKCgJpZBgBIAEoCSI4ChJSZXN1bWVQbGFuUmVzcG9uc2USIgoEcGxhbhgBIAEoCzIULmV6ZHIucG9ydGFsLnYxLlBsYW4iIwoVRGVhY3RpdmF0ZVBsYW5SZXF1ZXN0EgoKAmlkGAEgASgJIjwKFkRlYWN0aXZhdGVQbGFuUmVzcG9uc2USIgoEcGxhbhgBIAEoCzIULmV6ZHIucG9ydGFsLnYxLlBsYW4i/QIKBFBsYW4SCgoCaWQYASABKAkSJAoEc3BlYxgCIAEoCzIWLmV6ZHIucGxhbi52MS5QbGFuU3BlYxISCgpjcmVhdGVkX2J5GAMgASgJEi4KCmNyZWF0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEigKBXN0YXRlGAYgASgOMhkuZXpkci5wb3J0YWwudjEuUGxhblN0YXRlEiwKDGFwcGxpZWRfc3BlYxgHIAEoCzIWLmV6ZHIucGxhbi52MS5QbGFuU3BlYxIuCgphcHBsaWVkX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIXCg9wZW5kaW5nX2NoYW5nZXMYCSABKAgSLgoFaG9zdHMYCiADKAsyHy5lemRyLnBvcnRhbC52MS5Ib3N0QXBwbHlTdGF0dXMimgEKD0hvc3RBcHBseVN0YXR1cxIPCgdob3N0X2lkGAEgASgJEhAKCGhvc3RuYW1lGAIgASgJEg4KBm9ubGluZRgDIAEoCBIPCgdhcHBsaWVkGAQgASgIEhMKC2FwcGx5X2Vycm9yGAUgASgJEhUKDXpyZXBsX3ZlcnNpb24YBiABKAkSFwoPaGFzX2NlcnRpZmljYXRlGAcgASgIIvQBCgtQbGFuU3VtbWFyeRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhgKEHByaW1hcnlfaG9zdG5hbWUYAyABKAkSEwoLZHJfaG9zdG5hbWUYBCABKAkSEwoLZ3Vlc3RfY291bnQYBSABKA0SGAoQaW50ZXJ2YWxfc2Vjb25kcxgGIAEoDRITCgtlcnJvcl9jb3VudBgHIAEoDRIVCg13YXJuaW5nX2NvdW50GAggASgNEigKBXN0YXRlGAkgASgOMhkuZXpkci5wb3J0YWwudjEuUGxhblN0YXRlEhcKD3BlbmRpbmdfY2hhbmdlcxgKIAEoCCISChBMaXN0UGxhbnNSZXF1ZXN0Ij8KEUxpc3RQbGFuc1Jlc3BvbnNlEioKBXBsYW5zGAEgAygLMhsuZXpkci5wb3J0YWwudjEuUGxhblN1bW1hcnkiHAoOR2V0UGxhblJlcXVlc3QSCgoCaWQYASABKAkiWgoPR2V0UGxhblJlc3BvbnNlEiIKBHBsYW4YASABKAsyFC5lemRyLnBvcnRhbC52MS5QbGFuEiMKBmlzc3VlcxgCIAMoCzITLmV6ZHIucGxhbi52MS5Jc3N1ZSI5ChFDcmVhdGVQbGFuUmVxdWVzdBIkCgRzcGVjGAEgASgLMhYuZXpkci5wbGFuLnYxLlBsYW5TcGVjIl0KEkNyZWF0ZVBsYW5SZXNwb25zZRIiCgRwbGFuGAEgASgLMhQuZXpkci5wb3J0YWwudjEuUGxhbhIjCgZpc3N1ZXMYAiADKAsyEy5lemRyLnBsYW4udjEuSXNzdWUiRQoRVXBkYXRlUGxhblJlcXVlc3QSCgoCaWQYASABKAkSJAoEc3BlYxgCIAEoCzIWLmV6ZHIucGxhbi52MS5QbGFuU3BlYyJdChJVcGRhdGVQbGFuUmVzcG9uc2USIgoEcGxhbhgBIAEoCzIULmV6ZHIucG9ydGFsLnYxLlBsYW4SIwoGaXNzdWVzGAIgAygLMhMuZXpkci5wbGFuLnYxLklzc3VlIh8KEURlbGV0ZVBsYW5SZXF1ZXN0EgoKAmlkGAEgASgJIhQKEkRlbGV0ZVBsYW5SZXNwb25zZSJMChNWYWxpZGF0ZVBsYW5SZXF1ZXN0EiQKBHNwZWMYASABKAsyFi5lemRyLnBsYW4udjEuUGxhblNwZWMSDwoHcGxhbl9pZBgCIAEoCSI7ChRWYWxpZGF0ZVBsYW5SZXNwb25zZRIjCgZpc3N1ZXMYASADKAsyEy5lemRyLnBsYW4udjEuSXNzdWUiOgoSU3VnZ2VzdFBsYW5SZXF1ZXN0EiQKBHNwZWMYASABKAsyFi5lemRyLnBsYW4udjEuUGxhblNwZWMiOwoTU3VnZ2VzdFBsYW5SZXNwb25zZRIkCgRzcGVjGAEgASgLMhYuZXpkci5wbGFuLnYxLlBsYW5TcGVjKmsKCVBsYW5TdGF0ZRIaChZQTEFOX1NUQVRFX1VOU1BFQ0lGSUVEEAASFAoQUExBTl9TVEFURV9EUkFGVBABEhUKEVBMQU5fU1RBVEVfQUNUSVZFEAISFQoRUExBTl9TVEFURV9QQVVTRUQQAzLNAQoMU2V0dXBTZXJ2aWNlEl8KDkdldFNldHVwU3RhdHVzEiUuZXpkci5wb3J0YWwudjEuR2V0U2V0dXBTdGF0dXNSZXF1ZXN0GiYuZXpkci5wb3J0YWwudjEuR2V0U2V0dXBTdGF0dXNSZXNwb25zZRJcCg1Db21wbGV0ZVNldHVwEiQuZXpkci5wb3J0YWwudjEuQ29tcGxldGVTZXR1cFJlcXVlc3QaJS5lemRyLnBvcnRhbC52MS5Db21wbGV0ZVNldHVwUmVzcG9uc2Uy0gIKC0F1dGhTZXJ2aWNlEkQKBUxvZ2luEhwuZXpkci5wb3J0YWwudjEuTG9naW5SZXF1ZXN0Gh0uZXpkci5wb3J0YWwudjEuTG9naW5SZXNwb25zZRJTCgpWZXJpZnlUb3RwEiEuZXpkci5wb3J0YWwudjEuVmVyaWZ5VG90cFJlcXVlc3QaIi5lemRyLnBvcnRhbC52MS5WZXJpZnlUb3RwUmVzcG9uc2USRwoGTG9nb3V0Eh0uZXpkci5wb3J0YWwudjEuTG9nb3V0UmVxdWVzdBoeLmV6ZHIucG9ydGFsLnYxLkxvZ291dFJlc3BvbnNlEl8KDkdldEN1cnJlbnRVc2VyEiUuZXpkci5wb3J0YWwudjEuR2V0Q3VycmVudFVzZXJSZXF1ZXN0GiYuZXpkci5wb3J0YWwudjEuR2V0Q3VycmVudFVzZXJSZXNwb25zZTKTAgoMVG9rZW5TZXJ2aWNlElYKC0NyZWF0ZVRva2VuEiIuZXpkci5wb3J0YWwudjEuQ3JlYXRlVG9rZW5SZXF1ZXN0GiMuZXpkci5wb3J0YWwudjEuQ3JlYXRlVG9rZW5SZXNwb25zZRJTCgpMaXN0VG9rZW5zEiEuZXpkci5wb3J0YWwudjEuTGlzdFRva2Vuc1JlcXVlc3QaIi5lemRyLnBvcnRhbC52MS5MaXN0VG9rZW5zUmVzcG9uc2USVgoLUmV2b2tlVG9rZW4SIi5lemRyLnBvcnRhbC52MS5SZXZva2VUb2tlblJlcXVlc3QaIy5lemRyLnBvcnRhbC52MS5SZXZva2VUb2tlblJlc3BvbnNlMoIDCgtIb3N0U2VydmljZRJQCglMaXN0SG9zdHMSIC5lemRyLnBvcnRhbC52MS5MaXN0SG9zdHNSZXF1ZXN0GiEuZXpkci5wb3J0YWwudjEuTGlzdEhvc3RzUmVzcG9uc2USUwoKRGVsZXRlSG9zdBIhLmV6ZHIucG9ydGFsLnYxLkRlbGV0ZUhvc3RSZXF1ZXN0GiIuZXpkci5wb3J0YWwudjEuRGVsZXRlSG9zdFJlc3BvbnNlEmUKEEdldEhvc3RJbnZlbnRvcnkSJy5lemRyLnBvcnRhbC52MS5HZXRIb3N0SW52ZW50b3J5UmVxdWVzdBooLmV6ZHIucG9ydGFsLnYxLkdldEhvc3RJbnZlbnRvcnlSZXNwb25zZRJlChBSZWZyZXNoSW52ZW50b3J5EicuZXpkci5wb3J0YWwudjEuUmVmcmVzaEludmVudG9yeVJlcXVlc3QaKC5lemRyLnBvcnRhbC52MS5SZWZyZXNoSW52ZW50b3J5UmVzcG9uc2UycgoMQXVkaXRTZXJ2aWNlEmIKD0xpc3RBdWRpdEV2ZW50cxImLmV6ZHIucG9ydGFsLnYxLkxpc3RBdWRpdEV2ZW50c1JlcXVlc3QaJy5lemRyLnBvcnRhbC52MS5MaXN0QXVkaXRFdmVudHNSZXNwb25zZTKBCgoLUGxhblNlcnZpY2USUAoJTGlzdFBsYW5zEiAuZXpkci5wb3J0YWwudjEuTGlzdFBsYW5zUmVxdWVzdBohLmV6ZHIucG9ydGFsLnYxLkxpc3RQbGFuc1Jlc3BvbnNlEkoKB0dldFBsYW4SHi5lemRyLnBvcnRhbC52MS5HZXRQbGFuUmVxdWVzdBofLmV6ZHIucG9ydGFsLnYxLkdldFBsYW5SZXNwb25zZRJTCgpDcmVhdGVQbGFuEiEuZXpkci5wb3J0YWwudjEuQ3JlYXRlUGxhblJlcXVlc3QaIi5lemRyLnBvcnRhbC52MS5DcmVhdGVQbGFuUmVzcG9uc2USUwoKVXBkYXRlUGxhbhIhLmV6ZHIucG9ydGFsLnYxLlVwZGF0ZVBsYW5SZXF1ZXN0GiIuZXpkci5wb3J0YWwudjEuVXBkYXRlUGxhblJlc3BvbnNlElMKCkRlbGV0ZVBsYW4SIS5lemRyLnBvcnRhbC52MS5EZWxldGVQbGFuUmVxdWVzdBoiLmV6ZHIucG9ydGFsLnYxLkRlbGV0ZVBsYW5SZXNwb25zZRJZCgxWYWxpZGF0ZVBsYW4SIy5lemRyLnBvcnRhbC52MS5WYWxpZGF0ZVBsYW5SZXF1ZXN0GiQuZXpkci5wb3J0YWwudjEuVmFsaWRhdGVQbGFuUmVzcG9uc2USVgoLU3VnZ2VzdFBsYW4SIi5lemRyLnBvcnRhbC52MS5TdWdnZXN0UGxhblJlcXVlc3QaIy5lemRyLnBvcnRhbC52MS5TdWdnZXN0UGxhblJlc3BvbnNlEmsKElByZXZpZXdQbGFuQ2hhbmdlcxIpLmV6ZHIucG9ydGFsLnYxLlByZXZpZXdQbGFuQ2hhbmdlc1JlcXVlc3QaKi5lemRyLnBvcnRhbC52MS5QcmV2aWV3UGxhbkNoYW5nZXNSZXNwb25zZRJZCgxBY3RpdmF0ZVBsYW4SIy5lemRyLnBvcnRhbC52MS5BY3RpdmF0ZVBsYW5SZXF1ZXN0GiQuZXpkci5wb3J0YWwudjEuQWN0aXZhdGVQbGFuUmVzcG9uc2USZQoQQXBwbHlQbGFuQ2hhbmdlcxInLmV6ZHIucG9ydGFsLnYxLkFwcGx5UGxhbkNoYW5nZXNSZXF1ZXN0GiguZXpkci5wb3J0YWwudjEuQXBwbHlQbGFuQ2hhbmdlc1Jlc3BvbnNlEmsKEkRpc2NhcmRQbGFuQ2hhbmdlcxIpLmV6ZHIucG9ydGFsLnYxLkRpc2NhcmRQbGFuQ2hhbmdlc1JlcXVlc3QaKi5lemRyLnBvcnRhbC52MS5EaXNjYXJkUGxhbkNoYW5nZXNSZXNwb25zZRJQCglQYXVzZVBsYW4SIC5lemRyLnBvcnRhbC52MS5QYXVzZVBsYW5SZXF1ZXN0GiEuZXpkci5wb3J0YWwudjEuUGF1c2VQbGFuUmVzcG9uc2USUwoKUmVzdW1lUGxhbhIhLmV6ZHIucG9ydGFsLnYxLlJlc3VtZVBsYW5SZXF1ZXN0GiIuZXpkci5wb3J0YWwudjEuUmVzdW1lUGxhblJlc3BvbnNlEl8KDkRlYWN0aXZhdGVQbGFuEiUuZXpkci5wb3J0YWwudjEuRGVhY3RpdmF0ZVBsYW5SZXF1ZXN0GiYuZXpkci5wb3J0YWwudjEuRGVhY3RpdmF0ZVBsYW5SZXNwb25zZUK5AQoSY29tLmV6ZHIucG9ydGFsLnYxQgtQb3J0YWxQcm90b1ABWjxnaXRodWIuY29tL2psYnloMm8vZXpkci9pbnRlcm5hbC9nZW4vZXpkci9wb3J0YWwvdjE7cG9ydGFsdjGiAgNFUFiqAg5FemRyLlBvcnRhbC5WMcoCDkV6ZHJcUG9ydGFsXFYx4gIaRXpkclxQb3J0YWxcVjFcR1BCTWV0YWRhdGHqAhBFemRyOjpQb3J0YWw6OlYxYgZwcm90bzM", [file_ezdr_inventory_v1_inventory, file_ezdr_plan_v1_plan, file_google_protobuf_timestamp]);
+  fileDesc("ChtlemRyL3BvcnRhbC92MS9wb3J0YWwucHJvdG8SDmV6ZHIucG9ydGFsLnYxIhcKFUdldFNldHVwU3RhdHVzUmVxdWVzdCIwChZHZXRTZXR1cFN0YXR1c1Jlc3BvbnNlEhYKDnNldHVwX3JlcXVpcmVkGAEgASgIIk4KFENvbXBsZXRlU2V0dXBSZXF1ZXN0EhIKCnNldHVwX2NvZGUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSEAoIcGFzc3dvcmQYAyABKAkiFwoVQ29tcGxldGVTZXR1cFJlc3BvbnNlIjIKDExvZ2luUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJUCg1Mb2dpblJlc3BvbnNlEhQKDGNoYWxsZW5nZV9pZBgBIAEoCRItCgp0b3RwX3NldHVwGAIgASgLMhkuZXpkci5wb3J0YWwudjEuVG90cFNldHVwIigKCVRvdHBTZXR1cBIOCgZzZWNyZXQYASABKAkSCwoDdXJsGAIgASgJIjcKEVZlcmlmeVRvdHBSZXF1ZXN0EhQKDGNoYWxsZW5nZV9pZBgBIAEoCRIMCgRjb2RlGAIgASgJIlAKElZlcmlmeVRvdHBSZXNwb25zZRIiCgR1c2VyGAEgASgLMhQuZXpkci5wb3J0YWwudjEuVXNlchIWCg5yZWNvdmVyeV9jb2RlcxgCIAMoCSIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIhcKFUdldEN1cnJlbnRVc2VyUmVxdWVzdCI8ChZHZXRDdXJyZW50VXNlclJlc3BvbnNlEiIKBHVzZXIYASABKAsyFC5lemRyLnBvcnRhbC52MS5Vc2VyIiQKBFVzZXISCgoCaWQYASABKAkSEAoIdXNlcm5hbWUYAiABKAkiPgoSQ3JlYXRlVG9rZW5SZXF1ZXN0EhMKC2Rlc2NyaXB0aW9uGAEgASgJEhMKC3R0bF9zZWNvbmRzGAIgASgNIowBChNDcmVhdGVUb2tlblJlc3BvbnNlEi4KBXRva2VuGAEgASgLMh8uZXpkci5wb3J0YWwudjEuRW5yb2xsbWVudFRva2VuEhQKDHRva2VuX3N0cmluZxgCIAEoCRIXCg9pbnN0YWxsX2NvbW1hbmQYAyABKAkSFgoOZW5yb2xsX2NvbW1hbmQYBCABKAkiEwoRTGlzdFRva2Vuc1JlcXVlc3QiRQoSTGlzdFRva2Vuc1Jlc3BvbnNlEi8KBnRva2VucxgBIAMoCzIfLmV6ZHIucG9ydGFsLnYxLkVucm9sbG1lbnRUb2tlbiIgChJSZXZva2VUb2tlblJlcXVlc3QSCgoCaWQYASABKAkiFQoTUmV2b2tlVG9rZW5SZXNwb25zZSKUAgoPRW5yb2xsbWVudFRva2VuEgoKAmlkGAEgASgJEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhIKCmNyZWF0ZWRfYnkYAyABKAkSLgoKY3JlYXRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKZXhwaXJlc19hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKwoHdXNlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKcmV2b2tlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHaG9zdF9pZBgIIAEoCSIqChdHZXRIb3N0SW52ZW50b3J5UmVxdWVzdBIPCgdob3N0X2lkGAEgASgJIusCChhHZXRIb3N0SW52ZW50b3J5UmVzcG9uc2USIgoEaG9zdBgBIAEoCzIULmV6ZHIucG9ydGFsLnYxLkhvc3QSLwoJaW52ZW50b3J5GAIgASgLMhwuZXpkci5pbnZlbnRvcnkudjEuSW52ZW50b3J5Ei4KCmNoYW5nZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC3JlY2VpdmVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBJNCgtndWVzdF9wbGFucxgFIAMoCzI4LmV6ZHIucG9ydGFsLnYxLkdldEhvc3RJbnZlbnRvcnlSZXNwb25zZS5HdWVzdFBsYW5zRW50cnkaSgoPR3Vlc3RQbGFuc0VudHJ5EgsKA2tleRgBIAEoDRImCgV2YWx1ZRgCIAEoCzIXLmV6ZHIucG9ydGFsLnYxLlBsYW5SZWY6AjgBIiMKB1BsYW5SZWYSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCSIqChdSZWZyZXNoSW52ZW50b3J5UmVxdWVzdBIPCgdob3N0X2lkGAEgASgJIhoKGFJlZnJlc2hJbnZlbnRvcnlSZXNwb25zZSISChBMaXN0SG9zdHNSZXF1ZXN0IjgKEUxpc3RIb3N0c1Jlc3BvbnNlEiMKBWhvc3RzGAEgAygLMhQuZXpkci5wb3J0YWwudjEuSG9zdCIfChFEZWxldGVIb3N0UmVxdWVzdBIKCgJpZBgBIAEoCSIUChJEZWxldGVIb3N0UmVzcG9uc2Ui6AIKBEhvc3QSCgoCaWQYASABKAkSEAoIaG9zdG5hbWUYAiABKAkSEgoKbWFjaGluZV9pZBgDIAEoCRITCgtwdmVfdmVyc2lvbhgEIAEoCRIWCg5jbGllbnRfdmVyc2lvbhgFIAEoCRIWCg50dW5uZWxfYWRkcmVzcxgGIAEoCRIvCgtlbnJvbGxlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMAoMbGFzdF9zZWVuX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZvbmxpbmUYCSABKAgSHAoUZHVwbGljYXRlX21hY2hpbmVfaWQYCiABKAgSEwoLZ3Vlc3RfY291bnQYCyABKA0SGAoQZ3Vlc3RzX25vdF9yZWFkeRgMIAEoDRIVCg1oYXNfaW52ZW50b3J5GA0gASgIEhIKCnBsYW5fY291bnQYDiABKA0iJwoWTGlzdEF1ZGl0RXZlbnRzUmVxdWVzdBINCgVsaW1pdBgBIAEoDSJFChdMaXN0QXVkaXRFdmVudHNSZXNwb25zZRIqCgZldmVudHMYASADKAsyGi5lemRyLnBvcnRhbC52MS5BdWRpdEV2ZW50Io0BCgpBdWRpdEV2ZW50EigKBHRpbWUYASABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg0KBWFjdG9yGAIgASgJEg4KBmFjdGlvbhgDIAEoCRIOCgZ0YXJnZXQYBCABKAkSFgoOc291cmNlX2FkZHJlc3MYBSABKAkSDgoGZGV0YWlsGAYgASgJIrYBCgpQbGFuSGVhbHRoEioKBXN0YXRlGAEgASgOMhsuZXpkci5wb3J0YWwudjEuSGVhbHRoU3RhdGUSDwoHbWVzc2FnZRgCIAEoCRIXCg9ycG9fYWdlX3NlY29uZHMYAyABKAQSGQoRcnBvX2FsZXJ0X3NlY29uZHMYBCABKAQSNwoTbGFzdF9yZXBsaWNhdGlvbl9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAi1gEKDURhdGFzZXRIZWFsdGgSDwoHZGF0YXNldBgBIAEoCRIXCg9sYXRlc3Rfc25hcHNob3QYAiABKAkSNgoSbGF0ZXN0X3NuYXBzaG90X2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBITCgthZ2Vfc2Vjb25kcxgEIAEoBBINCgVzdGF0ZRgFIAEoCRINCgVlcnJvchgGIAEoCRIWCg5ieXRlc19leHBlY3RlZBgHIAEoBBIYChBieXRlc19yZXBsaWNhdGVkGAggASgEIiIKFEdldFBsYW5TdGF0dXNSZXF1ZXN0EgoKAmlkGAEgASgJIoQBChVHZXRQbGFuU3RhdHVzUmVzcG9uc2USKgoGaGVhbHRoGAEgASgLMhouZXpkci5wb3J0YWwudjEuUGxhbkhlYWx0aBIvCghkYXRhc2V0cxgCIAMoCzIdLmV6ZHIucG9ydGFsLnYxLkRhdGFzZXRIZWFsdGgSDgoGZXJyb3JzGAMgAygJIscBCgxTbXRwU2V0dGluZ3MSDwoHZW5hYmxlZBgBIAEoCBIMCgRob3N0GAIgASgJEgwKBHBvcnQYAyABKA0SLgoIc2VjdXJpdHkYBCABKA4yHC5lemRyLnBvcnRhbC52MS5TbXRwU2VjdXJpdHkSEAoIdXNlcm5hbWUYBSABKAkSEAoIcGFzc3dvcmQYBiABKAkSFAoMaGFzX3Bhc3N3b3JkGAcgASgIEgwKBGZyb20YCCABKAkSEgoKcmVjaXBpZW50cxgJIAMoCSJQCgdXZWJob29rEgsKA3VybBgBIAEoCRIOCgZzZWNyZXQYAiABKAkSEgoKaGFzX3NlY3JldBgDIAEoCBIUCgxjbGVhcl9zZWNyZXQYBCABKAgiZgoNQWxlcnRTZXR0aW5ncxIqCgRzbXRwGAEgASgLMhwuZXpkci5wb3J0YWwudjEuU210cFNldHRpbmdzEikKCHdlYmhvb2tzGAIgAygLMhcuZXpkci5wb3J0YWwudjEuV2ViaG9vayIZChdHZXRBbGVydFNldHRpbmdzUmVxdWVzdCJLChhHZXRBbGVydFNldHRpbmdzUmVzcG9uc2USLwoIc2V0dGluZ3MYASABKAsyHS5lemRyLnBvcnRhbC52MS5BbGVydFNldHRpbmdzIk0KGlVwZGF0ZUFsZXJ0U2V0dGluZ3NSZXF1ZXN0Ei8KCHNldHRpbmdzGAEgASgLMh0uZXpkci5wb3J0YWwudjEuQWxlcnRTZXR0aW5ncyJOChtVcGRhdGVBbGVydFNldHRpbmdzUmVzcG9uc2USLwoIc2V0dGluZ3MYASABKAsyHS5lemRyLnBvcnRhbC52MS5BbGVydFNldHRpbmdzIhYKFFNlbmRUZXN0QWxlcnRSZXF1ZXN0IigKFVNlbmRUZXN0QWxlcnRSZXNwb25zZRIPCgdyZXN1bHRzGAEgAygJIuYBCgVBbGVydBILCgNrZXkYASABKAkSLwoIc2V2ZXJpdHkYAiABKA4yHS5lemRyLnBvcnRhbC52MS5BbGVydFNldmVyaXR5Eg0KBXRpdGxlGAMgASgJEg8KB21lc3NhZ2UYBCABKAkSDwoHcGxhbl9pZBgFIAEoCRIPCgdob3N0X2lkGAYgASgJEiwKCGZpcmVkX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtyZXNvbHZlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiIgoRTGlzdEFsZXJ0c1JlcXVlc3QSDQoFbGltaXQYASABKA0iOwoSTGlzdEFsZXJ0c1Jlc3BvbnNlEiUKBmFsZXJ0cxgBIAMoCzIVLmV6ZHIucG9ydGFsLnYxLkFsZXJ0IkEKC0hvc3RDaGFuZ2VzEg8KB2hvc3RfaWQYASABKAkSEAoIaG9zdG5hbWUYAiABKAkSDwoHY2hhbmdlcxgDIAMoCSInChlQcmV2aWV3UGxhbkNoYW5nZXNSZXF1ZXN0EgoKAmlkGAEgASgJIm0KGlByZXZpZXdQbGFuQ2hhbmdlc1Jlc3BvbnNlEioKBWhvc3RzGAEgAygLMhsuZXpkci5wb3J0YWwudjEuSG9zdENoYW5nZXMSIwoGaXNzdWVzGAIgAygLMhMuZXpkci5wbGFuLnYxLklzc3VlIiEKE0FjdGl2YXRlUGxhblJlcXVlc3QSCgoCaWQYASABKAkiOgoUQWN0aXZhdGVQbGFuUmVzcG9uc2USIgoEcGxhbhgBIAEoCzIULmV6ZHIucG9ydGFsLnYxLlBsYW4iJQoXQXBwbHlQbGFuQ2hhbmdlc1JlcXVlc3QSCgoCaWQYASABKAkiPgoYQXBwbHlQbGFuQ2hhbmdlc1Jlc3BvbnNlEiIKBHBsYW4YASABKAsyFC5lemRyLnBvcnRhbC52MS5QbGFuIicKGURpc2NhcmRQbGFuQ2hhbmdlc1JlcXVlc3QSCgoCaWQYASABKAkiQAoaRGlzY2FyZFBsYW5DaGFuZ2VzUmVzcG9uc2USIgoEcGxhbhgBIAEoCzIULmV6ZHIucG9ydGFsLnYxLlBsYW4iHgoQUGF1c2VQbGFuUmVxdWVzdBIKCgJpZBgBIAEoCSI3ChFQYXVzZVBsYW5SZXNwb25zZRIiCgRwbGFuGAEgASgLMhQuZXpkci5wb3J0YWwudjEuUGxhbiIfChFSZXN1bWVQbGFuUmVxdWVzdBIKCgJpZBgBIAEoCSI4ChJSZXN1bWVQbGFuUmVzcG9uc2USIgoEcGxhbhgBIAEoCzIULmV6ZHIucG9ydGFsLnYxLlBsYW4iIwoVRGVhY3RpdmF0ZVBsYW5SZXF1ZXN0EgoKAmlkGAEgASgJIjwKFkRlYWN0aXZhdGVQbGFuUmVzcG9uc2USIgoEcGxhbhgBIAEoCzIULmV6ZHIucG9ydGFsLnYxLlBsYW4i/QIKBFBsYW4SCgoCaWQYASABKAkSJAoEc3BlYxgCIAEoCzIWLmV6ZHIucGxhbi52MS5QbGFuU3BlYxISCgpjcmVhdGVkX2J5GAMgASgJEi4KCmNyZWF0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEigKBXN0YXRlGAYgASgOMhkuZXpkci5wb3J0YWwudjEuUGxhblN0YXRlEiwKDGFwcGxpZWRfc3BlYxgHIAEoCzIWLmV6ZHIucGxhbi52MS5QbGFuU3BlYxIuCgphcHBsaWVkX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIXCg9wZW5kaW5nX2NoYW5nZXMYCSABKAgSLgoFaG9zdHMYCiADKAsyHy5lemRyLnBvcnRhbC52MS5Ib3N0QXBwbHlTdGF0dXMimgEKD0hvc3RBcHBseVN0YXR1cxIPCgdob3N0X2lkGAEgASgJEhAKCGhvc3RuYW1lGAIgASgJEg4KBm9ubGluZRgDIAEoCBIPCgdhcHBsaWVkGAQgASgIEhMKC2FwcGx5X2Vycm9yGAUgASgJEhUKDXpyZXBsX3ZlcnNpb24YBiABKAkSFwoPaGFzX2NlcnRpZmljYXRlGAcgASgIIqACCgtQbGFuU3VtbWFyeRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhgKEHByaW1hcnlfaG9zdG5hbWUYAyABKAkSEwoLZHJfaG9zdG5hbWUYBCABKAkSEwoLZ3Vlc3RfY291bnQYBSABKA0SGAoQaW50ZXJ2YWxfc2Vjb25kcxgGIAEoDRITCgtlcnJvcl9jb3VudBgHIAEoDRIVCg13YXJuaW5nX2NvdW50GAggASgNEigKBXN0YXRlGAkgASgOMhkuZXpkci5wb3J0YWwudjEuUGxhblN0YXRlEhcKD3BlbmRpbmdfY2hhbmdlcxgKIAEoCBIqCgZoZWFsdGgYCyABKAsyGi5lemRyLnBvcnRhbC52MS5QbGFuSGVhbHRoIhIKEExpc3RQbGFuc1JlcXVlc3QiPwoRTGlzdFBsYW5zUmVzcG9uc2USKgoFcGxhbnMYASADKAsyGy5lemRyLnBvcnRhbC52MS5QbGFuU3VtbWFyeSIcCg5HZXRQbGFuUmVxdWVzdBIKCgJpZBgBIAEoCSJaCg9HZXRQbGFuUmVzcG9uc2USIgoEcGxhbhgBIAEoCzIULmV6ZHIucG9ydGFsLnYxLlBsYW4SIwoGaXNzdWVzGAIgAygLMhMuZXpkci5wbGFuLnYxLklzc3VlIjkKEUNyZWF0ZVBsYW5SZXF1ZXN0EiQKBHNwZWMYASABKAsyFi5lemRyLnBsYW4udjEuUGxhblNwZWMiXQoSQ3JlYXRlUGxhblJlc3BvbnNlEiIKBHBsYW4YASABKAsyFC5lemRyLnBvcnRhbC52MS5QbGFuEiMKBmlzc3VlcxgCIAMoCzITLmV6ZHIucGxhbi52MS5Jc3N1ZSJFChFVcGRhdGVQbGFuUmVxdWVzdBIKCgJpZBgBIAEoCRIkCgRzcGVjGAIgASgLMhYuZXpkci5wbGFuLnYxLlBsYW5TcGVjIl0KElVwZGF0ZVBsYW5SZXNwb25zZRIiCgRwbGFuGAEgASgLMhQuZXpkci5wb3J0YWwudjEuUGxhbhIjCgZpc3N1ZXMYAiADKAsyEy5lemRyLnBsYW4udjEuSXNzdWUiHwoRRGVsZXRlUGxhblJlcXVlc3QSCgoCaWQYASABKAkiFAoSRGVsZXRlUGxhblJlc3BvbnNlIkwKE1ZhbGlkYXRlUGxhblJlcXVlc3QSJAoEc3BlYxgBIAEoCzIWLmV6ZHIucGxhbi52MS5QbGFuU3BlYxIPCgdwbGFuX2lkGAIgASgJIjsKFFZhbGlkYXRlUGxhblJlc3BvbnNlEiMKBmlzc3VlcxgBIAMoCzITLmV6ZHIucGxhbi52MS5Jc3N1ZSI6ChJTdWdnZXN0UGxhblJlcXVlc3QSJAoEc3BlYxgBIAEoCzIWLmV6ZHIucGxhbi52MS5QbGFuU3BlYyI7ChNTdWdnZXN0UGxhblJlc3BvbnNlEiQKBHNwZWMYASABKAsyFi5lemRyLnBsYW4udjEuUGxhblNwZWMqxAEKC0hlYWx0aFN0YXRlEhwKGEhFQUxUSF9TVEFURV9VTlNQRUNJRklFRBAAEhUKEUhFQUxUSF9TVEFURV9OT05FEAESGAoUSEVBTFRIX1NUQVRFX0hFQUxUSFkQAhIYChRIRUFMVEhfU1RBVEVfU1lOQ0lORxADEhgKFEhFQUxUSF9TVEFURV9MQUdHSU5HEAQSGAoUSEVBTFRIX1NUQVRFX0ZBSUxJTkcQBRIYChRIRUFMVEhfU1RBVEVfVU5LTk9XThAGKngKDFNtdHBTZWN1cml0eRIdChlTTVRQX1NFQ1VSSVRZX1VOU1BFQ0lGSUVEEAASGgoWU01UUF9TRUNVUklUWV9TVEFSVFRMUxABEhUKEVNNVFBfU0VDVVJJVFlfVExTEAISFgoSU01UUF9TRUNVUklUWV9OT05FEAMqaAoNQWxlcnRTZXZlcml0eRIeChpBTEVSVF9TRVZFUklUWV9VTlNQRUNJRklFRBAAEhoKFkFMRVJUX1NFVkVSSVRZX1dBUk5JTkcQARIbChdBTEVSVF9TRVZFUklUWV9DUklUSUNBTBACKmsKCVBsYW5TdGF0ZRIaChZQTEFOX1NUQVRFX1VOU1BFQ0lGSUVEEAASFAoQUExBTl9TVEFURV9EUkFGVBABEhUKEVBMQU5fU1RBVEVfQUNUSVZFEAISFQoRUExBTl9TVEFURV9QQVVTRUQQAzLNAQoMU2V0dXBTZXJ2aWNlEl8KDkdldFNldHVwU3RhdHVzEiUuZXpkci5wb3J0YWwudjEuR2V0U2V0dXBTdGF0dXNSZXF1ZXN0GiYuZXpkci5wb3J0YWwudjEuR2V0U2V0dXBTdGF0dXNSZXNwb25zZRJcCg1Db21wbGV0ZVNldHVwEiQuZXpkci5wb3J0YWwudjEuQ29tcGxldGVTZXR1cFJlcXVlc3QaJS5lemRyLnBvcnRhbC52MS5Db21wbGV0ZVNldHVwUmVzcG9uc2Uy0gIKC0F1dGhTZXJ2aWNlEkQKBUxvZ2luEhwuZXpkci5wb3J0YWwudjEuTG9naW5SZXF1ZXN0Gh0uZXpkci5wb3J0YWwudjEuTG9naW5SZXNwb25zZRJTCgpWZXJpZnlUb3RwEiEuZXpkci5wb3J0YWwudjEuVmVyaWZ5VG90cFJlcXVlc3QaIi5lemRyLnBvcnRhbC52MS5WZXJpZnlUb3RwUmVzcG9uc2USRwoGTG9nb3V0Eh0uZXpkci5wb3J0YWwudjEuTG9nb3V0UmVxdWVzdBoeLmV6ZHIucG9ydGFsLnYxLkxvZ291dFJlc3BvbnNlEl8KDkdldEN1cnJlbnRVc2VyEiUuZXpkci5wb3J0YWwudjEuR2V0Q3VycmVudFVzZXJSZXF1ZXN0GiYuZXpkci5wb3J0YWwudjEuR2V0Q3VycmVudFVzZXJSZXNwb25zZTKTAgoMVG9rZW5TZXJ2aWNlElYKC0NyZWF0ZVRva2VuEiIuZXpkci5wb3J0YWwudjEuQ3JlYXRlVG9rZW5SZXF1ZXN0GiMuZXpkci5wb3J0YWwudjEuQ3JlYXRlVG9rZW5SZXNwb25zZRJTCgpMaXN0VG9rZW5zEiEuZXpkci5wb3J0YWwudjEuTGlzdFRva2Vuc1JlcXVlc3QaIi5lemRyLnBvcnRhbC52MS5MaXN0VG9rZW5zUmVzcG9uc2USVgoLUmV2b2tlVG9rZW4SIi5lemRyLnBvcnRhbC52MS5SZXZva2VUb2tlblJlcXVlc3QaIy5lemRyLnBvcnRhbC52MS5SZXZva2VUb2tlblJlc3BvbnNlMoIDCgtIb3N0U2VydmljZRJQCglMaXN0SG9zdHMSIC5lemRyLnBvcnRhbC52MS5MaXN0SG9zdHNSZXF1ZXN0GiEuZXpkci5wb3J0YWwudjEuTGlzdEhvc3RzUmVzcG9uc2USUwoKRGVsZXRlSG9zdBIhLmV6ZHIucG9ydGFsLnYxLkRlbGV0ZUhvc3RSZXF1ZXN0GiIuZXpkci5wb3J0YWwudjEuRGVsZXRlSG9zdFJlc3BvbnNlEmUKEEdldEhvc3RJbnZlbnRvcnkSJy5lemRyLnBvcnRhbC52MS5HZXRIb3N0SW52ZW50b3J5UmVxdWVzdBooLmV6ZHIucG9ydGFsLnYxLkdldEhvc3RJbnZlbnRvcnlSZXNwb25zZRJlChBSZWZyZXNoSW52ZW50b3J5EicuZXpkci5wb3J0YWwudjEuUmVmcmVzaEludmVudG9yeVJlcXVlc3QaKC5lemRyLnBvcnRhbC52MS5SZWZyZXNoSW52ZW50b3J5UmVzcG9uc2UycgoMQXVkaXRTZXJ2aWNlEmIKD0xpc3RBdWRpdEV2ZW50cxImLmV6ZHIucG9ydGFsLnYxLkxpc3RBdWRpdEV2ZW50c1JlcXVlc3QaJy5lemRyLnBvcnRhbC52MS5MaXN0QXVkaXRFdmVudHNSZXNwb25zZTLfCgoLUGxhblNlcnZpY2USUAoJTGlzdFBsYW5zEiAuZXpkci5wb3J0YWwudjEuTGlzdFBsYW5zUmVxdWVzdBohLmV6ZHIucG9ydGFsLnYxLkxpc3RQbGFuc1Jlc3BvbnNlEkoKB0dldFBsYW4SHi5lemRyLnBvcnRhbC52MS5HZXRQbGFuUmVxdWVzdBofLmV6ZHIucG9ydGFsLnYxLkdldFBsYW5SZXNwb25zZRJTCgpDcmVhdGVQbGFuEiEuZXpkci5wb3J0YWwudjEuQ3JlYXRlUGxhblJlcXVlc3QaIi5lemRyLnBvcnRhbC52MS5DcmVhdGVQbGFuUmVzcG9uc2USUwoKVXBkYXRlUGxhbhIhLmV6ZHIucG9ydGFsLnYxLlVwZGF0ZVBsYW5SZXF1ZXN0GiIuZXpkci5wb3J0YWwudjEuVXBkYXRlUGxhblJlc3BvbnNlElMKCkRlbGV0ZVBsYW4SIS5lemRyLnBvcnRhbC52MS5EZWxldGVQbGFuUmVxdWVzdBoiLmV6ZHIucG9ydGFsLnYxLkRlbGV0ZVBsYW5SZXNwb25zZRJZCgxWYWxpZGF0ZVBsYW4SIy5lemRyLnBvcnRhbC52MS5WYWxpZGF0ZVBsYW5SZXF1ZXN0GiQuZXpkci5wb3J0YWwudjEuVmFsaWRhdGVQbGFuUmVzcG9uc2USVgoLU3VnZ2VzdFBsYW4SIi5lemRyLnBvcnRhbC52MS5TdWdnZXN0UGxhblJlcXVlc3QaIy5lemRyLnBvcnRhbC52MS5TdWdnZXN0UGxhblJlc3BvbnNlEmsKElByZXZpZXdQbGFuQ2hhbmdlcxIpLmV6ZHIucG9ydGFsLnYxLlByZXZpZXdQbGFuQ2hhbmdlc1JlcXVlc3QaKi5lemRyLnBvcnRhbC52MS5QcmV2aWV3UGxhbkNoYW5nZXNSZXNwb25zZRJZCgxBY3RpdmF0ZVBsYW4SIy5lemRyLnBvcnRhbC52MS5BY3RpdmF0ZVBsYW5SZXF1ZXN0GiQuZXpkci5wb3J0YWwudjEuQWN0aXZhdGVQbGFuUmVzcG9uc2USZQoQQXBwbHlQbGFuQ2hhbmdlcxInLmV6ZHIucG9ydGFsLnYxLkFwcGx5UGxhbkNoYW5nZXNSZXF1ZXN0GiguZXpkci5wb3J0YWwudjEuQXBwbHlQbGFuQ2hhbmdlc1Jlc3BvbnNlEmsKEkRpc2NhcmRQbGFuQ2hhbmdlcxIpLmV6ZHIucG9ydGFsLnYxLkRpc2NhcmRQbGFuQ2hhbmdlc1JlcXVlc3QaKi5lemRyLnBvcnRhbC52MS5EaXNjYXJkUGxhbkNoYW5nZXNSZXNwb25zZRJQCglQYXVzZVBsYW4SIC5lemRyLnBvcnRhbC52MS5QYXVzZVBsYW5SZXF1ZXN0GiEuZXpkci5wb3J0YWwudjEuUGF1c2VQbGFuUmVzcG9uc2USUwoKUmVzdW1lUGxhbhIhLmV6ZHIucG9ydGFsLnYxLlJlc3VtZVBsYW5SZXF1ZXN0GiIuZXpkci5wb3J0YWwudjEuUmVzdW1lUGxhblJlc3BvbnNlEl8KDkRlYWN0aXZhdGVQbGFuEiUuZXpkci5wb3J0YWwudjEuRGVhY3RpdmF0ZVBsYW5SZXF1ZXN0GiYuZXpkci5wb3J0YWwudjEuRGVhY3RpdmF0ZVBsYW5SZXNwb25zZRJcCg1HZXRQbGFuU3RhdHVzEiQuZXpkci5wb3J0YWwudjEuR2V0UGxhblN0YXR1c1JlcXVlc3QaJS5lemRyLnBvcnRhbC52MS5HZXRQbGFuU3RhdHVzUmVzcG9uc2UymAMKDEFsZXJ0U2VydmljZRJlChBHZXRBbGVydFNldHRpbmdzEicuZXpkci5wb3J0YWwudjEuR2V0QWxlcnRTZXR0aW5nc1JlcXVlc3QaKC5lemRyLnBvcnRhbC52MS5HZXRBbGVydFNldHRpbmdzUmVzcG9uc2USbgoTVXBkYXRlQWxlcnRTZXR0aW5ncxIqLmV6ZHIucG9ydGFsLnYxLlVwZGF0ZUFsZXJ0U2V0dGluZ3NSZXF1ZXN0GisuZXpkci5wb3J0YWwudjEuVXBkYXRlQWxlcnRTZXR0aW5nc1Jlc3BvbnNlElwKDVNlbmRUZXN0QWxlcnQSJC5lemRyLnBvcnRhbC52MS5TZW5kVGVzdEFsZXJ0UmVxdWVzdBolLmV6ZHIucG9ydGFsLnYxLlNlbmRUZXN0QWxlcnRSZXNwb25zZRJTCgpMaXN0QWxlcnRzEiEuZXpkci5wb3J0YWwudjEuTGlzdEFsZXJ0c1JlcXVlc3QaIi5lemRyLnBvcnRhbC52MS5MaXN0QWxlcnRzUmVzcG9uc2VCuQEKEmNvbS5lemRyLnBvcnRhbC52MUILUG9ydGFsUHJvdG9QAVo8Z2l0aHViLmNvbS9qbGJ5aDJvL2V6ZHIvaW50ZXJuYWwvZ2VuL2V6ZHIvcG9ydGFsL3YxO3BvcnRhbHYxogIDRVBYqgIORXpkci5Qb3J0YWwuVjHKAg5FemRyXFBvcnRhbFxWMeICGkV6ZHJcUG9ydGFsXFYxXEdQQk1ldGFkYXRh6gIQRXpkcjo6UG9ydGFsOjpWMWIGcHJvdG8z", [file_ezdr_inventory_v1_inventory, file_ezdr_plan_v1_plan, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message ezdr.portal.v1.GetSetupStatusRequest
@@ -806,6 +806,446 @@ export const AuditEventSchema: GenMessage<AuditEvent> = /*@__PURE__*/
   messageDesc(file_ezdr_portal_v1_portal, 33);
 
 /**
+ * @generated from message ezdr.portal.v1.PlanHealth
+ */
+export type PlanHealth = Message<"ezdr.portal.v1.PlanHealth"> & {
+  /**
+   * @generated from field: ezdr.portal.v1.HealthState state = 1;
+   */
+  state: HealthState;
+
+  /**
+   * @generated from field: string message = 2;
+   */
+  message: string;
+
+  /**
+   * Age of the oldest dataset's newest replicated snapshot, in seconds.
+   *
+   * @generated from field: uint64 rpo_age_seconds = 3;
+   */
+  rpoAgeSeconds: bigint;
+
+  /**
+   * @generated from field: uint64 rpo_alert_seconds = 4;
+   */
+  rpoAlertSeconds: bigint;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp last_replication_at = 5;
+   */
+  lastReplicationAt?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message ezdr.portal.v1.PlanHealth.
+ * Use `create(PlanHealthSchema)` to create a new message.
+ */
+export const PlanHealthSchema: GenMessage<PlanHealth> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 34);
+
+/**
+ * @generated from message ezdr.portal.v1.DatasetHealth
+ */
+export type DatasetHealth = Message<"ezdr.portal.v1.DatasetHealth"> & {
+  /**
+   * @generated from field: string dataset = 1;
+   */
+  dataset: string;
+
+  /**
+   * @generated from field: string latest_snapshot = 2;
+   */
+  latestSnapshot: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp latest_snapshot_at = 3;
+   */
+  latestSnapshotAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: uint64 age_seconds = 4;
+   */
+  ageSeconds: bigint;
+
+  /**
+   * @generated from field: string state = 5;
+   */
+  state: string;
+
+  /**
+   * @generated from field: string error = 6;
+   */
+  error: string;
+
+  /**
+   * @generated from field: uint64 bytes_expected = 7;
+   */
+  bytesExpected: bigint;
+
+  /**
+   * @generated from field: uint64 bytes_replicated = 8;
+   */
+  bytesReplicated: bigint;
+};
+
+/**
+ * Describes the message ezdr.portal.v1.DatasetHealth.
+ * Use `create(DatasetHealthSchema)` to create a new message.
+ */
+export const DatasetHealthSchema: GenMessage<DatasetHealth> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 35);
+
+/**
+ * @generated from message ezdr.portal.v1.GetPlanStatusRequest
+ */
+export type GetPlanStatusRequest = Message<"ezdr.portal.v1.GetPlanStatusRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message ezdr.portal.v1.GetPlanStatusRequest.
+ * Use `create(GetPlanStatusRequestSchema)` to create a new message.
+ */
+export const GetPlanStatusRequestSchema: GenMessage<GetPlanStatusRequest> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 36);
+
+/**
+ * @generated from message ezdr.portal.v1.GetPlanStatusResponse
+ */
+export type GetPlanStatusResponse = Message<"ezdr.portal.v1.GetPlanStatusResponse"> & {
+  /**
+   * @generated from field: ezdr.portal.v1.PlanHealth health = 1;
+   */
+  health?: PlanHealth | undefined;
+
+  /**
+   * @generated from field: repeated ezdr.portal.v1.DatasetHealth datasets = 2;
+   */
+  datasets: DatasetHealth[];
+
+  /**
+   * Job-level errors reported by either host.
+   *
+   * @generated from field: repeated string errors = 3;
+   */
+  errors: string[];
+};
+
+/**
+ * Describes the message ezdr.portal.v1.GetPlanStatusResponse.
+ * Use `create(GetPlanStatusResponseSchema)` to create a new message.
+ */
+export const GetPlanStatusResponseSchema: GenMessage<GetPlanStatusResponse> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 37);
+
+/**
+ * @generated from message ezdr.portal.v1.SmtpSettings
+ */
+export type SmtpSettings = Message<"ezdr.portal.v1.SmtpSettings"> & {
+  /**
+   * @generated from field: bool enabled = 1;
+   */
+  enabled: boolean;
+
+  /**
+   * @generated from field: string host = 2;
+   */
+  host: string;
+
+  /**
+   * @generated from field: uint32 port = 3;
+   */
+  port: number;
+
+  /**
+   * @generated from field: ezdr.portal.v1.SmtpSecurity security = 4;
+   */
+  security: SmtpSecurity;
+
+  /**
+   * @generated from field: string username = 5;
+   */
+  username: string;
+
+  /**
+   * Write-only: never returned. Empty on update keeps the stored password.
+   *
+   * @generated from field: string password = 6;
+   */
+  password: string;
+
+  /**
+   * Returned on read: whether a password is stored.
+   *
+   * @generated from field: bool has_password = 7;
+   */
+  hasPassword: boolean;
+
+  /**
+   * @generated from field: string from = 8;
+   */
+  from: string;
+
+  /**
+   * @generated from field: repeated string recipients = 9;
+   */
+  recipients: string[];
+};
+
+/**
+ * Describes the message ezdr.portal.v1.SmtpSettings.
+ * Use `create(SmtpSettingsSchema)` to create a new message.
+ */
+export const SmtpSettingsSchema: GenMessage<SmtpSettings> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 38);
+
+/**
+ * @generated from message ezdr.portal.v1.Webhook
+ */
+export type Webhook = Message<"ezdr.portal.v1.Webhook"> & {
+  /**
+   * @generated from field: string url = 1;
+   */
+  url: string;
+
+  /**
+   * Write-only; empty on update keeps the stored secret.
+   *
+   * @generated from field: string secret = 2;
+   */
+  secret: string;
+
+  /**
+   * @generated from field: bool has_secret = 3;
+   */
+  hasSecret: boolean;
+
+  /**
+   * Set to remove the stored secret.
+   *
+   * @generated from field: bool clear_secret = 4;
+   */
+  clearSecret: boolean;
+};
+
+/**
+ * Describes the message ezdr.portal.v1.Webhook.
+ * Use `create(WebhookSchema)` to create a new message.
+ */
+export const WebhookSchema: GenMessage<Webhook> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 39);
+
+/**
+ * @generated from message ezdr.portal.v1.AlertSettings
+ */
+export type AlertSettings = Message<"ezdr.portal.v1.AlertSettings"> & {
+  /**
+   * @generated from field: ezdr.portal.v1.SmtpSettings smtp = 1;
+   */
+  smtp?: SmtpSettings | undefined;
+
+  /**
+   * @generated from field: repeated ezdr.portal.v1.Webhook webhooks = 2;
+   */
+  webhooks: Webhook[];
+};
+
+/**
+ * Describes the message ezdr.portal.v1.AlertSettings.
+ * Use `create(AlertSettingsSchema)` to create a new message.
+ */
+export const AlertSettingsSchema: GenMessage<AlertSettings> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 40);
+
+/**
+ * @generated from message ezdr.portal.v1.GetAlertSettingsRequest
+ */
+export type GetAlertSettingsRequest = Message<"ezdr.portal.v1.GetAlertSettingsRequest"> & {
+};
+
+/**
+ * Describes the message ezdr.portal.v1.GetAlertSettingsRequest.
+ * Use `create(GetAlertSettingsRequestSchema)` to create a new message.
+ */
+export const GetAlertSettingsRequestSchema: GenMessage<GetAlertSettingsRequest> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 41);
+
+/**
+ * @generated from message ezdr.portal.v1.GetAlertSettingsResponse
+ */
+export type GetAlertSettingsResponse = Message<"ezdr.portal.v1.GetAlertSettingsResponse"> & {
+  /**
+   * @generated from field: ezdr.portal.v1.AlertSettings settings = 1;
+   */
+  settings?: AlertSettings | undefined;
+};
+
+/**
+ * Describes the message ezdr.portal.v1.GetAlertSettingsResponse.
+ * Use `create(GetAlertSettingsResponseSchema)` to create a new message.
+ */
+export const GetAlertSettingsResponseSchema: GenMessage<GetAlertSettingsResponse> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 42);
+
+/**
+ * @generated from message ezdr.portal.v1.UpdateAlertSettingsRequest
+ */
+export type UpdateAlertSettingsRequest = Message<"ezdr.portal.v1.UpdateAlertSettingsRequest"> & {
+  /**
+   * @generated from field: ezdr.portal.v1.AlertSettings settings = 1;
+   */
+  settings?: AlertSettings | undefined;
+};
+
+/**
+ * Describes the message ezdr.portal.v1.UpdateAlertSettingsRequest.
+ * Use `create(UpdateAlertSettingsRequestSchema)` to create a new message.
+ */
+export const UpdateAlertSettingsRequestSchema: GenMessage<UpdateAlertSettingsRequest> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 43);
+
+/**
+ * @generated from message ezdr.portal.v1.UpdateAlertSettingsResponse
+ */
+export type UpdateAlertSettingsResponse = Message<"ezdr.portal.v1.UpdateAlertSettingsResponse"> & {
+  /**
+   * @generated from field: ezdr.portal.v1.AlertSettings settings = 1;
+   */
+  settings?: AlertSettings | undefined;
+};
+
+/**
+ * Describes the message ezdr.portal.v1.UpdateAlertSettingsResponse.
+ * Use `create(UpdateAlertSettingsResponseSchema)` to create a new message.
+ */
+export const UpdateAlertSettingsResponseSchema: GenMessage<UpdateAlertSettingsResponse> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 44);
+
+/**
+ * @generated from message ezdr.portal.v1.SendTestAlertRequest
+ */
+export type SendTestAlertRequest = Message<"ezdr.portal.v1.SendTestAlertRequest"> & {
+};
+
+/**
+ * Describes the message ezdr.portal.v1.SendTestAlertRequest.
+ * Use `create(SendTestAlertRequestSchema)` to create a new message.
+ */
+export const SendTestAlertRequestSchema: GenMessage<SendTestAlertRequest> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 45);
+
+/**
+ * @generated from message ezdr.portal.v1.SendTestAlertResponse
+ */
+export type SendTestAlertResponse = Message<"ezdr.portal.v1.SendTestAlertResponse"> & {
+  /**
+   * One line per channel: what was sent or why it failed.
+   *
+   * @generated from field: repeated string results = 1;
+   */
+  results: string[];
+};
+
+/**
+ * Describes the message ezdr.portal.v1.SendTestAlertResponse.
+ * Use `create(SendTestAlertResponseSchema)` to create a new message.
+ */
+export const SendTestAlertResponseSchema: GenMessage<SendTestAlertResponse> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 46);
+
+/**
+ * @generated from message ezdr.portal.v1.Alert
+ */
+export type Alert = Message<"ezdr.portal.v1.Alert"> & {
+  /**
+   * @generated from field: string key = 1;
+   */
+  key: string;
+
+  /**
+   * @generated from field: ezdr.portal.v1.AlertSeverity severity = 2;
+   */
+  severity: AlertSeverity;
+
+  /**
+   * @generated from field: string title = 3;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string message = 4;
+   */
+  message: string;
+
+  /**
+   * @generated from field: string plan_id = 5;
+   */
+  planId: string;
+
+  /**
+   * @generated from field: string host_id = 6;
+   */
+  hostId: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp fired_at = 7;
+   */
+  firedAt?: Timestamp | undefined;
+
+  /**
+   * Unset while the alert is firing.
+   *
+   * @generated from field: google.protobuf.Timestamp resolved_at = 8;
+   */
+  resolvedAt?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message ezdr.portal.v1.Alert.
+ * Use `create(AlertSchema)` to create a new message.
+ */
+export const AlertSchema: GenMessage<Alert> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 47);
+
+/**
+ * @generated from message ezdr.portal.v1.ListAlertsRequest
+ */
+export type ListAlertsRequest = Message<"ezdr.portal.v1.ListAlertsRequest"> & {
+  /**
+   * @generated from field: uint32 limit = 1;
+   */
+  limit: number;
+};
+
+/**
+ * Describes the message ezdr.portal.v1.ListAlertsRequest.
+ * Use `create(ListAlertsRequestSchema)` to create a new message.
+ */
+export const ListAlertsRequestSchema: GenMessage<ListAlertsRequest> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 48);
+
+/**
+ * @generated from message ezdr.portal.v1.ListAlertsResponse
+ */
+export type ListAlertsResponse = Message<"ezdr.portal.v1.ListAlertsResponse"> & {
+  /**
+   * @generated from field: repeated ezdr.portal.v1.Alert alerts = 1;
+   */
+  alerts: Alert[];
+};
+
+/**
+ * Describes the message ezdr.portal.v1.ListAlertsResponse.
+ * Use `create(ListAlertsResponseSchema)` to create a new message.
+ */
+export const ListAlertsResponseSchema: GenMessage<ListAlertsResponse> = /*@__PURE__*/
+  messageDesc(file_ezdr_portal_v1_portal, 49);
+
+/**
  * @generated from message ezdr.portal.v1.HostChanges
  */
 export type HostChanges = Message<"ezdr.portal.v1.HostChanges"> & {
@@ -830,7 +1270,7 @@ export type HostChanges = Message<"ezdr.portal.v1.HostChanges"> & {
  * Use `create(HostChangesSchema)` to create a new message.
  */
 export const HostChangesSchema: GenMessage<HostChanges> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 34);
+  messageDesc(file_ezdr_portal_v1_portal, 50);
 
 /**
  * @generated from message ezdr.portal.v1.PreviewPlanChangesRequest
@@ -847,7 +1287,7 @@ export type PreviewPlanChangesRequest = Message<"ezdr.portal.v1.PreviewPlanChang
  * Use `create(PreviewPlanChangesRequestSchema)` to create a new message.
  */
 export const PreviewPlanChangesRequestSchema: GenMessage<PreviewPlanChangesRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 35);
+  messageDesc(file_ezdr_portal_v1_portal, 51);
 
 /**
  * @generated from message ezdr.portal.v1.PreviewPlanChangesResponse
@@ -869,7 +1309,7 @@ export type PreviewPlanChangesResponse = Message<"ezdr.portal.v1.PreviewPlanChan
  * Use `create(PreviewPlanChangesResponseSchema)` to create a new message.
  */
 export const PreviewPlanChangesResponseSchema: GenMessage<PreviewPlanChangesResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 36);
+  messageDesc(file_ezdr_portal_v1_portal, 52);
 
 /**
  * @generated from message ezdr.portal.v1.ActivatePlanRequest
@@ -886,7 +1326,7 @@ export type ActivatePlanRequest = Message<"ezdr.portal.v1.ActivatePlanRequest"> 
  * Use `create(ActivatePlanRequestSchema)` to create a new message.
  */
 export const ActivatePlanRequestSchema: GenMessage<ActivatePlanRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 37);
+  messageDesc(file_ezdr_portal_v1_portal, 53);
 
 /**
  * @generated from message ezdr.portal.v1.ActivatePlanResponse
@@ -903,7 +1343,7 @@ export type ActivatePlanResponse = Message<"ezdr.portal.v1.ActivatePlanResponse"
  * Use `create(ActivatePlanResponseSchema)` to create a new message.
  */
 export const ActivatePlanResponseSchema: GenMessage<ActivatePlanResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 38);
+  messageDesc(file_ezdr_portal_v1_portal, 54);
 
 /**
  * @generated from message ezdr.portal.v1.ApplyPlanChangesRequest
@@ -920,7 +1360,7 @@ export type ApplyPlanChangesRequest = Message<"ezdr.portal.v1.ApplyPlanChangesRe
  * Use `create(ApplyPlanChangesRequestSchema)` to create a new message.
  */
 export const ApplyPlanChangesRequestSchema: GenMessage<ApplyPlanChangesRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 39);
+  messageDesc(file_ezdr_portal_v1_portal, 55);
 
 /**
  * @generated from message ezdr.portal.v1.ApplyPlanChangesResponse
@@ -937,7 +1377,7 @@ export type ApplyPlanChangesResponse = Message<"ezdr.portal.v1.ApplyPlanChangesR
  * Use `create(ApplyPlanChangesResponseSchema)` to create a new message.
  */
 export const ApplyPlanChangesResponseSchema: GenMessage<ApplyPlanChangesResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 40);
+  messageDesc(file_ezdr_portal_v1_portal, 56);
 
 /**
  * @generated from message ezdr.portal.v1.DiscardPlanChangesRequest
@@ -954,7 +1394,7 @@ export type DiscardPlanChangesRequest = Message<"ezdr.portal.v1.DiscardPlanChang
  * Use `create(DiscardPlanChangesRequestSchema)` to create a new message.
  */
 export const DiscardPlanChangesRequestSchema: GenMessage<DiscardPlanChangesRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 41);
+  messageDesc(file_ezdr_portal_v1_portal, 57);
 
 /**
  * @generated from message ezdr.portal.v1.DiscardPlanChangesResponse
@@ -971,7 +1411,7 @@ export type DiscardPlanChangesResponse = Message<"ezdr.portal.v1.DiscardPlanChan
  * Use `create(DiscardPlanChangesResponseSchema)` to create a new message.
  */
 export const DiscardPlanChangesResponseSchema: GenMessage<DiscardPlanChangesResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 42);
+  messageDesc(file_ezdr_portal_v1_portal, 58);
 
 /**
  * @generated from message ezdr.portal.v1.PausePlanRequest
@@ -988,7 +1428,7 @@ export type PausePlanRequest = Message<"ezdr.portal.v1.PausePlanRequest"> & {
  * Use `create(PausePlanRequestSchema)` to create a new message.
  */
 export const PausePlanRequestSchema: GenMessage<PausePlanRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 43);
+  messageDesc(file_ezdr_portal_v1_portal, 59);
 
 /**
  * @generated from message ezdr.portal.v1.PausePlanResponse
@@ -1005,7 +1445,7 @@ export type PausePlanResponse = Message<"ezdr.portal.v1.PausePlanResponse"> & {
  * Use `create(PausePlanResponseSchema)` to create a new message.
  */
 export const PausePlanResponseSchema: GenMessage<PausePlanResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 44);
+  messageDesc(file_ezdr_portal_v1_portal, 60);
 
 /**
  * @generated from message ezdr.portal.v1.ResumePlanRequest
@@ -1022,7 +1462,7 @@ export type ResumePlanRequest = Message<"ezdr.portal.v1.ResumePlanRequest"> & {
  * Use `create(ResumePlanRequestSchema)` to create a new message.
  */
 export const ResumePlanRequestSchema: GenMessage<ResumePlanRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 45);
+  messageDesc(file_ezdr_portal_v1_portal, 61);
 
 /**
  * @generated from message ezdr.portal.v1.ResumePlanResponse
@@ -1039,7 +1479,7 @@ export type ResumePlanResponse = Message<"ezdr.portal.v1.ResumePlanResponse"> & 
  * Use `create(ResumePlanResponseSchema)` to create a new message.
  */
 export const ResumePlanResponseSchema: GenMessage<ResumePlanResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 46);
+  messageDesc(file_ezdr_portal_v1_portal, 62);
 
 /**
  * @generated from message ezdr.portal.v1.DeactivatePlanRequest
@@ -1056,7 +1496,7 @@ export type DeactivatePlanRequest = Message<"ezdr.portal.v1.DeactivatePlanReques
  * Use `create(DeactivatePlanRequestSchema)` to create a new message.
  */
 export const DeactivatePlanRequestSchema: GenMessage<DeactivatePlanRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 47);
+  messageDesc(file_ezdr_portal_v1_portal, 63);
 
 /**
  * @generated from message ezdr.portal.v1.DeactivatePlanResponse
@@ -1073,7 +1513,7 @@ export type DeactivatePlanResponse = Message<"ezdr.portal.v1.DeactivatePlanRespo
  * Use `create(DeactivatePlanResponseSchema)` to create a new message.
  */
 export const DeactivatePlanResponseSchema: GenMessage<DeactivatePlanResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 48);
+  messageDesc(file_ezdr_portal_v1_portal, 64);
 
 /**
  * @generated from message ezdr.portal.v1.Plan
@@ -1143,7 +1583,7 @@ export type Plan = Message<"ezdr.portal.v1.Plan"> & {
  * Use `create(PlanSchema)` to create a new message.
  */
 export const PlanSchema: GenMessage<Plan> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 49);
+  messageDesc(file_ezdr_portal_v1_portal, 65);
 
 /**
  * @generated from message ezdr.portal.v1.HostApplyStatus
@@ -1192,7 +1632,7 @@ export type HostApplyStatus = Message<"ezdr.portal.v1.HostApplyStatus"> & {
  * Use `create(HostApplyStatusSchema)` to create a new message.
  */
 export const HostApplyStatusSchema: GenMessage<HostApplyStatus> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 50);
+  messageDesc(file_ezdr_portal_v1_portal, 66);
 
 /**
  * @generated from message ezdr.portal.v1.PlanSummary
@@ -1247,6 +1687,11 @@ export type PlanSummary = Message<"ezdr.portal.v1.PlanSummary"> & {
    * @generated from field: bool pending_changes = 10;
    */
   pendingChanges: boolean;
+
+  /**
+   * @generated from field: ezdr.portal.v1.PlanHealth health = 11;
+   */
+  health?: PlanHealth | undefined;
 };
 
 /**
@@ -1254,7 +1699,7 @@ export type PlanSummary = Message<"ezdr.portal.v1.PlanSummary"> & {
  * Use `create(PlanSummarySchema)` to create a new message.
  */
 export const PlanSummarySchema: GenMessage<PlanSummary> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 51);
+  messageDesc(file_ezdr_portal_v1_portal, 67);
 
 /**
  * @generated from message ezdr.portal.v1.ListPlansRequest
@@ -1267,7 +1712,7 @@ export type ListPlansRequest = Message<"ezdr.portal.v1.ListPlansRequest"> & {
  * Use `create(ListPlansRequestSchema)` to create a new message.
  */
 export const ListPlansRequestSchema: GenMessage<ListPlansRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 52);
+  messageDesc(file_ezdr_portal_v1_portal, 68);
 
 /**
  * @generated from message ezdr.portal.v1.ListPlansResponse
@@ -1284,7 +1729,7 @@ export type ListPlansResponse = Message<"ezdr.portal.v1.ListPlansResponse"> & {
  * Use `create(ListPlansResponseSchema)` to create a new message.
  */
 export const ListPlansResponseSchema: GenMessage<ListPlansResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 53);
+  messageDesc(file_ezdr_portal_v1_portal, 69);
 
 /**
  * @generated from message ezdr.portal.v1.GetPlanRequest
@@ -1301,7 +1746,7 @@ export type GetPlanRequest = Message<"ezdr.portal.v1.GetPlanRequest"> & {
  * Use `create(GetPlanRequestSchema)` to create a new message.
  */
 export const GetPlanRequestSchema: GenMessage<GetPlanRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 54);
+  messageDesc(file_ezdr_portal_v1_portal, 70);
 
 /**
  * @generated from message ezdr.portal.v1.GetPlanResponse
@@ -1323,7 +1768,7 @@ export type GetPlanResponse = Message<"ezdr.portal.v1.GetPlanResponse"> & {
  * Use `create(GetPlanResponseSchema)` to create a new message.
  */
 export const GetPlanResponseSchema: GenMessage<GetPlanResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 55);
+  messageDesc(file_ezdr_portal_v1_portal, 71);
 
 /**
  * @generated from message ezdr.portal.v1.CreatePlanRequest
@@ -1340,7 +1785,7 @@ export type CreatePlanRequest = Message<"ezdr.portal.v1.CreatePlanRequest"> & {
  * Use `create(CreatePlanRequestSchema)` to create a new message.
  */
 export const CreatePlanRequestSchema: GenMessage<CreatePlanRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 56);
+  messageDesc(file_ezdr_portal_v1_portal, 72);
 
 /**
  * @generated from message ezdr.portal.v1.CreatePlanResponse
@@ -1362,7 +1807,7 @@ export type CreatePlanResponse = Message<"ezdr.portal.v1.CreatePlanResponse"> & 
  * Use `create(CreatePlanResponseSchema)` to create a new message.
  */
 export const CreatePlanResponseSchema: GenMessage<CreatePlanResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 57);
+  messageDesc(file_ezdr_portal_v1_portal, 73);
 
 /**
  * @generated from message ezdr.portal.v1.UpdatePlanRequest
@@ -1384,7 +1829,7 @@ export type UpdatePlanRequest = Message<"ezdr.portal.v1.UpdatePlanRequest"> & {
  * Use `create(UpdatePlanRequestSchema)` to create a new message.
  */
 export const UpdatePlanRequestSchema: GenMessage<UpdatePlanRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 58);
+  messageDesc(file_ezdr_portal_v1_portal, 74);
 
 /**
  * @generated from message ezdr.portal.v1.UpdatePlanResponse
@@ -1406,7 +1851,7 @@ export type UpdatePlanResponse = Message<"ezdr.portal.v1.UpdatePlanResponse"> & 
  * Use `create(UpdatePlanResponseSchema)` to create a new message.
  */
 export const UpdatePlanResponseSchema: GenMessage<UpdatePlanResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 59);
+  messageDesc(file_ezdr_portal_v1_portal, 75);
 
 /**
  * @generated from message ezdr.portal.v1.DeletePlanRequest
@@ -1423,7 +1868,7 @@ export type DeletePlanRequest = Message<"ezdr.portal.v1.DeletePlanRequest"> & {
  * Use `create(DeletePlanRequestSchema)` to create a new message.
  */
 export const DeletePlanRequestSchema: GenMessage<DeletePlanRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 60);
+  messageDesc(file_ezdr_portal_v1_portal, 76);
 
 /**
  * @generated from message ezdr.portal.v1.DeletePlanResponse
@@ -1436,7 +1881,7 @@ export type DeletePlanResponse = Message<"ezdr.portal.v1.DeletePlanResponse"> & 
  * Use `create(DeletePlanResponseSchema)` to create a new message.
  */
 export const DeletePlanResponseSchema: GenMessage<DeletePlanResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 61);
+  messageDesc(file_ezdr_portal_v1_portal, 77);
 
 /**
  * @generated from message ezdr.portal.v1.ValidatePlanRequest
@@ -1461,7 +1906,7 @@ export type ValidatePlanRequest = Message<"ezdr.portal.v1.ValidatePlanRequest"> 
  * Use `create(ValidatePlanRequestSchema)` to create a new message.
  */
 export const ValidatePlanRequestSchema: GenMessage<ValidatePlanRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 62);
+  messageDesc(file_ezdr_portal_v1_portal, 78);
 
 /**
  * @generated from message ezdr.portal.v1.ValidatePlanResponse
@@ -1478,7 +1923,7 @@ export type ValidatePlanResponse = Message<"ezdr.portal.v1.ValidatePlanResponse"
  * Use `create(ValidatePlanResponseSchema)` to create a new message.
  */
 export const ValidatePlanResponseSchema: GenMessage<ValidatePlanResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 63);
+  messageDesc(file_ezdr_portal_v1_portal, 79);
 
 /**
  * @generated from message ezdr.portal.v1.SuggestPlanRequest
@@ -1495,7 +1940,7 @@ export type SuggestPlanRequest = Message<"ezdr.portal.v1.SuggestPlanRequest"> & 
  * Use `create(SuggestPlanRequestSchema)` to create a new message.
  */
 export const SuggestPlanRequestSchema: GenMessage<SuggestPlanRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 64);
+  messageDesc(file_ezdr_portal_v1_portal, 80);
 
 /**
  * @generated from message ezdr.portal.v1.SuggestPlanResponse
@@ -1512,7 +1957,126 @@ export type SuggestPlanResponse = Message<"ezdr.portal.v1.SuggestPlanResponse"> 
  * Use `create(SuggestPlanResponseSchema)` to create a new message.
  */
 export const SuggestPlanResponseSchema: GenMessage<SuggestPlanResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_portal_v1_portal, 65);
+  messageDesc(file_ezdr_portal_v1_portal, 81);
+
+/**
+ * @generated from enum ezdr.portal.v1.HealthState
+ */
+export enum HealthState {
+  /**
+   * @generated from enum value: HEALTH_STATE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Not active, so no health.
+   *
+   * @generated from enum value: HEALTH_STATE_NONE = 1;
+   */
+  NONE = 1,
+
+  /**
+   * @generated from enum value: HEALTH_STATE_HEALTHY = 2;
+   */
+  HEALTHY = 2,
+
+  /**
+   * The initial replication is still running.
+   *
+   * @generated from enum value: HEALTH_STATE_SYNCING = 3;
+   */
+  SYNCING = 3,
+
+  /**
+   * The newest replicated snapshot is older than the RPO alert threshold.
+   *
+   * @generated from enum value: HEALTH_STATE_LAGGING = 4;
+   */
+  LAGGING = 4,
+
+  /**
+   * zrepl reports errors.
+   *
+   * @generated from enum value: HEALTH_STATE_FAILING = 5;
+   */
+  FAILING = 5,
+
+  /**
+   * A host is offline or hasn't reported status recently.
+   *
+   * @generated from enum value: HEALTH_STATE_UNKNOWN = 6;
+   */
+  UNKNOWN = 6,
+}
+
+/**
+ * Describes the enum ezdr.portal.v1.HealthState.
+ */
+export const HealthStateSchema: GenEnum<HealthState> = /*@__PURE__*/
+  enumDesc(file_ezdr_portal_v1_portal, 0);
+
+/**
+ * @generated from enum ezdr.portal.v1.SmtpSecurity
+ */
+export enum SmtpSecurity {
+  /**
+   * @generated from enum value: SMTP_SECURITY_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * STARTTLS on the submission port (usually 587).
+   *
+   * @generated from enum value: SMTP_SECURITY_STARTTLS = 1;
+   */
+  STARTTLS = 1,
+
+  /**
+   * Implicit TLS (usually port 465).
+   *
+   * @generated from enum value: SMTP_SECURITY_TLS = 2;
+   */
+  TLS = 2,
+
+  /**
+   * No encryption; only for trusted local relays.
+   *
+   * @generated from enum value: SMTP_SECURITY_NONE = 3;
+   */
+  NONE = 3,
+}
+
+/**
+ * Describes the enum ezdr.portal.v1.SmtpSecurity.
+ */
+export const SmtpSecuritySchema: GenEnum<SmtpSecurity> = /*@__PURE__*/
+  enumDesc(file_ezdr_portal_v1_portal, 1);
+
+/**
+ * @generated from enum ezdr.portal.v1.AlertSeverity
+ */
+export enum AlertSeverity {
+  /**
+   * @generated from enum value: ALERT_SEVERITY_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: ALERT_SEVERITY_WARNING = 1;
+   */
+  WARNING = 1,
+
+  /**
+   * @generated from enum value: ALERT_SEVERITY_CRITICAL = 2;
+   */
+  CRITICAL = 2,
+}
+
+/**
+ * Describes the enum ezdr.portal.v1.AlertSeverity.
+ */
+export const AlertSeveritySchema: GenEnum<AlertSeverity> = /*@__PURE__*/
+  enumDesc(file_ezdr_portal_v1_portal, 2);
 
 /**
  * @generated from enum ezdr.portal.v1.PlanState
@@ -1543,7 +2107,7 @@ export enum PlanState {
  * Describes the enum ezdr.portal.v1.PlanState.
  */
 export const PlanStateSchema: GenEnum<PlanState> = /*@__PURE__*/
-  enumDesc(file_ezdr_portal_v1_portal, 0);
+  enumDesc(file_ezdr_portal_v1_portal, 3);
 
 /**
  * SetupService creates the first administrator on a new portal.
@@ -1840,6 +2404,59 @@ export const PlanService: GenService<{
     input: typeof DeactivatePlanRequestSchema;
     output: typeof DeactivatePlanResponseSchema;
   },
+  /**
+   * GetPlanStatus returns an active plan's replication health.
+   *
+   * @generated from rpc ezdr.portal.v1.PlanService.GetPlanStatus
+   */
+  getPlanStatus: {
+    methodKind: "unary";
+    input: typeof GetPlanStatusRequestSchema;
+    output: typeof GetPlanStatusResponseSchema;
+  },
 }> = /*@__PURE__*/
   serviceDesc(file_ezdr_portal_v1_portal, 5);
+
+/**
+ * AlertService manages alert channels and lists alerts.
+ *
+ * @generated from service ezdr.portal.v1.AlertService
+ */
+export const AlertService: GenService<{
+  /**
+   * @generated from rpc ezdr.portal.v1.AlertService.GetAlertSettings
+   */
+  getAlertSettings: {
+    methodKind: "unary";
+    input: typeof GetAlertSettingsRequestSchema;
+    output: typeof GetAlertSettingsResponseSchema;
+  },
+  /**
+   * @generated from rpc ezdr.portal.v1.AlertService.UpdateAlertSettings
+   */
+  updateAlertSettings: {
+    methodKind: "unary";
+    input: typeof UpdateAlertSettingsRequestSchema;
+    output: typeof UpdateAlertSettingsResponseSchema;
+  },
+  /**
+   * SendTestAlert sends a test notification to every configured channel.
+   *
+   * @generated from rpc ezdr.portal.v1.AlertService.SendTestAlert
+   */
+  sendTestAlert: {
+    methodKind: "unary";
+    input: typeof SendTestAlertRequestSchema;
+    output: typeof SendTestAlertResponseSchema;
+  },
+  /**
+   * @generated from rpc ezdr.portal.v1.AlertService.ListAlerts
+   */
+  listAlerts: {
+    methodKind: "unary";
+    input: typeof ListAlertsRequestSchema;
+    output: typeof ListAlertsResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_ezdr_portal_v1_portal, 6);
 

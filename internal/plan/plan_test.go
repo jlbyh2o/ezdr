@@ -205,6 +205,7 @@ func TestValidateWarnings(t *testing.T) {
 		"unused mapping": {func(s *planv1.PlanSpec, _ *Context) {
 			s.NetworkMappings = append(s.NetworkMappings, &planv1.NetworkMapping{SourceBridge: "vmbr5", TargetBridge: "vmbr2"})
 		}, "isn't used by any protected guest"},
+		"short RPO threshold": {func(s *planv1.PlanSpec, _ *Context) { s.RpoAlertSeconds = 2 * s.IntervalSeconds }, "alerts would fire during normal operation"},
 		"same DNS values": {func(s *planv1.PlanSpec, _ *Context) {
 			s.Guests[0].DnsRecords = []*planv1.DnsRecord{{Name: "app.example.com", Type: planv1.DnsRecordType_DNS_RECORD_TYPE_CNAME,
 				ProductionValue: "x.example.com", FailoverValue: "x.example.com"}}
