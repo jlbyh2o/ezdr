@@ -1,29 +1,79 @@
 import { useEffect, useState } from 'react'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 
-type Health = { status: string; version: string }
+import { ErrorAlert } from '@/components/error-alert'
+import type { User } from '@/gen/ezdr/portal/v1/portal_pb'
+import { authClient, errorMessage, isUnauthenticated, setupClient } from '@/lib/api'
+import { AuditPage } from '@/pages/audit'
+import { HostsPage } from '@/pages/hosts'
+import { Layout } from '@/pages/layout'
+import { LoginPage } from '@/pages/login'
+import { SetupPage } from '@/pages/setup'
+import { TokensPage } from '@/pages/tokens'
+
+type State =
+  | { kind: 'loading' }
+  | { kind: 'error'; message: string }
+  | { kind: 'setup' }
+  | { kind: 'signed-out' }
+  | { kind: 'signed-in'; user: User }
+
+async function loadState(): Promise<State> {
+  try {
+    const { setupRequired } = await setupClient.getSetupStatus({})
+    if (setupRequired) return { kind: 'setup' }
+    const { user } = await authClient.getCurrentUser({})
+    return user ? { kind: 'signed-in', user } : { kind: 'signed-out' }
+  } catch (err) {
+    return isUnauthenticated(err) ? { kind: 'signed-out' } : { kind: 'error', message: errorMessage(err) }
+  }
+}
 
 function App() {
-  const [health, setHealth] = useState<Health | null>(null)
-  const [error, setError] = useState(false)
+  const [state, setState] = useState<State>({ kind: 'loading' })
 
   useEffect(() => {
-    fetch('/api/health')
-      .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
-      .then(setHealth)
-      .catch(() => setError(true))
+    let active = true
+    void loadState().then((s) => {
+      if (active) setState(s)
+    })
+    return () => {
+      active = false
+    }
   }, [])
 
-  return (
-    <main className="mx-auto max-w-2xl p-8">
-      <h1 className="text-3xl font-semibold">EZDR</h1>
-      <p className="mt-2 text-gray-600">Easy Disaster Recovery for Proxmox VE</p>
-      <p className="mt-6 text-sm text-gray-500">
-        {error && 'Portal API is unreachable.'}
-        {health && `Portal ${health.version}: ${health.status}`}
-        {!error && !health && 'Checking portal status…'}
-      </p>
-    </main>
-  )
+  async function signOut() {
+    await authClient.logout({}).catch(() => undefined)
+    setState({ kind: 'signed-out' })
+  }
+
+  switch (state.kind) {
+    case 'loading':
+      return null
+    case 'error':
+      return (
+        <main className="mx-auto max-w-md p-8">
+          <ErrorAlert message={`Cannot reach the portal: ${state.message}`} />
+        </main>
+      )
+    case 'setup':
+      return <SetupPage onDone={() => setState({ kind: 'signed-out' })} />
+    case 'signed-out':
+      return <LoginPage onSignedIn={(user) => setState({ kind: 'signed-in', user })} />
+    case 'signed-in':
+      return (
+        <BrowserRouter>
+          <Routes>
+            <Route element={<Layout user={state.user} onSignOut={() => void signOut()} />}>
+              <Route path="/hosts" element={<HostsPage />} />
+              <Route path="/tokens" element={<TokensPage />} />
+              <Route path="/audit" element={<AuditPage />} />
+              <Route path="*" element={<Navigate to="/hosts" replace />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      )
+  }
 }
 
 export default App

@@ -73,6 +73,7 @@ message LogoutResponse {}
 message GetCurrentUserRequest {}
 
 message GetCurrentUserResponse {
+  // Unset when no one is signed in.
   User user = 1;
 }
 

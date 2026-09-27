@@ -251,6 +251,8 @@ export const GetCurrentUserRequestSchema: GenMessage<GetCurrentUserRequest> = /*
  */
 export type GetCurrentUserResponse = Message<"ezdr.portal.v1.GetCurrentUserResponse"> & {
   /**
+   * Unset when no one is signed in.
+   *
    * @generated from field: ezdr.portal.v1.User user = 1;
    */
   user?: User | undefined;

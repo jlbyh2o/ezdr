@@ -85,6 +85,10 @@ func TestPortalFlow(t *testing.T) {
 	// Signed-out users cannot call protected APIs.
 	_, err = hosts.ListHosts(ctx, connect.NewRequest(&portalv1.ListHostsRequest{}))
 	wantCode(t, err, connect.CodeUnauthenticated)
+	anon, err := authc.GetCurrentUser(ctx, connect.NewRequest(&portalv1.GetCurrentUserRequest{}))
+	if err != nil || anon.Msg.User != nil {
+		t.Fatalf("GetCurrentUser signed out: %v, %v", anon, err)
+	}
 
 	// First-run setup requires the setup code.
 	st1, _ := setup.GetSetupStatus(ctx, connect.NewRequest(&portalv1.GetSetupStatusRequest{}))

@@ -132,13 +132,14 @@ func (s AuthService) Logout(ctx context.Context, req *connect.Request[portalv1.L
 	return res, nil
 }
 
-// GetCurrentUser returns the signed-in user.
+// GetCurrentUser returns the signed-in user, or no user when signed out.
+// Signed out is a normal state for the UI, so it is not an error.
 func (s AuthService) GetCurrentUser(ctx context.Context, _ *connect.Request[portalv1.GetCurrentUserRequest]) (*connect.Response[portalv1.GetCurrentUserResponse], error) {
-	u, ok := auth.UserFrom(ctx)
-	if !ok {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errNotSignedIn)
+	resp := &portalv1.GetCurrentUserResponse{}
+	if u, ok := auth.UserFrom(ctx); ok {
+		resp.User = userMsg(u)
 	}
-	return connect.NewResponse(&portalv1.GetCurrentUserResponse{User: userMsg(u)}), nil
+	return connect.NewResponse(resp), nil
 }
 
 func cookieFromHeader(header string) string {

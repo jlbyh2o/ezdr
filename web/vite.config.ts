@@ -11,6 +11,10 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  build: {
+    // A single bundle is fine for an admin portal (about 170 kB gzipped).
+    chunkSizeWarningLimit: 800,
+  },
   server: {
     // During development, forward API calls to a locally running portal.
     proxy: {
