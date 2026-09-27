@@ -91,7 +91,8 @@ Two separate network paths exist:
 Responsibilities:
 
 - User authentication (with MFA) and an audit log of all actions.
-- Client enrollment: issuing one-time enrollment tokens and client certificates.
+- Client enrollment: issuing one-time enrollment tokens and registering each
+  host's WireGuard peer.
 - Storing inventory reported by clients.
 - DR plan builder: selecting workloads and defining storage and network
   mappings between hosts.
@@ -124,8 +125,8 @@ Responsibilities:
 - **Bootstrap:** verify prerequisites (Proxmox VE version, ZFS pools) and
   install required tools (zrepl, WireGuard tools) from their official
   repositories.
-- **Enrollment:** exchange a one-time token for a client certificate and
-  establish the control-plane VPN to the portal.
+- **Enrollment:** exchange a one-time token for a WireGuard peer configuration
+  and establish the control-plane VPN to the portal.
 - **Inventory:** report VMs, containers, disks, ZFS pools and datasets, Proxmox
   storage definitions, and host network configuration (interfaces, bridges,
   VLANs). Inventory is gathered through the Proxmox API (`pvesh` or the local
@@ -163,6 +164,10 @@ Each client initiates a WireGuard tunnel to the portal. Because connections are
 outbound from the client, hosts behind NAT or restrictive firewalls work
 without inbound port forwarding. Only the portal needs a publicly reachable
 endpoint.
+
+The tunnel is also the client's identity: the portal serves its client API
+only inside the tunnel, and WireGuard binds each tunnel address to one host's
+key. See [Enrollment and control plane](design/enrollment.md) for details.
 
 ### 4.2 Site-to-site VPN
 
@@ -255,8 +260,8 @@ Items that EZDR cannot manage, but that operators must prepare for failover:
 1. Operator creates an enrollment token in the portal.
 2. Operator installs the client on a host and provides the token.
 3. Client checks prerequisites and installs required tools.
-4. Client enrolls, receives its certificate, and brings up the control-plane
-   VPN.
+4. Client enrolls, receives its WireGuard peer configuration, and brings up
+   the control-plane VPN.
 5. Client sends a full inventory, then sends updates when the host changes.
 
 ### 6.2 Plan activation and replication
@@ -335,8 +340,12 @@ and zrepl configuration should account for it from the start.
 The portal can direct actions on hypervisors, which makes it a high-value
 target. The design limits both the likelihood and the impact of a compromise.
 
-- **Enrollment:** one-time, expiring tokens. After enrollment, clients and
-  portal authenticate each other with mutual TLS (mTLS) certificates.
+- **Enrollment:** one-time, expiring tokens, sent over HTTPS with optional
+  certificate pinning. Private keys are generated on the host and never leave
+  it.
+- **Tunnel-based client identity:** the client API is reachable only through
+  WireGuard, which cryptographically ties each tunnel address to one host.
+  Clients cannot reach each other through the portal.
 - **Client-initiated connections:** clients connect out to the portal; the
   portal never needs inbound access to hosts.
 - **Declarative control, not remote execution:** the portal sends desired state
@@ -346,8 +355,9 @@ target. The design limits both the likelihood and the impact of a compromise.
 - **Pull-based replication:** a compromised primary cannot delete DR snapshots.
 - **Least-privilege data plane:** zrepl on each side is limited to the datasets
   in the plan.
-- **Portal hardening:** MFA for users, audit log of all actions, secrets
-  encrypted at rest.
+- **Portal hardening:** required TOTP for users, audit log of all actions,
+  secrets encrypted at rest, and a one-time setup code for the first
+  administrator.
 - **DNS provider credentials stay on the portal:** API tokens are scoped to DNS
   edit on selected zones and are never distributed to clients.
 - **Human-initiated failover:** no automatic failover, reducing the risk of
@@ -364,7 +374,9 @@ target. The design limits both the likelihood and the impact of a compromise.
 | Portal backend | Go API | Shares code and types with the client. |
 | Portal frontend | React single-page app (TypeScript, Vite) | Largest ecosystem and contributor pool; built assets are embedded in the Go binary. |
 | Portal database | SQLite | Enough for a single organization; no separate database service; backups are a file copy. |
-| Portal packaging | Container image and Compose file | Simple to self-host on a VPS. |
+| Portal packaging | Container image and Compose file with Caddy | Simple to self-host on a VPS; Caddy provides automatic HTTPS. |
+| API protocol | ConnectRPC with protobuf, managed with Buf | One schema generates typed Go and TypeScript code; supports streaming. |
+| User sign-in | Local accounts with password and required TOTP | No external identity provider needed; passkeys and OIDC later. |
 | Alerting | Email (SMTP) and generic webhooks | Webhooks cover Slack, Discord, Teams, and custom tooling. |
 | DNS provider | Cloudflare, behind a provider interface | Widely used and has a complete API; the interface allows other providers later. |
 | License | AGPL-3.0 | Changes to a hosted portal must be shared; matches Proxmox VE's license. |
