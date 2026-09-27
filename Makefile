@@ -3,7 +3,7 @@ GO_LDFLAGS := -s -w \
 	-X github.com/jlbyh2o/ezdr/internal/version.Commit=$(shell git rev-parse --short HEAD 2>/dev/null || echo unknown) \
 	-X github.com/jlbyh2o/ezdr/internal/version.Date=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 
-.PHONY: all build client portal web web-deps test lint fmt clean
+.PHONY: all build client portal web web-deps generate test lint fmt clean
 
 all: build
 
@@ -22,6 +22,11 @@ web-deps:
 ## web: build the web UI into web/dist
 web: web-deps
 	cd web && pnpm build
+
+## generate: regenerate protobuf code for Go and TypeScript
+generate: web-deps
+	buf lint
+	buf generate
 
 ## test: run Go tests
 test:

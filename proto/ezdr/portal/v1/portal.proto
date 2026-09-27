@@ -1,0 +1,183 @@
+syntax = "proto3";
+
+package ezdr.portal.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// SetupService creates the first administrator on a new portal.
+service SetupService {
+  rpc GetSetupStatus(GetSetupStatusRequest) returns (GetSetupStatusResponse);
+  rpc CompleteSetup(CompleteSetupRequest) returns (CompleteSetupResponse);
+}
+
+message GetSetupStatusRequest {}
+
+message GetSetupStatusResponse {
+  bool setup_required = 1;
+}
+
+message CompleteSetupRequest {
+  // One-time code printed in the portal log.
+  string setup_code = 1;
+  string username = 2;
+  string password = 3;
+}
+
+message CompleteSetupResponse {}
+
+// AuthService signs users in and out. Sign-in has two steps: password, then
+// TOTP. Users without TOTP set up are given a secret to add to an
+// authenticator app during their first sign-in.
+service AuthService {
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc VerifyTotp(VerifyTotpRequest) returns (VerifyTotpResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse);
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  // Short-lived ID for the second sign-in step.
+  string challenge_id = 1;
+  // Set when the user must add TOTP to an authenticator app first.
+  TotpSetup totp_setup = 2;
+}
+
+message TotpSetup {
+  string secret = 1;
+  // otpauth:// URL for QR codes.
+  string url = 2;
+}
+
+message VerifyTotpRequest {
+  string challenge_id = 1;
+  // A 6-digit TOTP code or, for users with TOTP already set up, a recovery
+  // code.
+  string code = 2;
+}
+
+message VerifyTotpResponse {
+  User user = 1;
+  // Returned once, when TOTP is first set up.
+  repeated string recovery_codes = 2;
+}
+
+message LogoutRequest {}
+
+message LogoutResponse {}
+
+message GetCurrentUserRequest {}
+
+message GetCurrentUserResponse {
+  User user = 1;
+}
+
+message User {
+  string id = 1;
+  string username = 2;
+}
+
+// TokenService manages enrollment tokens.
+service TokenService {
+  rpc CreateToken(CreateTokenRequest) returns (CreateTokenResponse);
+  rpc ListTokens(ListTokensRequest) returns (ListTokensResponse);
+  rpc RevokeToken(RevokeTokenRequest) returns (RevokeTokenResponse);
+}
+
+message CreateTokenRequest {
+  string description = 1;
+  // Lifetime in seconds. Zero means the default (one hour).
+  uint32 ttl_seconds = 2;
+}
+
+message CreateTokenResponse {
+  EnrollmentToken token = 1;
+  // The full token string. Shown only once.
+  string token_string = 2;
+  // Command that installs the client and enrolls the host.
+  string install_command = 3;
+  // Command for hosts that already have the client installed.
+  string enroll_command = 4;
+}
+
+message ListTokensRequest {}
+
+message ListTokensResponse {
+  repeated EnrollmentToken tokens = 1;
+}
+
+message RevokeTokenRequest {
+  string id = 1;
+}
+
+message RevokeTokenResponse {}
+
+message EnrollmentToken {
+  string id = 1;
+  string description = 2;
+  string created_by = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp expires_at = 5;
+  google.protobuf.Timestamp used_at = 6;
+  google.protobuf.Timestamp revoked_at = 7;
+  // Host enrolled with this token, if used.
+  string host_id = 8;
+}
+
+// HostService lists and removes enrolled hosts.
+service HostService {
+  rpc ListHosts(ListHostsRequest) returns (ListHostsResponse);
+  rpc DeleteHost(DeleteHostRequest) returns (DeleteHostResponse);
+}
+
+message ListHostsRequest {}
+
+message ListHostsResponse {
+  repeated Host hosts = 1;
+}
+
+message DeleteHostRequest {
+  string id = 1;
+}
+
+message DeleteHostResponse {}
+
+message Host {
+  string id = 1;
+  string hostname = 2;
+  string machine_id = 3;
+  string pve_version = 4;
+  string client_version = 5;
+  string tunnel_address = 6;
+  google.protobuf.Timestamp enrolled_at = 7;
+  google.protobuf.Timestamp last_seen_at = 8;
+  bool online = 9;
+  // Set when another host was enrolled with the same machine ID.
+  bool duplicate_machine_id = 10;
+}
+
+// AuditService lists audit log entries, newest first.
+service AuditService {
+  rpc ListAuditEvents(ListAuditEventsRequest) returns (ListAuditEventsResponse);
+}
+
+message ListAuditEventsRequest {
+  uint32 limit = 1;
+}
+
+message ListAuditEventsResponse {
+  repeated AuditEvent events = 1;
+}
+
+message AuditEvent {
+  google.protobuf.Timestamp time = 1;
+  string actor = 2;
+  string action = 3;
+  string target = 4;
+  string source_address = 5;
+  string detail = 6;
+}

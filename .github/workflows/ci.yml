@@ -22,6 +22,20 @@ jobs:
       - name: Lint
         run: golangci-lint run
 
+  proto:
+    name: Protobuf
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+      - name: Lint
+        run: buf lint
+      - name: Check generated code is up to date
+        run: |
+          (cd web && pnpm install --frozen-lockfile)
+          buf generate
+          git diff --exit-code
+
   web:
     name: Web UI
     runs-on: ubuntu-latest
@@ -43,7 +57,7 @@ jobs:
   build:
     name: Build binaries
     runs-on: ubuntu-latest
-    needs: [go, web]
+    needs: [go, proto, web]
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4

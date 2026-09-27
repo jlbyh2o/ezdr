@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package ezdr.client.v1;
+
+// ClientService is served only on the portal's tunnel listener. The portal
+// identifies the calling host by its tunnel source address.
+service ClientService {
+  // Subscribe opens the command stream. The portal sends the current desired
+  // state first, then heartbeats and any updates.
+  rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse);
+
+  // ReportStatus reports the client's health and applied configuration.
+  rpc ReportStatus(ReportStatusRequest) returns (ReportStatusResponse);
+}
+
+message SubscribeRequest {
+  string client_version = 1;
+}
+
+message SubscribeResponse {
+  oneof message {
+    Heartbeat heartbeat = 1;
+    DesiredState desired_state = 2;
+  }
+}
+
+message Heartbeat {}
+
+// DesiredState is the full configuration the host should have. It is empty in
+// phase 1 and gains fields in later phases.
+message DesiredState {
+  uint64 generation = 1;
+}
+
+message ReportStatusRequest {
+  string client_version = 1;
+  uint64 applied_generation = 2;
+}
+
+message ReportStatusResponse {}

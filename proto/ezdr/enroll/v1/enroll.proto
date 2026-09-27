@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package ezdr.enroll.v1;
+
+// EnrollmentService is served on the portal's public listener. It is the only
+// client-facing API reachable from the internet. Both methods require the
+// full enrollment token and are rate-limited per source address.
+service EnrollmentService {
+  // CheckToken validates a token without using it and returns the settings
+  // the client needs to run its prerequisite checks.
+  rpc CheckToken(CheckTokenRequest) returns (CheckTokenResponse);
+
+  // Enroll uses the token, registers the host, and returns its WireGuard peer
+  // configuration.
+  rpc Enroll(EnrollRequest) returns (EnrollResponse);
+}
+
+message CheckTokenRequest {
+  string token_id = 1;
+  bytes secret = 2;
+}
+
+message CheckTokenResponse {
+  // Tunnel address range in CIDR notation, for example "100.64.42.0/28".
+  string tunnel_prefix = 1;
+  // Portal WireGuard endpoint as host:port.
+  string wireguard_endpoint = 2;
+}
+
+message HostFacts {
+  string hostname = 1;
+  // Contents of /etc/machine-id.
+  string machine_id = 2;
+  // Output of `pveversion`, for example "pve-manager/9.2.20/...".
+  string pve_version = 3;
+  string client_version = 4;
+}
+
+message EnrollRequest {
+  string token_id = 1;
+  bytes secret = 2;
+  // The host's WireGuard public key (32 bytes).
+  bytes wireguard_public_key = 3;
+  HostFacts facts = 4;
+}
+
+message EnrollResponse {
+  string host_id = 1;
+  // The host's tunnel address, for example "100.64.42.2".
+  string tunnel_address = 2;
+  // Tunnel address range in CIDR notation.
+  string tunnel_prefix = 3;
+  // The portal's tunnel address, for example "100.64.42.1".
+  string portal_tunnel_address = 4;
+  // The portal's WireGuard public key (32 bytes).
+  bytes portal_wireguard_public_key = 5;
+  // Portal WireGuard endpoint as host:port.
+  string wireguard_endpoint = 6;
+  // Base URL of the client API inside the tunnel.
+  string client_api_url = 7;
+  uint32 persistent_keepalive_seconds = 8;
+}
