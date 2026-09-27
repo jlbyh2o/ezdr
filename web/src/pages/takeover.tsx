@@ -1,4 +1,4 @@
-import { CircleAlert, Loader2, TriangleAlert } from 'lucide-react'
+import { CheckCircle2, Circle, CircleAlert, Loader2, MinusCircle, TriangleAlert, XCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { ErrorAlert } from '@/components/error-alert'
@@ -10,52 +10,168 @@ import { type Plan, type Takeover, TakeoverState } from '@/gen/ezdr/portal/v1/po
 import { errorMessage, planClient } from '@/lib/api'
 import { formatBytes, formatRelative } from '@/lib/format'
 
-// TakeoverDialog runs the takeover preflight for an adopted plan and shows
-// what taking over would do.
+// TakeoverDialog runs the takeover preflight for an adopted plan, shows what
+// taking over would do, and after confirmation follows the takeover's
+// progress. A takeover that's already running is shown directly.
 export function TakeoverDialog({ plan, onClose }: { plan: Plan; onClose: () => void }) {
-  // Each run of the preflight has a number; the result records which run it
+  // The plan stops adopting once the takeover completes; keep the job names.
+  const [adopted] = useState(plan.spec?.takeover)
+  // Each preflight run has a number; the result records which run it
   // answers, so a newer run shows as checking.
   const [run, setRun] = useState(0)
   const [result, setResult] = useState<{ run: number; takeover?: Takeover; error?: string }>()
+  const [progress, setProgress] = useState<Takeover>()
+  const [starting, setStarting] = useState(false)
+  const [startError, setStartError] = useState<string>()
+
   useEffect(() => {
     let active = true
-    planClient.runTakeoverPreflight({ id: plan.id }).then(
-      (r) => active && setResult({ run, takeover: r.takeover }),
-      (e) => active && setResult({ run, error: errorMessage(e) }),
-    )
+    void (async () => {
+      try {
+        if (run === 0) {
+          const current = await planClient.getTakeover({ id: plan.id })
+          if (current.takeover?.state === TakeoverState.RUNNING) {
+            if (active) setProgress(current.takeover)
+            return
+          }
+        }
+        const r = await planClient.runTakeoverPreflight({ id: plan.id })
+        if (active) setResult({ run, takeover: r.takeover })
+      } catch (err) {
+        if (active) setResult({ run, error: errorMessage(err) })
+      }
+    })()
     return () => {
       active = false
     }
   }, [plan.id, run])
-  const checking = result?.run !== run
+
+  // Follow a running takeover.
+  const running = progress?.state === TakeoverState.RUNNING
+  useEffect(() => {
+    if (!running) return
+    const timer = setInterval(() => {
+      void planClient.getTakeover({ id: plan.id }).then((r) => r.takeover && setProgress(r.takeover), () => undefined)
+    }, 2000)
+    return () => clearInterval(timer)
+  }, [plan.id, running])
+
+  async function start() {
+    setStarting(true)
+    setStartError(undefined)
+    try {
+      const r = await planClient.startTakeover({ id: plan.id })
+      setProgress(r.takeover)
+    } catch (err) {
+      setStartError(errorMessage(err))
+    } finally {
+      setStarting(false)
+    }
+  }
+
+  const checking = !progress && result?.run !== run
   const takeover = result?.takeover
   const error = checking ? undefined : result?.error
-
-  const t = plan.spec?.takeover
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Take over the existing zrepl setup</DialogTitle>
           <DialogDescription>
-            {plan.spec?.name} replaces <span className="font-mono">{t?.sourceJob}</span> on the primary and{' '}
-            <span className="font-mono">{t?.pullJob}</span> on the DR host. The preflight below changes nothing.
+            {plan.spec?.name} replaces <span className="font-mono">{adopted?.sourceJob}</span> on the primary and{' '}
+            <span className="font-mono">{adopted?.pullJob}</span> on the DR host.
+            {!progress && ' The preflight below changes nothing.'}
           </DialogDescription>
         </DialogHeader>
-        <ErrorAlert message={error} />
-        {checking && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Checking snapshots on both hosts…
-          </div>
+        {progress ? (
+          <ProgressView takeover={progress} />
+        ) : (
+          <>
+            <ErrorAlert message={error} />
+            {checking && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" /> Checking snapshots on both hosts…
+              </div>
+            )}
+            {takeover?.preflight && !checking && <PreflightReport takeover={takeover} />}
+            {takeover?.state === TakeoverState.READY && !checking && (
+              <p className="text-sm text-muted-foreground">
+                Taking over upgrades zrepl where needed, removes the old pull job, replaces the old source job with EZDR's, adds
+                EZDR's pull job, and checks that the first replication is incremental. If any of that fails, both hosts get
+                their original zrepl.yml back and the old jobs run again. Only then are the old jobs' holds and bookmarks
+                released.
+              </p>
+            )}
+            <ErrorAlert message={startError} />
+          </>
         )}
-        {takeover?.preflight && !checking && <PreflightReport takeover={takeover} />}
         <DialogFooter>
-          <Button variant="outline" onClick={() => setRun((n) => n + 1)} disabled={checking}>
-            Check again
-          </Button>
+          {progress ? (
+            <Button variant="outline" onClick={onClose}>
+              {running ? 'Close (the takeover continues)' : 'Close'}
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => setRun((n) => n + 1)} disabled={checking || starting}>
+                Check again
+              </Button>
+              <Button onClick={() => void start()} disabled={checking || starting || takeover?.state !== TakeoverState.READY}>
+                Take over now
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+const stepIcon: Record<string, React.ReactNode> = {
+  pending: <Circle className="size-4 text-muted-foreground" />,
+  running: <Loader2 className="size-4 animate-spin" />,
+  done: <CheckCircle2 className="size-4 text-emerald-700" />,
+  failed: <XCircle className="size-4 text-destructive" />,
+  skipped: <MinusCircle className="size-4 text-muted-foreground" />,
+}
+
+function ProgressView({ takeover: t }: { takeover: Takeover }) {
+  return (
+    <div className="grid gap-4 text-sm">
+      {t.state === TakeoverState.COMPLETED && (
+        <Alert>
+          <CheckCircle2 />
+          <AlertTitle>Taken over: the plan is active</AlertTitle>
+          {t.error && <AlertDescription>{t.error}</AlertDescription>}
+        </Alert>
+      )}
+      {t.state === TakeoverState.ROLLED_BACK && (
+        <Alert variant="destructive">
+          <CircleAlert />
+          <AlertTitle>The takeover failed; both hosts run the old setup again</AlertTitle>
+          <AlertDescription>{t.error}</AlertDescription>
+        </Alert>
+      )}
+      {t.state === TakeoverState.FAILED && (
+        <Alert variant="destructive">
+          <CircleAlert />
+          <AlertTitle>The takeover failed and couldn't be fully undone</AlertTitle>
+          <AlertDescription>
+            {t.error}. See the steps below. Each host's original configuration is kept as /etc/zrepl/zrepl.yml.ezdr-takeover-*.
+          </AlertDescription>
+        </Alert>
+      )}
+      <ol className="grid gap-2">
+        {t.steps.map((s) => (
+          <li key={s.name} className="flex gap-2">
+            <span className="mt-0.5">{stepIcon[s.status] ?? stepIcon.pending}</span>
+            <div>
+              <div className={s.status === 'skipped' ? 'text-muted-foreground' : ''}>{s.name}</div>
+              {s.detail && <div className="text-xs break-words text-muted-foreground">{s.detail}</div>}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
   )
 }
 

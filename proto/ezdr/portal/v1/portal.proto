@@ -245,6 +245,10 @@ service PlanService {
   // GetTakeover returns an adopted plan's latest preflight and takeover
   // progress.
   rpc GetTakeover(GetTakeoverRequest) returns (GetTakeoverResponse);
+  // StartTakeover takes over the zrepl setup after a recent preflight without
+  // problems. It returns once the takeover has started; GetTakeover shows its
+  // progress. On success the plan becomes active.
+  rpc StartTakeover(StartTakeoverRequest) returns (StartTakeoverResponse);
   // PreviewPlanChanges lists what activating or applying the plan's
   // editing specification would change on each host.
   rpc PreviewPlanChanges(PreviewPlanChangesRequest) returns (PreviewPlanChangesResponse);
@@ -608,6 +612,14 @@ message RunTakeoverPreflightRequest {
 }
 
 message RunTakeoverPreflightResponse {
+  Takeover takeover = 1;
+}
+
+message StartTakeoverRequest {
+  string id = 1;
+}
+
+message StartTakeoverResponse {
   Takeover takeover = 1;
 }
 

@@ -78,6 +78,17 @@ func TestRemoveAndRestore(t *testing.T) {
 	if got, _ := os.ReadFile(p.MainConfig); string(got) != oldMain {
 		t.Errorf("restored = %q", got)
 	}
+	// The original didn't include EZDR's jobs, so the empty jobs file goes
+	// too; otherwise applying desired state would add the include back.
+	if _, err := os.Stat(p.JobsFile()); !os.IsNotExist(err) {
+		t.Errorf("jobs file left after restore: %v", err)
+	}
+	if err := a.Apply(ctx, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := os.ReadFile(p.MainConfig); string(got) != oldMain {
+		t.Error("applying empty desired state after a restore changed the configuration")
+	}
 	// Without a backup there's nothing to restore.
 	if err := a.RestoreConfig(ctx, "other"); err != nil {
 		t.Errorf("restore without backup: %v", err)

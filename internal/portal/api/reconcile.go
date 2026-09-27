@@ -98,7 +98,12 @@ func (d *Deps) desiredState(ctx context.Context, hostID string) (*clientv1.Desir
 	if err != nil {
 		return nil, err
 	}
-	ds, problems, err := d.desiredConfig(ctx, hostID, plans)
+	// A takeover adds its plan's jobs host by host (see takeover.go).
+	taking, err := d.takeoverPlans(ctx, hostID)
+	if err != nil {
+		return nil, err
+	}
+	ds, problems, err := d.desiredConfig(ctx, hostID, append(plans, taking...))
 	if err != nil {
 		return nil, err
 	}

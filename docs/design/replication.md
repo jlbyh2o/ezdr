@@ -268,6 +268,24 @@ unchanged, and downgrading during a failure would add risk. The plan's alerts
 are muted during the switch-over. Progress and results are shown in the
 portal and recorded in the audit log.
 
+How the portal runs it:
+
+- The plan stays a draft until the takeover completes. Its jobs join each
+  host's desired state only at their step (the primary's at step 3, the DR
+  host's at step 4), so EZDR's source job never competes with the old one
+  for the port. On success the plan becomes active with the adoption
+  cleared; its jobs are already running, so nothing changes on the hosts.
+- The runner records its next step, and every step is safe to repeat, so a
+  takeover interrupted by a portal restart resumes where it stopped. Steps
+  wait for hosts that are briefly offline.
+- Step 5 accepts only a replication attempt that started after EZDR's pull
+  job was added, and fails if zrepl sent a dataset in full. Datasets the
+  preflight found needing a full send aren't waited for. It waits at least
+  10 minutes, or three snapshot intervals.
+- A failure in step 6 doesn't roll back: replication already runs under
+  EZDR. The portal reports the command to release the holds by hand.
+- The plan can't be edited or deleted while its takeover runs.
+
 ## 6. Activation
 
 For a plan without existing replication, activation shows a confirmation

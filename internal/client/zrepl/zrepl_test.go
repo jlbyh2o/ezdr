@@ -295,7 +295,7 @@ const sampleStatus = `{"Jobs":{"ezdr_abcd1234_local-zfs_pull":{"type":"pull","pu
 "Replication":{"WaitReconnectError":null,"Attempts":[{"State":"done","StartAt":"2026-09-27T15:35:35-06:00",
 "FinishAt":"2026-09-27T15:35:37-06:00","PlanError":null,"Filesystems":[
 {"Info":{"Name":"rpool/data/vm-201-disk-0"},"State":"done","PlanError":null,"StepError":null,
- "Steps":[{"Info":{"BytesExpected":100,"BytesReplicated":90}}]},
+ "Steps":[{"Info":{"From":"@zrepl_1","BytesExpected":60,"BytesReplicated":60}},{"Info":{"From":"@zrepl_1","BytesExpected":40,"BytesReplicated":30}}]},
 {"Info":{"Name":"rpool/data/subvol-101-disk-0"},"State":"stepping","PlanError":null,"StepError":{"Err":"receive failed"},"Steps":[]}]}]},
 "PruningSender":{"Error":"","Completed":[]},
 "PruningReceiver":{"Error":"","Completed":[{"Filesystem":"rpool/data/vm-201-disk-0","LastError":"busy"}]}}},
@@ -329,7 +329,7 @@ func TestStatus(t *testing.T) {
 		byName[d.Dataset] = d
 	}
 	vm := byName["rpool/data/vm-201-disk-0"]
-	if vm == nil || vm.LatestSnapshot != "zrepl_2" || vm.LatestSnapshotAt.AsTime().Unix() != 2000 || vm.BytesReplicated != 90 {
+	if vm == nil || vm.LatestSnapshot != "zrepl_2" || vm.LatestSnapshotAt.AsTime().Unix() != 2000 || vm.BytesReplicated != 90 || vm.FullSend {
 		t.Errorf("vm dataset = %v (the manual snapshot must be ignored)", vm)
 	}
 	if ct := byName["rpool/data/subvol-101-disk-0"]; ct == nil || ct.Error != "receive failed" || ct.State != "stepping" {

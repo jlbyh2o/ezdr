@@ -1946,8 +1946,10 @@ type DatasetStatus struct {
 	Error           string `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
 	BytesExpected   uint64 `protobuf:"varint,6,opt,name=bytes_expected,json=bytesExpected,proto3" json:"bytes_expected,omitempty"`
 	BytesReplicated uint64 `protobuf:"varint,7,opt,name=bytes_replicated,json=bytesReplicated,proto3" json:"bytes_replicated,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// The latest attempt sent the dataset in full rather than incrementally.
+	FullSend      bool `protobuf:"varint,8,opt,name=full_send,json=fullSend,proto3" json:"full_send,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DatasetStatus) Reset() {
@@ -2027,6 +2029,13 @@ func (x *DatasetStatus) GetBytesReplicated() uint64 {
 		return x.BytesReplicated
 	}
 	return 0
+}
+
+func (x *DatasetStatus) GetFullSend() bool {
+	if x != nil {
+		return x.FullSend
+	}
+	return false
 }
 
 var File_ezdr_client_v1_client_proto protoreflect.FileDescriptor
@@ -2158,7 +2167,7 @@ const file_ezdr_client_v1_client_proto_rawDesc = "" +
 	"\x12attempt_started_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x10attemptStartedAt\x12J\n" +
 	"\x13attempt_finished_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x11attemptFinishedAt\x12\x16\n" +
 	"\x06errors\x18\x06 \x03(\tR\x06errors\x129\n" +
-	"\bdatasets\x18\a \x03(\v2\x1d.ezdr.client.v1.DatasetStatusR\bdatasets\"\x9a\x02\n" +
+	"\bdatasets\x18\a \x03(\v2\x1d.ezdr.client.v1.DatasetStatusR\bdatasets\"\xb7\x02\n" +
 	"\rDatasetStatus\x12\x18\n" +
 	"\adataset\x18\x01 \x01(\tR\adataset\x12'\n" +
 	"\x0flatest_snapshot\x18\x02 \x01(\tR\x0elatestSnapshot\x12H\n" +
@@ -2166,7 +2175,8 @@ const file_ezdr_client_v1_client_proto_rawDesc = "" +
 	"\x05state\x18\x04 \x01(\tR\x05state\x12\x14\n" +
 	"\x05error\x18\x05 \x01(\tR\x05error\x12%\n" +
 	"\x0ebytes_expected\x18\x06 \x01(\x04R\rbytesExpected\x12)\n" +
-	"\x10bytes_replicated\x18\a \x01(\x04R\x0fbytesReplicated2\xde\x03\n" +
+	"\x10bytes_replicated\x18\a \x01(\x04R\x0fbytesReplicated\x12\x1b\n" +
+	"\tfull_send\x18\b \x01(\bR\bfullSend2\xde\x03\n" +
 	"\rClientService\x12R\n" +
 	"\tSubscribe\x12 .ezdr.client.v1.SubscribeRequest\x1a!.ezdr.client.v1.SubscribeResponse0\x01\x12Y\n" +
 	"\fReportStatus\x12#.ezdr.client.v1.ReportStatusRequest\x1a$.ezdr.client.v1.ReportStatusResponse\x12b\n" +

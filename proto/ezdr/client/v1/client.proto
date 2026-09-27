@@ -269,4 +269,6 @@ message DatasetStatus {
   string error = 5;
   uint64 bytes_expected = 6;
   uint64 bytes_replicated = 7;
+  // The latest attempt sent the dataset in full rather than incrementally.
+  bool full_send = 8;
 }

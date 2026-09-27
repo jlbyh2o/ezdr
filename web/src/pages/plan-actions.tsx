@@ -242,7 +242,16 @@ export function PlanActions({ plan, onChanged, dirty }: { plan: Plan; onChanged:
           if (r.plan) onChanged(r.plan)
         }}
       />
-      {adopted && dialog === 'takeover' && <TakeoverDialog plan={plan} onClose={() => setDialog(undefined)} />}
+      {dialog === 'takeover' && (
+        <TakeoverDialog
+          plan={plan}
+          onClose={() => {
+            setDialog(undefined)
+            // A completed takeover activates the plan and clears its adoption.
+            void act(() => planClient.getPlan({ id: plan.id }))
+          }}
+        />
+      )}
       <ChangesDialog
         plan={plan}
         title={`Apply changes to ${plan.spec?.name}`}

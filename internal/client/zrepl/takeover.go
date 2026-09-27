@@ -143,7 +143,8 @@ func (a *Applier) RemoveJobs(ctx context.Context, jobs []string, backup string) 
 }
 
 // RestoreConfig puts back the main configuration saved by RemoveJobs and
-// restarts zrepl. If zrepl rejects it, it's still restored (it's the
+// restarts zrepl. EZDR's jobs must already be gone (the portal removes them
+// from desired state first). If zrepl rejects it, it's still restored (it's the
 // original) but zrepl isn't restarted, and the error is returned.
 func (a *Applier) RestoreConfig(ctx context.Context, backup string) error {
 	bp, err := a.Paths.backupPath(backup)
@@ -159,6 +160,16 @@ func (a *Applier) RestoreConfig(ctx context.Context, backup string) error {
 	}
 	if err := writeFile(a.Paths.MainConfig, b, 0o644); err != nil {
 		return err
+	}
+	// If the original didn't include EZDR's jobs, remove the (empty) jobs
+	// file too: while it exists, applying desired state would add the
+	// include back.
+	if _, changed, err := editMainConfig(a.Paths, b, nil); err == nil && changed {
+		if jobs, err := readConfigFile(a.Paths.JobsFile()); err == nil && len(jobs.Jobs) == 0 {
+			if err := os.Remove(a.Paths.JobsFile()); err != nil {
+				return err
+			}
+		}
 	}
 	if out, err := a.Run(ctx, "zrepl", "configcheck"); err != nil {
 		return fmt.Errorf("restored the original configuration, but zrepl rejects it: %w %s", err, strings.TrimSpace(string(out)))

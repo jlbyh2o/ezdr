@@ -35,6 +35,8 @@ type rawStatus struct {
 						StepError any    `json:"StepError"`
 						Steps     []struct {
 							Info struct {
+								// From is empty for a full send.
+								From            string `json:"From"`
 								BytesExpected   uint64 `json:"BytesExpected"`
 								BytesReplicated uint64 `json:"BytesReplicated"`
 							} `json:"Info"`
@@ -128,6 +130,7 @@ func (a *Applier) Status(ctx context.Context, z *clientv1.Zrepl) *clientv1.Repor
 						d.State = f.State
 						d.Error = strings.TrimSpace(errorText(f.PlanError) + " " + errorText(f.StepError))
 						for _, s := range f.Steps {
+							d.FullSend = d.FullSend || s.Info.From == ""
 							d.BytesExpected += s.Info.BytesExpected
 							d.BytesReplicated += s.Info.BytesReplicated
 						}

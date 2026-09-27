@@ -180,6 +180,13 @@ func (s PlanService) save(ctx context.Context, id string, spec *planv1.PlanSpec)
 	if err := checkSpec(spec); err != nil {
 		return nil, nil, err
 	}
+	if id != "" {
+		if running, err := s.takeoverRunning(ctx, id); err != nil {
+			return nil, nil, internalError(err)
+		} else if running {
+			return nil, nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan can't change while its takeover runs"))
+		}
+	}
 	data, err := proto.Marshal(spec)
 	if err != nil {
 		return nil, nil, internalError(err)
@@ -310,6 +317,11 @@ func (s PlanService) DeletePlan(ctx context.Context, req *connect.Request[portal
 	}
 	if sp.State != store.PlanDraft {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("deactivate the plan before deleting it"))
+	}
+	if running, err := s.takeoverRunning(ctx, sp.ID); err != nil {
+		return nil, internalError(err)
+	} else if running {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan can't be deleted while its takeover runs"))
 	}
 	if err := s.Store.DeletePlan(ctx, sp.ID); err != nil {
 		return nil, internalError(err)
@@ -522,7 +534,7 @@ func (s PlanService) ActivatePlan(ctx context.Context, req *connect.Request[port
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan is already active or paused"))
 	}
 	if spec.Takeover != nil {
-		return nil, connect.NewError(connect.CodeUnimplemented, errors.New("taking over an existing zrepl setup isn't available yet"))
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan adopts an existing zrepl setup; take it over instead"))
 	}
 	if err := s.requireValid(ctx, spec, sp.ID); err != nil {
 		return nil, err

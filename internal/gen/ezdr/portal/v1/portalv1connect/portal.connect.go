@@ -107,6 +107,9 @@ const (
 	PlanServiceRunTakeoverPreflightProcedure = "/ezdr.portal.v1.PlanService/RunTakeoverPreflight"
 	// PlanServiceGetTakeoverProcedure is the fully-qualified name of the PlanService's GetTakeover RPC.
 	PlanServiceGetTakeoverProcedure = "/ezdr.portal.v1.PlanService/GetTakeover"
+	// PlanServiceStartTakeoverProcedure is the fully-qualified name of the PlanService's StartTakeover
+	// RPC.
+	PlanServiceStartTakeoverProcedure = "/ezdr.portal.v1.PlanService/StartTakeover"
 	// PlanServicePreviewPlanChangesProcedure is the fully-qualified name of the PlanService's
 	// PreviewPlanChanges RPC.
 	PlanServicePreviewPlanChangesProcedure = "/ezdr.portal.v1.PlanService/PreviewPlanChanges"
@@ -752,6 +755,10 @@ type PlanServiceClient interface {
 	// GetTakeover returns an adopted plan's latest preflight and takeover
 	// progress.
 	GetTakeover(context.Context, *connect.Request[v1.GetTakeoverRequest]) (*connect.Response[v1.GetTakeoverResponse], error)
+	// StartTakeover takes over the zrepl setup after a recent preflight without
+	// problems. It returns once the takeover has started; GetTakeover shows its
+	// progress. On success the plan becomes active.
+	StartTakeover(context.Context, *connect.Request[v1.StartTakeoverRequest]) (*connect.Response[v1.StartTakeoverResponse], error)
 	// PreviewPlanChanges lists what activating or applying the plan's
 	// editing specification would change on each host.
 	PreviewPlanChanges(context.Context, *connect.Request[v1.PreviewPlanChangesRequest]) (*connect.Response[v1.PreviewPlanChangesResponse], error)
@@ -847,6 +854,12 @@ func NewPlanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(planServiceMethods.ByName("GetTakeover")),
 			connect.WithClientOptions(opts...),
 		),
+		startTakeover: connect.NewClient[v1.StartTakeoverRequest, v1.StartTakeoverResponse](
+			httpClient,
+			baseURL+PlanServiceStartTakeoverProcedure,
+			connect.WithSchema(planServiceMethods.ByName("StartTakeover")),
+			connect.WithClientOptions(opts...),
+		),
 		previewPlanChanges: connect.NewClient[v1.PreviewPlanChangesRequest, v1.PreviewPlanChangesResponse](
 			httpClient,
 			baseURL+PlanServicePreviewPlanChangesProcedure,
@@ -911,6 +924,7 @@ type planServiceClient struct {
 	adoptZreplSetup      *connect.Client[v1.AdoptZreplSetupRequest, v1.AdoptZreplSetupResponse]
 	runTakeoverPreflight *connect.Client[v1.RunTakeoverPreflightRequest, v1.RunTakeoverPreflightResponse]
 	getTakeover          *connect.Client[v1.GetTakeoverRequest, v1.GetTakeoverResponse]
+	startTakeover        *connect.Client[v1.StartTakeoverRequest, v1.StartTakeoverResponse]
 	previewPlanChanges   *connect.Client[v1.PreviewPlanChangesRequest, v1.PreviewPlanChangesResponse]
 	activatePlan         *connect.Client[v1.ActivatePlanRequest, v1.ActivatePlanResponse]
 	applyPlanChanges     *connect.Client[v1.ApplyPlanChangesRequest, v1.ApplyPlanChangesResponse]
@@ -974,6 +988,11 @@ func (c *planServiceClient) RunTakeoverPreflight(ctx context.Context, req *conne
 // GetTakeover calls ezdr.portal.v1.PlanService.GetTakeover.
 func (c *planServiceClient) GetTakeover(ctx context.Context, req *connect.Request[v1.GetTakeoverRequest]) (*connect.Response[v1.GetTakeoverResponse], error) {
 	return c.getTakeover.CallUnary(ctx, req)
+}
+
+// StartTakeover calls ezdr.portal.v1.PlanService.StartTakeover.
+func (c *planServiceClient) StartTakeover(ctx context.Context, req *connect.Request[v1.StartTakeoverRequest]) (*connect.Response[v1.StartTakeoverResponse], error) {
+	return c.startTakeover.CallUnary(ctx, req)
 }
 
 // PreviewPlanChanges calls ezdr.portal.v1.PlanService.PreviewPlanChanges.
@@ -1040,6 +1059,10 @@ type PlanServiceHandler interface {
 	// GetTakeover returns an adopted plan's latest preflight and takeover
 	// progress.
 	GetTakeover(context.Context, *connect.Request[v1.GetTakeoverRequest]) (*connect.Response[v1.GetTakeoverResponse], error)
+	// StartTakeover takes over the zrepl setup after a recent preflight without
+	// problems. It returns once the takeover has started; GetTakeover shows its
+	// progress. On success the plan becomes active.
+	StartTakeover(context.Context, *connect.Request[v1.StartTakeoverRequest]) (*connect.Response[v1.StartTakeoverResponse], error)
 	// PreviewPlanChanges lists what activating or applying the plan's
 	// editing specification would change on each host.
 	PreviewPlanChanges(context.Context, *connect.Request[v1.PreviewPlanChangesRequest]) (*connect.Response[v1.PreviewPlanChangesResponse], error)
@@ -1131,6 +1154,12 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(planServiceMethods.ByName("GetTakeover")),
 		connect.WithHandlerOptions(opts...),
 	)
+	planServiceStartTakeoverHandler := connect.NewUnaryHandler(
+		PlanServiceStartTakeoverProcedure,
+		svc.StartTakeover,
+		connect.WithSchema(planServiceMethods.ByName("StartTakeover")),
+		connect.WithHandlerOptions(opts...),
+	)
 	planServicePreviewPlanChangesHandler := connect.NewUnaryHandler(
 		PlanServicePreviewPlanChangesProcedure,
 		svc.PreviewPlanChanges,
@@ -1203,6 +1232,8 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 			planServiceRunTakeoverPreflightHandler.ServeHTTP(w, r)
 		case PlanServiceGetTakeoverProcedure:
 			planServiceGetTakeoverHandler.ServeHTTP(w, r)
+		case PlanServiceStartTakeoverProcedure:
+			planServiceStartTakeoverHandler.ServeHTTP(w, r)
 		case PlanServicePreviewPlanChangesProcedure:
 			planServicePreviewPlanChangesHandler.ServeHTTP(w, r)
 		case PlanServiceActivatePlanProcedure:
@@ -1270,6 +1301,10 @@ func (UnimplementedPlanServiceHandler) RunTakeoverPreflight(context.Context, *co
 
 func (UnimplementedPlanServiceHandler) GetTakeover(context.Context, *connect.Request[v1.GetTakeoverRequest]) (*connect.Response[v1.GetTakeoverResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.GetTakeover is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) StartTakeover(context.Context, *connect.Request[v1.StartTakeoverRequest]) (*connect.Response[v1.StartTakeoverResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.StartTakeover is not implemented"))
 }
 
 func (UnimplementedPlanServiceHandler) PreviewPlanChanges(context.Context, *connect.Request[v1.PreviewPlanChangesRequest]) (*connect.Response[v1.PreviewPlanChangesResponse], error) {
