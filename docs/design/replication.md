@@ -1,6 +1,6 @@
 # Design: Replication
 
-> **Status:** Draft for phase 4. Covers activating DR plans, configuring zrepl
+> **Status:** Approved for phase 4. Covers activating DR plans, configuring zrepl
 > on both hosts, the network paths between them, taking over an existing zrepl
 > setup, replication status, and alerts. See [DR plans](dr-plans.md) and
 > [Architecture](../architecture.md).
@@ -94,7 +94,9 @@ The client turns desired state into zrepl configuration:
   per kind.
 - **Receives:** replicas are received with `readonly=on`, so nothing on the DR
   host changes them and breaks incremental receives. Failover (phase 6) lifts
-  this for promoted datasets.
+  this for promoted datasets. The placeholder datasets zrepl creates to mirror
+  the source path use `recv.placeholder.encryption: inherit`, which zrepl
+  requires to be set.
 - **Pruning:** the plan's tiers as zrepl grids, restricted to the plan's
   prefix, plus the always-on rules: never prune the primary's unreplicated
   snapshots (`not_replicated`) and never prune snapshots without the prefix.
@@ -106,7 +108,9 @@ and the error is reported to the portal.
 ### 3.3 The main zrepl.yml
 
 - If `/etc/zrepl/zrepl.yml` doesn't exist, EZDR creates it with logging
-  settings and `include: [./ezdr.d/]`.
+  settings and `include: [/etc/zrepl/ezdr.d/]`. The path is always absolute:
+  zrepl 0.7.0 resolves relative include paths against its working directory,
+  not the configuration file's directory.
 - If it exists, EZDR adds the `include` entry, keeping a backup
   (`zrepl.yml.ezdr-backup-<timestamp>`), and changes nothing else, except
   during takeover (section 5).
@@ -116,8 +120,12 @@ and the error is reported to the portal.
 ### 3.4 Installing zrepl
 
 - zrepl comes from zrepl's official apt repository, version 0.7.x. The
-  repository's signing key fingerprint is built into the client, so a
-  tampered key is rejected.
+  repository's signing key fingerprint
+  (`E101 418F D3D6 FBCB 9D65 A62D 7086 99FC 5F2E BF16`) is built into the
+  client, so a tampered key is rejected.
+- The package is held (`apt-mark hold zrepl`). Until zrepl 1.0, its repository
+  publishes new releases, including breaking ones, immediately. EZDR upgrades
+  zrepl deliberately, on both hosts of a plan together.
 - Installation happens on activation, and is listed in the activation
   confirmation (section 6).
 
@@ -161,12 +169,13 @@ hosts, separate from the control-plane tunnel to the portal.
 - The portal collects each host's public certificate and puts the peer's
   certificate in the desired state. Each side trusts exactly its peer's
   certificate: there is no certificate authority.
+- Certificates are leaf certificates (not certificate authorities) with the
+  host name as both common name and DNS subject alternative name. zrepl
+  accepts a peer's self-signed certificate as its trust root. Verified in the
+  lab: a peer with the wrong name, and an impostor with the right name but a
+  different certificate, are both rejected.
 - Over an EZDR tunnel this doubles up on encryption. It's kept anyway, so
   zrepl's authentication doesn't depend on which network path is used.
-
-> **To verify in the lab:** zrepl's TLS transport accepting a peer's
-> self-signed certificate as its trust root. Fallback: a per-plan certificate
-> authority whose key stays on the portal.
 
 ## 5. Taking over an existing zrepl setup
 
@@ -189,6 +198,8 @@ When an adopted plan is activated, both clients run a preflight and report:
   dataset without one needs a **full send**, which is listed with its size.
 - Datasets the old job replicates that the plan doesn't include. These stop
   being replicated.
+- The old jobs' holds and bookmarks that step 6 will release (from
+  `zrepl zfs-abstraction release-all --job <old job> --dry-run`).
 - Old jobs that the takeover would remove, and any other jobs in the
   configuration (left in place).
 - zrepl versions, and whether an upgrade to 0.7 is needed.
@@ -205,8 +216,12 @@ After one confirmation, the portal runs these steps:
 4. **DR host:** add EZDR's `pull` job.
 5. Wait for the first EZDR replication and check that every dataset
    replicated **incrementally** from the common snapshot found in preflight.
-6. Release the old jobs' zrepl holds and bookmarks
-   (`zrepl zfs-abstraction release-stale`) on both hosts.
+6. Release the old jobs' zrepl holds and bookmarks by job name on both hosts
+   (`zrepl zfs-abstraction release-all --job <old job>`): the old source
+   job's on the primary and the old pull job's on the DR host (zrepl names
+   the DR host's last-received hold after the pull job). `release-stale`
+   doesn't cover this: it only releases markers superseded by newer ones,
+   not those of removed jobs.
 
 The main `zrepl.yml` files are backed up before step 2. If any step before
 step 6 fails, both hosts' configurations are restored and the old setup
