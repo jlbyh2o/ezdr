@@ -174,5 +174,6 @@ func (s ClientService) AckAction(ctx context.Context, req *connect.Request[clien
 	} else {
 		slog.Warn("action failed", "host", h.Hostname, "action", m.ActionId, "message", m.Message)
 	}
+	s.Hub.deliver(h.ID, m)
 	return connect.NewResponse(&clientv1.AckActionResponse{}), nil
 }

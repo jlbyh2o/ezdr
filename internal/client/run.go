@@ -110,7 +110,7 @@ func subscribe(ctx context.Context, api clientv1connect.ClientServiceClient, app
 			received = true
 		}
 		if a := stream.Msg().GetAction(); a != nil {
-			handleAction(ctx, api, a, refresh)
+			handleAction(ctx, api, app, a, refresh)
 		}
 		if ds := stream.Msg().GetDesiredState(); ds != nil {
 			app.submit(ds)
@@ -127,7 +127,7 @@ func subscribe(ctx context.Context, api clientv1connect.ClientServiceClient, app
 
 // handleAction dispatches an action from the portal. Unknown kinds are
 // rejected, so the client only ever performs operations it knows.
-func handleAction(ctx context.Context, api clientv1connect.ClientServiceClient, a *clientv1.Action, refresh chan<- string) {
+func handleAction(ctx context.Context, api clientv1connect.ClientServiceClient, app *applier, a *clientv1.Action, refresh chan<- string) {
 	fail := func(msg string) {
 		_, err := api.AckAction(ctx, connect.NewRequest(&clientv1.AckActionRequest{ActionId: a.Id, Message: msg}))
 		if err != nil {
@@ -141,6 +141,11 @@ func handleAction(ctx context.Context, api clientv1connect.ClientServiceClient, 
 		default:
 			fail("an inventory refresh is already in progress")
 		}
+	case *clientv1.Action_ZreplPreflight, *clientv1.Action_ZreplUpgrade, *clientv1.Action_ZreplRemoveJobs,
+		*clientv1.Action_ZreplRestoreConfig, *clientv1.Action_ZreplReleaseJobs:
+		// These can take minutes (an upgrade, restarting zrepl), so they run
+		// off the stream loop.
+		go app.takeoverAction(ctx, a)
 	default:
 		slog.Warn("rejected unsupported action", "action", a.Id)
 		fail("unsupported action; upgrade the ezdr client")

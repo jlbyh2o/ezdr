@@ -172,6 +172,11 @@ type Action struct {
 	// Types that are valid to be assigned to Kind:
 	//
 	//	*Action_RefreshInventory
+	//	*Action_ZreplPreflight
+	//	*Action_ZreplUpgrade
+	//	*Action_ZreplRemoveJobs
+	//	*Action_ZreplRestoreConfig
+	//	*Action_ZreplReleaseJobs
 	Kind          isAction_Kind `protobuf_oneof:"kind"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -230,6 +235,51 @@ func (x *Action) GetRefreshInventory() *RefreshInventory {
 	return nil
 }
 
+func (x *Action) GetZreplPreflight() *ZreplPreflight {
+	if x != nil {
+		if x, ok := x.Kind.(*Action_ZreplPreflight); ok {
+			return x.ZreplPreflight
+		}
+	}
+	return nil
+}
+
+func (x *Action) GetZreplUpgrade() *ZreplUpgrade {
+	if x != nil {
+		if x, ok := x.Kind.(*Action_ZreplUpgrade); ok {
+			return x.ZreplUpgrade
+		}
+	}
+	return nil
+}
+
+func (x *Action) GetZreplRemoveJobs() *ZreplRemoveJobs {
+	if x != nil {
+		if x, ok := x.Kind.(*Action_ZreplRemoveJobs); ok {
+			return x.ZreplRemoveJobs
+		}
+	}
+	return nil
+}
+
+func (x *Action) GetZreplRestoreConfig() *ZreplRestoreConfig {
+	if x != nil {
+		if x, ok := x.Kind.(*Action_ZreplRestoreConfig); ok {
+			return x.ZreplRestoreConfig
+		}
+	}
+	return nil
+}
+
+func (x *Action) GetZreplReleaseJobs() *ZreplReleaseJobs {
+	if x != nil {
+		if x, ok := x.Kind.(*Action_ZreplReleaseJobs); ok {
+			return x.ZreplReleaseJobs
+		}
+	}
+	return nil
+}
+
 type isAction_Kind interface {
 	isAction_Kind()
 }
@@ -238,7 +288,476 @@ type Action_RefreshInventory struct {
 	RefreshInventory *RefreshInventory `protobuf:"bytes,2,opt,name=refresh_inventory,json=refreshInventory,proto3,oneof"`
 }
 
+type Action_ZreplPreflight struct {
+	ZreplPreflight *ZreplPreflight `protobuf:"bytes,3,opt,name=zrepl_preflight,json=zreplPreflight,proto3,oneof"`
+}
+
+type Action_ZreplUpgrade struct {
+	ZreplUpgrade *ZreplUpgrade `protobuf:"bytes,4,opt,name=zrepl_upgrade,json=zreplUpgrade,proto3,oneof"`
+}
+
+type Action_ZreplRemoveJobs struct {
+	ZreplRemoveJobs *ZreplRemoveJobs `protobuf:"bytes,5,opt,name=zrepl_remove_jobs,json=zreplRemoveJobs,proto3,oneof"`
+}
+
+type Action_ZreplRestoreConfig struct {
+	ZreplRestoreConfig *ZreplRestoreConfig `protobuf:"bytes,6,opt,name=zrepl_restore_config,json=zreplRestoreConfig,proto3,oneof"`
+}
+
+type Action_ZreplReleaseJobs struct {
+	ZreplReleaseJobs *ZreplReleaseJobs `protobuf:"bytes,7,opt,name=zrepl_release_jobs,json=zreplReleaseJobs,proto3,oneof"`
+}
+
 func (*Action_RefreshInventory) isAction_Kind() {}
+
+func (*Action_ZreplPreflight) isAction_Kind() {}
+
+func (*Action_ZreplUpgrade) isAction_Kind() {}
+
+func (*Action_ZreplRemoveJobs) isAction_Kind() {}
+
+func (*Action_ZreplRestoreConfig) isAction_Kind() {}
+
+func (*Action_ZreplReleaseJobs) isAction_Kind() {}
+
+// ZreplPreflight lists datasets' snapshots and bookmarks, and previews
+// releasing an old job's holds and bookmarks. It changes nothing.
+type ZreplPreflight struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Full dataset names on this host.
+	Datasets      []string `protobuf:"bytes,1,rep,name=datasets,proto3" json:"datasets,omitempty"`
+	ReleaseJob    string   `protobuf:"bytes,2,opt,name=release_job,json=releaseJob,proto3" json:"release_job,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ZreplPreflight) Reset() {
+	*x = ZreplPreflight{}
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ZreplPreflight) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZreplPreflight) ProtoMessage() {}
+
+func (x *ZreplPreflight) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZreplPreflight.ProtoReflect.Descriptor instead.
+func (*ZreplPreflight) Descriptor() ([]byte, []int) {
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ZreplPreflight) GetDatasets() []string {
+	if x != nil {
+		return x.Datasets
+	}
+	return nil
+}
+
+func (x *ZreplPreflight) GetReleaseJob() string {
+	if x != nil {
+		return x.ReleaseJob
+	}
+	return ""
+}
+
+type ZreplPreflightResult struct {
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	ZreplVersion string                 `protobuf:"bytes,1,opt,name=zrepl_version,json=zreplVersion,proto3" json:"zrepl_version,omitempty"`
+	ZreplRunning bool                   `protobuf:"varint,2,opt,name=zrepl_running,json=zreplRunning,proto3" json:"zrepl_running,omitempty"`
+	Datasets     []*DatasetSnapshots    `protobuf:"bytes,3,rep,name=datasets,proto3" json:"datasets,omitempty"`
+	// Output of `zrepl zfs-abstraction release-all --job <release_job>
+	// --dry-run`, one line per hold or bookmark.
+	ReleasePreview []string `protobuf:"bytes,4,rep,name=release_preview,json=releasePreview,proto3" json:"release_preview,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ZreplPreflightResult) Reset() {
+	*x = ZreplPreflightResult{}
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ZreplPreflightResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZreplPreflightResult) ProtoMessage() {}
+
+func (x *ZreplPreflightResult) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZreplPreflightResult.ProtoReflect.Descriptor instead.
+func (*ZreplPreflightResult) Descriptor() ([]byte, []int) {
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ZreplPreflightResult) GetZreplVersion() string {
+	if x != nil {
+		return x.ZreplVersion
+	}
+	return ""
+}
+
+func (x *ZreplPreflightResult) GetZreplRunning() bool {
+	if x != nil {
+		return x.ZreplRunning
+	}
+	return false
+}
+
+func (x *ZreplPreflightResult) GetDatasets() []*DatasetSnapshots {
+	if x != nil {
+		return x.Datasets
+	}
+	return nil
+}
+
+func (x *ZreplPreflightResult) GetReleasePreview() []string {
+	if x != nil {
+		return x.ReleasePreview
+	}
+	return nil
+}
+
+type DatasetSnapshots struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Dataset         string                 `protobuf:"bytes,1,opt,name=dataset,proto3" json:"dataset,omitempty"`
+	Exists          bool                   `protobuf:"varint,2,opt,name=exists,proto3" json:"exists,omitempty"`
+	ReferencedBytes uint64                 `protobuf:"varint,3,opt,name=referenced_bytes,json=referencedBytes,proto3" json:"referenced_bytes,omitempty"`
+	// Snapshots ("@name") and bookmarks ("#name"), oldest first.
+	Snapshots     []*SnapshotInfo `protobuf:"bytes,4,rep,name=snapshots,proto3" json:"snapshots,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DatasetSnapshots) Reset() {
+	*x = DatasetSnapshots{}
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DatasetSnapshots) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DatasetSnapshots) ProtoMessage() {}
+
+func (x *DatasetSnapshots) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DatasetSnapshots.ProtoReflect.Descriptor instead.
+func (*DatasetSnapshots) Descriptor() ([]byte, []int) {
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *DatasetSnapshots) GetDataset() string {
+	if x != nil {
+		return x.Dataset
+	}
+	return ""
+}
+
+func (x *DatasetSnapshots) GetExists() bool {
+	if x != nil {
+		return x.Exists
+	}
+	return false
+}
+
+func (x *DatasetSnapshots) GetReferencedBytes() uint64 {
+	if x != nil {
+		return x.ReferencedBytes
+	}
+	return 0
+}
+
+func (x *DatasetSnapshots) GetSnapshots() []*SnapshotInfo {
+	if x != nil {
+		return x.Snapshots
+	}
+	return nil
+}
+
+type SnapshotInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Guid          uint64                 `protobuf:"varint,2,opt,name=guid,proto3" json:"guid,omitempty"`
+	Createtxg     uint64                 `protobuf:"varint,3,opt,name=createtxg,proto3" json:"createtxg,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SnapshotInfo) Reset() {
+	*x = SnapshotInfo{}
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotInfo) ProtoMessage() {}
+
+func (x *SnapshotInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotInfo.ProtoReflect.Descriptor instead.
+func (*SnapshotInfo) Descriptor() ([]byte, []int) {
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *SnapshotInfo) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SnapshotInfo) GetGuid() uint64 {
+	if x != nil {
+		return x.Guid
+	}
+	return 0
+}
+
+func (x *SnapshotInfo) GetCreatetxg() uint64 {
+	if x != nil {
+		return x.Createtxg
+	}
+	return 0
+}
+
+// ZreplUpgrade installs the supported zrepl version (0.7) if an older one is
+// installed.
+type ZreplUpgrade struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ZreplUpgrade) Reset() {
+	*x = ZreplUpgrade{}
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ZreplUpgrade) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZreplUpgrade) ProtoMessage() {}
+
+func (x *ZreplUpgrade) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZreplUpgrade.ProtoReflect.Descriptor instead.
+func (*ZreplUpgrade) Descriptor() ([]byte, []int) {
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{7}
+}
+
+// ZreplRemoveJobs removes hand-written jobs from the main zrepl
+// configuration, makes it include EZDR's jobs directory, and restarts zrepl.
+// The main configuration is first copied to a backup named after backup,
+// unless that backup already exists (so retries keep the original).
+type ZreplRemoveJobs struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Jobs          []string               `protobuf:"bytes,1,rep,name=jobs,proto3" json:"jobs,omitempty"`
+	Backup        string                 `protobuf:"bytes,2,opt,name=backup,proto3" json:"backup,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ZreplRemoveJobs) Reset() {
+	*x = ZreplRemoveJobs{}
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ZreplRemoveJobs) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZreplRemoveJobs) ProtoMessage() {}
+
+func (x *ZreplRemoveJobs) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZreplRemoveJobs.ProtoReflect.Descriptor instead.
+func (*ZreplRemoveJobs) Descriptor() ([]byte, []int) {
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ZreplRemoveJobs) GetJobs() []string {
+	if x != nil {
+		return x.Jobs
+	}
+	return nil
+}
+
+func (x *ZreplRemoveJobs) GetBackup() string {
+	if x != nil {
+		return x.Backup
+	}
+	return ""
+}
+
+// ZreplRestoreConfig restores the main zrepl configuration from a backup made
+// by ZreplRemoveJobs and restarts zrepl.
+type ZreplRestoreConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Backup        string                 `protobuf:"bytes,1,opt,name=backup,proto3" json:"backup,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ZreplRestoreConfig) Reset() {
+	*x = ZreplRestoreConfig{}
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ZreplRestoreConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZreplRestoreConfig) ProtoMessage() {}
+
+func (x *ZreplRestoreConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZreplRestoreConfig.ProtoReflect.Descriptor instead.
+func (*ZreplRestoreConfig) Descriptor() ([]byte, []int) {
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ZreplRestoreConfig) GetBackup() string {
+	if x != nil {
+		return x.Backup
+	}
+	return ""
+}
+
+// ZreplReleaseJobs releases the zrepl holds and bookmarks of removed jobs.
+type ZreplReleaseJobs struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Jobs          []string               `protobuf:"bytes,1,rep,name=jobs,proto3" json:"jobs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ZreplReleaseJobs) Reset() {
+	*x = ZreplReleaseJobs{}
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ZreplReleaseJobs) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZreplReleaseJobs) ProtoMessage() {}
+
+func (x *ZreplReleaseJobs) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZreplReleaseJobs.ProtoReflect.Descriptor instead.
+func (*ZreplReleaseJobs) Descriptor() ([]byte, []int) {
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ZreplReleaseJobs) GetJobs() []string {
+	if x != nil {
+		return x.Jobs
+	}
+	return nil
+}
 
 // RefreshInventory asks the host to collect and report inventory now.
 type RefreshInventory struct {
@@ -249,7 +768,7 @@ type RefreshInventory struct {
 
 func (x *RefreshInventory) Reset() {
 	*x = RefreshInventory{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[3]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -261,7 +780,7 @@ func (x *RefreshInventory) String() string {
 func (*RefreshInventory) ProtoMessage() {}
 
 func (x *RefreshInventory) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[3]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -274,7 +793,7 @@ func (x *RefreshInventory) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshInventory.ProtoReflect.Descriptor instead.
 func (*RefreshInventory) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{3}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{11}
 }
 
 type Heartbeat struct {
@@ -285,7 +804,7 @@ type Heartbeat struct {
 
 func (x *Heartbeat) Reset() {
 	*x = Heartbeat{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[4]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -297,7 +816,7 @@ func (x *Heartbeat) String() string {
 func (*Heartbeat) ProtoMessage() {}
 
 func (x *Heartbeat) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[4]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -310,7 +829,7 @@ func (x *Heartbeat) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Heartbeat.ProtoReflect.Descriptor instead.
 func (*Heartbeat) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{4}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{12}
 }
 
 // DesiredState is the full configuration the host should have.
@@ -327,7 +846,7 @@ type DesiredState struct {
 
 func (x *DesiredState) Reset() {
 	*x = DesiredState{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[5]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -339,7 +858,7 @@ func (x *DesiredState) String() string {
 func (*DesiredState) ProtoMessage() {}
 
 func (x *DesiredState) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[5]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -352,7 +871,7 @@ func (x *DesiredState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DesiredState.ProtoReflect.Descriptor instead.
 func (*DesiredState) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{5}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DesiredState) GetGeneration() uint64 {
@@ -394,7 +913,7 @@ type SiteTunnel struct {
 
 func (x *SiteTunnel) Reset() {
 	*x = SiteTunnel{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[6]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -406,7 +925,7 @@ func (x *SiteTunnel) String() string {
 func (*SiteTunnel) ProtoMessage() {}
 
 func (x *SiteTunnel) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[6]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -419,7 +938,7 @@ func (x *SiteTunnel) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SiteTunnel.ProtoReflect.Descriptor instead.
 func (*SiteTunnel) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{6}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *SiteTunnel) GetAddress() string {
@@ -466,7 +985,7 @@ type SitePeer struct {
 
 func (x *SitePeer) Reset() {
 	*x = SitePeer{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[7]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -478,7 +997,7 @@ func (x *SitePeer) String() string {
 func (*SitePeer) ProtoMessage() {}
 
 func (x *SitePeer) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[7]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -491,7 +1010,7 @@ func (x *SitePeer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SitePeer.ProtoReflect.Descriptor instead.
 func (*SitePeer) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{7}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *SitePeer) GetPublicKey() []byte {
@@ -535,7 +1054,7 @@ type Zrepl struct {
 
 func (x *Zrepl) Reset() {
 	*x = Zrepl{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[8]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -547,7 +1066,7 @@ func (x *Zrepl) String() string {
 func (*Zrepl) ProtoMessage() {}
 
 func (x *Zrepl) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[8]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -560,7 +1079,7 @@ func (x *Zrepl) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Zrepl.ProtoReflect.Descriptor instead.
 func (*Zrepl) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{8}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *Zrepl) GetSourceJobs() []*SourceJob {
@@ -590,7 +1109,7 @@ type Peer struct {
 
 func (x *Peer) Reset() {
 	*x = Peer{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[9]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -602,7 +1121,7 @@ func (x *Peer) String() string {
 func (*Peer) ProtoMessage() {}
 
 func (x *Peer) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[9]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -615,7 +1134,7 @@ func (x *Peer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Peer.ProtoReflect.Descriptor instead.
 func (*Peer) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{9}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Peer) GetName() string {
@@ -654,7 +1173,7 @@ type SourceJob struct {
 
 func (x *SourceJob) Reset() {
 	*x = SourceJob{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[10]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -666,7 +1185,7 @@ func (x *SourceJob) String() string {
 func (*SourceJob) ProtoMessage() {}
 
 func (x *SourceJob) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[10]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -679,7 +1198,7 @@ func (x *SourceJob) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SourceJob.ProtoReflect.Descriptor instead.
 func (*SourceJob) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{10}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *SourceJob) GetName() string {
@@ -756,7 +1275,7 @@ type PullJob struct {
 
 func (x *PullJob) Reset() {
 	*x = PullJob{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[11]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -768,7 +1287,7 @@ func (x *PullJob) String() string {
 func (*PullJob) ProtoMessage() {}
 
 func (x *PullJob) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[11]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -781,7 +1300,7 @@ func (x *PullJob) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullJob.ProtoReflect.Descriptor instead.
 func (*PullJob) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{11}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *PullJob) GetName() string {
@@ -851,7 +1370,7 @@ type RetentionTier struct {
 
 func (x *RetentionTier) Reset() {
 	*x = RetentionTier{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[12]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -863,7 +1382,7 @@ func (x *RetentionTier) String() string {
 func (*RetentionTier) ProtoMessage() {}
 
 func (x *RetentionTier) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[12]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -876,7 +1395,7 @@ func (x *RetentionTier) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RetentionTier.ProtoReflect.Descriptor instead.
 func (*RetentionTier) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{12}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *RetentionTier) GetCount() uint32 {
@@ -919,7 +1438,7 @@ type ReportStatusRequest struct {
 
 func (x *ReportStatusRequest) Reset() {
 	*x = ReportStatusRequest{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[13]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -931,7 +1450,7 @@ func (x *ReportStatusRequest) String() string {
 func (*ReportStatusRequest) ProtoMessage() {}
 
 func (x *ReportStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[13]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -944,7 +1463,7 @@ func (x *ReportStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportStatusRequest.ProtoReflect.Descriptor instead.
 func (*ReportStatusRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{13}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ReportStatusRequest) GetClientVersion() string {
@@ -997,7 +1516,7 @@ type ReportStatusResponse struct {
 
 func (x *ReportStatusResponse) Reset() {
 	*x = ReportStatusResponse{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[14]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1009,7 +1528,7 @@ func (x *ReportStatusResponse) String() string {
 func (*ReportStatusResponse) ProtoMessage() {}
 
 func (x *ReportStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[14]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1022,7 +1541,7 @@ func (x *ReportStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportStatusResponse.ProtoReflect.Descriptor instead.
 func (*ReportStatusResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{14}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{22}
 }
 
 type ReportInventoryRequest struct {
@@ -1034,7 +1553,7 @@ type ReportInventoryRequest struct {
 
 func (x *ReportInventoryRequest) Reset() {
 	*x = ReportInventoryRequest{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[15]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1046,7 +1565,7 @@ func (x *ReportInventoryRequest) String() string {
 func (*ReportInventoryRequest) ProtoMessage() {}
 
 func (x *ReportInventoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[15]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1059,7 +1578,7 @@ func (x *ReportInventoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportInventoryRequest.ProtoReflect.Descriptor instead.
 func (*ReportInventoryRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{15}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ReportInventoryRequest) GetInventory() *v1.Inventory {
@@ -1077,7 +1596,7 @@ type ReportInventoryResponse struct {
 
 func (x *ReportInventoryResponse) Reset() {
 	*x = ReportInventoryResponse{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[16]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1089,7 +1608,7 @@ func (x *ReportInventoryResponse) String() string {
 func (*ReportInventoryResponse) ProtoMessage() {}
 
 func (x *ReportInventoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[16]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1102,21 +1621,25 @@ func (x *ReportInventoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportInventoryResponse.ProtoReflect.Descriptor instead.
 func (*ReportInventoryResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{16}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{24}
 }
 
 type AckActionRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ActionId      string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
-	Succeeded     bool                   `protobuf:"varint,2,opt,name=succeeded,proto3" json:"succeeded,omitempty"`
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	ActionId  string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	Succeeded bool                   `protobuf:"varint,2,opt,name=succeeded,proto3" json:"succeeded,omitempty"`
+	Message   string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	// Result of a ZreplPreflight action.
+	Preflight *ZreplPreflightResult `protobuf:"bytes,4,opt,name=preflight,proto3" json:"preflight,omitempty"`
+	// Command output worth showing, such as released holds.
+	Output        []string `protobuf:"bytes,5,rep,name=output,proto3" json:"output,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AckActionRequest) Reset() {
 	*x = AckActionRequest{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[17]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1128,7 +1651,7 @@ func (x *AckActionRequest) String() string {
 func (*AckActionRequest) ProtoMessage() {}
 
 func (x *AckActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[17]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1141,7 +1664,7 @@ func (x *AckActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AckActionRequest.ProtoReflect.Descriptor instead.
 func (*AckActionRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{17}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *AckActionRequest) GetActionId() string {
@@ -1165,6 +1688,20 @@ func (x *AckActionRequest) GetMessage() string {
 	return ""
 }
 
+func (x *AckActionRequest) GetPreflight() *ZreplPreflightResult {
+	if x != nil {
+		return x.Preflight
+	}
+	return nil
+}
+
+func (x *AckActionRequest) GetOutput() []string {
+	if x != nil {
+		return x.Output
+	}
+	return nil
+}
+
 type AckActionResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1173,7 +1710,7 @@ type AckActionResponse struct {
 
 func (x *AckActionResponse) Reset() {
 	*x = AckActionResponse{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[18]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1185,7 +1722,7 @@ func (x *AckActionResponse) String() string {
 func (*AckActionResponse) ProtoMessage() {}
 
 func (x *AckActionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[18]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1198,7 +1735,7 @@ func (x *AckActionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AckActionResponse.ProtoReflect.Descriptor instead.
 func (*AckActionResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{18}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{26}
 }
 
 type ReportReplicationRequest struct {
@@ -1213,7 +1750,7 @@ type ReportReplicationRequest struct {
 
 func (x *ReportReplicationRequest) Reset() {
 	*x = ReportReplicationRequest{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[19]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1225,7 +1762,7 @@ func (x *ReportReplicationRequest) String() string {
 func (*ReportReplicationRequest) ProtoMessage() {}
 
 func (x *ReportReplicationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[19]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1238,7 +1775,7 @@ func (x *ReportReplicationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportReplicationRequest.ProtoReflect.Descriptor instead.
 func (*ReportReplicationRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{19}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ReportReplicationRequest) GetCollectedAt() *timestamppb.Timestamp {
@@ -1270,7 +1807,7 @@ type ReportReplicationResponse struct {
 
 func (x *ReportReplicationResponse) Reset() {
 	*x = ReportReplicationResponse{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[20]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1282,7 +1819,7 @@ func (x *ReportReplicationResponse) String() string {
 func (*ReportReplicationResponse) ProtoMessage() {}
 
 func (x *ReportReplicationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[20]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1295,7 +1832,7 @@ func (x *ReportReplicationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportReplicationResponse.ProtoReflect.Descriptor instead.
 func (*ReportReplicationResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{20}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{28}
 }
 
 // JobStatus is one of EZDR's zrepl jobs, from `zrepl status`.
@@ -1319,7 +1856,7 @@ type JobStatus struct {
 
 func (x *JobStatus) Reset() {
 	*x = JobStatus{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[21]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1331,7 +1868,7 @@ func (x *JobStatus) String() string {
 func (*JobStatus) ProtoMessage() {}
 
 func (x *JobStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[21]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1344,7 +1881,7 @@ func (x *JobStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JobStatus.ProtoReflect.Descriptor instead.
 func (*JobStatus) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{21}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *JobStatus) GetName() string {
@@ -1415,7 +1952,7 @@ type DatasetStatus struct {
 
 func (x *DatasetStatus) Reset() {
 	*x = DatasetStatus{}
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[22]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1427,7 +1964,7 @@ func (x *DatasetStatus) String() string {
 func (*DatasetStatus) ProtoMessage() {}
 
 func (x *DatasetStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_client_v1_client_proto_msgTypes[22]
+	mi := &file_ezdr_client_v1_client_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1440,7 +1977,7 @@ func (x *DatasetStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DatasetStatus.ProtoReflect.Descriptor instead.
 func (*DatasetStatus) Descriptor() ([]byte, []int) {
-	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{22}
+	return file_ezdr_client_v1_client_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *DatasetStatus) GetDataset() string {
@@ -1503,11 +2040,42 @@ const file_ezdr_client_v1_client_proto_rawDesc = "" +
 	"\theartbeat\x18\x01 \x01(\v2\x19.ezdr.client.v1.HeartbeatH\x00R\theartbeat\x12C\n" +
 	"\rdesired_state\x18\x02 \x01(\v2\x1c.ezdr.client.v1.DesiredStateH\x00R\fdesiredState\x120\n" +
 	"\x06action\x18\x03 \x01(\v2\x16.ezdr.client.v1.ActionH\x00R\x06actionB\t\n" +
-	"\amessage\"q\n" +
+	"\amessage\"\xfa\x03\n" +
 	"\x06Action\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12O\n" +
-	"\x11refresh_inventory\x18\x02 \x01(\v2 .ezdr.client.v1.RefreshInventoryH\x00R\x10refreshInventoryB\x06\n" +
-	"\x04kind\"\x12\n" +
+	"\x11refresh_inventory\x18\x02 \x01(\v2 .ezdr.client.v1.RefreshInventoryH\x00R\x10refreshInventory\x12I\n" +
+	"\x0fzrepl_preflight\x18\x03 \x01(\v2\x1e.ezdr.client.v1.ZreplPreflightH\x00R\x0ezreplPreflight\x12C\n" +
+	"\rzrepl_upgrade\x18\x04 \x01(\v2\x1c.ezdr.client.v1.ZreplUpgradeH\x00R\fzreplUpgrade\x12M\n" +
+	"\x11zrepl_remove_jobs\x18\x05 \x01(\v2\x1f.ezdr.client.v1.ZreplRemoveJobsH\x00R\x0fzreplRemoveJobs\x12V\n" +
+	"\x14zrepl_restore_config\x18\x06 \x01(\v2\".ezdr.client.v1.ZreplRestoreConfigH\x00R\x12zreplRestoreConfig\x12P\n" +
+	"\x12zrepl_release_jobs\x18\a \x01(\v2 .ezdr.client.v1.ZreplReleaseJobsH\x00R\x10zreplReleaseJobsB\x06\n" +
+	"\x04kind\"M\n" +
+	"\x0eZreplPreflight\x12\x1a\n" +
+	"\bdatasets\x18\x01 \x03(\tR\bdatasets\x12\x1f\n" +
+	"\vrelease_job\x18\x02 \x01(\tR\n" +
+	"releaseJob\"\xc7\x01\n" +
+	"\x14ZreplPreflightResult\x12#\n" +
+	"\rzrepl_version\x18\x01 \x01(\tR\fzreplVersion\x12#\n" +
+	"\rzrepl_running\x18\x02 \x01(\bR\fzreplRunning\x12<\n" +
+	"\bdatasets\x18\x03 \x03(\v2 .ezdr.client.v1.DatasetSnapshotsR\bdatasets\x12'\n" +
+	"\x0frelease_preview\x18\x04 \x03(\tR\x0ereleasePreview\"\xab\x01\n" +
+	"\x10DatasetSnapshots\x12\x18\n" +
+	"\adataset\x18\x01 \x01(\tR\adataset\x12\x16\n" +
+	"\x06exists\x18\x02 \x01(\bR\x06exists\x12)\n" +
+	"\x10referenced_bytes\x18\x03 \x01(\x04R\x0freferencedBytes\x12:\n" +
+	"\tsnapshots\x18\x04 \x03(\v2\x1c.ezdr.client.v1.SnapshotInfoR\tsnapshots\"T\n" +
+	"\fSnapshotInfo\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
+	"\x04guid\x18\x02 \x01(\x04R\x04guid\x12\x1c\n" +
+	"\tcreatetxg\x18\x03 \x01(\x04R\tcreatetxg\"\x0e\n" +
+	"\fZreplUpgrade\"=\n" +
+	"\x0fZreplRemoveJobs\x12\x12\n" +
+	"\x04jobs\x18\x01 \x03(\tR\x04jobs\x12\x16\n" +
+	"\x06backup\x18\x02 \x01(\tR\x06backup\",\n" +
+	"\x12ZreplRestoreConfig\x12\x16\n" +
+	"\x06backup\x18\x01 \x01(\tR\x06backup\"&\n" +
+	"\x10ZreplReleaseJobs\x12\x12\n" +
+	"\x04jobs\x18\x01 \x03(\tR\x04jobs\"\x12\n" +
 	"\x10RefreshInventory\"\v\n" +
 	"\tHeartbeat\"\x98\x01\n" +
 	"\fDesiredState\x12\x1e\n" +
@@ -1570,11 +2138,13 @@ const file_ezdr_client_v1_client_proto_rawDesc = "" +
 	"\x14ReportStatusResponse\"T\n" +
 	"\x16ReportInventoryRequest\x12:\n" +
 	"\tinventory\x18\x01 \x01(\v2\x1c.ezdr.inventory.v1.InventoryR\tinventory\"\x19\n" +
-	"\x17ReportInventoryResponse\"g\n" +
+	"\x17ReportInventoryResponse\"\xc3\x01\n" +
 	"\x10AckActionRequest\x12\x1b\n" +
 	"\taction_id\x18\x01 \x01(\tR\bactionId\x12\x1c\n" +
 	"\tsucceeded\x18\x02 \x01(\bR\tsucceeded\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"\x13\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\x12B\n" +
+	"\tpreflight\x18\x04 \x01(\v2$.ezdr.client.v1.ZreplPreflightResultR\tpreflight\x12\x16\n" +
+	"\x06output\x18\x05 \x03(\tR\x06output\"\x13\n" +
 	"\x11AckActionResponse\"\x9e\x01\n" +
 	"\x18ReportReplicationRequest\x12=\n" +
 	"\fcollected_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\vcollectedAt\x12-\n" +
@@ -1617,70 +2187,86 @@ func file_ezdr_client_v1_client_proto_rawDescGZIP() []byte {
 	return file_ezdr_client_v1_client_proto_rawDescData
 }
 
-var file_ezdr_client_v1_client_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_ezdr_client_v1_client_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_ezdr_client_v1_client_proto_goTypes = []any{
 	(*SubscribeRequest)(nil),          // 0: ezdr.client.v1.SubscribeRequest
 	(*SubscribeResponse)(nil),         // 1: ezdr.client.v1.SubscribeResponse
 	(*Action)(nil),                    // 2: ezdr.client.v1.Action
-	(*RefreshInventory)(nil),          // 3: ezdr.client.v1.RefreshInventory
-	(*Heartbeat)(nil),                 // 4: ezdr.client.v1.Heartbeat
-	(*DesiredState)(nil),              // 5: ezdr.client.v1.DesiredState
-	(*SiteTunnel)(nil),                // 6: ezdr.client.v1.SiteTunnel
-	(*SitePeer)(nil),                  // 7: ezdr.client.v1.SitePeer
-	(*Zrepl)(nil),                     // 8: ezdr.client.v1.Zrepl
-	(*Peer)(nil),                      // 9: ezdr.client.v1.Peer
-	(*SourceJob)(nil),                 // 10: ezdr.client.v1.SourceJob
-	(*PullJob)(nil),                   // 11: ezdr.client.v1.PullJob
-	(*RetentionTier)(nil),             // 12: ezdr.client.v1.RetentionTier
-	(*ReportStatusRequest)(nil),       // 13: ezdr.client.v1.ReportStatusRequest
-	(*ReportStatusResponse)(nil),      // 14: ezdr.client.v1.ReportStatusResponse
-	(*ReportInventoryRequest)(nil),    // 15: ezdr.client.v1.ReportInventoryRequest
-	(*ReportInventoryResponse)(nil),   // 16: ezdr.client.v1.ReportInventoryResponse
-	(*AckActionRequest)(nil),          // 17: ezdr.client.v1.AckActionRequest
-	(*AckActionResponse)(nil),         // 18: ezdr.client.v1.AckActionResponse
-	(*ReportReplicationRequest)(nil),  // 19: ezdr.client.v1.ReportReplicationRequest
-	(*ReportReplicationResponse)(nil), // 20: ezdr.client.v1.ReportReplicationResponse
-	(*JobStatus)(nil),                 // 21: ezdr.client.v1.JobStatus
-	(*DatasetStatus)(nil),             // 22: ezdr.client.v1.DatasetStatus
-	(*v1.Inventory)(nil),              // 23: ezdr.inventory.v1.Inventory
-	(*timestamppb.Timestamp)(nil),     // 24: google.protobuf.Timestamp
+	(*ZreplPreflight)(nil),            // 3: ezdr.client.v1.ZreplPreflight
+	(*ZreplPreflightResult)(nil),      // 4: ezdr.client.v1.ZreplPreflightResult
+	(*DatasetSnapshots)(nil),          // 5: ezdr.client.v1.DatasetSnapshots
+	(*SnapshotInfo)(nil),              // 6: ezdr.client.v1.SnapshotInfo
+	(*ZreplUpgrade)(nil),              // 7: ezdr.client.v1.ZreplUpgrade
+	(*ZreplRemoveJobs)(nil),           // 8: ezdr.client.v1.ZreplRemoveJobs
+	(*ZreplRestoreConfig)(nil),        // 9: ezdr.client.v1.ZreplRestoreConfig
+	(*ZreplReleaseJobs)(nil),          // 10: ezdr.client.v1.ZreplReleaseJobs
+	(*RefreshInventory)(nil),          // 11: ezdr.client.v1.RefreshInventory
+	(*Heartbeat)(nil),                 // 12: ezdr.client.v1.Heartbeat
+	(*DesiredState)(nil),              // 13: ezdr.client.v1.DesiredState
+	(*SiteTunnel)(nil),                // 14: ezdr.client.v1.SiteTunnel
+	(*SitePeer)(nil),                  // 15: ezdr.client.v1.SitePeer
+	(*Zrepl)(nil),                     // 16: ezdr.client.v1.Zrepl
+	(*Peer)(nil),                      // 17: ezdr.client.v1.Peer
+	(*SourceJob)(nil),                 // 18: ezdr.client.v1.SourceJob
+	(*PullJob)(nil),                   // 19: ezdr.client.v1.PullJob
+	(*RetentionTier)(nil),             // 20: ezdr.client.v1.RetentionTier
+	(*ReportStatusRequest)(nil),       // 21: ezdr.client.v1.ReportStatusRequest
+	(*ReportStatusResponse)(nil),      // 22: ezdr.client.v1.ReportStatusResponse
+	(*ReportInventoryRequest)(nil),    // 23: ezdr.client.v1.ReportInventoryRequest
+	(*ReportInventoryResponse)(nil),   // 24: ezdr.client.v1.ReportInventoryResponse
+	(*AckActionRequest)(nil),          // 25: ezdr.client.v1.AckActionRequest
+	(*AckActionResponse)(nil),         // 26: ezdr.client.v1.AckActionResponse
+	(*ReportReplicationRequest)(nil),  // 27: ezdr.client.v1.ReportReplicationRequest
+	(*ReportReplicationResponse)(nil), // 28: ezdr.client.v1.ReportReplicationResponse
+	(*JobStatus)(nil),                 // 29: ezdr.client.v1.JobStatus
+	(*DatasetStatus)(nil),             // 30: ezdr.client.v1.DatasetStatus
+	(*v1.Inventory)(nil),              // 31: ezdr.inventory.v1.Inventory
+	(*timestamppb.Timestamp)(nil),     // 32: google.protobuf.Timestamp
 }
 var file_ezdr_client_v1_client_proto_depIdxs = []int32{
-	4,  // 0: ezdr.client.v1.SubscribeResponse.heartbeat:type_name -> ezdr.client.v1.Heartbeat
-	5,  // 1: ezdr.client.v1.SubscribeResponse.desired_state:type_name -> ezdr.client.v1.DesiredState
+	12, // 0: ezdr.client.v1.SubscribeResponse.heartbeat:type_name -> ezdr.client.v1.Heartbeat
+	13, // 1: ezdr.client.v1.SubscribeResponse.desired_state:type_name -> ezdr.client.v1.DesiredState
 	2,  // 2: ezdr.client.v1.SubscribeResponse.action:type_name -> ezdr.client.v1.Action
-	3,  // 3: ezdr.client.v1.Action.refresh_inventory:type_name -> ezdr.client.v1.RefreshInventory
-	8,  // 4: ezdr.client.v1.DesiredState.zrepl:type_name -> ezdr.client.v1.Zrepl
-	6,  // 5: ezdr.client.v1.DesiredState.site_tunnel:type_name -> ezdr.client.v1.SiteTunnel
-	7,  // 6: ezdr.client.v1.SiteTunnel.peers:type_name -> ezdr.client.v1.SitePeer
-	10, // 7: ezdr.client.v1.Zrepl.source_jobs:type_name -> ezdr.client.v1.SourceJob
-	11, // 8: ezdr.client.v1.Zrepl.pull_jobs:type_name -> ezdr.client.v1.PullJob
-	9,  // 9: ezdr.client.v1.SourceJob.peer:type_name -> ezdr.client.v1.Peer
-	9,  // 10: ezdr.client.v1.PullJob.peer:type_name -> ezdr.client.v1.Peer
-	12, // 11: ezdr.client.v1.PullJob.primary_retention:type_name -> ezdr.client.v1.RetentionTier
-	12, // 12: ezdr.client.v1.PullJob.dr_retention:type_name -> ezdr.client.v1.RetentionTier
-	23, // 13: ezdr.client.v1.ReportInventoryRequest.inventory:type_name -> ezdr.inventory.v1.Inventory
-	24, // 14: ezdr.client.v1.ReportReplicationRequest.collected_at:type_name -> google.protobuf.Timestamp
-	21, // 15: ezdr.client.v1.ReportReplicationRequest.jobs:type_name -> ezdr.client.v1.JobStatus
-	24, // 16: ezdr.client.v1.JobStatus.attempt_started_at:type_name -> google.protobuf.Timestamp
-	24, // 17: ezdr.client.v1.JobStatus.attempt_finished_at:type_name -> google.protobuf.Timestamp
-	22, // 18: ezdr.client.v1.JobStatus.datasets:type_name -> ezdr.client.v1.DatasetStatus
-	24, // 19: ezdr.client.v1.DatasetStatus.latest_snapshot_at:type_name -> google.protobuf.Timestamp
-	0,  // 20: ezdr.client.v1.ClientService.Subscribe:input_type -> ezdr.client.v1.SubscribeRequest
-	13, // 21: ezdr.client.v1.ClientService.ReportStatus:input_type -> ezdr.client.v1.ReportStatusRequest
-	15, // 22: ezdr.client.v1.ClientService.ReportInventory:input_type -> ezdr.client.v1.ReportInventoryRequest
-	17, // 23: ezdr.client.v1.ClientService.AckAction:input_type -> ezdr.client.v1.AckActionRequest
-	19, // 24: ezdr.client.v1.ClientService.ReportReplication:input_type -> ezdr.client.v1.ReportReplicationRequest
-	1,  // 25: ezdr.client.v1.ClientService.Subscribe:output_type -> ezdr.client.v1.SubscribeResponse
-	14, // 26: ezdr.client.v1.ClientService.ReportStatus:output_type -> ezdr.client.v1.ReportStatusResponse
-	16, // 27: ezdr.client.v1.ClientService.ReportInventory:output_type -> ezdr.client.v1.ReportInventoryResponse
-	18, // 28: ezdr.client.v1.ClientService.AckAction:output_type -> ezdr.client.v1.AckActionResponse
-	20, // 29: ezdr.client.v1.ClientService.ReportReplication:output_type -> ezdr.client.v1.ReportReplicationResponse
-	25, // [25:30] is the sub-list for method output_type
-	20, // [20:25] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	11, // 3: ezdr.client.v1.Action.refresh_inventory:type_name -> ezdr.client.v1.RefreshInventory
+	3,  // 4: ezdr.client.v1.Action.zrepl_preflight:type_name -> ezdr.client.v1.ZreplPreflight
+	7,  // 5: ezdr.client.v1.Action.zrepl_upgrade:type_name -> ezdr.client.v1.ZreplUpgrade
+	8,  // 6: ezdr.client.v1.Action.zrepl_remove_jobs:type_name -> ezdr.client.v1.ZreplRemoveJobs
+	9,  // 7: ezdr.client.v1.Action.zrepl_restore_config:type_name -> ezdr.client.v1.ZreplRestoreConfig
+	10, // 8: ezdr.client.v1.Action.zrepl_release_jobs:type_name -> ezdr.client.v1.ZreplReleaseJobs
+	5,  // 9: ezdr.client.v1.ZreplPreflightResult.datasets:type_name -> ezdr.client.v1.DatasetSnapshots
+	6,  // 10: ezdr.client.v1.DatasetSnapshots.snapshots:type_name -> ezdr.client.v1.SnapshotInfo
+	16, // 11: ezdr.client.v1.DesiredState.zrepl:type_name -> ezdr.client.v1.Zrepl
+	14, // 12: ezdr.client.v1.DesiredState.site_tunnel:type_name -> ezdr.client.v1.SiteTunnel
+	15, // 13: ezdr.client.v1.SiteTunnel.peers:type_name -> ezdr.client.v1.SitePeer
+	18, // 14: ezdr.client.v1.Zrepl.source_jobs:type_name -> ezdr.client.v1.SourceJob
+	19, // 15: ezdr.client.v1.Zrepl.pull_jobs:type_name -> ezdr.client.v1.PullJob
+	17, // 16: ezdr.client.v1.SourceJob.peer:type_name -> ezdr.client.v1.Peer
+	17, // 17: ezdr.client.v1.PullJob.peer:type_name -> ezdr.client.v1.Peer
+	20, // 18: ezdr.client.v1.PullJob.primary_retention:type_name -> ezdr.client.v1.RetentionTier
+	20, // 19: ezdr.client.v1.PullJob.dr_retention:type_name -> ezdr.client.v1.RetentionTier
+	31, // 20: ezdr.client.v1.ReportInventoryRequest.inventory:type_name -> ezdr.inventory.v1.Inventory
+	4,  // 21: ezdr.client.v1.AckActionRequest.preflight:type_name -> ezdr.client.v1.ZreplPreflightResult
+	32, // 22: ezdr.client.v1.ReportReplicationRequest.collected_at:type_name -> google.protobuf.Timestamp
+	29, // 23: ezdr.client.v1.ReportReplicationRequest.jobs:type_name -> ezdr.client.v1.JobStatus
+	32, // 24: ezdr.client.v1.JobStatus.attempt_started_at:type_name -> google.protobuf.Timestamp
+	32, // 25: ezdr.client.v1.JobStatus.attempt_finished_at:type_name -> google.protobuf.Timestamp
+	30, // 26: ezdr.client.v1.JobStatus.datasets:type_name -> ezdr.client.v1.DatasetStatus
+	32, // 27: ezdr.client.v1.DatasetStatus.latest_snapshot_at:type_name -> google.protobuf.Timestamp
+	0,  // 28: ezdr.client.v1.ClientService.Subscribe:input_type -> ezdr.client.v1.SubscribeRequest
+	21, // 29: ezdr.client.v1.ClientService.ReportStatus:input_type -> ezdr.client.v1.ReportStatusRequest
+	23, // 30: ezdr.client.v1.ClientService.ReportInventory:input_type -> ezdr.client.v1.ReportInventoryRequest
+	25, // 31: ezdr.client.v1.ClientService.AckAction:input_type -> ezdr.client.v1.AckActionRequest
+	27, // 32: ezdr.client.v1.ClientService.ReportReplication:input_type -> ezdr.client.v1.ReportReplicationRequest
+	1,  // 33: ezdr.client.v1.ClientService.Subscribe:output_type -> ezdr.client.v1.SubscribeResponse
+	22, // 34: ezdr.client.v1.ClientService.ReportStatus:output_type -> ezdr.client.v1.ReportStatusResponse
+	24, // 35: ezdr.client.v1.ClientService.ReportInventory:output_type -> ezdr.client.v1.ReportInventoryResponse
+	26, // 36: ezdr.client.v1.ClientService.AckAction:output_type -> ezdr.client.v1.AckActionResponse
+	28, // 37: ezdr.client.v1.ClientService.ReportReplication:output_type -> ezdr.client.v1.ReportReplicationResponse
+	33, // [33:38] is the sub-list for method output_type
+	28, // [28:33] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_ezdr_client_v1_client_proto_init() }
@@ -1695,6 +2281,11 @@ func file_ezdr_client_v1_client_proto_init() {
 	}
 	file_ezdr_client_v1_client_proto_msgTypes[2].OneofWrappers = []any{
 		(*Action_RefreshInventory)(nil),
+		(*Action_ZreplPreflight)(nil),
+		(*Action_ZreplUpgrade)(nil),
+		(*Action_ZreplRemoveJobs)(nil),
+		(*Action_ZreplRestoreConfig)(nil),
+		(*Action_ZreplReleaseJobs)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1702,7 +2293,7 @@ func file_ezdr_client_v1_client_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ezdr_client_v1_client_proto_rawDesc), len(file_ezdr_client_v1_client_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   23,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

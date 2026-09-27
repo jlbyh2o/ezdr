@@ -225,6 +225,18 @@ When an adopted plan is activated, both clients run a preflight and report:
   configuration (left in place).
 - zrepl versions, and whether an upgrade to 0.7 is needed.
 
+The takeover can't start while the preflight reports a problem:
+
+- a replica exists on the DR host but shares no snapshot with the primary
+  (zrepl can't replicate into it, and EZDR never destroys replicas);
+- a replica has a snapshot newer than the newest common one that the primary
+  doesn't have (diverged);
+- another hand-written job on the primary listens on the plan's port;
+- zrepl isn't installed on a host.
+
+Confirmation needs a preflight from the last 15 minutes; otherwise it runs
+again.
+
 ### 5.3 Switch-over
 
 After one confirmation, the portal runs these steps:

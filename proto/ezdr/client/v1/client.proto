@@ -42,7 +42,70 @@ message Action {
   string id = 1;
   oneof kind {
     RefreshInventory refresh_inventory = 2;
+    ZreplPreflight zrepl_preflight = 3;
+    ZreplUpgrade zrepl_upgrade = 4;
+    ZreplRemoveJobs zrepl_remove_jobs = 5;
+    ZreplRestoreConfig zrepl_restore_config = 6;
+    ZreplReleaseJobs zrepl_release_jobs = 7;
   }
+}
+
+// The Zrepl* actions take over an existing zrepl setup. See
+// docs/design/replication.md, section 5.
+
+// ZreplPreflight lists datasets' snapshots and bookmarks, and previews
+// releasing an old job's holds and bookmarks. It changes nothing.
+message ZreplPreflight {
+  // Full dataset names on this host.
+  repeated string datasets = 1;
+  string release_job = 2;
+}
+
+message ZreplPreflightResult {
+  string zrepl_version = 1;
+  bool zrepl_running = 2;
+  repeated DatasetSnapshots datasets = 3;
+  // Output of `zrepl zfs-abstraction release-all --job <release_job>
+  // --dry-run`, one line per hold or bookmark.
+  repeated string release_preview = 4;
+}
+
+message DatasetSnapshots {
+  string dataset = 1;
+  bool exists = 2;
+  uint64 referenced_bytes = 3;
+  // Snapshots ("@name") and bookmarks ("#name"), oldest first.
+  repeated SnapshotInfo snapshots = 4;
+}
+
+message SnapshotInfo {
+  string name = 1;
+  uint64 guid = 2;
+  uint64 createtxg = 3;
+}
+
+// ZreplUpgrade installs the supported zrepl version (0.7) if an older one is
+// installed.
+message ZreplUpgrade {}
+
+// ZreplRemoveJobs removes hand-written jobs from the main zrepl
+// configuration, makes it include EZDR's jobs directory, and restarts zrepl.
+// The main configuration is first copied to a backup named after backup,
+// unless that backup already exists (so retries keep the original).
+message ZreplRemoveJobs {
+  repeated string jobs = 1;
+  string backup = 2;
+}
+
+// ZreplRestoreConfig restores the main zrepl configuration from a backup made
+// by ZreplRemoveJobs and restarts zrepl.
+message ZreplRestoreConfig {
+  string backup = 1;
+}
+
+// ZreplReleaseJobs releases the zrepl holds and bookmarks of removed jobs.
+message ZreplReleaseJobs {
+  repeated string jobs = 1;
 }
 
 // RefreshInventory asks the host to collect and report inventory now.
@@ -161,6 +224,10 @@ message AckActionRequest {
   string action_id = 1;
   bool succeeded = 2;
   string message = 3;
+  // Result of a ZreplPreflight action.
+  ZreplPreflightResult preflight = 4;
+  // Command output worth showing, such as released holds.
+  repeated string output = 5;
 }
 
 message AckActionResponse {}

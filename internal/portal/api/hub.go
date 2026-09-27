@@ -2,9 +2,11 @@ package api
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
+	"github.com/jlbyh2o/ezdr/internal/portal/store"
 )
 
 // Hub tracks which hosts have an open command stream, so the portal can show
@@ -12,6 +14,13 @@ import (
 type Hub struct {
 	mu    sync.Mutex
 	conns map[string]map[*hubConn]struct{} // host ID -> open streams
+	// waiting maps action IDs to requests awaiting their acknowledgement.
+	waiting map[string]*pendingAction
+}
+
+type pendingAction struct {
+	hostID string
+	ack    chan *clientv1.AckActionRequest
 }
 
 type hubConn struct {
@@ -22,7 +31,7 @@ type hubConn struct {
 
 // NewHub returns an empty Hub.
 func NewHub() *Hub {
-	return &Hub{conns: make(map[string]map[*hubConn]struct{})}
+	return &Hub{conns: make(map[string]map[*hubConn]struct{}), waiting: make(map[string]*pendingAction)}
 }
 
 // connect registers a stream for hostID. The returned context is canceled
@@ -77,4 +86,44 @@ func (h *Hub) Send(hostID string, msg *clientv1.SubscribeResponse) bool {
 		}
 	}
 	return false
+}
+
+// ErrHostOffline is returned when an action can't be sent to a host.
+var ErrHostOffline = errors.New("the host isn't connected")
+
+// Request sends an action to hostID and waits for its acknowledgement, until
+// ctx is done.
+func (h *Hub) Request(ctx context.Context, hostID string, a *clientv1.Action) (*clientv1.AckActionRequest, error) {
+	a.Id = store.NewID()
+	p := &pendingAction{hostID: hostID, ack: make(chan *clientv1.AckActionRequest, 1)}
+	h.mu.Lock()
+	h.waiting[a.Id] = p
+	h.mu.Unlock()
+	defer func() {
+		h.mu.Lock()
+		delete(h.waiting, a.Id)
+		h.mu.Unlock()
+	}()
+	if !h.Send(hostID, &clientv1.SubscribeResponse{Message: &clientv1.SubscribeResponse_Action{Action: a}}) {
+		return nil, ErrHostOffline
+	}
+	select {
+	case ack := <-p.ack:
+		return ack, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+// deliver passes an acknowledgement to the request waiting for it. Only the
+// host the action was sent to can acknowledge it.
+func (h *Hub) deliver(hostID string, ack *clientv1.AckActionRequest) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if p := h.waiting[ack.ActionId]; p != nil && p.hostID == hostID {
+		select {
+		case p.ack <- ack:
+		default:
+		}
+	}
 }

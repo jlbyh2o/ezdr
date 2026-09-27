@@ -238,6 +238,13 @@ service PlanService {
   // AdoptZreplSetup fills in a specification from an existing zrepl setup,
   // without saving it.
   rpc AdoptZreplSetup(AdoptZreplSetupRequest) returns (AdoptZreplSetupResponse);
+  // RunTakeoverPreflight checks, on both hosts, that an adopted plan can take
+  // over its zrepl setup, and stores the result. It changes nothing on the
+  // hosts.
+  rpc RunTakeoverPreflight(RunTakeoverPreflightRequest) returns (RunTakeoverPreflightResponse);
+  // GetTakeover returns an adopted plan's latest preflight and takeover
+  // progress.
+  rpc GetTakeover(GetTakeoverRequest) returns (GetTakeoverResponse);
   // PreviewPlanChanges lists what activating or applying the plan's
   // editing specification would change on each host.
   rpc PreviewPlanChanges(PreviewPlanChangesRequest) returns (PreviewPlanChangesResponse);
@@ -594,4 +601,83 @@ message AdoptZreplSetupResponse {
   // What the plan does differently from the old setup, such as guests whose
   // disks were only partly replicated.
   repeated string notes = 2;
+}
+
+message RunTakeoverPreflightRequest {
+  string id = 1;
+}
+
+message RunTakeoverPreflightResponse {
+  Takeover takeover = 1;
+}
+
+message GetTakeoverRequest {
+  string id = 1;
+}
+
+message GetTakeoverResponse {
+  // Unset when no preflight has run.
+  Takeover takeover = 1;
+}
+
+enum TakeoverState {
+  TAKEOVER_STATE_UNSPECIFIED = 0;
+  // Preflight done; waiting for confirmation.
+  TAKEOVER_STATE_READY = 1;
+  // Preflight found problems that block the takeover.
+  TAKEOVER_STATE_BLOCKED = 2;
+  TAKEOVER_STATE_RUNNING = 3;
+  TAKEOVER_STATE_COMPLETED = 4;
+  // A step failed and both hosts' configurations were restored.
+  TAKEOVER_STATE_ROLLED_BACK = 5;
+  // A step failed and restoring didn't finish; see the steps.
+  TAKEOVER_STATE_FAILED = 6;
+}
+
+message Takeover {
+  TakeoverState state = 1;
+  TakeoverPreflight preflight = 2;
+  repeated TakeoverStep steps = 3;
+  string error = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+// TakeoverPreflight is what taking over would do, from both hosts' current
+// snapshots.
+message TakeoverPreflight {
+  google.protobuf.Timestamp checked_at = 1;
+  repeated TakeoverDataset datasets = 2;
+  // Datasets the old job replicates that the plan doesn't.
+  repeated string dropped_datasets = 3;
+  // Holds and bookmarks the old jobs' release will remove.
+  repeated string primary_releases = 4;
+  repeated string dr_releases = 5;
+  string primary_zrepl_version = 6;
+  string dr_zrepl_version = 7;
+  bool upgrade_primary = 8;
+  bool upgrade_dr = 9;
+  // Other hand-written jobs, left in place.
+  repeated string other_jobs = 10;
+  // Problems that block the takeover.
+  repeated string problems = 11;
+  // Concerns that don't block it.
+  repeated string warnings = 12;
+}
+
+message TakeoverDataset {
+  // Dataset on the primary.
+  string dataset = 1;
+  // Newest snapshot (or primary bookmark) both hosts have; empty when a full
+  // send is needed.
+  string common_snapshot = 2;
+  bool full_send = 3;
+  uint64 full_send_bytes = 4;
+}
+
+message TakeoverStep {
+  string name = 1;
+  // "pending", "running", "done", "failed", or "skipped".
+  string status = 2;
+  string detail = 3;
+  google.protobuf.Timestamp updated_at = 4;
 }

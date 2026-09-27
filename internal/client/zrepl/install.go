@@ -3,6 +3,7 @@ package zrepl
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -37,10 +38,67 @@ func (a *Applier) Version(ctx context.Context) string {
 	return ""
 }
 
-// Install adds zrepl's apt repository (verifying its signing key), installs
-// zrepl, and holds the package: until zrepl 1.0 the repository publishes
-// breaking releases immediately, so EZDR upgrades deliberately.
+// SupportedVersion is the zrepl release series EZDR configures, as an apt
+// version pattern.
+const SupportedVersion = "0.7.*"
+
+// aptInstall installs zrepl in the supported series, keeping a modified
+// zrepl.yml (a dpkg conffile) rather than stopping at dpkg's prompt, and
+// holds the package: until zrepl 1.0 the repository publishes breaking
+// releases immediately, so EZDR upgrades deliberately.
+var aptInstall = [][]string{
+	{"apt-get", "update", "-qq"},
+	{"apt-get", "install", "-y", "-qq", "--allow-downgrades", "--allow-change-held-packages",
+		"-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "zrepl=" + SupportedVersion},
+	{"apt-mark", "hold", "zrepl"},
+}
+
+// Install adds zrepl's apt repository (verifying its signing key) and
+// installs zrepl.
 func (a *Applier) Install(ctx context.Context) error {
+	if err := a.ensureRepository(ctx); err != nil {
+		return err
+	}
+	for _, s := range aptInstall {
+		if _, err := a.Run(ctx, s[0], s[1:]...); err != nil {
+			return fmt.Errorf("%s: %w", strings.Join(s, " "), err)
+		}
+	}
+	return nil
+}
+
+// Upgrade installs the supported zrepl series if an older release is
+// installed, and makes sure zrepl runs afterwards. It returns the version
+// now installed.
+func (a *Applier) Upgrade(ctx context.Context) (string, error) {
+	v := a.Version(ctx)
+	if v == "" {
+		return "", errors.New("zrepl isn't installed")
+	}
+	if Supported(v) {
+		return v, nil
+	}
+	if err := a.Install(ctx); err != nil {
+		return "", err
+	}
+	if _, err := a.Run(ctx, "systemctl", "restart", "zrepl"); err != nil {
+		return "", fmt.Errorf("restart zrepl: %w", err)
+	}
+	if v = a.Version(ctx); !Supported(v) {
+		return v, fmt.Errorf("zrepl %s is installed after the upgrade, not 0.7", v)
+	}
+	return v, nil
+}
+
+// Supported reports whether a zrepl version (such as "v0.7.0") is in the
+// supported series.
+func Supported(version string) bool {
+	return strings.HasPrefix(version, "v0.7.") || version == "v0.7"
+}
+
+// ensureRepository adds zrepl's apt repository after verifying its signing
+// key's fingerprint.
+func (a *Applier) ensureRepository(ctx context.Context) error {
 	codename, err := debianCodename()
 	if err != nil {
 		return err
@@ -66,19 +124,7 @@ func (a *Applier) Install(ctx context.Context) error {
 		return fmt.Errorf("install zrepl signing key: %w", err)
 	}
 	source := fmt.Sprintf("deb [arch=amd64 signed-by=%s] %s %s main\n", aptKeyring, aptRepoBase, codename)
-	if err := writeFile(aptSourcesFile, []byte(source), 0o644); err != nil {
-		return err
-	}
-	for _, s := range [][]string{
-		{"apt-get", "update", "-qq"},
-		{"apt-get", "install", "-y", "-qq", "zrepl"},
-		{"apt-mark", "hold", "zrepl"},
-	} {
-		if _, err := a.Run(ctx, s[0], s[1:]...); err != nil {
-			return fmt.Errorf("%s: %w", strings.Join(s, " "), err)
-		}
-	}
-	return nil
+	return writeFile(aptSourcesFile, []byte(source), 0o644)
 }
 
 func firstFingerprint(colons string) string {

@@ -20,11 +20,14 @@ import (
 // installing zrepl) don't block the command stream. If newer desired state
 // arrives while applying, only the newest is applied next.
 type applier struct {
-	api       clientv1connect.ClientServiceClient
-	zrepl     *zrepl.Applier
-	cert      string
-	siteKey   wgtypes.Key
-	mu        sync.Mutex
+	api     clientv1connect.ClientServiceClient
+	zrepl   *zrepl.Applier
+	cert    string
+	siteKey wgtypes.Key
+	mu      sync.Mutex
+	// zreplMu serializes changes to zrepl's configuration: applying desired
+	// state and takeover actions.
+	zreplMu   sync.Mutex
 	pending   *clientv1.DesiredState
 	wake      chan struct{}
 	lastGen   uint64
@@ -73,7 +76,9 @@ func (a *applier) run(ctx context.Context) {
 		// The tunnel comes first: zrepl's jobs may use its addresses.
 		err := ApplySiteTunnel(ds.GetSiteTunnel(), a.siteKey)
 		if err == nil {
+			a.zreplMu.Lock()
 			err = a.zrepl.Apply(ctx, ds.GetZrepl())
+			a.zreplMu.Unlock()
 		}
 		if err != nil {
 			if ctx.Err() != nil {

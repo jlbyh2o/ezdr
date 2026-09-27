@@ -185,6 +185,8 @@ func TestEnsureInclude(t *testing.T) {
 }
 
 type fakeRunner struct {
+	// out maps exact command lines to their output.
+	out        map[string]string
 	calls      []string
 	failCheck  bool
 	notRunning bool
@@ -194,6 +196,9 @@ type fakeRunner struct {
 func (f *fakeRunner) run(_ context.Context, name string, args ...string) ([]byte, error) {
 	call := strings.Join(append([]string{name}, args...), " ")
 	f.calls = append(f.calls, call)
+	if o, ok := f.out[call]; ok {
+		return []byte(o), nil
+	}
 	switch {
 	case call == "zrepl version --show client":
 		return []byte("client: zrepl version=v0.7.0 go=go1.25"), nil
@@ -201,6 +206,8 @@ func (f *fakeRunner) run(_ context.Context, name string, args ...string) ([]byte
 		return []byte("bad"), errors.New("exit status 1")
 	case strings.HasPrefix(call, "systemctl is-active") && f.notRunning:
 		return nil, errors.New("inactive")
+	case strings.HasPrefix(call, "zfs list -Hp -t filesystem,volume,snapshot,bookmark "):
+		return nil, errors.New("exit status 1: cannot open '" + args[len(args)-1] + "': dataset does not exist")
 	case strings.HasPrefix(call, "zfs list -H -o name "):
 		if !f.datasets[args[len(args)-1]] {
 			return nil, errors.New("dataset does not exist")

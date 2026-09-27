@@ -27,6 +27,7 @@ import {
 import { Severity } from '@/gen/ezdr/plan/v1/plan_pb'
 import { type Plan, PlanState, type PreviewPlanChangesResponse } from '@/gen/ezdr/portal/v1/portal_pb'
 import { errorMessage, planClient } from '@/lib/api'
+import { TakeoverDialog } from '@/pages/takeover'
 
 const stateLabel: Record<PlanState, string> = {
   [PlanState.UNSPECIFIED]: 'unknown',
@@ -172,7 +173,8 @@ function ConfirmButton({
 
 // PlanActions shows the lifecycle actions for the plan's state.
 export function PlanActions({ plan, onChanged, dirty }: { plan: Plan; onChanged: (p: Plan) => void; dirty: boolean }) {
-  const [dialog, setDialog] = useState<'activate' | 'apply'>()
+  const [dialog, setDialog] = useState<'activate' | 'apply' | 'takeover'>()
+  const adopted = !!plan.spec?.takeover
   const [error, setError] = useState<string>()
 
   async function act(fn: () => Promise<{ plan?: Plan }>) {
@@ -189,8 +191,8 @@ export function PlanActions({ plan, onChanged, dirty }: { plan: Plan; onChanged:
     <div className="grid justify-items-end gap-2">
       <div className="flex flex-wrap items-center justify-end gap-2">
         {plan.state === PlanState.DRAFT && (
-          <Button onClick={() => setDialog('activate')} disabled={dirty} title={dirty ? 'Save first' : undefined}>
-            <Rocket /> Activate
+          <Button onClick={() => setDialog(adopted ? 'takeover' : 'activate')} disabled={dirty} title={dirty ? 'Save first' : undefined}>
+            <Rocket /> {adopted ? 'Take over' : 'Activate'}
           </Button>
         )}
         {plan.state !== PlanState.DRAFT && plan.pendingChanges && (
@@ -240,6 +242,7 @@ export function PlanActions({ plan, onChanged, dirty }: { plan: Plan; onChanged:
           if (r.plan) onChanged(r.plan)
         }}
       />
+      {adopted && dialog === 'takeover' && <TakeoverDialog plan={plan} onClose={() => setDialog(undefined)} />}
       <ChangesDialog
         plan={plan}
         title={`Apply changes to ${plan.spec?.name}`}

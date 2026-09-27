@@ -102,6 +102,11 @@ const (
 	// PlanServiceAdoptZreplSetupProcedure is the fully-qualified name of the PlanService's
 	// AdoptZreplSetup RPC.
 	PlanServiceAdoptZreplSetupProcedure = "/ezdr.portal.v1.PlanService/AdoptZreplSetup"
+	// PlanServiceRunTakeoverPreflightProcedure is the fully-qualified name of the PlanService's
+	// RunTakeoverPreflight RPC.
+	PlanServiceRunTakeoverPreflightProcedure = "/ezdr.portal.v1.PlanService/RunTakeoverPreflight"
+	// PlanServiceGetTakeoverProcedure is the fully-qualified name of the PlanService's GetTakeover RPC.
+	PlanServiceGetTakeoverProcedure = "/ezdr.portal.v1.PlanService/GetTakeover"
 	// PlanServicePreviewPlanChangesProcedure is the fully-qualified name of the PlanService's
 	// PreviewPlanChanges RPC.
 	PlanServicePreviewPlanChangesProcedure = "/ezdr.portal.v1.PlanService/PreviewPlanChanges"
@@ -740,6 +745,13 @@ type PlanServiceClient interface {
 	// AdoptZreplSetup fills in a specification from an existing zrepl setup,
 	// without saving it.
 	AdoptZreplSetup(context.Context, *connect.Request[v1.AdoptZreplSetupRequest]) (*connect.Response[v1.AdoptZreplSetupResponse], error)
+	// RunTakeoverPreflight checks, on both hosts, that an adopted plan can take
+	// over its zrepl setup, and stores the result. It changes nothing on the
+	// hosts.
+	RunTakeoverPreflight(context.Context, *connect.Request[v1.RunTakeoverPreflightRequest]) (*connect.Response[v1.RunTakeoverPreflightResponse], error)
+	// GetTakeover returns an adopted plan's latest preflight and takeover
+	// progress.
+	GetTakeover(context.Context, *connect.Request[v1.GetTakeoverRequest]) (*connect.Response[v1.GetTakeoverResponse], error)
 	// PreviewPlanChanges lists what activating or applying the plan's
 	// editing specification would change on each host.
 	PreviewPlanChanges(context.Context, *connect.Request[v1.PreviewPlanChangesRequest]) (*connect.Response[v1.PreviewPlanChangesResponse], error)
@@ -823,6 +835,18 @@ func NewPlanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(planServiceMethods.ByName("AdoptZreplSetup")),
 			connect.WithClientOptions(opts...),
 		),
+		runTakeoverPreflight: connect.NewClient[v1.RunTakeoverPreflightRequest, v1.RunTakeoverPreflightResponse](
+			httpClient,
+			baseURL+PlanServiceRunTakeoverPreflightProcedure,
+			connect.WithSchema(planServiceMethods.ByName("RunTakeoverPreflight")),
+			connect.WithClientOptions(opts...),
+		),
+		getTakeover: connect.NewClient[v1.GetTakeoverRequest, v1.GetTakeoverResponse](
+			httpClient,
+			baseURL+PlanServiceGetTakeoverProcedure,
+			connect.WithSchema(planServiceMethods.ByName("GetTakeover")),
+			connect.WithClientOptions(opts...),
+		),
 		previewPlanChanges: connect.NewClient[v1.PreviewPlanChangesRequest, v1.PreviewPlanChangesResponse](
 			httpClient,
 			baseURL+PlanServicePreviewPlanChangesProcedure,
@@ -876,23 +900,25 @@ func NewPlanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // planServiceClient implements PlanServiceClient.
 type planServiceClient struct {
-	listPlans          *connect.Client[v1.ListPlansRequest, v1.ListPlansResponse]
-	getPlan            *connect.Client[v1.GetPlanRequest, v1.GetPlanResponse]
-	createPlan         *connect.Client[v1.CreatePlanRequest, v1.CreatePlanResponse]
-	updatePlan         *connect.Client[v1.UpdatePlanRequest, v1.UpdatePlanResponse]
-	deletePlan         *connect.Client[v1.DeletePlanRequest, v1.DeletePlanResponse]
-	validatePlan       *connect.Client[v1.ValidatePlanRequest, v1.ValidatePlanResponse]
-	suggestPlan        *connect.Client[v1.SuggestPlanRequest, v1.SuggestPlanResponse]
-	listZreplSetups    *connect.Client[v1.ListZreplSetupsRequest, v1.ListZreplSetupsResponse]
-	adoptZreplSetup    *connect.Client[v1.AdoptZreplSetupRequest, v1.AdoptZreplSetupResponse]
-	previewPlanChanges *connect.Client[v1.PreviewPlanChangesRequest, v1.PreviewPlanChangesResponse]
-	activatePlan       *connect.Client[v1.ActivatePlanRequest, v1.ActivatePlanResponse]
-	applyPlanChanges   *connect.Client[v1.ApplyPlanChangesRequest, v1.ApplyPlanChangesResponse]
-	discardPlanChanges *connect.Client[v1.DiscardPlanChangesRequest, v1.DiscardPlanChangesResponse]
-	pausePlan          *connect.Client[v1.PausePlanRequest, v1.PausePlanResponse]
-	resumePlan         *connect.Client[v1.ResumePlanRequest, v1.ResumePlanResponse]
-	deactivatePlan     *connect.Client[v1.DeactivatePlanRequest, v1.DeactivatePlanResponse]
-	getPlanStatus      *connect.Client[v1.GetPlanStatusRequest, v1.GetPlanStatusResponse]
+	listPlans            *connect.Client[v1.ListPlansRequest, v1.ListPlansResponse]
+	getPlan              *connect.Client[v1.GetPlanRequest, v1.GetPlanResponse]
+	createPlan           *connect.Client[v1.CreatePlanRequest, v1.CreatePlanResponse]
+	updatePlan           *connect.Client[v1.UpdatePlanRequest, v1.UpdatePlanResponse]
+	deletePlan           *connect.Client[v1.DeletePlanRequest, v1.DeletePlanResponse]
+	validatePlan         *connect.Client[v1.ValidatePlanRequest, v1.ValidatePlanResponse]
+	suggestPlan          *connect.Client[v1.SuggestPlanRequest, v1.SuggestPlanResponse]
+	listZreplSetups      *connect.Client[v1.ListZreplSetupsRequest, v1.ListZreplSetupsResponse]
+	adoptZreplSetup      *connect.Client[v1.AdoptZreplSetupRequest, v1.AdoptZreplSetupResponse]
+	runTakeoverPreflight *connect.Client[v1.RunTakeoverPreflightRequest, v1.RunTakeoverPreflightResponse]
+	getTakeover          *connect.Client[v1.GetTakeoverRequest, v1.GetTakeoverResponse]
+	previewPlanChanges   *connect.Client[v1.PreviewPlanChangesRequest, v1.PreviewPlanChangesResponse]
+	activatePlan         *connect.Client[v1.ActivatePlanRequest, v1.ActivatePlanResponse]
+	applyPlanChanges     *connect.Client[v1.ApplyPlanChangesRequest, v1.ApplyPlanChangesResponse]
+	discardPlanChanges   *connect.Client[v1.DiscardPlanChangesRequest, v1.DiscardPlanChangesResponse]
+	pausePlan            *connect.Client[v1.PausePlanRequest, v1.PausePlanResponse]
+	resumePlan           *connect.Client[v1.ResumePlanRequest, v1.ResumePlanResponse]
+	deactivatePlan       *connect.Client[v1.DeactivatePlanRequest, v1.DeactivatePlanResponse]
+	getPlanStatus        *connect.Client[v1.GetPlanStatusRequest, v1.GetPlanStatusResponse]
 }
 
 // ListPlans calls ezdr.portal.v1.PlanService.ListPlans.
@@ -938,6 +964,16 @@ func (c *planServiceClient) ListZreplSetups(ctx context.Context, req *connect.Re
 // AdoptZreplSetup calls ezdr.portal.v1.PlanService.AdoptZreplSetup.
 func (c *planServiceClient) AdoptZreplSetup(ctx context.Context, req *connect.Request[v1.AdoptZreplSetupRequest]) (*connect.Response[v1.AdoptZreplSetupResponse], error) {
 	return c.adoptZreplSetup.CallUnary(ctx, req)
+}
+
+// RunTakeoverPreflight calls ezdr.portal.v1.PlanService.RunTakeoverPreflight.
+func (c *planServiceClient) RunTakeoverPreflight(ctx context.Context, req *connect.Request[v1.RunTakeoverPreflightRequest]) (*connect.Response[v1.RunTakeoverPreflightResponse], error) {
+	return c.runTakeoverPreflight.CallUnary(ctx, req)
+}
+
+// GetTakeover calls ezdr.portal.v1.PlanService.GetTakeover.
+func (c *planServiceClient) GetTakeover(ctx context.Context, req *connect.Request[v1.GetTakeoverRequest]) (*connect.Response[v1.GetTakeoverResponse], error) {
+	return c.getTakeover.CallUnary(ctx, req)
 }
 
 // PreviewPlanChanges calls ezdr.portal.v1.PlanService.PreviewPlanChanges.
@@ -997,6 +1033,13 @@ type PlanServiceHandler interface {
 	// AdoptZreplSetup fills in a specification from an existing zrepl setup,
 	// without saving it.
 	AdoptZreplSetup(context.Context, *connect.Request[v1.AdoptZreplSetupRequest]) (*connect.Response[v1.AdoptZreplSetupResponse], error)
+	// RunTakeoverPreflight checks, on both hosts, that an adopted plan can take
+	// over its zrepl setup, and stores the result. It changes nothing on the
+	// hosts.
+	RunTakeoverPreflight(context.Context, *connect.Request[v1.RunTakeoverPreflightRequest]) (*connect.Response[v1.RunTakeoverPreflightResponse], error)
+	// GetTakeover returns an adopted plan's latest preflight and takeover
+	// progress.
+	GetTakeover(context.Context, *connect.Request[v1.GetTakeoverRequest]) (*connect.Response[v1.GetTakeoverResponse], error)
 	// PreviewPlanChanges lists what activating or applying the plan's
 	// editing specification would change on each host.
 	PreviewPlanChanges(context.Context, *connect.Request[v1.PreviewPlanChangesRequest]) (*connect.Response[v1.PreviewPlanChangesResponse], error)
@@ -1076,6 +1119,18 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(planServiceMethods.ByName("AdoptZreplSetup")),
 		connect.WithHandlerOptions(opts...),
 	)
+	planServiceRunTakeoverPreflightHandler := connect.NewUnaryHandler(
+		PlanServiceRunTakeoverPreflightProcedure,
+		svc.RunTakeoverPreflight,
+		connect.WithSchema(planServiceMethods.ByName("RunTakeoverPreflight")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceGetTakeoverHandler := connect.NewUnaryHandler(
+		PlanServiceGetTakeoverProcedure,
+		svc.GetTakeover,
+		connect.WithSchema(planServiceMethods.ByName("GetTakeover")),
+		connect.WithHandlerOptions(opts...),
+	)
 	planServicePreviewPlanChangesHandler := connect.NewUnaryHandler(
 		PlanServicePreviewPlanChangesProcedure,
 		svc.PreviewPlanChanges,
@@ -1144,6 +1199,10 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 			planServiceListZreplSetupsHandler.ServeHTTP(w, r)
 		case PlanServiceAdoptZreplSetupProcedure:
 			planServiceAdoptZreplSetupHandler.ServeHTTP(w, r)
+		case PlanServiceRunTakeoverPreflightProcedure:
+			planServiceRunTakeoverPreflightHandler.ServeHTTP(w, r)
+		case PlanServiceGetTakeoverProcedure:
+			planServiceGetTakeoverHandler.ServeHTTP(w, r)
 		case PlanServicePreviewPlanChangesProcedure:
 			planServicePreviewPlanChangesHandler.ServeHTTP(w, r)
 		case PlanServiceActivatePlanProcedure:
@@ -1203,6 +1262,14 @@ func (UnimplementedPlanServiceHandler) ListZreplSetups(context.Context, *connect
 
 func (UnimplementedPlanServiceHandler) AdoptZreplSetup(context.Context, *connect.Request[v1.AdoptZreplSetupRequest]) (*connect.Response[v1.AdoptZreplSetupResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.AdoptZreplSetup is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) RunTakeoverPreflight(context.Context, *connect.Request[v1.RunTakeoverPreflightRequest]) (*connect.Response[v1.RunTakeoverPreflightResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.RunTakeoverPreflight is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) GetTakeover(context.Context, *connect.Request[v1.GetTakeoverRequest]) (*connect.Response[v1.GetTakeoverResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.GetTakeover is not implemented"))
 }
 
 func (UnimplementedPlanServiceHandler) PreviewPlanChanges(context.Context, *connect.Request[v1.PreviewPlanChangesRequest]) (*connect.Response[v1.PreviewPlanChangesResponse], error) {
