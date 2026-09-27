@@ -96,6 +96,12 @@ func withSecurityHeaders(next http.Handler) http.Handler {
 func spaHandler(ui fs.FS) http.Handler {
 	files := http.FileServerFS(ui)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Only page loads fall back to the UI; anything else (such as a POST
+		// to an unknown API path) is a plain 404.
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			http.NotFound(w, r)
+			return
+		}
 		name := strings.TrimPrefix(path.Clean(r.URL.Path), "/")
 		if name == "" {
 			name = "."

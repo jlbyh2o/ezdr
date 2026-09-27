@@ -67,7 +67,7 @@ func (s TokenService) CreateToken(ctx context.Context, req *connect.Request[port
 		return nil, internalError(err)
 	}
 	str := token.Token{PortalURL: s.PublicURL.String(), ID: t.ID, Secret: secret, TLSPin: s.TLSPin}.Encode()
-	s.audit(ctx, u.Username, "token.create", "token:"+t.ID, fmt.Sprintf("expires %s", t.ExpiresAt.Format(time.RFC3339)))
+	s.audit(ctx, u.Username, "token.create", "token:"+t.ID, fmt.Sprintf("expires %s", t.ExpiresAt.UTC().Format(time.RFC3339)))
 
 	return connect.NewResponse(&portalv1.CreateTokenResponse{
 		Token:          tokenMsg(t),

@@ -15,6 +15,8 @@ import (
 	"github.com/jlbyh2o/ezdr/internal/version"
 )
 
+var errStreamTimeout = errors.New("no message from the portal within the timeout")
+
 // streamTimeout is how long the client waits for any message (the portal
 // sends heartbeats every 15 seconds) before reconnecting.
 const streamTimeout = 45 * time.Second
@@ -67,15 +69,15 @@ func Run(ctx context.Context) error {
 // subscribe runs one command stream until it fails. It reports whether any
 // message was received, so the caller can reset its backoff.
 func subscribe(ctx context.Context, api clientv1connect.ClientServiceClient) (bool, error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(nil)
 	stream, err := api.Subscribe(ctx, connect.NewRequest(&clientv1.SubscribeRequest{ClientVersion: version.Version}))
 	if err != nil {
 		return false, err
 	}
 	defer func() { _ = stream.Close() }()
 
-	watchdog := time.AfterFunc(streamTimeout, cancel)
+	watchdog := time.AfterFunc(streamTimeout, func() { cancel(errStreamTimeout) })
 	defer watchdog.Stop()
 
 	received := false
@@ -94,6 +96,9 @@ func subscribe(ctx context.Context, api clientv1connect.ClientServiceClient) (bo
 				slog.Warn("report status", "err", err)
 			}
 		}
+	}
+	if cause := context.Cause(ctx); errors.Is(cause, errStreamTimeout) {
+		return received, cause
 	}
 	if err := stream.Err(); err != nil {
 		return received, err

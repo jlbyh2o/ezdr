@@ -69,3 +69,12 @@ func TestStaticAndSPAFallback(t *testing.T) {
 		}
 	}
 }
+
+func TestSPAFallbackOnlyForPageLoads(t *testing.T) {
+	h := NewHandler(testUI())
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/ezdr.client.v1.ClientService/ReportStatus", strings.NewReader("{}")))
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("POST to unknown path: status = %d, want 404", rec.Code)
+	}
+}
