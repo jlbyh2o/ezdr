@@ -97,6 +97,11 @@ with receive dataset `tank-dr/ezdr/pve1`, the source zvol
   zrepl keeps bookmarks of the last replicated snapshot, so incremental sends
   keep working even after the primary prunes.
 - Presets fill in the tiers, which can then be edited freely.
+- Retention only ever applies to snapshots with the plan's prefix. EZDR never
+  prunes other snapshots, such as Proxmox snapshots or manual ones, on either
+  host, and never prunes a primary snapshot that hasn't been replicated yet
+  (zrepl's `not_replicated` rule). These rules are always added and can't be
+  turned off.
 
 ## 6. Startup order
 
@@ -136,6 +141,18 @@ settings:
 
 Phase 4 designs the takeover itself: detecting an existing zrepl
 configuration, replacing it safely, and verifying the first incremental sync.
+Known requirements:
+
+- zrepl names its replication cursors and holds after the job. When EZDR's
+  jobs replace existing ones, the old job's holds must be released, or they
+  would keep old snapshots forever.
+- Send options must stay consistent with the existing chain. EZDR's defaults
+  are compressed, large-block, and embedded-data sends (raw sends for
+  encrypted datasets); changing large-block settings mid-chain can break
+  incremental receives.
+- Existing jobs often replicate a whole pool with exclusions. EZDR replicates
+  only the disks of protected guests, so other datasets under the pool stop
+  being replicated after takeover. The takeover lists them first.
 
 ## 9. Validation
 
@@ -179,6 +196,8 @@ inventories of both hosts.
 
 ## 11. User interface
 
+- The guest picker has a **Select all replicable** shortcut, for setups that
+  protect everything except a few guests.
 - A **Plans** page lists plans with their hosts, number of guests, interval,
   and validation state.
 - The **plan editor** has sections for hosts, guests, mappings, schedule and
