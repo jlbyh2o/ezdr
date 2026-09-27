@@ -7,7 +7,13 @@ import (
 	"strings"
 	"testing"
 	"testing/fstest"
+
+	"github.com/jlbyh2o/ezdr/internal/portal/api"
 )
+
+func NewHandler(ui fstest.MapFS) http.Handler {
+	return PublicHandler(&api.Deps{}, ui)
+}
 
 func testUI() fstest.MapFS {
 	return fstest.MapFS{

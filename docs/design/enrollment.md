@@ -96,10 +96,16 @@ sure it's talking to the real portal:
 
 - **Default:** the client verifies the portal's certificate against the system
   trust store. This works with Caddy's automatic Let's Encrypt certificates.
-- **Private certificates:** if the portal uses a self-signed or internal CA
-  certificate (common in labs), the admin sets a TLS pin in the portal settings.
-  It's embedded in every token, and the client accepts only a certificate chain
-  containing that public key.
+- **Self-signed mode:** for labs and deployments without a reverse proxy, the
+  portal can serve HTTPS itself with a self-signed certificate it generates
+  and keeps (`EZDR_TLS=self-signed`). The pin is then added to every token
+  automatically; there is nothing to configure.
+- **Other private certificates:** if the portal sits behind a proxy with a
+  private certificate, the admin sets `EZDR_TLS_PIN`. It's embedded in every
+  token, and the client accepts only a certificate chain containing that
+  public key. The pinned certificate must be one the server actually presents
+  and must not rotate. (Caddy's `tls internal` rotates its certificates and
+  doesn't send its root, so it can't be pinned; use self-signed mode instead.)
 
 ## 4. Enrollment flow
 
@@ -338,13 +344,20 @@ The shipped Compose file runs two containers:
 | `caddy` | TCP 80, 443 | Automatic HTTPS; proxies to the portal's public listener. |
 | `portal` | UDP 51820 | WireGuard; data directory on a volume. |
 
-Portal settings needed for enrollment:
+The portal is configured with environment variables:
 
-- Public URL (for example, `https://portal.example.com`), embedded in tokens.
-- Public WireGuard endpoint (for example, `portal.example.com:51820`), sent to
-  clients at enrollment.
-- Tunnel address range (optional).
-- TLS pin (optional; see section 3).
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `EZDR_PUBLIC_URL` | (required) | Public URL, for example `https://portal.example.com`. Embedded in tokens; must be HTTPS to create tokens. |
+| `EZDR_LISTEN` | `:8080` | Public listener address. |
+| `EZDR_DATA_DIR` | `data` | Database, keys, and certificates. |
+| `EZDR_TLS` | `off` | `off` (behind a proxy) or `self-signed`. |
+| `EZDR_TLS_PIN` | (none) | Manual TLS pin (see section 3). |
+| `EZDR_WG_PORT` | `51820` | WireGuard UDP port. |
+| `EZDR_WG_ENDPOINT` | public URL host and WireGuard port | Endpoint sent to clients, as `host:port`. |
+| `EZDR_TUNNEL_PREFIX` | `100.64.42.0/28` | Tunnel address range. |
+| `EZDR_SECRET_KEY_FILE` | `<data dir>/secret.key` | Key that encrypts secrets in the database; generated if missing. Store a copy separately from database backups. |
+| `EZDR_TRUSTED_PROXIES` | loopback and private ranges | Sources allowed to set `X-Forwarded-For`. |
 
 Users with an existing reverse proxy can remove Caddy and proxy to the portal's
 public listener themselves.
