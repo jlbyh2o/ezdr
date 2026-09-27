@@ -1,6 +1,6 @@
 # Design: Enrollment and control plane
 
-> **Status:** Draft for phase 1. Covers how hosts join a portal, how they
+> **Status:** Approved for phase 1. Covers how hosts join a portal, how they
 > authenticate, how the client and portal communicate, and how people sign in
 > to the portal. See [Architecture](../architecture.md) for the overall design.
 
@@ -129,7 +129,7 @@ Admin                     Client (Proxmox host)                  Portal
    valid **without using it** and returns the tunnel range and the portal's
    WireGuard endpoint. This lets the client run all checks before anything is
    committed on either side.
-4. The client checks prerequisites (section 4.1).
+4. The client checks prerequisites (section 4.2).
 5. The client lists the changes it will make (interface, files, service) and
    asks for confirmation. `--yes` skips the prompt for automation.
 6. The client generates a WireGuard key pair. The private key is written to
@@ -154,7 +154,40 @@ valid: fix the problem and run `ezdr enroll` again. If any step after 8 fails,
 the admin deletes the half-enrolled host in the portal and enrolls again with a
 new token. The client command reports clearly which step failed.
 
-### 4.1 Prerequisite checks
+### 4.1 Install and enroll in one command
+
+The portal's **Add host** dialog creates a token and shows two ready-to-copy
+commands:
+
+- **New host (default):** installs the client and enrolls in one step.
+
+  ```sh
+  curl -fsSL https://github.com/jlbyh2o/ezdr/releases/latest/download/install.sh | sh -s -- ezdr1_…
+  ```
+
+- **Client already installed:**
+
+  ```sh
+  ezdr enroll ezdr1_…
+  ```
+
+The install script:
+
+1. Checks that it's running as root on a supported Proxmox VE host.
+2. Installs the `ezdr` package. Until the apt repository exists, it downloads
+   the `.deb` from the matching GitHub release and verifies it against the
+   release's published SHA-256 checksums. Once the signed apt repository is
+   available, the script adds it instead, and apt verifies package signatures
+   and provides updates.
+3. Runs `ezdr enroll` with the token. The usual checks and confirmation prompt
+   still apply.
+
+The script is served from the project's GitHub releases, **never from the
+portal**, so a compromised portal can't hand hosts a malicious installer.
+Tokens are single-use and short-lived, so a token left in shell history or
+briefly visible in the process list is not useful to anyone else.
+
+### 4.2 Prerequisite checks
 
 Before making changes, `ezdr enroll` verifies:
 
@@ -190,7 +223,7 @@ list-and-confirm approach.
   deployments can configure a bigger range before enrolling hosts.
 - Hosts that also run Tailscale, NetBird, or another tool using
   `100.64.0.0/10` may still conflict. Enrollment refuses to proceed if the
-  tunnel range overlaps an existing route on the host (see section 4.1). The
+  tunnel range overlaps an existing route on the host (see section 4.2). The
   admin then chooses a different range in the portal settings.
 - On the portal, each peer's allowed IPs are exactly that host's `/32`. On each
   client, the portal peer's allowed IPs are exactly the portal's `/32`.
@@ -333,6 +366,8 @@ In scope:
 - First-run setup, local accounts with TOTP, sessions, and the audit log.
 - Enrollment tokens: create, list, revoke.
 - `ezdr enroll`, `ezdr unenroll`, and `ezdr status`.
+- The install script and `.deb` packages published in GitHub releases.
+- The **Add host** dialog with both install commands.
 - The portal's userspace WireGuard, the client's `ezdr0` interface, and the
   `ezdr` systemd service.
 - The `Subscribe` stream with heartbeats, `ReportStatus`, and online/offline
