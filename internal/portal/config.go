@@ -48,7 +48,9 @@ type Config struct {
 	// database (EZDR_SECRET_KEY_FILE). It is generated if missing.
 	SecretKeyFile string
 	// TrustedProxies are the source ranges allowed to set X-Forwarded-For
-	// (EZDR_TRUSTED_PROXIES, comma-separated).
+	// (EZDR_TRUSTED_PROXIES, comma-separated, or "none"). Behind a proxy
+	// (EZDR_TLS=off) the default is loopback and private ranges; in
+	// self-signed mode the portal is the edge, so the default is none.
 	TrustedProxies []netip.Prefix
 }
 
@@ -115,8 +117,15 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		c.TunnelPrefix = p
 	}
 
-	proxies := strings.Split(get("EZDR_TRUSTED_PROXIES", strings.Join(defaultTrustedProxies, ",")), ",")
-	for _, p := range proxies {
+	defaultProxies := strings.Join(defaultTrustedProxies, ",")
+	if c.TLS == TLSSelfSigned {
+		defaultProxies = "none"
+	}
+	proxies := get("EZDR_TRUSTED_PROXIES", defaultProxies)
+	if proxies == "none" {
+		return c, nil
+	}
+	for _, p := range strings.Split(proxies, ",") {
 		prefix, err := netip.ParsePrefix(strings.TrimSpace(p))
 		if err != nil {
 			return c, fmt.Errorf("EZDR_TRUSTED_PROXIES: %w", err)

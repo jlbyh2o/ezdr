@@ -18,13 +18,23 @@ together. From the portal you can:
 
 ## Status
 
-EZDR is in the early design phase and is not yet usable. See the
-[architecture document](docs/architecture.md) for the intended design and
-roadmap.
+EZDR is in early development. Phase 1 is complete: the portal, sign-in with
+TOTP, and enrolling hosts over WireGuard. Replication and failover are not
+implemented yet. See the [architecture document](docs/architecture.md) for
+the design and roadmap.
+
+## Quick start
+
+1. Deploy the portal with Docker Compose on a server outside the sites it
+   protects ([deployment guide](docs/deployment.md)).
+2. Open the portal, create the administrator with the setup code from the
+   portal's log, and set up two-factor authentication.
+3. Select **Add host** and run the command it shows on each Proxmox VE host.
 
 ## Documentation
 
 - [Documentation index](docs/README.md)
+- [Deploying EZDR](docs/deployment.md)
 - [Architecture](docs/architecture.md)
 
 ## Contributing

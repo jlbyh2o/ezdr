@@ -7,6 +7,7 @@ and managing disaster recovery between Proxmox VE hosts that use ZFS storage.
 
 | Document | Description |
 | --- | --- |
+| [Deploying EZDR](deployment.md) | Install the portal, enroll hosts, back up, and upgrade. |
 | [Architecture](architecture.md) | High-level design: components, data flows, security model, and roadmap. |
 | [Enrollment and control plane](design/enrollment.md) | Design for host enrollment, client identity, the client API, and user sign-in (phase 1). |
 | [Test lab](development/test-lab.md) | Recommended nested Proxmox VE lab for development and testing. |

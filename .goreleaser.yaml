@@ -1,0 +1,94 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+project_name: ezdr
+
+before:
+  hooks:
+    - sh -c "cd web && pnpm install --frozen-lockfile && pnpm build"
+    # Pin the install script to this release's version.
+    - sh -c "mkdir -p build && sed 's/__VERSION__/{{ .Version }}/' packaging/install.sh > build/install.sh"
+
+builds:
+  - id: ezdr
+    main: ./cmd/ezdr
+    binary: ezdr
+    env: [CGO_ENABLED=0]
+    goos: [linux]
+    goarch: [amd64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w
+      - -X github.com/jlbyh2o/ezdr/internal/version.Version={{ .Version }}
+      - -X github.com/jlbyh2o/ezdr/internal/version.Commit={{ .ShortCommit }}
+      - -X github.com/jlbyh2o/ezdr/internal/version.Date={{ .Date }}
+  - id: ezdr-portal
+    main: ./cmd/ezdr-portal
+    binary: ezdr-portal
+    env: [CGO_ENABLED=0]
+    goos: [linux]
+    goarch: [amd64]
+    flags: [-trimpath]
+    tags: [webui]
+    ldflags:
+      - -s -w
+      - -X github.com/jlbyh2o/ezdr/internal/version.Version={{ .Version }}
+      - -X github.com/jlbyh2o/ezdr/internal/version.Commit={{ .ShortCommit }}
+      - -X github.com/jlbyh2o/ezdr/internal/version.Date={{ .Date }}
+
+archives:
+  - id: ezdr
+    ids: [ezdr]
+    name_template: "ezdr_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files: [LICENSE, README.md]
+  - id: ezdr-portal
+    ids: [ezdr-portal]
+    name_template: "ezdr-portal_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files: [LICENSE, README.md]
+
+nfpms:
+  - id: ezdr
+    ids: [ezdr]
+    package_name: ezdr
+    # A stable name lets the install script and "latest" links find it.
+    file_name_template: "{{ .PackageName }}_{{ .Os }}_{{ .Arch }}"
+    formats: [deb]
+    bindir: /usr/bin
+    vendor: EZDR
+    homepage: https://github.com/jlbyh2o/ezdr
+    maintainer: EZDR maintainers <https://github.com/jlbyh2o/ezdr>
+    description: EZDR client for Proxmox VE disaster recovery.
+    license: AGPL-3.0-only
+    section: admin
+    contents:
+      - src: packaging/ezdr.service
+        dst: /usr/lib/systemd/system/ezdr.service
+    scripts:
+      postinstall: packaging/postinstall.sh
+      preremove: packaging/preremove.sh
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+release:
+  extra_files:
+    - glob: build/install.sh
+
+changelog:
+  use: github
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\(.+\))??!?:.+$'
+      order: 0
+    - title: Bug fixes
+      regexp: '^.*?fix(\(.+\))??!?:.+$'
+      order: 1
+    - title: Other changes
+      order: 999
+  filters:
+    exclude:
+      - '^docs'
+      - '^test'
+      - '^chore'
+      - '^ci'

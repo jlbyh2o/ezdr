@@ -1,0 +1,26 @@
+# EZDR portal serving HTTPS itself with a self-signed certificate. Intended
+# for labs and networks without a public DNS name. Enrollment tokens carry the
+# certificate's pin, so hosts trust it automatically; browsers will show a
+# certificate warning.
+#
+# 1. Copy .env.example to .env and set EZDR_DOMAIN to this server's DNS name
+#    or IP address.
+# 2. Allow inbound TCP 443 and UDP 51820.
+# 3. docker compose -f compose.self-signed.yaml up -d
+
+services:
+  portal:
+    image: ghcr.io/jlbyh2o/ezdr-portal:${EZDR_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      EZDR_PUBLIC_URL: https://${EZDR_DOMAIN:?set EZDR_DOMAIN in .env}
+      EZDR_TLS: self-signed
+      EZDR_LISTEN: ":8443"
+    ports:
+      - "443:8443"
+      - "51820:51820/udp"
+    volumes:
+      - portal-data:/data
+
+volumes:
+  portal-data:

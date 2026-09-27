@@ -344,20 +344,8 @@ The shipped Compose file runs two containers:
 | `caddy` | TCP 80, 443 | Automatic HTTPS; proxies to the portal's public listener. |
 | `portal` | UDP 51820 | WireGuard; data directory on a volume. |
 
-The portal is configured with environment variables:
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `EZDR_PUBLIC_URL` | (required) | Public URL, for example `https://portal.example.com`. Embedded in tokens; must be HTTPS to create tokens. |
-| `EZDR_LISTEN` | `:8080` | Public listener address. |
-| `EZDR_DATA_DIR` | `data` | Database, keys, and certificates. |
-| `EZDR_TLS` | `off` | `off` (behind a proxy) or `self-signed`. |
-| `EZDR_TLS_PIN` | (none) | Manual TLS pin (see section 3). |
-| `EZDR_WG_PORT` | `51820` | WireGuard UDP port. |
-| `EZDR_WG_ENDPOINT` | public URL host and WireGuard port | Endpoint sent to clients, as `host:port`. |
-| `EZDR_TUNNEL_PREFIX` | `100.64.42.0/28` | Tunnel address range. |
-| `EZDR_SECRET_KEY_FILE` | `<data dir>/secret.key` | Key that encrypts secrets in the database; generated if missing. Store a copy separately from database backups. |
-| `EZDR_TRUSTED_PROXIES` | loopback and private ranges | Sources allowed to set `X-Forwarded-For`. |
+The portal is configured with environment variables; see the
+[configuration reference](../deployment.md#configuration-reference).
 
 Users with an existing reverse proxy can remove Caddy and proxy to the portal's
 public listener themselves.

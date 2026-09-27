@@ -7,6 +7,7 @@ node = "24.21.0"
 pnpm = "11.24.0"
 golangci-lint = "2.14.0"
 buf = "1.73.0"
+goreleaser = "2.18.2"
 # Keep the protobuf generators in step with the runtime libraries in go.mod.
 protoc-gen-go = "1.36.12"
 protoc-gen-connect-go = "1.21.0"

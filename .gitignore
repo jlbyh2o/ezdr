@@ -3,6 +3,7 @@
 
 # Build output
 /bin/
+/build/
 /dist/
 coverage.out
 

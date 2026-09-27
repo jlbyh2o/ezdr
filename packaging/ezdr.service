@@ -1,0 +1,15 @@
+# Keep in sync with the unit in internal/client/systemd.go, which is used when
+# the client is installed without the package.
+[Unit]
+Description=EZDR client
+Documentation=https://github.com/jlbyh2o/ezdr
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/ezdr run
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

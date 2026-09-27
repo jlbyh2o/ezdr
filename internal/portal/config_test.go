@@ -44,3 +44,24 @@ func TestLoadConfigRejects(t *testing.T) {
 		}
 	}
 }
+
+func TestTrustedProxyDefaults(t *testing.T) {
+	behindProxy, err := LoadConfig(env(map[string]string{"EZDR_PUBLIC_URL": "https://x"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(behindProxy.TrustedProxies) == 0 {
+		t.Error("behind a proxy, private ranges should be trusted by default")
+	}
+	edge, err := LoadConfig(env(map[string]string{"EZDR_PUBLIC_URL": "https://x", "EZDR_TLS": "self-signed"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(edge.TrustedProxies) != 0 {
+		t.Errorf("self-signed mode should trust no proxies by default, got %v", edge.TrustedProxies)
+	}
+	none, _ := LoadConfig(env(map[string]string{"EZDR_PUBLIC_URL": "https://x", "EZDR_TRUSTED_PROXIES": "none"}))
+	if len(none.TrustedProxies) != 0 {
+		t.Error(`EZDR_TRUSTED_PROXIES=none should trust no proxies`)
+	}
+}
