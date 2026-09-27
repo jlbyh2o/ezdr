@@ -38,6 +38,7 @@ func TestLoadConfigRejects(t *testing.T) {
 		"unmasked prefix": {"EZDR_PUBLIC_URL": "https://x", "EZDR_TUNNEL_PREFIX": "100.64.42.5/28"},
 		"ipv6 prefix":     {"EZDR_PUBLIC_URL": "https://x", "EZDR_TUNNEL_PREFIX": "fd00::/64"},
 		"bad port":        {"EZDR_PUBLIC_URL": "https://x", "EZDR_WG_PORT": "70000"},
+		"site overlap":    {"EZDR_PUBLIC_URL": "https://x", "EZDR_SITE_TUNNEL_PREFIX": "100.64.42.0/28"},
 	} {
 		if _, err := LoadConfig(env(m)); err == nil {
 			t.Errorf("%s: LoadConfig succeeded", name)

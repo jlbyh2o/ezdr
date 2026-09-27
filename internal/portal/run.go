@@ -54,7 +54,7 @@ func Run(ctx context.Context, cfg Config, ui fs.FS) error {
 	d := &api.Deps{
 		Store: st, Box: box, Peers: tun, Hub: api.NewHub(),
 		PublicURL: cfg.PublicURL, TLSPin: cfg.TLSPin, SecureCookies: cfg.SecureCookies(),
-		WireGuardEndpoint: cfg.WireGuardEndpoint, TunnelPrefix: cfg.TunnelPrefix,
+		WireGuardEndpoint: cfg.WireGuardEndpoint, TunnelPrefix: cfg.TunnelPrefix, SiteTunnelPrefix: cfg.SiteTunnelPrefix,
 		PortalTunnelAddr: cfg.PortalTunnelAddress(),
 		ClientAPIURL: "http://" + net.JoinHostPort(cfg.PortalTunnelAddress().String(),
 			strconv.Itoa(TunnelAPIPort)),

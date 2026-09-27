@@ -2,9 +2,11 @@ package plan
 
 import (
 	"fmt"
+	"net"
 	"net/netip"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,7 +33,24 @@ type Context struct {
 	// UsedPorts maps zrepl ports used on the primary by other plans to those
 	// plans' names.
 	UsedPorts map[uint32]string
-	Now       time.Time
+	// OtherTunnels are other applied plans that use EZDR tunnels.
+	OtherTunnels []OtherTunnel
+	Now          time.Time
+}
+
+// OtherTunnel is another plan's tunnel, for conflict checks.
+type OtherTunnel struct {
+	Plan                    string
+	PrimaryHostID, DRHostID string
+	Tunnel                  *planv1.EzdrTunnel
+}
+
+// listener returns the ID of the host that accepts a tunnel's connection.
+func listener(primary, dr string, t *planv1.EzdrTunnel) string {
+	if t.GetListener() == planv1.EzdrTunnel_LISTENER_PRIMARY {
+		return primary
+	}
+	return dr
 }
 
 // Validation thresholds.
@@ -371,8 +390,7 @@ func validateReplicationNetwork(spec *planv1.PlanSpec, primary *inventoryv1.Inve
 			is.errorf(0, "enter the primary's address as seen from the DR host (an IP address or DNS name)")
 		}
 	case *planv1.ReplicationNetwork_Tunnel:
-		is.errorf(0, "EZDR tunnels aren't available yet; use an existing network for now")
-		return
+		validateTunnel(spec, n.Tunnel, ctx, is)
 	default:
 		is.errorf(0, "choose how the DR host reaches the primary")
 		return
@@ -391,5 +409,34 @@ func validateReplicationNetwork(spec *planv1.PlanSpec, primary *inventoryv1.Inve
 	if len(groups) > 1 {
 		is.warnf(0, "this plan uses %d zrepl ports on the primary (%d-%d): one per storage mapping and encryption kind",
 			len(groups), base, base+uint32(len(groups))-1) //nolint:gosec // few groups
+	}
+}
+
+func validateTunnel(spec *planv1.PlanSpec, t *planv1.EzdrTunnel, ctx Context, is *issues) {
+	if t.Listener == planv1.EzdrTunnel_LISTENER_UNSPECIFIED {
+		is.errorf(0, "choose which host accepts the tunnel connection")
+	}
+	host, port, err := net.SplitHostPort(t.Endpoint)
+	if err != nil || (net.ParseIP(host) == nil && !hostPattern.MatchString(host)) {
+		is.errorf(0, "enter the listening host's public endpoint as host:port (for example, dr.example.com:51821)")
+	} else if p, err := strconv.Atoi(port); err != nil || p < 1 || p > 65535 {
+		is.errorf(0, "the tunnel endpoint's port must be between 1 and 65535")
+	}
+	if t.ListenPort == 0 || t.ListenPort > 65535 {
+		is.errorf(0, "the tunnel listen port must be between 1 and 65535")
+	}
+	// Plans between the same hosts share one tunnel, and a host listens on
+	// one port for all its tunnels.
+	lis := listener(spec.PrimaryHostId, spec.DrHostId, t)
+	for _, o := range ctx.OtherTunnels {
+		samePair := (o.PrimaryHostID == spec.PrimaryHostId && o.DRHostID == spec.DrHostId) ||
+			(o.PrimaryHostID == spec.DrHostId && o.DRHostID == spec.PrimaryHostId)
+		oLis := listener(o.PrimaryHostID, o.DRHostID, o.Tunnel)
+		switch {
+		case samePair && (oLis != lis || o.Tunnel.Endpoint != t.Endpoint || o.Tunnel.ListenPort != t.ListenPort):
+			is.errorf(0, "plan %q uses a tunnel between the same hosts with different settings; plans between two hosts share one tunnel", o.Plan)
+		case oLis == lis && o.Tunnel.ListenPort != t.ListenPort:
+			is.errorf(0, "the listening host already accepts tunnels on port %d for plan %q; use the same port", o.Tunnel.ListenPort, o.Plan)
+		}
 	}
 }

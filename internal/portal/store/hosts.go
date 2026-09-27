@@ -34,6 +34,9 @@ type Host struct {
 	DesiredGeneration uint64
 	AppliedGeneration uint64
 	ApplyError        string
+	// Site tunnel state.
+	SiteAddress   netip.Addr // invalid until allocated
+	SitePublicKey []byte
 }
 
 const hostSelect = "SELECT h.id, h.hostname, h.machine_id, h.pve_version, h.client_version, " +
@@ -41,7 +44,8 @@ const hostSelect = "SELECT h.id, h.hostname, h.machine_id, h.pve_version, h.clie
 	"EXISTS (SELECT 1 FROM hosts o WHERE o.machine_id = h.machine_id AND o.id != h.id), " +
 	"i.host_id IS NOT NULL, coalesce(i.guest_count, 0), coalesce(i.guests_not_ready, 0), " +
 	"(SELECT count(*) FROM plans p WHERE p.primary_host_id = h.id OR p.dr_host_id = h.id), " +
-	"h.zrepl_certificate, h.zrepl_version, h.desired_generation, h.applied_generation, h.apply_error " +
+	"h.zrepl_certificate, h.zrepl_version, h.desired_generation, h.applied_generation, h.apply_error, " +
+	"h.site_address, h.site_public_key " +
 	"FROM hosts h LEFT JOIN host_inventory i ON i.host_id = h.id"
 
 func scanHost(row interface{ Scan(...any) error }) (Host, error) {
@@ -49,10 +53,12 @@ func scanHost(row interface{ Scan(...any) error }) (Host, error) {
 	var addr string
 	var enrolled int64
 	var lastSeen sql.NullInt64
+	var site string
 	err := row.Scan(&h.ID, &h.Hostname, &h.MachineID, &h.PVEVersion, &h.ClientVersion,
 		&h.WireGuardPublicKey, &addr, &enrolled, &lastSeen, &h.DuplicateMachineID,
 		&h.HasInventory, &h.GuestCount, &h.GuestsNotReady, &h.PlanCount,
-		&h.ZreplCertificate, &h.ZreplVersion, &h.DesiredGeneration, &h.AppliedGeneration, &h.ApplyError)
+		&h.ZreplCertificate, &h.ZreplVersion, &h.DesiredGeneration, &h.AppliedGeneration, &h.ApplyError,
+		&site, &h.SitePublicKey)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return Host{}, ErrNotFound
@@ -64,6 +70,11 @@ func scanHost(row interface{ Scan(...any) error }) (Host, error) {
 	}
 	h.EnrolledAt = fromMillis(enrolled)
 	h.LastSeenAt = nullableTime(lastSeen)
+	if site != "" {
+		if h.SiteAddress, err = netip.ParseAddr(site); err != nil {
+			return Host{}, err
+		}
+	}
 	return h, nil
 }
 
@@ -159,4 +170,63 @@ func (s *Store) SetDesiredHash(ctx context.Context, id string, hash []byte) (uin
 		return err
 	})
 	return gen, err
+}
+
+// SetSitePublicKey records a host's site tunnel public key. It reports
+// whether the key changed.
+func (s *Store) SetSitePublicKey(ctx context.Context, id string, key []byte) (bool, error) {
+	res, err := s.db.ExecContext(ctx,
+		"UPDATE hosts SET site_public_key = ? WHERE id = ? AND (site_public_key IS NULL OR site_public_key != ?)", key, id, key)
+	if err != nil {
+		return false, err
+	}
+	n, _ := res.RowsAffected()
+	return n > 0, nil
+}
+
+// AllocateSiteAddress returns a host's site tunnel address, assigning the
+// first free host address in prefix if it has none.
+func (s *Store) AllocateSiteAddress(ctx context.Context, id string, prefix netip.Prefix) (netip.Addr, error) {
+	var addr netip.Addr
+	err := s.tx(ctx, func(tx *sql.Tx) error {
+		var cur string
+		if err := tx.QueryRowContext(ctx, "SELECT site_address FROM hosts WHERE id = ?", id).Scan(&cur); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return ErrNotFound
+			}
+			return err
+		}
+		if cur != "" {
+			a, err := netip.ParseAddr(cur)
+			if err == nil && prefix.Contains(a) {
+				addr = a
+				return nil
+			}
+		}
+		rows, err := tx.QueryContext(ctx, "SELECT site_address FROM hosts WHERE site_address != '' AND id != ?", id)
+		if err != nil {
+			return err
+		}
+		used := map[netip.Addr]bool{}
+		for rows.Next() {
+			var a string
+			if err := rows.Scan(&a); err != nil {
+				_ = rows.Close()
+				return err
+			}
+			if p, err := netip.ParseAddr(a); err == nil {
+				used[p] = true
+			}
+		}
+		_ = rows.Close()
+		for a := prefix.Addr().Next(); prefix.Contains(a) && prefix.Contains(a.Next()); a = a.Next() {
+			if !used[a] {
+				addr = a
+				_, err := tx.ExecContext(ctx, "UPDATE hosts SET site_address = ? WHERE id = ?", a.String(), id)
+				return err
+			}
+		}
+		return errors.New("no free site tunnel addresses; configure a larger EZDR_SITE_TUNNEL_PREFIX")
+	})
+	return addr, err
 }

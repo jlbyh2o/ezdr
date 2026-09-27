@@ -44,6 +44,9 @@ type Config struct {
 	WireGuardEndpoint string
 	// TunnelPrefix is the tunnel address range (EZDR_TUNNEL_PREFIX).
 	TunnelPrefix netip.Prefix
+	// SiteTunnelPrefix is the address range for host-to-host replication
+	// tunnels (EZDR_SITE_TUNNEL_PREFIX).
+	SiteTunnelPrefix netip.Prefix
 	// SecretKeyFile holds the 32-byte key that encrypts secrets in the
 	// database (EZDR_SECRET_KEY_FILE). It is generated if missing.
 	SecretKeyFile string
@@ -57,6 +60,9 @@ type Config struct {
 // DefaultTunnelPrefix avoids the start of 100.64.0.0/10, which other overlay
 // tools allocate from first.
 var DefaultTunnelPrefix = netip.MustParsePrefix("100.64.42.0/28")
+
+// DefaultSiteTunnelPrefix is the default range for host-to-host tunnels.
+var DefaultSiteTunnelPrefix = netip.MustParsePrefix("100.64.43.0/28")
 
 var defaultTrustedProxies = []string{
 	"127.0.0.0/8", "::1/128", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7",
@@ -121,6 +127,18 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 	if c.TLS == TLSSelfSigned {
 		defaultProxies = "none"
 	}
+	c.SiteTunnelPrefix = DefaultSiteTunnelPrefix
+	if v := get("EZDR_SITE_TUNNEL_PREFIX", ""); v != "" {
+		p, err := netip.ParsePrefix(v)
+		if err != nil || !p.Addr().Is4() || p.Bits() > 29 || p.Masked() != p {
+			return c, fmt.Errorf("EZDR_SITE_TUNNEL_PREFIX %q must be an IPv4 network of /29 or larger, such as 100.64.43.0/28", v)
+		}
+		c.SiteTunnelPrefix = p
+	}
+	if c.SiteTunnelPrefix.Overlaps(c.TunnelPrefix) {
+		return c, errors.New("EZDR_SITE_TUNNEL_PREFIX must not overlap EZDR_TUNNEL_PREFIX")
+	}
+
 	proxies := get("EZDR_TRUSTED_PROXIES", defaultProxies)
 	if proxies == "none" {
 		return c, nil

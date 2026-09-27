@@ -8,6 +8,8 @@ import (
 
 	"connectrpc.com/connect"
 
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+
 	"github.com/jlbyh2o/ezdr/internal/client/zrepl"
 	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
 	"github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1/clientv1connect"
@@ -21,6 +23,7 @@ type applier struct {
 	api       clientv1connect.ClientServiceClient
 	zrepl     *zrepl.Applier
 	cert      string
+	siteKey   wgtypes.Key
 	mu        sync.Mutex
 	pending   *clientv1.DesiredState
 	wake      chan struct{}
@@ -30,8 +33,8 @@ type applier struct {
 	current *clientv1.Zrepl
 }
 
-func newApplier(api clientv1connect.ClientServiceClient, cert string) *applier {
-	return &applier{api: api, zrepl: zrepl.NewApplier(), cert: cert, wake: make(chan struct{}, 1)}
+func newApplier(api clientv1connect.ClientServiceClient, cert string, siteKey wgtypes.Key) *applier {
+	return &applier{api: api, zrepl: zrepl.NewApplier(), cert: cert, siteKey: siteKey, wake: make(chan struct{}, 1)}
 }
 
 // submit queues desired state, replacing anything not yet started.
@@ -67,7 +70,12 @@ func (a *applier) run(ctx context.Context) {
 			continue // already applied (the portal may resend on reconnects)
 		}
 		errText := ""
-		if err := a.zrepl.Apply(ctx, ds.GetZrepl()); err != nil {
+		// The tunnel comes first: zrepl's jobs may use its addresses.
+		err := ApplySiteTunnel(ds.GetSiteTunnel(), a.siteKey)
+		if err == nil {
+			err = a.zrepl.Apply(ctx, ds.GetZrepl())
+		}
+		if err != nil {
 			if ctx.Err() != nil {
 				return
 			}
@@ -91,9 +99,10 @@ func (a *applier) run(ctx context.Context) {
 // its zrepl certificate, and the zrepl version.
 func (a *applier) report(ctx context.Context) {
 	a.mu.Lock()
+	pub := a.siteKey.PublicKey()
 	req := &clientv1.ReportStatusRequest{
 		ClientVersion: version.Version, AppliedGeneration: a.lastGen, ApplyError: a.lastError,
-		ZreplCertificate: a.cert,
+		ZreplCertificate: a.cert, SitePublicKey: pub[:],
 	}
 	a.mu.Unlock()
 	req.ZreplVersion = a.zrepl.Version(ctx)

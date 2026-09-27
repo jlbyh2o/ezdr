@@ -39,6 +39,9 @@ func removeLocal(ctx context.Context) error {
 	if err := DeleteInterface(); err != nil {
 		return fmt.Errorf("remove %s: %w", InterfaceName, err)
 	}
+	if err := deleteLink(SiteInterfaceName); err != nil {
+		return fmt.Errorf("remove %s: %w", SiteInterfaceName, err)
+	}
 	// Remove EZDR's zrepl jobs. zrepl itself, replicas, and snapshots stay.
 	if err := zrepl.NewApplier().Apply(ctx, &clientv1.Zrepl{}); err != nil {
 		return fmt.Errorf("remove EZDR's zrepl jobs: %w", err)

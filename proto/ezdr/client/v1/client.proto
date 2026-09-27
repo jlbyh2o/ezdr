@@ -54,6 +54,33 @@ message Heartbeat {}
 message DesiredState {
   uint64 generation = 1;
   Zrepl zrepl = 2;
+  // The host-to-host WireGuard tunnel for plans that use EZDR tunnels; unset
+  // when none do (the interface is then removed).
+  SiteTunnel site_tunnel = 3;
+}
+
+// SiteTunnel is the host's replication tunnel interface (ezdr1). Each
+// replication partner is one peer.
+message SiteTunnel {
+  // The host's own tunnel address, such as "100.64.43.2".
+  string address = 1;
+  // The site tunnel range, for the client's overlap check.
+  string prefix = 2;
+  // UDP port to listen on; zero lets the kernel choose (the host only
+  // connects out).
+  uint32 listen_port = 3;
+  repeated SitePeer peers = 4;
+}
+
+message SitePeer {
+  bytes public_key = 1;
+  // The peer's tunnel address; the only address allowed from it.
+  string address = 2;
+  // The peer's public endpoint as host:port, when this host connects to it;
+  // empty when the peer connects to this host.
+  string endpoint = 3;
+  // Keepalive interval in seconds, set on the connecting side.
+  uint32 persistent_keepalive_seconds = 4;
 }
 
 // Zrepl describes the zrepl jobs EZDR manages on the host. The client renders
@@ -85,6 +112,8 @@ message SourceJob {
   Peer peer = 6;
   // Raw sends, for encrypted datasets.
   bool encrypted = 7;
+  // Bind even before the address exists (for tunnel addresses).
+  bool listen_freebind = 8;
 }
 
 message PullJob {
@@ -116,6 +145,8 @@ message ReportStatusRequest {
   string zrepl_certificate = 4;
   // Installed zrepl version; empty if not installed.
   string zrepl_version = 5;
+  // The host's site tunnel WireGuard public key (32 bytes).
+  bytes site_public_key = 6;
 }
 
 message ReportStatusResponse {}

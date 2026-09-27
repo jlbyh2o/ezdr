@@ -246,9 +246,26 @@ func TestNetworkValidation(t *testing.T) {
 		"bad address": {func(s *planv1.PlanSpec, _ *Context) { s.GetNetwork().GetExisting().PrimaryAddress = "not an address!" }, "primary's address"},
 		"low port":    {func(s *planv1.PlanSpec, _ *Context) { s.GetNetwork().GetExisting().Port = 80 }, "between 1024 and 65535"},
 		"port in use": {func(_ *planv1.PlanSpec, c *Context) { c.UsedPorts = map[uint32]string{8888: "Other"} }, `already used by plan "Other"`},
-		"tunnel": {func(s *planv1.PlanSpec, _ *Context) {
-			s.Network = &planv1.ReplicationNetwork{Path: &planv1.ReplicationNetwork_Tunnel{Tunnel: &planv1.EzdrTunnel{}}}
-		}, "tunnels aren't available yet"},
+		"tunnel listener": {func(s *planv1.PlanSpec, _ *Context) {
+			s.Network = &planv1.ReplicationNetwork{Path: &planv1.ReplicationNetwork_Tunnel{Tunnel: &planv1.EzdrTunnel{
+				Endpoint: "dr.example.com:51821", ListenPort: 51821}}}
+		}, "choose which host accepts"},
+		"tunnel endpoint": {func(s *planv1.PlanSpec, _ *Context) {
+			s.Network = &planv1.ReplicationNetwork{Path: &planv1.ReplicationNetwork_Tunnel{Tunnel: &planv1.EzdrTunnel{
+				Listener: planv1.EzdrTunnel_LISTENER_DR, Endpoint: "dr.example.com", ListenPort: 51821}}}
+		}, "public endpoint as host:port"},
+		"tunnel conflict": {func(s *planv1.PlanSpec, c *Context) {
+			s.Network = &planv1.ReplicationNetwork{Path: &planv1.ReplicationNetwork_Tunnel{Tunnel: &planv1.EzdrTunnel{
+				Listener: planv1.EzdrTunnel_LISTENER_DR, Endpoint: "dr.example.com:51821", ListenPort: 51821}}}
+			c.OtherTunnels = []OtherTunnel{{Plan: "Other", PrimaryHostID: "p", DRHostID: "d", Tunnel: &planv1.EzdrTunnel{
+				Listener: planv1.EzdrTunnel_LISTENER_DR, Endpoint: "dr.example.com:51999", ListenPort: 51999}}}
+		}, "share one tunnel"},
+		"listen port clash": {func(s *planv1.PlanSpec, c *Context) {
+			s.Network = &planv1.ReplicationNetwork{Path: &planv1.ReplicationNetwork_Tunnel{Tunnel: &planv1.EzdrTunnel{
+				Listener: planv1.EzdrTunnel_LISTENER_DR, Endpoint: "dr.example.com:51821", ListenPort: 51821}}}
+			c.OtherTunnels = []OtherTunnel{{Plan: "Other", PrimaryHostID: "x", DRHostID: "d", Tunnel: &planv1.EzdrTunnel{
+				Listener: planv1.EzdrTunnel_LISTENER_DR, Endpoint: "dr.example.com:51999", ListenPort: 51999}}}
+		}, "already accepts tunnels on port 51999"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			s, c := validSpec(), ctxFor(primaryInv(), drInv())
@@ -279,5 +296,16 @@ func TestJobGroups(t *testing.T) {
 	is := Validate(s, ctxFor(inv, drInv()))
 	if w := messages(is, planv1.Severity_SEVERITY_WARNING); !strings.Contains(w, "2 zrepl ports on the primary (8888-8889)") {
 		t.Errorf("missing multi-port warning:\n%s", w)
+	}
+}
+
+func TestValidTunnel(t *testing.T) {
+	s, c := validSpec(), ctxFor(primaryInv(), drInv())
+	s.Network = &planv1.ReplicationNetwork{Path: &planv1.ReplicationNetwork_Tunnel{Tunnel: &planv1.EzdrTunnel{
+		Listener: planv1.EzdrTunnel_LISTENER_DR, Endpoint: "203.0.113.20:51821", ListenPort: 51821, Port: 8888}}}
+	// The same settings in another plan between the same hosts are fine.
+	c.OtherTunnels = []OtherTunnel{{Plan: "Other", PrimaryHostID: "p", DRHostID: "d", Tunnel: s.GetNetwork().GetTunnel()}}
+	if errs := messages(Validate(s, c), planv1.Severity_SEVERITY_ERROR); errs != "" {
+		t.Errorf("unexpected errors:\n%s", errs)
 	}
 }

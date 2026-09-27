@@ -25,6 +25,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GuestType, type Inventory } from '@/gen/ezdr/inventory/v1/inventory_pb'
 import {
   DnsRecordSchema,
+  type EzdrTunnel,
+  EzdrTunnel_Listener,
+  EzdrTunnelSchema,
   ExistingNetworkSchema,
   ReplicationNetworkSchema,
   DnsRecordType,
@@ -528,7 +531,13 @@ function MappingsCard({
 }
 
 function NetworkCard({ spec, update }: { spec: PlanSpec; update: Update }) {
-  const existing = spec.network?.path.case === 'existing' ? spec.network.path.value : undefined
+  const path = spec.network?.path
+  const existing = path?.case === 'existing' ? path.value : undefined
+  const tunnel = path?.case === 'tunnel' ? path.value : undefined
+  const setTunnel = (fn: (t: EzdrTunnel) => void) =>
+    update((s) => {
+      if (s.network?.path.case === 'tunnel') fn(s.network.path.value)
+    })
   return (
     <Section title="Replication network" description="How the DR host reaches the primary's zrepl jobs. zrepl connections always use TLS with each host's own certificate.">
       <div className="grid gap-2 text-sm">
@@ -547,9 +556,23 @@ function NetworkCard({ spec, update }: { spec: PlanSpec; update: Update }) {
           />
           Existing network (for example, a router site-to-site VPN)
         </label>
-        <label className="flex items-center gap-2 text-muted-foreground">
-          <input type="radio" name="network" disabled />
-          EZDR tunnel between the hosts (coming in a later update)
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="network"
+            checked={!!tunnel}
+            onChange={() =>
+              update((s) => {
+                s.network = create(ReplicationNetworkSchema, {
+                  path: {
+                    case: 'tunnel',
+                    value: create(EzdrTunnelSchema, { listener: EzdrTunnel_Listener.DR, listenPort: 51821, port: 8888 }),
+                  },
+                })
+              })
+            }
+          />
+          EZDR tunnel: a WireGuard tunnel between the two hosts
         </label>
       </div>
       {existing && (
@@ -580,6 +603,57 @@ function NetworkCard({ spec, update }: { spec: PlanSpec; update: Update }) {
               }
             />
           </Field>
+        </div>
+      )}
+      {tunnel && (
+        <div className="grid gap-4">
+          <div className="grid gap-2 text-sm">
+            <Label>Which host accepts the connection?</Label>
+            <div className="flex gap-4">
+              {[
+                { v: EzdrTunnel_Listener.DR, label: 'DR host' },
+                { v: EzdrTunnel_Listener.PRIMARY, label: 'Primary' },
+              ].map((o) => (
+                <label key={o.v} className="flex items-center gap-2">
+                  <input type="radio" name="listener" checked={tunnel.listener === o.v} onChange={() => setTunnel((t) => (t.listener = o.v))} />
+                  {o.label}
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              That host's site forwards the UDP listen port to it; the other host connects out. Replication then flows inside the tunnel.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-[1fr_140px_140px]">
+            <Field id="tunnel-endpoint" label="Listening host's public endpoint (host:port)">
+              <Input
+                id="tunnel-endpoint"
+                value={tunnel.endpoint}
+                placeholder="dr.example.com:51821"
+                onChange={(e) => setTunnel((t) => (t.endpoint = e.target.value))}
+              />
+            </Field>
+            <Field id="tunnel-port" label="Listen port (UDP)">
+              <Input
+                id="tunnel-port"
+                type="number"
+                min={1}
+                max={65535}
+                value={tunnel.listenPort || ''}
+                onChange={(e) => setTunnel((t) => (t.listenPort = Math.round(Number(e.target.value))))}
+              />
+            </Field>
+            <Field id="tunnel-zrepl-port" label="zrepl port">
+              <Input
+                id="tunnel-zrepl-port"
+                type="number"
+                min={1024}
+                max={65535}
+                value={tunnel.port || ''}
+                onChange={(e) => setTunnel((t) => (t.port = Math.round(Number(e.target.value))))}
+              />
+            </Field>
+          </div>
         </div>
       )}
     </Section>

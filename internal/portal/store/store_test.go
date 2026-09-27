@@ -490,3 +490,45 @@ func TestAlerts(t *testing.T) {
 		t.Errorf("list = %+v (firing first)", all)
 	}
 }
+
+func TestSiteTunnelState(t *testing.T) {
+	s := openTest(t)
+	ctx := context.Background()
+	alloc := seqAlloc(netip.MustParseAddr("100.64.42.2"))
+	var ids []string
+	for _, id := range []string{"a1", "b2", "c3"} {
+		if _, err := s.CreateToken(ctx, Token{ID: "t" + id, SecretHash: []byte("s"), CreatedBy: "admin",
+			ExpiresAt: time.Now().Add(time.Hour)}); err != nil {
+			t.Fatal(err)
+		}
+		h, err := s.EnrollHost(ctx, "t"+id, []byte("s"), newHost(id, "m"+id), alloc)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ids = append(ids, h.ID)
+	}
+	prefix := netip.MustParsePrefix("100.64.43.0/30") // room for two hosts
+	a, err := s.AllocateSiteAddress(ctx, ids[0], prefix)
+	if err != nil || a != netip.MustParseAddr("100.64.43.1") {
+		t.Fatalf("first = %v, %v", a, err)
+	}
+	if again, _ := s.AllocateSiteAddress(ctx, ids[0], prefix); again != a {
+		t.Errorf("address not stable: %v", again)
+	}
+	if b, _ := s.AllocateSiteAddress(ctx, ids[1], prefix); b != netip.MustParseAddr("100.64.43.2") {
+		t.Errorf("second = %v", b)
+	}
+	if _, err := s.AllocateSiteAddress(ctx, ids[2], prefix); err == nil {
+		t.Error("allocated beyond the range")
+	}
+	if changed, _ := s.SetSitePublicKey(ctx, ids[0], []byte("k1")); !changed {
+		t.Error("new key not reported as changed")
+	}
+	if changed, _ := s.SetSitePublicKey(ctx, ids[0], []byte("k1")); changed {
+		t.Error("same key reported as changed")
+	}
+	h, _ := s.HostByID(ctx, ids[0])
+	if h.SiteAddress != a || string(h.SitePublicKey) != "k1" {
+		t.Errorf("host site state = %v %q", h.SiteAddress, h.SitePublicKey)
+	}
+}

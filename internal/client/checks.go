@@ -69,14 +69,16 @@ func RunChecks(ctx context.Context, tunnelPrefix netip.Prefix, force bool) []Che
 	return checks
 }
 
-// checkOverlap reports whether the tunnel range overlaps any address or
+// checkOverlap reports whether a tunnel range overlaps any address or
 // non-default route on the host, in any routing table. The client's own
-// interface is ignored so re-enrolling does not conflict with itself.
+// interfaces are ignored so re-applying does not conflict with itself.
 func checkOverlap(p netip.Prefix) error {
 	var existing []netip.Prefix
-	own := -1
-	if link, err := netlink.LinkByName(InterfaceName); err == nil {
-		own = link.Attrs().Index
+	own := map[int]bool{}
+	for _, name := range []string{InterfaceName, SiteInterfaceName} {
+		if link, err := netlink.LinkByName(name); err == nil {
+			own[link.Attrs().Index] = true
+		}
 	}
 
 	addrs, err := netlink.AddrList(nil, netlink.FAMILY_V4)
@@ -84,7 +86,7 @@ func checkOverlap(p netip.Prefix) error {
 		return fmt.Errorf("list addresses: %w", err)
 	}
 	for _, a := range addrs {
-		if a.LinkIndex == own {
+		if own[a.LinkIndex] {
 			continue
 		}
 		if pf, ok := prefixFromIPNet(a.IP, a.Mask); ok {
@@ -98,7 +100,7 @@ func checkOverlap(p netip.Prefix) error {
 		return fmt.Errorf("list routes: %w", err)
 	}
 	for _, r := range routes {
-		if r.Dst == nil || r.LinkIndex == own {
+		if r.Dst == nil || own[r.LinkIndex] {
 			continue // default route or our own interface
 		}
 		if pf, ok := prefixFromIPNet(r.Dst.IP, r.Dst.Mask); ok {

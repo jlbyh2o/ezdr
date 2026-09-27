@@ -111,6 +111,16 @@ func (s ClientService) ReportStatus(ctx context.Context, req *connect.Request[cl
 	if m.ApplyError != "" {
 		slog.Warn("host failed to apply configuration", "host", h.Hostname, "generation", m.AppliedGeneration, "err", m.ApplyError)
 	}
+	if len(m.SitePublicKey) == 32 {
+		changed, err := s.Store.SetSitePublicKey(ctx, h.ID, m.SitePublicKey)
+		if err != nil {
+			return nil, internalError(err)
+		}
+		if changed {
+			slog.Info("host site tunnel key updated", "host", h.Hostname)
+			s.reconcile(context.WithoutCancel(ctx), s.relatedHosts(ctx, h.ID)...)
+		}
+	}
 	if m.ZreplCertificate != "" {
 		changed, err := s.Store.SetHostZrepl(ctx, h.ID, m.ZreplCertificate, m.ZreplVersion)
 		if err != nil {

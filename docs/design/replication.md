@@ -149,7 +149,10 @@ site-to-site VPN or a private link.
 For sites without a link, EZDR creates a WireGuard tunnel between the two
 hosts, separate from the control-plane tunnel to the portal.
 
-- **One tunnel per host pair**, shared by all plans between those hosts.
+- **One tunnel per host pair**, shared by all plans between those hosts, so
+  their tunnel settings must match (validation reports conflicts). Each host
+  has a single site tunnel interface, `ezdr1`, with one peer per replication
+  partner, and a stable address from the site range.
 - **Plan settings:** which host accepts the connection, its public endpoint
   (`host:port`, typically a port forward on that site's router), and the
   listen port (default 51821).
@@ -160,7 +163,14 @@ hosts, separate from the control-plane tunnel to the portal.
   keys. The connecting host sends keepalives.
 - The overlap check from enrollment also runs for this range before a tunnel
   is created.
-- The `source` job listens only on the primary's tunnel address.
+- The `source` job listens only on the primary's tunnel address, with
+  `listen_freebind` so zrepl can bind before the interface is up. The client
+  brings the tunnel up before applying zrepl jobs.
+- A host accepts tunnels on one UDP port for all its partners; plans that
+  would need different ports on the same host are rejected.
+- Switching a plan between network paths is an ordinary change: the preview
+  shows the tunnel being created or removed, and replication continues
+  incrementally.
 
 ### 4.3 zrepl TLS
 

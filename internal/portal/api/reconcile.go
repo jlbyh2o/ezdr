@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"log/slog"
 
 	"google.golang.org/protobuf/proto"
@@ -41,8 +42,19 @@ func (d *Deps) activePlans(ctx context.Context, override *replication.Plan) ([]r
 	return out, nil
 }
 
-// replicationHosts loads the hosts the plans refer to.
+// replicationHosts loads the hosts the plans refer to, allocating site
+// tunnel addresses for hosts in plans that use EZDR tunnels.
 func (d *Deps) replicationHosts(ctx context.Context, plans []replication.Plan) (map[string]*replication.Host, error) {
+	for _, p := range plans {
+		if p.Spec.GetNetwork().GetTunnel() == nil || !d.SiteTunnelPrefix.IsValid() {
+			continue
+		}
+		for _, id := range []string{p.Spec.PrimaryHostId, p.Spec.DrHostId} {
+			if _, err := d.Store.AllocateSiteAddress(ctx, id, d.SiteTunnelPrefix); err != nil && !errors.Is(err, store.ErrNotFound) {
+				return nil, err
+			}
+		}
+	}
 	hosts := map[string]*replication.Host{}
 	ps := PlanService{Deps: d}
 	for _, p := range plans {
@@ -61,20 +73,23 @@ func (d *Deps) replicationHosts(ctx context.Context, plans []replication.Plan) (
 			if err != nil {
 				return nil, err
 			}
-			hosts[id] = &replication.Host{ID: id, Hostname: ph.Hostname, Inventory: ph.Inventory, Certificate: h.ZreplCertificate}
+			hosts[id] = &replication.Host{ID: id, Hostname: ph.Hostname, Inventory: ph.Inventory, Certificate: h.ZreplCertificate,
+				SiteAddress: h.SiteAddress, SitePublicKey: h.SitePublicKey}
 		}
 	}
 	return hosts, nil
 }
 
-// desiredZrepl computes a host's zrepl desired state for the given plans.
-func (d *Deps) desiredZrepl(ctx context.Context, hostID string, plans []replication.Plan) (*clientv1.Zrepl, []string, error) {
+// desiredConfig computes a host's zrepl jobs and site tunnel for the given
+// plans.
+func (d *Deps) desiredConfig(ctx context.Context, hostID string, plans []replication.Plan) (*clientv1.DesiredState, []string, error) {
 	hosts, err := d.replicationHosts(ctx, plans)
 	if err != nil {
 		return nil, nil, err
 	}
 	z, problems := replication.Desired(hostID, plans, hosts)
-	return z, problems, nil
+	tunnel, tp := replication.SiteTunnel(hostID, plans, hosts, d.SiteTunnelPrefix)
+	return &clientv1.DesiredState{Zrepl: z, SiteTunnel: tunnel}, append(problems, tp...), nil
 }
 
 // desiredState computes a host's current desired state and its generation.
@@ -83,23 +98,22 @@ func (d *Deps) desiredState(ctx context.Context, hostID string) (*clientv1.Desir
 	if err != nil {
 		return nil, err
 	}
-	z, problems, err := d.desiredZrepl(ctx, hostID, plans)
+	ds, problems, err := d.desiredConfig(ctx, hostID, plans)
 	if err != nil {
 		return nil, err
 	}
 	for _, p := range problems {
 		slog.Warn("desired state incomplete", "host", hostID, "problem", p)
 	}
-	b, err := proto.MarshalOptions{Deterministic: true}.Marshal(z)
+	b, err := proto.MarshalOptions{Deterministic: true}.Marshal(ds)
 	if err != nil {
 		return nil, err
 	}
 	sum := sha256.Sum256(b)
-	gen, err := d.Store.SetDesiredHash(ctx, hostID, sum[:])
-	if err != nil {
+	if ds.Generation, err = d.Store.SetDesiredHash(ctx, hostID, sum[:]); err != nil {
 		return nil, err
 	}
-	return &clientv1.DesiredState{Generation: gen, Zrepl: z}, nil
+	return ds, nil
 }
 
 // reconcile recomputes the desired state of the given hosts and sends it to

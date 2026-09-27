@@ -49,7 +49,11 @@ func Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("zrepl certificate: %w", err)
 	}
-	app := newApplier(api, cert)
+	siteKey, err := EnsureSiteKey()
+	if err != nil {
+		return fmt.Errorf("site tunnel key: %w", err)
+	}
+	app := newApplier(api, cert, siteKey)
 	go app.run(ctx)
 
 	backoff := time.Second

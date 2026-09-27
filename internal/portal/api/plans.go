@@ -81,25 +81,30 @@ func (s PlanService) validate(ctx context.Context, spec *planv1.PlanSpec, planID
 		}
 	}
 	ports := map[uint32]string{}
-	if primary != nil && primary.Inventory != nil {
-		plans, err := s.Store.ListPlans(ctx)
+	var tunnels []plan.OtherTunnel
+	all, err := s.Store.ListPlans(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range all {
+		if p.ID == planID || p.AppliedSpec == nil {
+			continue
+		}
+		applied, err := decodeSpec(p.AppliedSpec)
 		if err != nil {
 			return nil, err
 		}
-		for _, p := range plans {
-			if p.ID == planID || p.PrimaryHostID != spec.PrimaryHostId || p.AppliedSpec == nil {
-				continue
-			}
-			applied, err := decodeSpec(p.AppliedSpec)
-			if err != nil {
-				return nil, err
-			}
+		if t := applied.GetNetwork().GetTunnel(); t != nil {
+			tunnels = append(tunnels, plan.OtherTunnel{Plan: p.Name, PrimaryHostID: applied.PrimaryHostId, DRHostID: applied.DrHostId, Tunnel: t})
+		}
+		if primary != nil && primary.Inventory != nil && p.PrimaryHostID == spec.PrimaryHostId {
 			for _, g := range plan.JobGroups(applied, primary.Inventory) {
 				ports[g.Port] = p.Name
 			}
 		}
 	}
-	return plan.Validate(spec, plan.Context{Primary: primary, DR: dr, OtherPlans: others, UsedPorts: ports, Now: time.Now()}), nil
+	return plan.Validate(spec, plan.Context{Primary: primary, DR: dr, OtherPlans: others, UsedPorts: ports,
+		OtherTunnels: tunnels, Now: time.Now()}), nil
 }
 
 // checkSpec enforces what a plan needs before it can be saved at all. Other
@@ -429,14 +434,15 @@ func (s PlanService) PreviewPlanChanges(ctx context.Context, req *connect.Reques
 		if err != nil {
 			continue
 		}
-		b, _, err := s.desiredZrepl(ctx, id, before)
+		bs, _, err := s.desiredConfig(ctx, id, before)
 		if err != nil {
 			return nil, internalError(err)
 		}
-		a, problems, err := s.desiredZrepl(ctx, id, after)
+		as, problems, err := s.desiredConfig(ctx, id, after)
 		if err != nil {
 			return nil, internalError(err)
 		}
+		b, a := bs.Zrepl, as.Zrepl
 		var changes []string
 		if h.ZreplVersion == "" && len(a.SourceJobs)+len(a.PullJobs) > 0 {
 			changes = append(changes, "install zrepl 0.7 from zrepl's official apt repository and hold the package")
@@ -444,6 +450,7 @@ func (s PlanService) PreviewPlanChanges(ctx context.Context, req *connect.Reques
 		if len(a.SourceJobs)+len(a.PullJobs) > 0 && len(b.SourceJobs)+len(b.PullJobs) == 0 {
 			changes = append(changes, "include EZDR's job file from /etc/zrepl/zrepl.yml, if it doesn't already (backing up the current file)")
 		}
+		changes = append(changes, replication.TunnelChanges(bs.SiteTunnel, as.SiteTunnel)...)
 		changes = append(changes, replication.Changes(b, a)...)
 		changes = append(changes, problems...)
 		if len(changes) == 0 {

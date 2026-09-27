@@ -190,7 +190,7 @@ func Render(z *clientv1.Zrepl, p Paths) ([]byte, error) {
 			"name": j.Name,
 			"type": "source",
 			"serve": m{
-				"type": "tls", "listen": j.ListenAddress,
+				"type": "tls", "listen": j.ListenAddress, "listen_freebind": j.ListenFreebind,
 				"ca": p.PeerFile(j.Peer.Name), "cert": p.CertFile(), "key": p.KeyFile(),
 				"client_cns": []string{j.Peer.Name},
 			},

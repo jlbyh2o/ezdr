@@ -19,7 +19,11 @@ together.
   | 51820 | UDP | WireGuard tunnels from hosts |
 
 - Proxmox VE 9.x hosts with ZFS, able to reach the portal on TCP 443 and
-  UDP 51820. Hosts need no inbound ports.
+  UDP 51820. Hosts need no inbound ports for the portal.
+- For replication, either a network between the sites that the DR host can
+  use to reach the primary (for example, a router site-to-site VPN; zrepl
+  uses TCP 8888 by default), or an EZDR tunnel: forward one UDP port
+  (default 51821) at one site to that site's host.
 
 ## Install the portal
 
@@ -109,6 +113,7 @@ The portal is configured with environment variables:
 | `EZDR_WG_PORT` | `51820` | WireGuard UDP port. |
 | `EZDR_WG_ENDPOINT` | public URL host and WireGuard port | WireGuard endpoint sent to hosts, as `host:port`. |
 | `EZDR_TUNNEL_PREFIX` | `100.64.42.0/28` | Tunnel address range. Change it before enrolling hosts if it overlaps a network your hosts use. |
+| `EZDR_SITE_TUNNEL_PREFIX` | `100.64.43.0/28` | Address range for EZDR tunnels between hosts (plans using the EZDR tunnel network path). Must not overlap `EZDR_TUNNEL_PREFIX`. |
 | `EZDR_SECRET_KEY_FILE` | `<data dir>/secret.key` | Key that encrypts secrets in the database; generated if missing. |
 | `EZDR_TRUSTED_PROXIES` | loopback and private ranges with `EZDR_TLS=off`; `none` with `self-signed` | Comma-separated ranges allowed to set `X-Forwarded-For`, or `none`. Only trust addresses that belong to your reverse proxy. |
 

@@ -72,7 +72,8 @@ func planTestDeps(t *testing.T) (*Deps, context.Context, string, string) {
 	})
 	box, _ := store.NewSecretBox(bytes.Repeat([]byte{3}, 32))
 	publicURL, _ := url.Parse("https://portal.example.com")
-	return &Deps{Store: st, Box: box, Hub: NewHub(), PublicURL: publicURL}, ctx, primary, dr
+	return &Deps{Store: st, Box: box, Hub: NewHub(), PublicURL: publicURL,
+		SiteTunnelPrefix: netip.MustParsePrefix("100.64.43.0/28")}, ctx, primary, dr
 }
 
 func TestPlanServiceFlow(t *testing.T) {
@@ -285,5 +286,63 @@ func TestActivateRequiresValidPlan(t *testing.T) {
 	_, err = svc.ActivatePlan(ctx, connect.NewRequest(&portalv1.ActivatePlanRequest{Id: created.Msg.Plan.Id}))
 	if connect.CodeOf(err) != connect.CodeFailedPrecondition {
 		t.Errorf("activating an invalid plan: err = %v", err)
+	}
+}
+
+func TestTunnelPlan(t *testing.T) {
+	d, ctx, primary, dr := planTestDeps(t)
+	svc := PlanService{Deps: d}
+	for _, id := range []string{primary, dr} {
+		_, _ = d.Store.SetHostZrepl(ctx, id, "CERT-"+id, "v0.7.0")
+		_, _ = d.Store.SetSitePublicKey(ctx, id, bytes.Repeat([]byte(id[:1]), 32))
+	}
+	sug, _ := svc.SuggestPlan(ctx, connect.NewRequest(&portalv1.SuggestPlanRequest{Spec: &planv1.PlanSpec{
+		Name: "Tunnel", PrimaryHostId: primary, DrHostId: dr, Guests: []*planv1.PlanGuest{{Vmid: 101}},
+	}}))
+	spec := sug.Msg.Spec
+	spec.Network = &planv1.ReplicationNetwork{Path: &planv1.ReplicationNetwork_Tunnel{Tunnel: &planv1.EzdrTunnel{
+		Listener: planv1.EzdrTunnel_LISTENER_DR, Endpoint: "dr.example.com:51821", ListenPort: 51821, Port: 8888}}}
+	created, err := svc.CreatePlan(ctx, connect.NewRequest(&portalv1.CreatePlanRequest{Spec: spec}))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	preview, err := svc.PreviewPlanChanges(ctx, connect.NewRequest(&portalv1.PreviewPlanChangesRequest{Id: created.Msg.Plan.Id}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	joined := ""
+	for _, h := range preview.Msg.Hosts {
+		joined += strings.Join(h.Changes, "\n") + "\n"
+	}
+	for _, want := range []string{"create WireGuard interface ezdr1", "accept 100.64.43.", "connect to 100.64.43.", "dr.example.com:51821"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("preview lacks %q:\n%s", want, joined)
+		}
+	}
+
+	_, drOutbox, release := d.Hub.connect(ctx, dr)
+	defer release()
+	if _, err := svc.ActivatePlan(ctx, connect.NewRequest(&portalv1.ActivatePlanRequest{Id: created.Msg.Plan.Id})); err != nil {
+		t.Fatal(err)
+	}
+	ds := (<-drOutbox).GetDesiredState()
+	st := ds.GetSiteTunnel()
+	if st == nil || st.ListenPort != 51821 || len(st.Peers) != 1 || st.Peers[0].Endpoint != "" {
+		t.Fatalf("DR site tunnel = %v", st)
+	}
+	pHost, _ := d.Store.HostByID(ctx, primary)
+	if pj := ds.Zrepl.PullJobs[0]; pj.Address != pHost.SiteAddress.String()+":8888" {
+		t.Errorf("pull address = %s, primary tunnel address %s", pj.Address, pHost.SiteAddress)
+	}
+	pds, err := d.desiredState(ctx, primary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pt := pds.SiteTunnel; pt.ListenPort != 0 || pt.Peers[0].Endpoint != "dr.example.com:51821" || pt.Peers[0].PersistentKeepaliveSeconds == 0 {
+		t.Errorf("primary site tunnel = %v", pt)
+	}
+	if sj := pds.Zrepl.SourceJobs[0]; !sj.ListenFreebind || sj.ListenAddress != pHost.SiteAddress.String()+":8888" {
+		t.Errorf("source job = %v", sj)
 	}
 }

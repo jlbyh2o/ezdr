@@ -36,6 +36,7 @@ type Deps struct {
 	SecureCookies     bool
 	WireGuardEndpoint string
 	TunnelPrefix      netip.Prefix
+	SiteTunnelPrefix  netip.Prefix
 	PortalTunnelAddr  netip.Addr
 	ClientAPIURL      string
 

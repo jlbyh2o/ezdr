@@ -5,6 +5,7 @@ package replication
 import (
 	"fmt"
 	"net"
+	"net/netip"
 	"regexp"
 	"sort"
 	"strconv"
@@ -23,6 +24,9 @@ type Host struct {
 	Inventory *inventoryv1.Inventory
 	// Certificate is the host's zrepl TLS certificate (PEM), once reported.
 	Certificate string
+	// Site tunnel address and public key, once allocated and reported.
+	SiteAddress   netip.Addr
+	SitePublicKey []byte
 }
 
 // Plan is an active plan: its applied specification.
@@ -69,9 +73,26 @@ func Jobs(p Plan, primary, dr *Host) (sources []*clientv1.SourceJob, pulls []*cl
 	if len(problems) > 0 {
 		return nil, nil, problems
 	}
-	existing := p.Spec.GetNetwork().GetExisting()
-	if existing == nil {
-		return nil, nil, []string{fmt.Sprintf("plan %q: only existing-network replication is supported", p.Name)}
+	// Where the primary's source jobs listen, and where the DR host connects.
+	var listenHost, connectHost string
+	freebind := false
+	switch n := p.Spec.GetNetwork().GetPath().(type) {
+	case *planv1.ReplicationNetwork_Existing:
+		connectHost = n.Existing.PrimaryAddress
+	case *planv1.ReplicationNetwork_Tunnel:
+		for _, h := range []*Host{primary, dr} {
+			if !h.SiteAddress.IsValid() || len(h.SitePublicKey) != 32 {
+				problems = append(problems, fmt.Sprintf("plan %q: waiting for %s's tunnel key", p.Name, h.Hostname))
+			}
+		}
+		if len(problems) > 0 {
+			return nil, nil, problems
+		}
+		// Listen only on the primary's tunnel address. freebind lets zrepl
+		// bind before the tunnel interface is up.
+		listenHost, connectHost, freebind = primary.SiteAddress.String(), primary.SiteAddress.String(), true
+	default:
+		return nil, nil, []string{fmt.Sprintf("plan %q: no replication network", p.Name)}
 	}
 
 	for _, g := range plan.JobGroups(p.Spec, primary.Inventory) {
@@ -79,11 +100,12 @@ func Jobs(p Plan, primary, dr *Host) (sources []*clientv1.SourceJob, pulls []*cl
 		port := strconv.FormatUint(uint64(g.Port), 10)
 		sources = append(sources, &clientv1.SourceJob{
 			Name: name, Datasets: g.Datasets, SnapshotPrefix: p.Spec.SnapshotPrefix,
-			IntervalSeconds: p.Spec.IntervalSeconds, ListenAddress: ":" + port, Encrypted: g.Encrypted,
+			IntervalSeconds: p.Spec.IntervalSeconds, ListenAddress: net.JoinHostPort(listenHost, port),
+			Encrypted: g.Encrypted, ListenFreebind: freebind,
 			Peer: &clientv1.Peer{Name: PeerName(dr.ID), CertificatePem: dr.Certificate},
 		})
 		pulls = append(pulls, &clientv1.PullJob{
-			Name: PullJobName(name), Address: net.JoinHostPort(existing.PrimaryAddress, port),
+			Name: PullJobName(name), Address: net.JoinHostPort(connectHost, port),
 			Peer:           &clientv1.Peer{Name: PeerName(primary.ID), CertificatePem: primary.Certificate},
 			ReceiveDataset: g.ReceiveDataset, IntervalSeconds: p.Spec.IntervalSeconds,
 			SnapshotPrefix:   p.Spec.SnapshotPrefix,
@@ -91,6 +113,66 @@ func Jobs(p Plan, primary, dr *Host) (sources []*clientv1.SourceJob, pulls []*cl
 		})
 	}
 	return sources, pulls, nil
+}
+
+// TunnelKeepalive is the keepalive the connecting side of a site tunnel
+// sends, so NAT mappings stay open.
+const TunnelKeepalive = 25
+
+// SiteTunnel returns hostID's site tunnel across all active plans that use
+// EZDR tunnels, or nil if none do. Peers that aren't ready yet (no address
+// or key) are left out and explained in problems.
+func SiteTunnel(hostID string, plans []Plan, hosts map[string]*Host, prefix netip.Prefix) (*clientv1.SiteTunnel, []string) {
+	self := hosts[hostID]
+	var problems []string
+	peers := map[string]*clientv1.SitePeer{}
+	var listenPort uint32
+	used := false
+	for _, p := range plans {
+		t := p.Spec.GetNetwork().GetTunnel()
+		if t == nil || (p.Spec.PrimaryHostId != hostID && p.Spec.DrHostId != hostID) {
+			continue
+		}
+		used = true
+		selfIsPrimary := p.Spec.PrimaryHostId == hostID
+		peerID := p.Spec.DrHostId
+		if !selfIsPrimary {
+			peerID = p.Spec.PrimaryHostId
+		}
+		peer := hosts[peerID]
+		if peer == nil || !peer.SiteAddress.IsValid() || len(peer.SitePublicKey) != 32 {
+			name := peerID
+			if peer != nil {
+				name = peer.Hostname
+			}
+			problems = append(problems, fmt.Sprintf("plan %q: waiting for %s's tunnel key", p.Name, name))
+			continue
+		}
+		selfListens := (t.Listener == planv1.EzdrTunnel_LISTENER_PRIMARY) == selfIsPrimary
+		sp := &clientv1.SitePeer{PublicKey: peer.SitePublicKey, Address: peer.SiteAddress.String()}
+		if selfListens {
+			listenPort = t.ListenPort
+		} else {
+			sp.Endpoint, sp.PersistentKeepaliveSeconds = t.Endpoint, TunnelKeepalive
+		}
+		peers[peerID] = sp
+	}
+	if !used || self == nil || !self.SiteAddress.IsValid() {
+		if used && self != nil {
+			problems = append(problems, fmt.Sprintf("waiting for a site tunnel address for %s", self.Hostname))
+		}
+		return nil, problems
+	}
+	st := &clientv1.SiteTunnel{Address: self.SiteAddress.String(), Prefix: prefix.String(), ListenPort: listenPort}
+	ids := make([]string, 0, len(peers))
+	for id := range peers {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	for _, id := range ids {
+		st.Peers = append(st.Peers, peers[id])
+	}
+	return st, problems
 }
 
 func tiers(in []*planv1.RetentionTier) []*clientv1.RetentionTier {
@@ -174,6 +256,53 @@ func Changes(before, after *clientv1.Zrepl) []string {
 			out = append(out, fmt.Sprintf("remove zrepl job %s (replicas and snapshots are kept)", n))
 		case a[n] != b[n]:
 			out = append(out, fmt.Sprintf("change zrepl job %s: %s", n, a[n]))
+		}
+	}
+	return out
+}
+
+// TunnelChanges describes differences between two site tunnels.
+func TunnelChanges(before, after *clientv1.SiteTunnel) []string {
+	describe := func(t *clientv1.SiteTunnel) map[string]string {
+		out := map[string]string{}
+		for _, p := range t.GetPeers() {
+			if p.Endpoint != "" {
+				out[p.Address] = fmt.Sprintf("connect to %s at %s", p.Address, p.Endpoint)
+			} else {
+				out[p.Address] = fmt.Sprintf("accept %s on UDP port %d", p.Address, t.ListenPort)
+			}
+		}
+		return out
+	}
+	switch {
+	case before == nil && after == nil:
+		return nil
+	case after == nil:
+		return []string{"remove the EZDR site tunnel interface ezdr1"}
+	}
+	var out []string
+	if before == nil || before.Address != after.Address {
+		out = append(out, fmt.Sprintf("create WireGuard interface ezdr1 with address %s (range %s)", after.Address, after.Prefix))
+	}
+	b, a := describe(before), describe(after)
+	var addrs []string
+	for k := range a {
+		addrs = append(addrs, k)
+	}
+	for k := range b {
+		if _, ok := a[k]; !ok {
+			addrs = append(addrs, k)
+		}
+	}
+	sort.Strings(addrs)
+	for _, k := range addrs {
+		switch {
+		case b[k] == "":
+			out = append(out, "tunnel peer: "+a[k])
+		case a[k] == "":
+			out = append(out, "remove tunnel peer "+k)
+		case a[k] != b[k]:
+			out = append(out, "change tunnel peer: "+a[k])
 		}
 	}
 	return out
