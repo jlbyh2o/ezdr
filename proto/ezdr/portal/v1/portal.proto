@@ -3,6 +3,7 @@ syntax = "proto3";
 package ezdr.portal.v1;
 
 import "ezdr/inventory/v1/inventory.proto";
+import "ezdr/plan/v1/plan.proto";
 import "google/protobuf/timestamp.proto";
 
 // SetupService creates the first administrator on a new portal.
@@ -151,6 +152,13 @@ message GetHostInventoryResponse {
   google.protobuf.Timestamp changed_at = 3;
   // When the portal last received a report.
   google.protobuf.Timestamp received_at = 4;
+  // Plans protecting this host's guests: VMID to plan.
+  map<uint32, PlanRef> guest_plans = 5;
+}
+
+message PlanRef {
+  string id = 1;
+  string name = 2;
 }
 
 message RefreshInventoryRequest {
@@ -187,6 +195,8 @@ message Host {
   uint32 guest_count = 11;
   uint32 guests_not_ready = 12;
   bool has_inventory = 13;
+  // Plans that use this host as primary or DR host.
+  uint32 plan_count = 14;
 }
 
 // AuditService lists audit log entries, newest first.
@@ -209,4 +219,95 @@ message AuditEvent {
   string target = 4;
   string source_address = 5;
   string detail = 6;
+}
+
+// PlanService manages DR plans.
+service PlanService {
+  rpc ListPlans(ListPlansRequest) returns (ListPlansResponse);
+  rpc GetPlan(GetPlanRequest) returns (GetPlanResponse);
+  rpc CreatePlan(CreatePlanRequest) returns (CreatePlanResponse);
+  rpc UpdatePlan(UpdatePlanRequest) returns (UpdatePlanResponse);
+  rpc DeletePlan(DeletePlanRequest) returns (DeletePlanResponse);
+  // ValidatePlan checks a specification without saving it.
+  rpc ValidatePlan(ValidatePlanRequest) returns (ValidatePlanResponse);
+  // SuggestPlan fills in missing mappings, startup order, and defaults.
+  rpc SuggestPlan(SuggestPlanRequest) returns (SuggestPlanResponse);
+}
+
+message Plan {
+  string id = 1;
+  ezdr.plan.v1.PlanSpec spec = 2;
+  string created_by = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message PlanSummary {
+  string id = 1;
+  string name = 2;
+  string primary_hostname = 3;
+  string dr_hostname = 4;
+  uint32 guest_count = 5;
+  uint32 interval_seconds = 6;
+  uint32 error_count = 7;
+  uint32 warning_count = 8;
+}
+
+message ListPlansRequest {}
+
+message ListPlansResponse {
+  repeated PlanSummary plans = 1;
+}
+
+message GetPlanRequest {
+  string id = 1;
+}
+
+message GetPlanResponse {
+  Plan plan = 1;
+  repeated ezdr.plan.v1.Issue issues = 2;
+}
+
+message CreatePlanRequest {
+  ezdr.plan.v1.PlanSpec spec = 1;
+}
+
+message CreatePlanResponse {
+  Plan plan = 1;
+  repeated ezdr.plan.v1.Issue issues = 2;
+}
+
+message UpdatePlanRequest {
+  string id = 1;
+  ezdr.plan.v1.PlanSpec spec = 2;
+}
+
+message UpdatePlanResponse {
+  Plan plan = 1;
+  repeated ezdr.plan.v1.Issue issues = 2;
+}
+
+message DeletePlanRequest {
+  string id = 1;
+}
+
+message DeletePlanResponse {}
+
+message ValidatePlanRequest {
+  ezdr.plan.v1.PlanSpec spec = 1;
+  // The plan being edited, if it exists, so its own guests don't count as
+  // protected by another plan.
+  string plan_id = 2;
+}
+
+message ValidatePlanResponse {
+  repeated ezdr.plan.v1.Issue issues = 1;
+}
+
+message SuggestPlanRequest {
+  ezdr.plan.v1.PlanSpec spec = 1;
+}
+
+message SuggestPlanResponse {
+  ezdr.plan.v1.PlanSpec spec = 1;
 }

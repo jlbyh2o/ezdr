@@ -130,6 +130,7 @@ func (s HostService) hostMsg(h store.Host) *portalv1.Host {
 		Online: s.Hub.Online(h.ID), DuplicateMachineId: h.DuplicateMachineID,
 		HasInventory: h.HasInventory, GuestCount: uint32(h.GuestCount), //nolint:gosec // small counts
 		GuestsNotReady: uint32(h.GuestsNotReady), //nolint:gosec // small counts
+		PlanCount:      uint32(h.PlanCount),      //nolint:gosec // small counts
 	}
 }
 
@@ -154,6 +155,25 @@ func (s HostService) GetHostInventory(ctx context.Context, req *connect.Request[
 			return nil, internalError(err)
 		}
 		resp.ChangedAt, resp.ReceivedAt = ts(inv.ChangedAt), ts(inv.ReceivedAt)
+	}
+
+	guestPlans, err := s.Store.GuestPlans(ctx, h.ID)
+	if err != nil {
+		return nil, internalError(err)
+	}
+	if len(guestPlans) > 0 {
+		plans, err := s.Store.ListPlans(ctx)
+		if err != nil {
+			return nil, internalError(err)
+		}
+		names := map[string]string{}
+		for _, p := range plans {
+			names[p.ID] = p.Name
+		}
+		resp.GuestPlans = map[uint32]*portalv1.PlanRef{}
+		for vmid, id := range guestPlans {
+			resp.GuestPlans[vmid] = &portalv1.PlanRef{Id: id, Name: names[id]}
+		}
 	}
 	return connect.NewResponse(resp), nil
 }

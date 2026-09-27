@@ -9,6 +9,8 @@ import { HostDetailPage } from '@/pages/host-detail'
 import { HostsPage } from '@/pages/hosts'
 import { Layout } from '@/pages/layout'
 import { LoginPage } from '@/pages/login'
+import { PlanEditorPage } from '@/pages/plan-editor'
+import { PlansPage } from '@/pages/plans'
 import { SetupPage } from '@/pages/setup'
 import { TokensPage } from '@/pages/tokens'
 
@@ -68,6 +70,9 @@ function App() {
             <Route element={<Layout user={state.user} onSignOut={() => void signOut()} />}>
               <Route path="/hosts" element={<HostsPage />} />
               <Route path="/hosts/:id" element={<HostDetailPage />} />
+              <Route path="/plans" element={<PlansPage />} />
+              <Route path="/plans/new" element={<PlanEditorPage />} />
+              <Route path="/plans/:id" element={<PlanEditorPage key="edit" />} />
               <Route path="/tokens" element={<TokensPage />} />
               <Route path="/audit" element={<AuditPage />} />
               <Route path="*" element={<Navigate to="/hosts" replace />} />

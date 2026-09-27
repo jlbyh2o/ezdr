@@ -31,6 +31,8 @@ const (
 	HostServiceName = "ezdr.portal.v1.HostService"
 	// AuditServiceName is the fully-qualified name of the AuditService service.
 	AuditServiceName = "ezdr.portal.v1.AuditService"
+	// PlanServiceName is the fully-qualified name of the PlanService service.
+	PlanServiceName = "ezdr.portal.v1.PlanService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -77,6 +79,21 @@ const (
 	// AuditServiceListAuditEventsProcedure is the fully-qualified name of the AuditService's
 	// ListAuditEvents RPC.
 	AuditServiceListAuditEventsProcedure = "/ezdr.portal.v1.AuditService/ListAuditEvents"
+	// PlanServiceListPlansProcedure is the fully-qualified name of the PlanService's ListPlans RPC.
+	PlanServiceListPlansProcedure = "/ezdr.portal.v1.PlanService/ListPlans"
+	// PlanServiceGetPlanProcedure is the fully-qualified name of the PlanService's GetPlan RPC.
+	PlanServiceGetPlanProcedure = "/ezdr.portal.v1.PlanService/GetPlan"
+	// PlanServiceCreatePlanProcedure is the fully-qualified name of the PlanService's CreatePlan RPC.
+	PlanServiceCreatePlanProcedure = "/ezdr.portal.v1.PlanService/CreatePlan"
+	// PlanServiceUpdatePlanProcedure is the fully-qualified name of the PlanService's UpdatePlan RPC.
+	PlanServiceUpdatePlanProcedure = "/ezdr.portal.v1.PlanService/UpdatePlan"
+	// PlanServiceDeletePlanProcedure is the fully-qualified name of the PlanService's DeletePlan RPC.
+	PlanServiceDeletePlanProcedure = "/ezdr.portal.v1.PlanService/DeletePlan"
+	// PlanServiceValidatePlanProcedure is the fully-qualified name of the PlanService's ValidatePlan
+	// RPC.
+	PlanServiceValidatePlanProcedure = "/ezdr.portal.v1.PlanService/ValidatePlan"
+	// PlanServiceSuggestPlanProcedure is the fully-qualified name of the PlanService's SuggestPlan RPC.
+	PlanServiceSuggestPlanProcedure = "/ezdr.portal.v1.PlanService/SuggestPlan"
 )
 
 // SetupServiceClient is a client for the ezdr.portal.v1.SetupService service.
@@ -663,4 +680,234 @@ type UnimplementedAuditServiceHandler struct{}
 
 func (UnimplementedAuditServiceHandler) ListAuditEvents(context.Context, *connect.Request[v1.ListAuditEventsRequest]) (*connect.Response[v1.ListAuditEventsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.AuditService.ListAuditEvents is not implemented"))
+}
+
+// PlanServiceClient is a client for the ezdr.portal.v1.PlanService service.
+type PlanServiceClient interface {
+	ListPlans(context.Context, *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error)
+	GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error)
+	CreatePlan(context.Context, *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error)
+	UpdatePlan(context.Context, *connect.Request[v1.UpdatePlanRequest]) (*connect.Response[v1.UpdatePlanResponse], error)
+	DeletePlan(context.Context, *connect.Request[v1.DeletePlanRequest]) (*connect.Response[v1.DeletePlanResponse], error)
+	// ValidatePlan checks a specification without saving it.
+	ValidatePlan(context.Context, *connect.Request[v1.ValidatePlanRequest]) (*connect.Response[v1.ValidatePlanResponse], error)
+	// SuggestPlan fills in missing mappings, startup order, and defaults.
+	SuggestPlan(context.Context, *connect.Request[v1.SuggestPlanRequest]) (*connect.Response[v1.SuggestPlanResponse], error)
+}
+
+// NewPlanServiceClient constructs a client for the ezdr.portal.v1.PlanService service. By default,
+// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
+// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
+// or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewPlanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) PlanServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	planServiceMethods := v1.File_ezdr_portal_v1_portal_proto.Services().ByName("PlanService").Methods()
+	return &planServiceClient{
+		listPlans: connect.NewClient[v1.ListPlansRequest, v1.ListPlansResponse](
+			httpClient,
+			baseURL+PlanServiceListPlansProcedure,
+			connect.WithSchema(planServiceMethods.ByName("ListPlans")),
+			connect.WithClientOptions(opts...),
+		),
+		getPlan: connect.NewClient[v1.GetPlanRequest, v1.GetPlanResponse](
+			httpClient,
+			baseURL+PlanServiceGetPlanProcedure,
+			connect.WithSchema(planServiceMethods.ByName("GetPlan")),
+			connect.WithClientOptions(opts...),
+		),
+		createPlan: connect.NewClient[v1.CreatePlanRequest, v1.CreatePlanResponse](
+			httpClient,
+			baseURL+PlanServiceCreatePlanProcedure,
+			connect.WithSchema(planServiceMethods.ByName("CreatePlan")),
+			connect.WithClientOptions(opts...),
+		),
+		updatePlan: connect.NewClient[v1.UpdatePlanRequest, v1.UpdatePlanResponse](
+			httpClient,
+			baseURL+PlanServiceUpdatePlanProcedure,
+			connect.WithSchema(planServiceMethods.ByName("UpdatePlan")),
+			connect.WithClientOptions(opts...),
+		),
+		deletePlan: connect.NewClient[v1.DeletePlanRequest, v1.DeletePlanResponse](
+			httpClient,
+			baseURL+PlanServiceDeletePlanProcedure,
+			connect.WithSchema(planServiceMethods.ByName("DeletePlan")),
+			connect.WithClientOptions(opts...),
+		),
+		validatePlan: connect.NewClient[v1.ValidatePlanRequest, v1.ValidatePlanResponse](
+			httpClient,
+			baseURL+PlanServiceValidatePlanProcedure,
+			connect.WithSchema(planServiceMethods.ByName("ValidatePlan")),
+			connect.WithClientOptions(opts...),
+		),
+		suggestPlan: connect.NewClient[v1.SuggestPlanRequest, v1.SuggestPlanResponse](
+			httpClient,
+			baseURL+PlanServiceSuggestPlanProcedure,
+			connect.WithSchema(planServiceMethods.ByName("SuggestPlan")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// planServiceClient implements PlanServiceClient.
+type planServiceClient struct {
+	listPlans    *connect.Client[v1.ListPlansRequest, v1.ListPlansResponse]
+	getPlan      *connect.Client[v1.GetPlanRequest, v1.GetPlanResponse]
+	createPlan   *connect.Client[v1.CreatePlanRequest, v1.CreatePlanResponse]
+	updatePlan   *connect.Client[v1.UpdatePlanRequest, v1.UpdatePlanResponse]
+	deletePlan   *connect.Client[v1.DeletePlanRequest, v1.DeletePlanResponse]
+	validatePlan *connect.Client[v1.ValidatePlanRequest, v1.ValidatePlanResponse]
+	suggestPlan  *connect.Client[v1.SuggestPlanRequest, v1.SuggestPlanResponse]
+}
+
+// ListPlans calls ezdr.portal.v1.PlanService.ListPlans.
+func (c *planServiceClient) ListPlans(ctx context.Context, req *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error) {
+	return c.listPlans.CallUnary(ctx, req)
+}
+
+// GetPlan calls ezdr.portal.v1.PlanService.GetPlan.
+func (c *planServiceClient) GetPlan(ctx context.Context, req *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error) {
+	return c.getPlan.CallUnary(ctx, req)
+}
+
+// CreatePlan calls ezdr.portal.v1.PlanService.CreatePlan.
+func (c *planServiceClient) CreatePlan(ctx context.Context, req *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error) {
+	return c.createPlan.CallUnary(ctx, req)
+}
+
+// UpdatePlan calls ezdr.portal.v1.PlanService.UpdatePlan.
+func (c *planServiceClient) UpdatePlan(ctx context.Context, req *connect.Request[v1.UpdatePlanRequest]) (*connect.Response[v1.UpdatePlanResponse], error) {
+	return c.updatePlan.CallUnary(ctx, req)
+}
+
+// DeletePlan calls ezdr.portal.v1.PlanService.DeletePlan.
+func (c *planServiceClient) DeletePlan(ctx context.Context, req *connect.Request[v1.DeletePlanRequest]) (*connect.Response[v1.DeletePlanResponse], error) {
+	return c.deletePlan.CallUnary(ctx, req)
+}
+
+// ValidatePlan calls ezdr.portal.v1.PlanService.ValidatePlan.
+func (c *planServiceClient) ValidatePlan(ctx context.Context, req *connect.Request[v1.ValidatePlanRequest]) (*connect.Response[v1.ValidatePlanResponse], error) {
+	return c.validatePlan.CallUnary(ctx, req)
+}
+
+// SuggestPlan calls ezdr.portal.v1.PlanService.SuggestPlan.
+func (c *planServiceClient) SuggestPlan(ctx context.Context, req *connect.Request[v1.SuggestPlanRequest]) (*connect.Response[v1.SuggestPlanResponse], error) {
+	return c.suggestPlan.CallUnary(ctx, req)
+}
+
+// PlanServiceHandler is an implementation of the ezdr.portal.v1.PlanService service.
+type PlanServiceHandler interface {
+	ListPlans(context.Context, *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error)
+	GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error)
+	CreatePlan(context.Context, *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error)
+	UpdatePlan(context.Context, *connect.Request[v1.UpdatePlanRequest]) (*connect.Response[v1.UpdatePlanResponse], error)
+	DeletePlan(context.Context, *connect.Request[v1.DeletePlanRequest]) (*connect.Response[v1.DeletePlanResponse], error)
+	// ValidatePlan checks a specification without saving it.
+	ValidatePlan(context.Context, *connect.Request[v1.ValidatePlanRequest]) (*connect.Response[v1.ValidatePlanResponse], error)
+	// SuggestPlan fills in missing mappings, startup order, and defaults.
+	SuggestPlan(context.Context, *connect.Request[v1.SuggestPlanRequest]) (*connect.Response[v1.SuggestPlanResponse], error)
+}
+
+// NewPlanServiceHandler builds an HTTP handler from the service implementation. It returns the path
+// on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	planServiceMethods := v1.File_ezdr_portal_v1_portal_proto.Services().ByName("PlanService").Methods()
+	planServiceListPlansHandler := connect.NewUnaryHandler(
+		PlanServiceListPlansProcedure,
+		svc.ListPlans,
+		connect.WithSchema(planServiceMethods.ByName("ListPlans")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceGetPlanHandler := connect.NewUnaryHandler(
+		PlanServiceGetPlanProcedure,
+		svc.GetPlan,
+		connect.WithSchema(planServiceMethods.ByName("GetPlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceCreatePlanHandler := connect.NewUnaryHandler(
+		PlanServiceCreatePlanProcedure,
+		svc.CreatePlan,
+		connect.WithSchema(planServiceMethods.ByName("CreatePlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceUpdatePlanHandler := connect.NewUnaryHandler(
+		PlanServiceUpdatePlanProcedure,
+		svc.UpdatePlan,
+		connect.WithSchema(planServiceMethods.ByName("UpdatePlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceDeletePlanHandler := connect.NewUnaryHandler(
+		PlanServiceDeletePlanProcedure,
+		svc.DeletePlan,
+		connect.WithSchema(planServiceMethods.ByName("DeletePlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceValidatePlanHandler := connect.NewUnaryHandler(
+		PlanServiceValidatePlanProcedure,
+		svc.ValidatePlan,
+		connect.WithSchema(planServiceMethods.ByName("ValidatePlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceSuggestPlanHandler := connect.NewUnaryHandler(
+		PlanServiceSuggestPlanProcedure,
+		svc.SuggestPlan,
+		connect.WithSchema(planServiceMethods.ByName("SuggestPlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/ezdr.portal.v1.PlanService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case PlanServiceListPlansProcedure:
+			planServiceListPlansHandler.ServeHTTP(w, r)
+		case PlanServiceGetPlanProcedure:
+			planServiceGetPlanHandler.ServeHTTP(w, r)
+		case PlanServiceCreatePlanProcedure:
+			planServiceCreatePlanHandler.ServeHTTP(w, r)
+		case PlanServiceUpdatePlanProcedure:
+			planServiceUpdatePlanHandler.ServeHTTP(w, r)
+		case PlanServiceDeletePlanProcedure:
+			planServiceDeletePlanHandler.ServeHTTP(w, r)
+		case PlanServiceValidatePlanProcedure:
+			planServiceValidatePlanHandler.ServeHTTP(w, r)
+		case PlanServiceSuggestPlanProcedure:
+			planServiceSuggestPlanHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedPlanServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedPlanServiceHandler struct{}
+
+func (UnimplementedPlanServiceHandler) ListPlans(context.Context, *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.ListPlans is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.GetPlan is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) CreatePlan(context.Context, *connect.Request[v1.CreatePlanRequest]) (*connect.Response[v1.CreatePlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.CreatePlan is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) UpdatePlan(context.Context, *connect.Request[v1.UpdatePlanRequest]) (*connect.Response[v1.UpdatePlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.UpdatePlan is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) DeletePlan(context.Context, *connect.Request[v1.DeletePlanRequest]) (*connect.Response[v1.DeletePlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.DeletePlan is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) ValidatePlan(context.Context, *connect.Request[v1.ValidatePlanRequest]) (*connect.Response[v1.ValidatePlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.ValidatePlan is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) SuggestPlan(context.Context, *connect.Request[v1.SuggestPlanRequest]) (*connect.Response[v1.SuggestPlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.SuggestPlan is not implemented"))
 }

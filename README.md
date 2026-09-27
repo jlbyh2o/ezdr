@@ -18,10 +18,10 @@ together. From the portal you can:
 
 ## Status
 
-EZDR is in early development. Phases 1 and 2 are complete: the portal,
-sign-in with TOTP, enrolling hosts over WireGuard, and host inventory with
-replication readiness. DR plans, replication, and failover are not
-implemented yet. See the [architecture document](docs/architecture.md) for
+EZDR is in early development. Phases 1–3 are complete: the portal, sign-in
+with TOTP, enrolling hosts over WireGuard, host inventory with replication
+readiness, and DR plans (guests, mappings, schedules, retention, startup
+order, and validation). Replication and failover are not implemented yet. See the [architecture document](docs/architecture.md) for
 the design and roadmap.
 
 ## Quick start

@@ -6,6 +6,7 @@ import type { User } from '@/gen/ezdr/portal/v1/portal_pb'
 
 const nav = [
   { to: '/hosts', label: 'Hosts' },
+  { to: '/plans', label: 'DR plans' },
   { to: '/tokens', label: 'Enrollment tokens' },
   { to: '/audit', label: 'Audit log' },
 ]

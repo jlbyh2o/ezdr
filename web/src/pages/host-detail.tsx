@@ -15,6 +15,7 @@ import {
   type Inventory,
   Readiness,
 } from '@/gen/ezdr/inventory/v1/inventory_pb'
+import type { GetHostInventoryResponse } from '@/gen/ezdr/portal/v1/portal_pb'
 import { errorMessage, hostClient } from '@/lib/api'
 import { formatBytes, formatRelative } from '@/lib/format'
 import { usePoll } from '@/lib/use-poll'
@@ -79,12 +80,12 @@ export function HostDetailPage() {
           </AlertDescription>
         </Alert>
       )}
-      {inv && <InventoryView inv={inv} />}
+      {inv && <InventoryView inv={inv} guestPlans={data?.guestPlans ?? {}} />}
     </>
   )
 }
 
-function InventoryView({ inv }: { inv: Inventory }) {
+function InventoryView({ inv, guestPlans }: { inv: Inventory; guestPlans: GuestPlans }) {
   const h = inv.host
   const notReady = inv.guests.filter((g) => !g.ready).length
   return (
@@ -110,7 +111,7 @@ function InventoryView({ inv }: { inv: Inventory }) {
           <TabsTrigger value="network">Network</TabsTrigger>
         </TabsList>
         <TabsContent value="guests">
-          <GuestsTable guests={inv.guests} />
+          <GuestsTable guests={inv.guests} plans={guestPlans} />
         </TabsContent>
         <TabsContent value="storage">
           <StorageView inv={inv} />
@@ -139,7 +140,9 @@ const readinessLabel: Record<Readiness, string> = {
   [Readiness.NOT_NEEDED]: 'not needed',
 }
 
-function GuestsTable({ guests }: { guests: Guest[] }) {
+type GuestPlans = GetHostInventoryResponse['guestPlans']
+
+function GuestsTable({ guests, plans }: { guests: Guest[]; plans: GuestPlans }) {
   if (guests.length === 0) return <p className="py-8 text-center text-muted-foreground">No guests on this host.</p>
   return (
     <Table>
@@ -152,6 +155,7 @@ function GuestsTable({ guests }: { guests: Guest[] }) {
           <TableHead>Disks</TableHead>
           <TableHead>Network</TableHead>
           <TableHead>Replication</TableHead>
+          <TableHead>Plan</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -200,6 +204,15 @@ function GuestsTable({ guests }: { guests: Guest[] }) {
                   <TriangleAlert className="mt-0.5 size-3 shrink-0" /> {w}
                 </div>
               ))}
+            </TableCell>
+            <TableCell className="text-xs">
+              {plans[g.vmid] ? (
+                <Link to={`/plans/${plans[g.vmid].id}`} className="hover:underline">
+                  {plans[g.vmid].name}
+                </Link>
+              ) : (
+                <span className="text-muted-foreground">unprotected</span>
+              )}
             </TableCell>
           </TableRow>
         ))}

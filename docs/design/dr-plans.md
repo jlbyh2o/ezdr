@@ -1,6 +1,6 @@
 # Design: DR plans
 
-> **Status:** Draft for phase 3. Covers what a disaster recovery (DR) plan
+> **Status:** Approved for phase 3. Covers what a disaster recovery (DR) plan
 > contains, how it is validated, and how it is built in the portal. Applying a
 > plan (zrepl configuration and replication) is phase 4. See
 > [Architecture](../architecture.md) and [Inventory](inventory.md).

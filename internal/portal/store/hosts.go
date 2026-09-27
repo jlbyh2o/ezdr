@@ -25,12 +25,15 @@ type Host struct {
 	HasInventory   bool
 	GuestCount     int
 	GuestsNotReady int
+	// PlanCount is the number of plans using the host as primary or DR host.
+	PlanCount int
 }
 
 const hostSelect = "SELECT h.id, h.hostname, h.machine_id, h.pve_version, h.client_version, " +
 	"h.wireguard_public_key, h.tunnel_address, h.enrolled_at, h.last_seen_at, " +
 	"EXISTS (SELECT 1 FROM hosts o WHERE o.machine_id = h.machine_id AND o.id != h.id), " +
-	"i.host_id IS NOT NULL, coalesce(i.guest_count, 0), coalesce(i.guests_not_ready, 0) " +
+	"i.host_id IS NOT NULL, coalesce(i.guest_count, 0), coalesce(i.guests_not_ready, 0), " +
+	"(SELECT count(*) FROM plans p WHERE p.primary_host_id = h.id OR p.dr_host_id = h.id) " +
 	"FROM hosts h LEFT JOIN host_inventory i ON i.host_id = h.id"
 
 func scanHost(row interface{ Scan(...any) error }) (Host, error) {
@@ -40,7 +43,7 @@ func scanHost(row interface{ Scan(...any) error }) (Host, error) {
 	var lastSeen sql.NullInt64
 	err := row.Scan(&h.ID, &h.Hostname, &h.MachineID, &h.PVEVersion, &h.ClientVersion,
 		&h.WireGuardPublicKey, &addr, &enrolled, &lastSeen, &h.DuplicateMachineID,
-		&h.HasInventory, &h.GuestCount, &h.GuestsNotReady)
+		&h.HasInventory, &h.GuestCount, &h.GuestsNotReady, &h.PlanCount)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return Host{}, ErrNotFound

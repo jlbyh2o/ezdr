@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package ezdr.plan.v1;
+
+// PlanSpec is a DR plan's configuration. See docs/design/dr-plans.md.
+message PlanSpec {
+  string name = 1;
+  string description = 2;
+  string primary_host_id = 3;
+  string dr_host_id = 4;
+  repeated PlanGuest guests = 5;
+  repeated StorageMapping storage_mappings = 6;
+  repeated NetworkMapping network_mappings = 7;
+  // DR bridge used for test failovers.
+  string test_bridge = 8;
+  // Snapshot interval in seconds.
+  uint32 interval_seconds = 9;
+  repeated RetentionTier primary_retention = 10;
+  repeated RetentionTier dr_retention = 11;
+  // Prefix of the snapshots this plan manages, such as "ezdr_".
+  string snapshot_prefix = 12;
+}
+
+message PlanGuest {
+  uint32 vmid = 1;
+  // Guests start in ascending order at failover; equal orders start together.
+  int32 startup_order = 2;
+  // Seconds to wait after starting this guest before starting the next.
+  uint32 startup_delay_seconds = 3;
+  repeated DnsRecord dns_records = 4;
+}
+
+enum DnsRecordType {
+  DNS_RECORD_TYPE_UNSPECIFIED = 0;
+  DNS_RECORD_TYPE_A = 1;
+  DNS_RECORD_TYPE_AAAA = 2;
+  DNS_RECORD_TYPE_CNAME = 3;
+  DNS_RECORD_TYPE_TXT = 4;
+}
+
+message DnsRecord {
+  string name = 1;
+  DnsRecordType type = 2;
+  string production_value = 3;
+  string failover_value = 4;
+}
+
+message StorageMapping {
+  // Storage ID on the primary.
+  string source_storage = 1;
+  // ZFS storage ID on the DR host.
+  string target_storage = 2;
+  // Dataset on the DR host that replicas are received under. Replicas keep
+  // their source path: <receive_dataset>/<source dataset>.
+  string receive_dataset = 3;
+}
+
+message NetworkMapping {
+  string source_bridge = 1;
+  string target_bridge = 2;
+}
+
+// RetentionTier keeps one snapshot per period for count periods (zrepl grid
+// "<count>x<period>"), or every snapshot within one period when keep_all is
+// set ("1x<period>(keep=all)").
+message RetentionTier {
+  uint32 count = 1;
+  uint32 period_seconds = 2;
+  bool keep_all = 3;
+}
+
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  SEVERITY_ERROR = 1;
+  SEVERITY_WARNING = 2;
+}
+
+// Issue is a validation result. Errors block activation.
+message Issue {
+  Severity severity = 1;
+  string message = 2;
+  // Guest the issue is about, if any.
+  uint32 vmid = 3;
+}

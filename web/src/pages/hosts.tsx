@@ -118,6 +118,11 @@ function RemoveHostButton({ host, onRemoved }: { host: Host; onRemoved: () => vo
           <AlertDialogDescription>
             The host is disconnected immediately and can no longer reach the portal. To clean up the host itself,
             run <code>ezdr unenroll</code> on it. To add it back later, enroll it again with a new token.
+            {host.planCount > 0 && (
+              <strong className="mt-2 block text-destructive">
+                {host.planCount} DR plan{host.planCount === 1 ? '' : 's'} using this host will also be deleted.
+              </strong>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -314,3 +314,83 @@ func TestInventory(t *testing.T) {
 		t.Error("inventory not removed with host")
 	}
 }
+
+func TestPlans(t *testing.T) {
+	s := openTest(t)
+	ctx := context.Background()
+	alloc := seqAlloc(netip.MustParseAddr("100.64.42.2"))
+	var hosts []Host
+	for _, id := range []string{"p1", "d1"} {
+		if _, err := s.CreateToken(ctx, Token{ID: "t" + id, SecretHash: []byte("s"), CreatedBy: "admin",
+			ExpiresAt: time.Now().Add(time.Hour)}); err != nil {
+			t.Fatal(err)
+		}
+		h, err := s.EnrollHost(ctx, "t"+id, []byte("s"), newHost(id, "m"+id), alloc)
+		if err != nil {
+			t.Fatal(err)
+		}
+		hosts = append(hosts, h)
+	}
+	primary, dr := hosts[0].ID, hosts[1].ID
+
+	a, err := s.SavePlan(ctx, Plan{Name: "A", Spec: []byte("a"), PrimaryHostID: primary, DRHostID: dr, VMIDs: []uint32{101, 102}, CreatedBy: "admin"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.ID == "" || len(a.VMIDs) != 2 {
+		t.Fatalf("plan = %+v", a)
+	}
+	// Same name (any case) is a conflict.
+	if _, err := s.SavePlan(ctx, Plan{Name: "a", Spec: []byte("x"), PrimaryHostID: primary, DRHostID: dr}); !errors.Is(err, ErrConflict) {
+		t.Errorf("duplicate name: err = %v", err)
+	}
+	// A guest can be in only one plan.
+	if _, err := s.SavePlan(ctx, Plan{Name: "B", Spec: []byte("b"), PrimaryHostID: primary, DRHostID: dr, VMIDs: []uint32{102, 103}}); !errors.Is(err, ErrGuestInOtherPlan) {
+		t.Errorf("guest in two plans: err = %v", err)
+	}
+	b, err := s.SavePlan(ctx, Plan{Name: "B", Spec: []byte("b"), PrimaryHostID: primary, DRHostID: dr, VMIDs: []uint32{103}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Updating a plan replaces its guests; freed guests can move plans.
+	a.VMIDs = []uint32{101}
+	if _, err := s.SavePlan(ctx, a); err != nil {
+		t.Fatal(err)
+	}
+	b.VMIDs = []uint32{102, 103}
+	if _, err := s.SavePlan(ctx, b); err != nil {
+		t.Fatalf("moving a freed guest: %v", err)
+	}
+	gp, _ := s.GuestPlans(ctx, primary)
+	if gp[101] != a.ID || gp[102] != b.ID || gp[103] != b.ID {
+		t.Errorf("guest plans = %v", gp)
+	}
+	if _, err := s.SavePlan(ctx, Plan{ID: "missing", Name: "C", Spec: []byte("c"), PrimaryHostID: primary, DRHostID: dr}); !errors.Is(err, ErrNotFound) {
+		t.Errorf("updating a missing plan: err = %v", err)
+	}
+	if _, err := s.SavePlan(ctx, Plan{Name: "C", Spec: []byte("c"), PrimaryHostID: "nope", DRHostID: dr}); !errors.Is(err, ErrNotFound) {
+		t.Errorf("unknown host: err = %v", err)
+	}
+
+	hs, _ := s.ListHosts(ctx)
+	for _, h := range hs {
+		if h.PlanCount != 2 {
+			t.Errorf("host %s plan count = %d, want 2", h.ID, h.PlanCount)
+		}
+	}
+	plans, _ := s.ListPlans(ctx)
+	if len(plans) != 2 || plans[0].Name != "A" {
+		t.Errorf("plans = %+v", plans)
+	}
+
+	// Removing a host removes its plans and their guests.
+	if err := s.DeleteHost(ctx, primary); err != nil {
+		t.Fatal(err)
+	}
+	if plans, _ := s.ListPlans(ctx); len(plans) != 0 {
+		t.Errorf("plans not removed with host: %+v", plans)
+	}
+	if gp, _ := s.GuestPlans(ctx, primary); len(gp) != 0 {
+		t.Errorf("plan guests not removed: %v", gp)
+	}
+}

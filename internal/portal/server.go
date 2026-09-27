@@ -53,6 +53,9 @@ func PublicHandler(d *api.Deps, ui fs.FS) http.Handler {
 		func() (string, http.Handler) {
 			return portalv1connect.NewAuditServiceHandler(api.AuditService{Deps: d}, userAPI)
 		},
+		func() (string, http.Handler) {
+			return portalv1connect.NewPlanServiceHandler(api.PlanService{Deps: d}, userAPI)
+		},
 	} {
 		p, h := register()
 		mux.Handle(p, api.WithSameOrigin(api.WithSession(d.Store, h)))
