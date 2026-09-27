@@ -12,6 +12,7 @@ and managing disaster recovery between Proxmox VE hosts that use ZFS storage.
 | [Enrollment and control plane](design/enrollment.md) | Design for host enrollment, client identity, the client API, and user sign-in (phase 1). |
 | [Inventory](design/inventory.md) | Design for collecting and reporting host inventory and replication readiness (phase 2). |
 | [DR plans](design/dr-plans.md) | Design for DR plans: guests, mappings, schedule, retention, startup order, DNS records, and validation (phase 3). |
+| [Replication](design/replication.md) | Design for activating plans, zrepl configuration, network paths, zrepl takeover, status, and alerts (phase 4). |
 | [Test lab](development/test-lab.md) | Recommended nested Proxmox VE lab for development and testing. |
 
 See also [CONTRIBUTING.md](../CONTRIBUTING.md) for development setup and
