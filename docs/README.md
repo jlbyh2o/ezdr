@@ -11,6 +11,7 @@ and managing disaster recovery between Proxmox VE hosts that use ZFS storage.
 | [Architecture](architecture.md) | High-level design: components, data flows, security model, and roadmap. |
 | [Enrollment and control plane](design/enrollment.md) | Design for host enrollment, client identity, the client API, and user sign-in (phase 1). |
 | [Inventory](design/inventory.md) | Design for collecting and reporting host inventory and replication readiness (phase 2). |
+| [DR plans](design/dr-plans.md) | Design for DR plans: guests, mappings, schedule, retention, startup order, DNS records, and validation (phase 3). |
 | [Test lab](development/test-lab.md) | Recommended nested Proxmox VE lab for development and testing. |
 
 See also [CONTRIBUTING.md](../CONTRIBUTING.md) for development setup and
