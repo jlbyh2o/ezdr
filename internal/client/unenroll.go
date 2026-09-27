@@ -8,6 +8,8 @@ import (
 	"os"
 
 	"github.com/jlbyh2o/ezdr/internal/client/pve"
+	"github.com/jlbyh2o/ezdr/internal/client/zrepl"
+	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
 )
 
 // Unenroll removes EZDR's service, interface, and configuration from this
@@ -20,6 +22,7 @@ func Unenroll(ctx context.Context, out io.Writer) error {
 		return err
 	}
 	fmt.Fprintln(out, "Removed the EZDR service, the "+InterfaceName+" interface, the "+pve.User+" API user, and "+ConfigDir+".")
+	fmt.Fprintln(out, "EZDR's zrepl jobs were removed; zrepl, replicas, and snapshots were left in place.")
 	fmt.Fprintln(out, "Remove this host in the portal as well, if you haven't already.")
 	return nil
 }
@@ -35,6 +38,10 @@ func removeLocal(ctx context.Context) error {
 	}
 	if err := DeleteInterface(); err != nil {
 		return fmt.Errorf("remove %s: %w", InterfaceName, err)
+	}
+	// Remove EZDR's zrepl jobs. zrepl itself, replicas, and snapshots stay.
+	if err := zrepl.NewApplier().Apply(ctx, &clientv1.Zrepl{}); err != nil {
+		return fmt.Errorf("remove EZDR's zrepl jobs: %w", err)
 	}
 	if err := pve.RemoveToken(ctx); err != nil {
 		return fmt.Errorf("remove Proxmox VE API user %s: %w", pve.User, err)

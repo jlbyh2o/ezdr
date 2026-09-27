@@ -63,10 +63,11 @@ func (s ClientService) Subscribe(ctx context.Context, req *connect.Request[clien
 	}
 	touch()
 
-	// Phase 1 has no configuration to apply yet; later phases fill this in.
-	desired := &clientv1.SubscribeResponse{Message: &clientv1.SubscribeResponse_DesiredState{
-		DesiredState: &clientv1.DesiredState{Generation: 1},
-	}}
+	ds, err := s.desiredState(ctx, h.ID)
+	if err != nil {
+		return internalError(err)
+	}
+	desired := &clientv1.SubscribeResponse{Message: &clientv1.SubscribeResponse_DesiredState{DesiredState: ds}}
 	if err := stream.Send(desired); err != nil {
 		return err
 	}
@@ -93,10 +94,32 @@ func (s ClientService) Subscribe(ctx context.Context, req *connect.Request[clien
 	}
 }
 
-// ReportStatus records a host's status.
+// ReportStatus records a host's status: what it applied and its zrepl
+// certificate. A new certificate is passed on to the host's peers.
 func (s ClientService) ReportStatus(ctx context.Context, req *connect.Request[clientv1.ReportStatusRequest]) (*connect.Response[clientv1.ReportStatusResponse], error) {
-	if err := s.Store.TouchHost(ctx, hostFrom(ctx).ID, req.Msg.ClientVersion); err != nil {
+	h := hostFrom(ctx)
+	m := req.Msg
+	if err := s.Store.TouchHost(ctx, h.ID, m.ClientVersion); err != nil {
 		return nil, internalError(err)
+	}
+	if len(m.ZreplCertificate) > 16<<10 || len(m.ApplyError) > 4<<10 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("status fields are too large"))
+	}
+	if err := s.Store.SetHostApplied(ctx, h.ID, m.AppliedGeneration, m.ApplyError); err != nil {
+		return nil, internalError(err)
+	}
+	if m.ApplyError != "" {
+		slog.Warn("host failed to apply configuration", "host", h.Hostname, "generation", m.AppliedGeneration, "err", m.ApplyError)
+	}
+	if m.ZreplCertificate != "" {
+		changed, err := s.Store.SetHostZrepl(ctx, h.ID, m.ZreplCertificate, m.ZreplVersion)
+		if err != nil {
+			return nil, internalError(err)
+		}
+		if changed {
+			slog.Info("host zrepl certificate updated", "host", h.Hostname)
+			s.reconcile(context.WithoutCancel(ctx), s.relatedHosts(ctx, h.ID)...)
+		}
 	}
 	return connect.NewResponse(&clientv1.ReportStatusResponse{}), nil
 }
@@ -126,6 +149,8 @@ func (s ClientService) ReportInventory(ctx context.Context, req *connect.Request
 	if changed {
 		slog.Info("inventory updated", "host", h.Hostname, "guests", len(inv.GetGuests()),
 			"not_ready", inventory.NotReady(inv), "warnings", len(inv.GetWarnings()))
+		// A primary's disks decide which datasets its plans replicate.
+		s.reconcile(context.WithoutCancel(ctx), s.relatedHosts(ctx, h.ID)...)
 	}
 	return connect.NewResponse(&clientv1.ReportInventoryResponse{}), nil
 }

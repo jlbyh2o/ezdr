@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
@@ -27,13 +28,20 @@ type Host struct {
 	GuestsNotReady int
 	// PlanCount is the number of plans using the host as primary or DR host.
 	PlanCount int
+	// zrepl state.
+	ZreplCertificate  string
+	ZreplVersion      string
+	DesiredGeneration uint64
+	AppliedGeneration uint64
+	ApplyError        string
 }
 
 const hostSelect = "SELECT h.id, h.hostname, h.machine_id, h.pve_version, h.client_version, " +
 	"h.wireguard_public_key, h.tunnel_address, h.enrolled_at, h.last_seen_at, " +
 	"EXISTS (SELECT 1 FROM hosts o WHERE o.machine_id = h.machine_id AND o.id != h.id), " +
 	"i.host_id IS NOT NULL, coalesce(i.guest_count, 0), coalesce(i.guests_not_ready, 0), " +
-	"(SELECT count(*) FROM plans p WHERE p.primary_host_id = h.id OR p.dr_host_id = h.id) " +
+	"(SELECT count(*) FROM plans p WHERE p.primary_host_id = h.id OR p.dr_host_id = h.id), " +
+	"h.zrepl_certificate, h.zrepl_version, h.desired_generation, h.applied_generation, h.apply_error " +
 	"FROM hosts h LEFT JOIN host_inventory i ON i.host_id = h.id"
 
 func scanHost(row interface{ Scan(...any) error }) (Host, error) {
@@ -43,7 +51,8 @@ func scanHost(row interface{ Scan(...any) error }) (Host, error) {
 	var lastSeen sql.NullInt64
 	err := row.Scan(&h.ID, &h.Hostname, &h.MachineID, &h.PVEVersion, &h.ClientVersion,
 		&h.WireGuardPublicKey, &addr, &enrolled, &lastSeen, &h.DuplicateMachineID,
-		&h.HasInventory, &h.GuestCount, &h.GuestsNotReady, &h.PlanCount)
+		&h.HasInventory, &h.GuestCount, &h.GuestsNotReady, &h.PlanCount,
+		&h.ZreplCertificate, &h.ZreplVersion, &h.DesiredGeneration, &h.AppliedGeneration, &h.ApplyError)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return Host{}, ErrNotFound
@@ -104,4 +113,50 @@ func (s *Store) DeleteHost(ctx context.Context, id string) error {
 		return ErrNotFound
 	}
 	return nil
+}
+
+// SetHostZrepl records a host's zrepl certificate and version. It reports
+// whether the certificate changed.
+func (s *Store) SetHostZrepl(ctx context.Context, id, certificate, version string) (bool, error) {
+	res, err := s.db.ExecContext(ctx,
+		"UPDATE hosts SET zrepl_certificate = ?, zrepl_version = ? WHERE id = ? AND zrepl_certificate != ?",
+		certificate, version, id, certificate)
+	if err != nil {
+		return false, err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		_, err = s.db.ExecContext(ctx, "UPDATE hosts SET zrepl_version = ? WHERE id = ?", version, id)
+	}
+	return n > 0, err
+}
+
+// SetHostApplied records the newest desired state generation a host handled.
+func (s *Store) SetHostApplied(ctx context.Context, id string, generation uint64, applyError string) error {
+	_, err := s.db.ExecContext(ctx,
+		"UPDATE hosts SET applied_generation = ?, apply_error = ? WHERE id = ?", generation, applyError, id)
+	return err
+}
+
+// SetDesiredHash stores the hash of a host's desired state, bumping its
+// generation when the hash changed. It returns the current generation.
+func (s *Store) SetDesiredHash(ctx context.Context, id string, hash []byte) (uint64, error) {
+	var gen uint64
+	err := s.tx(ctx, func(tx *sql.Tx) error {
+		var old []byte
+		if err := tx.QueryRowContext(ctx, "SELECT desired_generation, desired_hash FROM hosts WHERE id = ?", id).
+			Scan(&gen, &old); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return ErrNotFound
+			}
+			return err
+		}
+		if bytes.Equal(old, hash) {
+			return nil
+		}
+		gen++
+		_, err := tx.ExecContext(ctx, "UPDATE hosts SET desired_generation = ?, desired_hash = ? WHERE id = ?", gen, hash, id)
+		return err
+	})
+	return gen, err
 }

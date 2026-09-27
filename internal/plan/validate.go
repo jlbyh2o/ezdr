@@ -28,7 +28,10 @@ type Context struct {
 	// OtherPlans maps the primary's VMIDs protected by other plans to those
 	// plans' names.
 	OtherPlans map[uint32]string
-	Now        time.Time
+	// UsedPorts maps zrepl ports used on the primary by other plans to those
+	// plans' names.
+	UsedPorts map[uint32]string
+	Now       time.Time
 }
 
 // Validation thresholds.
@@ -80,6 +83,7 @@ func Validate(spec *planv1.PlanSpec, ctx Context) []*planv1.Issue {
 	usedStorage, usedBridges := used(spec, guests)
 	validateStorage(spec, usedStorage, primary, dr, guests, &is)
 	validateNetwork(spec, usedBridges, dr, guests, &is)
+	validateReplicationNetwork(spec, primary, ctx, &is)
 
 	var unprotected []string
 	for _, g := range primary.Guests {
@@ -347,4 +351,37 @@ func Counts(is []*planv1.Issue) (errs, warns int) {
 		}
 	}
 	return errs, warns
+}
+
+var hostPattern = regexp.MustCompile(`^[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$`)
+
+func validateReplicationNetwork(spec *planv1.PlanSpec, primary *inventoryv1.Inventory, ctx Context, is *issues) {
+	switch n := spec.GetNetwork().GetPath().(type) {
+	case *planv1.ReplicationNetwork_Existing:
+		addr := n.Existing.GetPrimaryAddress()
+		if _, err := netip.ParseAddr(addr); err != nil && !hostPattern.MatchString(addr) {
+			is.errorf(0, "enter the primary's address as seen from the DR host (an IP address or DNS name)")
+		}
+	case *planv1.ReplicationNetwork_Tunnel:
+		is.errorf(0, "EZDR tunnels aren't available yet; use an existing network for now")
+		return
+	default:
+		is.errorf(0, "choose how the DR host reaches the primary")
+		return
+	}
+	groups := JobGroups(spec, primary)
+	base := BasePort(spec)
+	if base < 1024 || int(base)+len(groups) > 65535 {
+		is.errorf(0, "the zrepl port must be between 1024 and 65535")
+		return
+	}
+	for _, g := range groups {
+		if other := ctx.UsedPorts[g.Port]; other != "" {
+			is.errorf(0, "zrepl port %d on the primary is already used by plan %q", g.Port, other)
+		}
+	}
+	if len(groups) > 1 {
+		is.warnf(0, "this plan uses %d zrepl ports on the primary (%d-%d): one per storage mapping and encryption kind",
+			len(groups), base, base+uint32(len(groups))-1) //nolint:gosec // few groups
+	}
 }

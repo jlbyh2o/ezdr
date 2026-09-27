@@ -11,6 +11,13 @@ import (
 // another plan already protects.
 var ErrGuestInOtherPlan = errors.New("a guest in this plan is already protected by another plan")
 
+// Plan states.
+const (
+	PlanDraft  = "draft"
+	PlanActive = "active"
+	PlanPaused = "paused"
+)
+
 // Plan is a stored DR plan.
 type Plan struct {
 	ID string
@@ -23,6 +30,10 @@ type Plan struct {
 	CreatedBy     string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
+	State         string
+	// AppliedSpec is the specification applied to the hosts; nil for drafts.
+	AppliedSpec []byte
+	AppliedAt   time.Time
 }
 
 // SavePlan creates or replaces a plan. Name, PrimaryHostID, DRHostID, VMIDs,
@@ -82,7 +93,8 @@ func planError(err error) error {
 	return err
 }
 
-const planSelect = "SELECT id, name, spec, primary_host_id, dr_host_id, created_by, created_at, updated_at FROM plans"
+const planSelect = "SELECT id, name, spec, primary_host_id, dr_host_id, created_by, created_at, updated_at, " +
+	"state, applied_spec, applied_at FROM plans"
 
 func (s *Store) scanPlans(ctx context.Context, rows *sql.Rows) ([]Plan, error) {
 	defer func() { _ = rows.Close() }()
@@ -90,10 +102,12 @@ func (s *Store) scanPlans(ctx context.Context, rows *sql.Rows) ([]Plan, error) {
 	for rows.Next() {
 		var p Plan
 		var created, updated int64
-		if err := rows.Scan(&p.ID, &p.Name, &p.Spec, &p.PrimaryHostID, &p.DRHostID, &p.CreatedBy, &created, &updated); err != nil {
+		var applied sql.NullInt64
+		if err := rows.Scan(&p.ID, &p.Name, &p.Spec, &p.PrimaryHostID, &p.DRHostID, &p.CreatedBy, &created, &updated,
+			&p.State, &p.AppliedSpec, &applied); err != nil {
 			return nil, err
 		}
-		p.CreatedAt, p.UpdatedAt = fromMillis(created), fromMillis(updated)
+		p.CreatedAt, p.UpdatedAt, p.AppliedAt = fromMillis(created), fromMillis(updated), nullableTime(applied)
 		plans = append(plans, p)
 	}
 	if err := rows.Err(); err != nil {
@@ -181,4 +195,22 @@ func (s *Store) GuestPlans(ctx context.Context, primaryHostID string) (map[uint3
 		m[id] = plan
 	}
 	return m, rows.Err()
+}
+
+// SetPlanState sets a plan's state and applied specification. A nil applied
+// specification clears it (for drafts).
+func (s *Store) SetPlanState(ctx context.Context, id, state string, applied []byte) error {
+	var appliedAt any
+	if applied != nil {
+		appliedAt = toMillis(s.now())
+	}
+	res, err := s.db.ExecContext(ctx,
+		"UPDATE plans SET state = ?, applied_spec = ?, applied_at = ? WHERE id = ?", state, applied, appliedAt, id)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return nil
 }

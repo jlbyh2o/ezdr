@@ -24,6 +24,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type PlanState int32
+
+const (
+	PlanState_PLAN_STATE_UNSPECIFIED PlanState = 0
+	PlanState_PLAN_STATE_DRAFT       PlanState = 1
+	PlanState_PLAN_STATE_ACTIVE      PlanState = 2
+	PlanState_PLAN_STATE_PAUSED      PlanState = 3
+)
+
+// Enum value maps for PlanState.
+var (
+	PlanState_name = map[int32]string{
+		0: "PLAN_STATE_UNSPECIFIED",
+		1: "PLAN_STATE_DRAFT",
+		2: "PLAN_STATE_ACTIVE",
+		3: "PLAN_STATE_PAUSED",
+	}
+	PlanState_value = map[string]int32{
+		"PLAN_STATE_UNSPECIFIED": 0,
+		"PLAN_STATE_DRAFT":       1,
+		"PLAN_STATE_ACTIVE":      2,
+		"PLAN_STATE_PAUSED":      3,
+	}
+)
+
+func (x PlanState) Enum() *PlanState {
+	p := new(PlanState)
+	*p = x
+	return p
+}
+
+func (x PlanState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PlanState) Descriptor() protoreflect.EnumDescriptor {
+	return file_ezdr_portal_v1_portal_proto_enumTypes[0].Descriptor()
+}
+
+func (PlanState) Type() protoreflect.EnumType {
+	return &file_ezdr_portal_v1_portal_proto_enumTypes[0]
+}
+
+func (x PlanState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PlanState.Descriptor instead.
+func (PlanState) EnumDescriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{0}
+}
+
 type GetSetupStatusRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1796,20 +1848,713 @@ func (x *AuditEvent) GetDetail() string {
 	return ""
 }
 
-type Plan struct {
+type HostChanges struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	HostId        string                 `protobuf:"bytes,1,opt,name=host_id,json=hostId,proto3" json:"host_id,omitempty"`
+	Hostname      string                 `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	Changes       []string               `protobuf:"bytes,3,rep,name=changes,proto3" json:"changes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HostChanges) Reset() {
+	*x = HostChanges{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HostChanges) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HostChanges) ProtoMessage() {}
+
+func (x *HostChanges) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HostChanges.ProtoReflect.Descriptor instead.
+func (*HostChanges) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *HostChanges) GetHostId() string {
+	if x != nil {
+		return x.HostId
+	}
+	return ""
+}
+
+func (x *HostChanges) GetHostname() string {
+	if x != nil {
+		return x.Hostname
+	}
+	return ""
+}
+
+func (x *HostChanges) GetChanges() []string {
+	if x != nil {
+		return x.Changes
+	}
+	return nil
+}
+
+type PreviewPlanChangesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Spec          *v11.PlanSpec          `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
-	CreatedBy     string                 `protobuf:"bytes,3,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewPlanChangesRequest) Reset() {
+	*x = PreviewPlanChangesRequest{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewPlanChangesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewPlanChangesRequest) ProtoMessage() {}
+
+func (x *PreviewPlanChangesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewPlanChangesRequest.ProtoReflect.Descriptor instead.
+func (*PreviewPlanChangesRequest) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *PreviewPlanChangesRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type PreviewPlanChangesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Hosts         []*HostChanges         `protobuf:"bytes,1,rep,name=hosts,proto3" json:"hosts,omitempty"`
+	Issues        []*v11.Issue           `protobuf:"bytes,2,rep,name=issues,proto3" json:"issues,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewPlanChangesResponse) Reset() {
+	*x = PreviewPlanChangesResponse{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewPlanChangesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewPlanChangesResponse) ProtoMessage() {}
+
+func (x *PreviewPlanChangesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewPlanChangesResponse.ProtoReflect.Descriptor instead.
+func (*PreviewPlanChangesResponse) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *PreviewPlanChangesResponse) GetHosts() []*HostChanges {
+	if x != nil {
+		return x.Hosts
+	}
+	return nil
+}
+
+func (x *PreviewPlanChangesResponse) GetIssues() []*v11.Issue {
+	if x != nil {
+		return x.Issues
+	}
+	return nil
+}
+
+type ActivatePlanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ActivatePlanRequest) Reset() {
+	*x = ActivatePlanRequest{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ActivatePlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActivatePlanRequest) ProtoMessage() {}
+
+func (x *ActivatePlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActivatePlanRequest.ProtoReflect.Descriptor instead.
+func (*ActivatePlanRequest) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *ActivatePlanRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type ActivatePlanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *Plan                  `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ActivatePlanResponse) Reset() {
+	*x = ActivatePlanResponse{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ActivatePlanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActivatePlanResponse) ProtoMessage() {}
+
+func (x *ActivatePlanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActivatePlanResponse.ProtoReflect.Descriptor instead.
+func (*ActivatePlanResponse) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *ActivatePlanResponse) GetPlan() *Plan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+type ApplyPlanChangesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApplyPlanChangesRequest) Reset() {
+	*x = ApplyPlanChangesRequest{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApplyPlanChangesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyPlanChangesRequest) ProtoMessage() {}
+
+func (x *ApplyPlanChangesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyPlanChangesRequest.ProtoReflect.Descriptor instead.
+func (*ApplyPlanChangesRequest) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *ApplyPlanChangesRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type ApplyPlanChangesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *Plan                  `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApplyPlanChangesResponse) Reset() {
+	*x = ApplyPlanChangesResponse{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApplyPlanChangesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyPlanChangesResponse) ProtoMessage() {}
+
+func (x *ApplyPlanChangesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyPlanChangesResponse.ProtoReflect.Descriptor instead.
+func (*ApplyPlanChangesResponse) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *ApplyPlanChangesResponse) GetPlan() *Plan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+type DiscardPlanChangesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DiscardPlanChangesRequest) Reset() {
+	*x = DiscardPlanChangesRequest{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DiscardPlanChangesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DiscardPlanChangesRequest) ProtoMessage() {}
+
+func (x *DiscardPlanChangesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DiscardPlanChangesRequest.ProtoReflect.Descriptor instead.
+func (*DiscardPlanChangesRequest) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *DiscardPlanChangesRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DiscardPlanChangesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *Plan                  `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DiscardPlanChangesResponse) Reset() {
+	*x = DiscardPlanChangesResponse{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DiscardPlanChangesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DiscardPlanChangesResponse) ProtoMessage() {}
+
+func (x *DiscardPlanChangesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DiscardPlanChangesResponse.ProtoReflect.Descriptor instead.
+func (*DiscardPlanChangesResponse) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *DiscardPlanChangesResponse) GetPlan() *Plan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+type PausePlanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PausePlanRequest) Reset() {
+	*x = PausePlanRequest{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PausePlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PausePlanRequest) ProtoMessage() {}
+
+func (x *PausePlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PausePlanRequest.ProtoReflect.Descriptor instead.
+func (*PausePlanRequest) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *PausePlanRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type PausePlanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *Plan                  `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PausePlanResponse) Reset() {
+	*x = PausePlanResponse{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PausePlanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PausePlanResponse) ProtoMessage() {}
+
+func (x *PausePlanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PausePlanResponse.ProtoReflect.Descriptor instead.
+func (*PausePlanResponse) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *PausePlanResponse) GetPlan() *Plan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+type ResumePlanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResumePlanRequest) Reset() {
+	*x = ResumePlanRequest{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResumePlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResumePlanRequest) ProtoMessage() {}
+
+func (x *ResumePlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResumePlanRequest.ProtoReflect.Descriptor instead.
+func (*ResumePlanRequest) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *ResumePlanRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type ResumePlanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *Plan                  `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResumePlanResponse) Reset() {
+	*x = ResumePlanResponse{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResumePlanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResumePlanResponse) ProtoMessage() {}
+
+func (x *ResumePlanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResumePlanResponse.ProtoReflect.Descriptor instead.
+func (*ResumePlanResponse) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *ResumePlanResponse) GetPlan() *Plan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+type DeactivatePlanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeactivatePlanRequest) Reset() {
+	*x = DeactivatePlanRequest{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeactivatePlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeactivatePlanRequest) ProtoMessage() {}
+
+func (x *DeactivatePlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeactivatePlanRequest.ProtoReflect.Descriptor instead.
+func (*DeactivatePlanRequest) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *DeactivatePlanRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DeactivatePlanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *Plan                  `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeactivatePlanResponse) Reset() {
+	*x = DeactivatePlanResponse{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeactivatePlanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeactivatePlanResponse) ProtoMessage() {}
+
+func (x *DeactivatePlanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeactivatePlanResponse.ProtoReflect.Descriptor instead.
+func (*DeactivatePlanResponse) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *DeactivatePlanResponse) GetPlan() *Plan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+type Plan struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// The editing specification.
+	Spec      *v11.PlanSpec          `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
+	CreatedBy string                 `protobuf:"bytes,3,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	State     PlanState              `protobuf:"varint,6,opt,name=state,proto3,enum=ezdr.portal.v1.PlanState" json:"state,omitempty"`
+	// The specification applied to the hosts; unset for drafts.
+	AppliedSpec *v11.PlanSpec          `protobuf:"bytes,7,opt,name=applied_spec,json=appliedSpec,proto3" json:"applied_spec,omitempty"`
+	AppliedAt   *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=applied_at,json=appliedAt,proto3" json:"applied_at,omitempty"`
+	// True when an active or paused plan has edits not yet applied.
+	PendingChanges bool `protobuf:"varint,9,opt,name=pending_changes,json=pendingChanges,proto3" json:"pending_changes,omitempty"`
+	// Per-host progress applying the plan's configuration.
+	Hosts         []*HostApplyStatus `protobuf:"bytes,10,rep,name=hosts,proto3" json:"hosts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Plan) Reset() {
 	*x = Plan{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[34]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1821,7 +2566,7 @@ func (x *Plan) String() string {
 func (*Plan) ProtoMessage() {}
 
 func (x *Plan) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[34]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1834,7 +2579,7 @@ func (x *Plan) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Plan.ProtoReflect.Descriptor instead.
 func (*Plan) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{34}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *Plan) GetId() string {
@@ -1872,6 +2617,134 @@ func (x *Plan) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Plan) GetState() PlanState {
+	if x != nil {
+		return x.State
+	}
+	return PlanState_PLAN_STATE_UNSPECIFIED
+}
+
+func (x *Plan) GetAppliedSpec() *v11.PlanSpec {
+	if x != nil {
+		return x.AppliedSpec
+	}
+	return nil
+}
+
+func (x *Plan) GetAppliedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.AppliedAt
+	}
+	return nil
+}
+
+func (x *Plan) GetPendingChanges() bool {
+	if x != nil {
+		return x.PendingChanges
+	}
+	return false
+}
+
+func (x *Plan) GetHosts() []*HostApplyStatus {
+	if x != nil {
+		return x.Hosts
+	}
+	return nil
+}
+
+type HostApplyStatus struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	HostId   string                 `protobuf:"bytes,1,opt,name=host_id,json=hostId,proto3" json:"host_id,omitempty"`
+	Hostname string                 `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	Online   bool                   `protobuf:"varint,3,opt,name=online,proto3" json:"online,omitempty"`
+	// True once the host has applied its latest configuration.
+	Applied        bool   `protobuf:"varint,4,opt,name=applied,proto3" json:"applied,omitempty"`
+	ApplyError     string `protobuf:"bytes,5,opt,name=apply_error,json=applyError,proto3" json:"apply_error,omitempty"`
+	ZreplVersion   string `protobuf:"bytes,6,opt,name=zrepl_version,json=zreplVersion,proto3" json:"zrepl_version,omitempty"`
+	HasCertificate bool   `protobuf:"varint,7,opt,name=has_certificate,json=hasCertificate,proto3" json:"has_certificate,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *HostApplyStatus) Reset() {
+	*x = HostApplyStatus{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[50]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HostApplyStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HostApplyStatus) ProtoMessage() {}
+
+func (x *HostApplyStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[50]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HostApplyStatus.ProtoReflect.Descriptor instead.
+func (*HostApplyStatus) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{50}
+}
+
+func (x *HostApplyStatus) GetHostId() string {
+	if x != nil {
+		return x.HostId
+	}
+	return ""
+}
+
+func (x *HostApplyStatus) GetHostname() string {
+	if x != nil {
+		return x.Hostname
+	}
+	return ""
+}
+
+func (x *HostApplyStatus) GetOnline() bool {
+	if x != nil {
+		return x.Online
+	}
+	return false
+}
+
+func (x *HostApplyStatus) GetApplied() bool {
+	if x != nil {
+		return x.Applied
+	}
+	return false
+}
+
+func (x *HostApplyStatus) GetApplyError() string {
+	if x != nil {
+		return x.ApplyError
+	}
+	return ""
+}
+
+func (x *HostApplyStatus) GetZreplVersion() string {
+	if x != nil {
+		return x.ZreplVersion
+	}
+	return ""
+}
+
+func (x *HostApplyStatus) GetHasCertificate() bool {
+	if x != nil {
+		return x.HasCertificate
+	}
+	return false
+}
+
 type PlanSummary struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -1882,13 +2755,15 @@ type PlanSummary struct {
 	IntervalSeconds uint32                 `protobuf:"varint,6,opt,name=interval_seconds,json=intervalSeconds,proto3" json:"interval_seconds,omitempty"`
 	ErrorCount      uint32                 `protobuf:"varint,7,opt,name=error_count,json=errorCount,proto3" json:"error_count,omitempty"`
 	WarningCount    uint32                 `protobuf:"varint,8,opt,name=warning_count,json=warningCount,proto3" json:"warning_count,omitempty"`
+	State           PlanState              `protobuf:"varint,9,opt,name=state,proto3,enum=ezdr.portal.v1.PlanState" json:"state,omitempty"`
+	PendingChanges  bool                   `protobuf:"varint,10,opt,name=pending_changes,json=pendingChanges,proto3" json:"pending_changes,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
 func (x *PlanSummary) Reset() {
 	*x = PlanSummary{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[35]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1900,7 +2775,7 @@ func (x *PlanSummary) String() string {
 func (*PlanSummary) ProtoMessage() {}
 
 func (x *PlanSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[35]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1913,7 +2788,7 @@ func (x *PlanSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanSummary.ProtoReflect.Descriptor instead.
 func (*PlanSummary) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{35}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *PlanSummary) GetId() string {
@@ -1972,6 +2847,20 @@ func (x *PlanSummary) GetWarningCount() uint32 {
 	return 0
 }
 
+func (x *PlanSummary) GetState() PlanState {
+	if x != nil {
+		return x.State
+	}
+	return PlanState_PLAN_STATE_UNSPECIFIED
+}
+
+func (x *PlanSummary) GetPendingChanges() bool {
+	if x != nil {
+		return x.PendingChanges
+	}
+	return false
+}
+
 type ListPlansRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1980,7 +2869,7 @@ type ListPlansRequest struct {
 
 func (x *ListPlansRequest) Reset() {
 	*x = ListPlansRequest{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[36]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1992,7 +2881,7 @@ func (x *ListPlansRequest) String() string {
 func (*ListPlansRequest) ProtoMessage() {}
 
 func (x *ListPlansRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[36]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2005,7 +2894,7 @@ func (x *ListPlansRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlansRequest.ProtoReflect.Descriptor instead.
 func (*ListPlansRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{36}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{52}
 }
 
 type ListPlansResponse struct {
@@ -2017,7 +2906,7 @@ type ListPlansResponse struct {
 
 func (x *ListPlansResponse) Reset() {
 	*x = ListPlansResponse{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[37]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2029,7 +2918,7 @@ func (x *ListPlansResponse) String() string {
 func (*ListPlansResponse) ProtoMessage() {}
 
 func (x *ListPlansResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[37]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2042,7 +2931,7 @@ func (x *ListPlansResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlansResponse.ProtoReflect.Descriptor instead.
 func (*ListPlansResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{37}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *ListPlansResponse) GetPlans() []*PlanSummary {
@@ -2061,7 +2950,7 @@ type GetPlanRequest struct {
 
 func (x *GetPlanRequest) Reset() {
 	*x = GetPlanRequest{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[38]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2073,7 +2962,7 @@ func (x *GetPlanRequest) String() string {
 func (*GetPlanRequest) ProtoMessage() {}
 
 func (x *GetPlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[38]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2086,7 +2975,7 @@ func (x *GetPlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanRequest.ProtoReflect.Descriptor instead.
 func (*GetPlanRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{38}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *GetPlanRequest) GetId() string {
@@ -2106,7 +2995,7 @@ type GetPlanResponse struct {
 
 func (x *GetPlanResponse) Reset() {
 	*x = GetPlanResponse{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[39]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2118,7 +3007,7 @@ func (x *GetPlanResponse) String() string {
 func (*GetPlanResponse) ProtoMessage() {}
 
 func (x *GetPlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[39]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2131,7 +3020,7 @@ func (x *GetPlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanResponse.ProtoReflect.Descriptor instead.
 func (*GetPlanResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{39}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *GetPlanResponse) GetPlan() *Plan {
@@ -2157,7 +3046,7 @@ type CreatePlanRequest struct {
 
 func (x *CreatePlanRequest) Reset() {
 	*x = CreatePlanRequest{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[40]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2169,7 +3058,7 @@ func (x *CreatePlanRequest) String() string {
 func (*CreatePlanRequest) ProtoMessage() {}
 
 func (x *CreatePlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[40]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2182,7 +3071,7 @@ func (x *CreatePlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePlanRequest.ProtoReflect.Descriptor instead.
 func (*CreatePlanRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{40}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *CreatePlanRequest) GetSpec() *v11.PlanSpec {
@@ -2202,7 +3091,7 @@ type CreatePlanResponse struct {
 
 func (x *CreatePlanResponse) Reset() {
 	*x = CreatePlanResponse{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[41]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2214,7 +3103,7 @@ func (x *CreatePlanResponse) String() string {
 func (*CreatePlanResponse) ProtoMessage() {}
 
 func (x *CreatePlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[41]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2227,7 +3116,7 @@ func (x *CreatePlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePlanResponse.ProtoReflect.Descriptor instead.
 func (*CreatePlanResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{41}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *CreatePlanResponse) GetPlan() *Plan {
@@ -2254,7 +3143,7 @@ type UpdatePlanRequest struct {
 
 func (x *UpdatePlanRequest) Reset() {
 	*x = UpdatePlanRequest{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[42]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2266,7 +3155,7 @@ func (x *UpdatePlanRequest) String() string {
 func (*UpdatePlanRequest) ProtoMessage() {}
 
 func (x *UpdatePlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[42]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2279,7 +3168,7 @@ func (x *UpdatePlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatePlanRequest.ProtoReflect.Descriptor instead.
 func (*UpdatePlanRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{42}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *UpdatePlanRequest) GetId() string {
@@ -2306,7 +3195,7 @@ type UpdatePlanResponse struct {
 
 func (x *UpdatePlanResponse) Reset() {
 	*x = UpdatePlanResponse{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[43]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2318,7 +3207,7 @@ func (x *UpdatePlanResponse) String() string {
 func (*UpdatePlanResponse) ProtoMessage() {}
 
 func (x *UpdatePlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[43]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2331,7 +3220,7 @@ func (x *UpdatePlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatePlanResponse.ProtoReflect.Descriptor instead.
 func (*UpdatePlanResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{43}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *UpdatePlanResponse) GetPlan() *Plan {
@@ -2357,7 +3246,7 @@ type DeletePlanRequest struct {
 
 func (x *DeletePlanRequest) Reset() {
 	*x = DeletePlanRequest{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[44]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2369,7 +3258,7 @@ func (x *DeletePlanRequest) String() string {
 func (*DeletePlanRequest) ProtoMessage() {}
 
 func (x *DeletePlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[44]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2382,7 +3271,7 @@ func (x *DeletePlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeletePlanRequest.ProtoReflect.Descriptor instead.
 func (*DeletePlanRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{44}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *DeletePlanRequest) GetId() string {
@@ -2400,7 +3289,7 @@ type DeletePlanResponse struct {
 
 func (x *DeletePlanResponse) Reset() {
 	*x = DeletePlanResponse{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[45]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2412,7 +3301,7 @@ func (x *DeletePlanResponse) String() string {
 func (*DeletePlanResponse) ProtoMessage() {}
 
 func (x *DeletePlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[45]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2425,7 +3314,7 @@ func (x *DeletePlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeletePlanResponse.ProtoReflect.Descriptor instead.
 func (*DeletePlanResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{45}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{61}
 }
 
 type ValidatePlanRequest struct {
@@ -2440,7 +3329,7 @@ type ValidatePlanRequest struct {
 
 func (x *ValidatePlanRequest) Reset() {
 	*x = ValidatePlanRequest{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[46]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2452,7 +3341,7 @@ func (x *ValidatePlanRequest) String() string {
 func (*ValidatePlanRequest) ProtoMessage() {}
 
 func (x *ValidatePlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[46]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2465,7 +3354,7 @@ func (x *ValidatePlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidatePlanRequest.ProtoReflect.Descriptor instead.
 func (*ValidatePlanRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{46}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *ValidatePlanRequest) GetSpec() *v11.PlanSpec {
@@ -2491,7 +3380,7 @@ type ValidatePlanResponse struct {
 
 func (x *ValidatePlanResponse) Reset() {
 	*x = ValidatePlanResponse{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[47]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2503,7 +3392,7 @@ func (x *ValidatePlanResponse) String() string {
 func (*ValidatePlanResponse) ProtoMessage() {}
 
 func (x *ValidatePlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[47]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2516,7 +3405,7 @@ func (x *ValidatePlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidatePlanResponse.ProtoReflect.Descriptor instead.
 func (*ValidatePlanResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{47}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *ValidatePlanResponse) GetIssues() []*v11.Issue {
@@ -2535,7 +3424,7 @@ type SuggestPlanRequest struct {
 
 func (x *SuggestPlanRequest) Reset() {
 	*x = SuggestPlanRequest{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[48]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2547,7 +3436,7 @@ func (x *SuggestPlanRequest) String() string {
 func (*SuggestPlanRequest) ProtoMessage() {}
 
 func (x *SuggestPlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[48]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2560,7 +3449,7 @@ func (x *SuggestPlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SuggestPlanRequest.ProtoReflect.Descriptor instead.
 func (*SuggestPlanRequest) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{48}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *SuggestPlanRequest) GetSpec() *v11.PlanSpec {
@@ -2579,7 +3468,7 @@ type SuggestPlanResponse struct {
 
 func (x *SuggestPlanResponse) Reset() {
 	*x = SuggestPlanResponse{}
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[49]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2591,7 +3480,7 @@ func (x *SuggestPlanResponse) String() string {
 func (*SuggestPlanResponse) ProtoMessage() {}
 
 func (x *SuggestPlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[49]
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2604,7 +3493,7 @@ func (x *SuggestPlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SuggestPlanResponse.ProtoReflect.Descriptor instead.
 func (*SuggestPlanResponse) Descriptor() ([]byte, []int) {
-	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{49}
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *SuggestPlanResponse) GetSpec() *v11.PlanSpec {
@@ -2739,7 +3628,40 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\x06action\x18\x03 \x01(\tR\x06action\x12\x16\n" +
 	"\x06target\x18\x04 \x01(\tR\x06target\x12%\n" +
 	"\x0esource_address\x18\x05 \x01(\tR\rsourceAddress\x12\x16\n" +
-	"\x06detail\x18\x06 \x01(\tR\x06detail\"\xd7\x01\n" +
+	"\x06detail\x18\x06 \x01(\tR\x06detail\"\\\n" +
+	"\vHostChanges\x12\x17\n" +
+	"\ahost_id\x18\x01 \x01(\tR\x06hostId\x12\x1a\n" +
+	"\bhostname\x18\x02 \x01(\tR\bhostname\x12\x18\n" +
+	"\achanges\x18\x03 \x03(\tR\achanges\"+\n" +
+	"\x19PreviewPlanChangesRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"|\n" +
+	"\x1aPreviewPlanChangesResponse\x121\n" +
+	"\x05hosts\x18\x01 \x03(\v2\x1b.ezdr.portal.v1.HostChangesR\x05hosts\x12+\n" +
+	"\x06issues\x18\x02 \x03(\v2\x13.ezdr.plan.v1.IssueR\x06issues\"%\n" +
+	"\x13ActivatePlanRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"@\n" +
+	"\x14ActivatePlanResponse\x12(\n" +
+	"\x04plan\x18\x01 \x01(\v2\x14.ezdr.portal.v1.PlanR\x04plan\")\n" +
+	"\x17ApplyPlanChangesRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"D\n" +
+	"\x18ApplyPlanChangesResponse\x12(\n" +
+	"\x04plan\x18\x01 \x01(\v2\x14.ezdr.portal.v1.PlanR\x04plan\"+\n" +
+	"\x19DiscardPlanChangesRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"F\n" +
+	"\x1aDiscardPlanChangesResponse\x12(\n" +
+	"\x04plan\x18\x01 \x01(\v2\x14.ezdr.portal.v1.PlanR\x04plan\"\"\n" +
+	"\x10PausePlanRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"=\n" +
+	"\x11PausePlanResponse\x12(\n" +
+	"\x04plan\x18\x01 \x01(\v2\x14.ezdr.portal.v1.PlanR\x04plan\"#\n" +
+	"\x11ResumePlanRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\">\n" +
+	"\x12ResumePlanResponse\x12(\n" +
+	"\x04plan\x18\x01 \x01(\v2\x14.ezdr.portal.v1.PlanR\x04plan\"'\n" +
+	"\x15DeactivatePlanRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"B\n" +
+	"\x16DeactivatePlanResponse\x12(\n" +
+	"\x04plan\x18\x01 \x01(\v2\x14.ezdr.portal.v1.PlanR\x04plan\"\xde\x03\n" +
 	"\x04Plan\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12*\n" +
 	"\x04spec\x18\x02 \x01(\v2\x16.ezdr.plan.v1.PlanSpecR\x04spec\x12\x1d\n" +
@@ -2748,7 +3670,23 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x8f\x02\n" +
+	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12/\n" +
+	"\x05state\x18\x06 \x01(\x0e2\x19.ezdr.portal.v1.PlanStateR\x05state\x129\n" +
+	"\fapplied_spec\x18\a \x01(\v2\x16.ezdr.plan.v1.PlanSpecR\vappliedSpec\x129\n" +
+	"\n" +
+	"applied_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tappliedAt\x12'\n" +
+	"\x0fpending_changes\x18\t \x01(\bR\x0ependingChanges\x125\n" +
+	"\x05hosts\x18\n" +
+	" \x03(\v2\x1f.ezdr.portal.v1.HostApplyStatusR\x05hosts\"\xe7\x01\n" +
+	"\x0fHostApplyStatus\x12\x17\n" +
+	"\ahost_id\x18\x01 \x01(\tR\x06hostId\x12\x1a\n" +
+	"\bhostname\x18\x02 \x01(\tR\bhostname\x12\x16\n" +
+	"\x06online\x18\x03 \x01(\bR\x06online\x12\x18\n" +
+	"\aapplied\x18\x04 \x01(\bR\aapplied\x12\x1f\n" +
+	"\vapply_error\x18\x05 \x01(\tR\n" +
+	"applyError\x12#\n" +
+	"\rzrepl_version\x18\x06 \x01(\tR\fzreplVersion\x12'\n" +
+	"\x0fhas_certificate\x18\a \x01(\bR\x0ehasCertificate\"\xe9\x02\n" +
 	"\vPlanSummary\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12)\n" +
@@ -2760,7 +3698,10 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\x10interval_seconds\x18\x06 \x01(\rR\x0fintervalSeconds\x12\x1f\n" +
 	"\verror_count\x18\a \x01(\rR\n" +
 	"errorCount\x12#\n" +
-	"\rwarning_count\x18\b \x01(\rR\fwarningCount\"\x12\n" +
+	"\rwarning_count\x18\b \x01(\rR\fwarningCount\x12/\n" +
+	"\x05state\x18\t \x01(\x0e2\x19.ezdr.portal.v1.PlanStateR\x05state\x12'\n" +
+	"\x0fpending_changes\x18\n" +
+	" \x01(\bR\x0ependingChanges\"\x12\n" +
 	"\x10ListPlansRequest\"F\n" +
 	"\x11ListPlansResponse\x121\n" +
 	"\x05plans\x18\x01 \x03(\v2\x1b.ezdr.portal.v1.PlanSummaryR\x05plans\" \n" +
@@ -2791,7 +3732,12 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\x12SuggestPlanRequest\x12*\n" +
 	"\x04spec\x18\x01 \x01(\v2\x16.ezdr.plan.v1.PlanSpecR\x04spec\"A\n" +
 	"\x13SuggestPlanResponse\x12*\n" +
-	"\x04spec\x18\x01 \x01(\v2\x16.ezdr.plan.v1.PlanSpecR\x04spec2\xcd\x01\n" +
+	"\x04spec\x18\x01 \x01(\v2\x16.ezdr.plan.v1.PlanSpecR\x04spec*k\n" +
+	"\tPlanState\x12\x1a\n" +
+	"\x16PLAN_STATE_UNSPECIFIED\x10\x00\x12\x14\n" +
+	"\x10PLAN_STATE_DRAFT\x10\x01\x12\x15\n" +
+	"\x11PLAN_STATE_ACTIVE\x10\x02\x12\x15\n" +
+	"\x11PLAN_STATE_PAUSED\x10\x032\xcd\x01\n" +
 	"\fSetupService\x12_\n" +
 	"\x0eGetSetupStatus\x12%.ezdr.portal.v1.GetSetupStatusRequest\x1a&.ezdr.portal.v1.GetSetupStatusResponse\x12\\\n" +
 	"\rCompleteSetup\x12$.ezdr.portal.v1.CompleteSetupRequest\x1a%.ezdr.portal.v1.CompleteSetupResponse2\xd2\x02\n" +
@@ -2813,7 +3759,8 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\x10GetHostInventory\x12'.ezdr.portal.v1.GetHostInventoryRequest\x1a(.ezdr.portal.v1.GetHostInventoryResponse\x12e\n" +
 	"\x10RefreshInventory\x12'.ezdr.portal.v1.RefreshInventoryRequest\x1a(.ezdr.portal.v1.RefreshInventoryResponse2r\n" +
 	"\fAuditService\x12b\n" +
-	"\x0fListAuditEvents\x12&.ezdr.portal.v1.ListAuditEventsRequest\x1a'.ezdr.portal.v1.ListAuditEventsResponse2\xdd\x04\n" +
+	"\x0fListAuditEvents\x12&.ezdr.portal.v1.ListAuditEventsRequest\x1a'.ezdr.portal.v1.ListAuditEventsResponse2\x81\n" +
+	"\n" +
 	"\vPlanService\x12P\n" +
 	"\tListPlans\x12 .ezdr.portal.v1.ListPlansRequest\x1a!.ezdr.portal.v1.ListPlansResponse\x12J\n" +
 	"\aGetPlan\x12\x1e.ezdr.portal.v1.GetPlanRequest\x1a\x1f.ezdr.portal.v1.GetPlanResponse\x12S\n" +
@@ -2824,7 +3771,15 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\n" +
 	"DeletePlan\x12!.ezdr.portal.v1.DeletePlanRequest\x1a\".ezdr.portal.v1.DeletePlanResponse\x12Y\n" +
 	"\fValidatePlan\x12#.ezdr.portal.v1.ValidatePlanRequest\x1a$.ezdr.portal.v1.ValidatePlanResponse\x12V\n" +
-	"\vSuggestPlan\x12\".ezdr.portal.v1.SuggestPlanRequest\x1a#.ezdr.portal.v1.SuggestPlanResponseB\xb9\x01\n" +
+	"\vSuggestPlan\x12\".ezdr.portal.v1.SuggestPlanRequest\x1a#.ezdr.portal.v1.SuggestPlanResponse\x12k\n" +
+	"\x12PreviewPlanChanges\x12).ezdr.portal.v1.PreviewPlanChangesRequest\x1a*.ezdr.portal.v1.PreviewPlanChangesResponse\x12Y\n" +
+	"\fActivatePlan\x12#.ezdr.portal.v1.ActivatePlanRequest\x1a$.ezdr.portal.v1.ActivatePlanResponse\x12e\n" +
+	"\x10ApplyPlanChanges\x12'.ezdr.portal.v1.ApplyPlanChangesRequest\x1a(.ezdr.portal.v1.ApplyPlanChangesResponse\x12k\n" +
+	"\x12DiscardPlanChanges\x12).ezdr.portal.v1.DiscardPlanChangesRequest\x1a*.ezdr.portal.v1.DiscardPlanChangesResponse\x12P\n" +
+	"\tPausePlan\x12 .ezdr.portal.v1.PausePlanRequest\x1a!.ezdr.portal.v1.PausePlanResponse\x12S\n" +
+	"\n" +
+	"ResumePlan\x12!.ezdr.portal.v1.ResumePlanRequest\x1a\".ezdr.portal.v1.ResumePlanResponse\x12_\n" +
+	"\x0eDeactivatePlan\x12%.ezdr.portal.v1.DeactivatePlanRequest\x1a&.ezdr.portal.v1.DeactivatePlanResponseB\xb9\x01\n" +
 	"\x12com.ezdr.portal.v1B\vPortalProtoP\x01Z<github.com/jlbyh2o/ezdr/internal/gen/ezdr/portal/v1;portalv1\xa2\x02\x03EPX\xaa\x02\x0eEzdr.Portal.V1\xca\x02\x0eEzdr\\Portal\\V1\xe2\x02\x1aEzdr\\Portal\\V1\\GPBMetadata\xea\x02\x10Ezdr::Portal::V1b\x06proto3"
 
 var (
@@ -2839,148 +3794,193 @@ func file_ezdr_portal_v1_portal_proto_rawDescGZIP() []byte {
 	return file_ezdr_portal_v1_portal_proto_rawDescData
 }
 
-var file_ezdr_portal_v1_portal_proto_msgTypes = make([]protoimpl.MessageInfo, 51)
+var file_ezdr_portal_v1_portal_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_ezdr_portal_v1_portal_proto_msgTypes = make([]protoimpl.MessageInfo, 67)
 var file_ezdr_portal_v1_portal_proto_goTypes = []any{
-	(*GetSetupStatusRequest)(nil),    // 0: ezdr.portal.v1.GetSetupStatusRequest
-	(*GetSetupStatusResponse)(nil),   // 1: ezdr.portal.v1.GetSetupStatusResponse
-	(*CompleteSetupRequest)(nil),     // 2: ezdr.portal.v1.CompleteSetupRequest
-	(*CompleteSetupResponse)(nil),    // 3: ezdr.portal.v1.CompleteSetupResponse
-	(*LoginRequest)(nil),             // 4: ezdr.portal.v1.LoginRequest
-	(*LoginResponse)(nil),            // 5: ezdr.portal.v1.LoginResponse
-	(*TotpSetup)(nil),                // 6: ezdr.portal.v1.TotpSetup
-	(*VerifyTotpRequest)(nil),        // 7: ezdr.portal.v1.VerifyTotpRequest
-	(*VerifyTotpResponse)(nil),       // 8: ezdr.portal.v1.VerifyTotpResponse
-	(*LogoutRequest)(nil),            // 9: ezdr.portal.v1.LogoutRequest
-	(*LogoutResponse)(nil),           // 10: ezdr.portal.v1.LogoutResponse
-	(*GetCurrentUserRequest)(nil),    // 11: ezdr.portal.v1.GetCurrentUserRequest
-	(*GetCurrentUserResponse)(nil),   // 12: ezdr.portal.v1.GetCurrentUserResponse
-	(*User)(nil),                     // 13: ezdr.portal.v1.User
-	(*CreateTokenRequest)(nil),       // 14: ezdr.portal.v1.CreateTokenRequest
-	(*CreateTokenResponse)(nil),      // 15: ezdr.portal.v1.CreateTokenResponse
-	(*ListTokensRequest)(nil),        // 16: ezdr.portal.v1.ListTokensRequest
-	(*ListTokensResponse)(nil),       // 17: ezdr.portal.v1.ListTokensResponse
-	(*RevokeTokenRequest)(nil),       // 18: ezdr.portal.v1.RevokeTokenRequest
-	(*RevokeTokenResponse)(nil),      // 19: ezdr.portal.v1.RevokeTokenResponse
-	(*EnrollmentToken)(nil),          // 20: ezdr.portal.v1.EnrollmentToken
-	(*GetHostInventoryRequest)(nil),  // 21: ezdr.portal.v1.GetHostInventoryRequest
-	(*GetHostInventoryResponse)(nil), // 22: ezdr.portal.v1.GetHostInventoryResponse
-	(*PlanRef)(nil),                  // 23: ezdr.portal.v1.PlanRef
-	(*RefreshInventoryRequest)(nil),  // 24: ezdr.portal.v1.RefreshInventoryRequest
-	(*RefreshInventoryResponse)(nil), // 25: ezdr.portal.v1.RefreshInventoryResponse
-	(*ListHostsRequest)(nil),         // 26: ezdr.portal.v1.ListHostsRequest
-	(*ListHostsResponse)(nil),        // 27: ezdr.portal.v1.ListHostsResponse
-	(*DeleteHostRequest)(nil),        // 28: ezdr.portal.v1.DeleteHostRequest
-	(*DeleteHostResponse)(nil),       // 29: ezdr.portal.v1.DeleteHostResponse
-	(*Host)(nil),                     // 30: ezdr.portal.v1.Host
-	(*ListAuditEventsRequest)(nil),   // 31: ezdr.portal.v1.ListAuditEventsRequest
-	(*ListAuditEventsResponse)(nil),  // 32: ezdr.portal.v1.ListAuditEventsResponse
-	(*AuditEvent)(nil),               // 33: ezdr.portal.v1.AuditEvent
-	(*Plan)(nil),                     // 34: ezdr.portal.v1.Plan
-	(*PlanSummary)(nil),              // 35: ezdr.portal.v1.PlanSummary
-	(*ListPlansRequest)(nil),         // 36: ezdr.portal.v1.ListPlansRequest
-	(*ListPlansResponse)(nil),        // 37: ezdr.portal.v1.ListPlansResponse
-	(*GetPlanRequest)(nil),           // 38: ezdr.portal.v1.GetPlanRequest
-	(*GetPlanResponse)(nil),          // 39: ezdr.portal.v1.GetPlanResponse
-	(*CreatePlanRequest)(nil),        // 40: ezdr.portal.v1.CreatePlanRequest
-	(*CreatePlanResponse)(nil),       // 41: ezdr.portal.v1.CreatePlanResponse
-	(*UpdatePlanRequest)(nil),        // 42: ezdr.portal.v1.UpdatePlanRequest
-	(*UpdatePlanResponse)(nil),       // 43: ezdr.portal.v1.UpdatePlanResponse
-	(*DeletePlanRequest)(nil),        // 44: ezdr.portal.v1.DeletePlanRequest
-	(*DeletePlanResponse)(nil),       // 45: ezdr.portal.v1.DeletePlanResponse
-	(*ValidatePlanRequest)(nil),      // 46: ezdr.portal.v1.ValidatePlanRequest
-	(*ValidatePlanResponse)(nil),     // 47: ezdr.portal.v1.ValidatePlanResponse
-	(*SuggestPlanRequest)(nil),       // 48: ezdr.portal.v1.SuggestPlanRequest
-	(*SuggestPlanResponse)(nil),      // 49: ezdr.portal.v1.SuggestPlanResponse
-	nil,                              // 50: ezdr.portal.v1.GetHostInventoryResponse.GuestPlansEntry
-	(*timestamppb.Timestamp)(nil),    // 51: google.protobuf.Timestamp
-	(*v1.Inventory)(nil),             // 52: ezdr.inventory.v1.Inventory
-	(*v11.PlanSpec)(nil),             // 53: ezdr.plan.v1.PlanSpec
-	(*v11.Issue)(nil),                // 54: ezdr.plan.v1.Issue
+	(PlanState)(0),                     // 0: ezdr.portal.v1.PlanState
+	(*GetSetupStatusRequest)(nil),      // 1: ezdr.portal.v1.GetSetupStatusRequest
+	(*GetSetupStatusResponse)(nil),     // 2: ezdr.portal.v1.GetSetupStatusResponse
+	(*CompleteSetupRequest)(nil),       // 3: ezdr.portal.v1.CompleteSetupRequest
+	(*CompleteSetupResponse)(nil),      // 4: ezdr.portal.v1.CompleteSetupResponse
+	(*LoginRequest)(nil),               // 5: ezdr.portal.v1.LoginRequest
+	(*LoginResponse)(nil),              // 6: ezdr.portal.v1.LoginResponse
+	(*TotpSetup)(nil),                  // 7: ezdr.portal.v1.TotpSetup
+	(*VerifyTotpRequest)(nil),          // 8: ezdr.portal.v1.VerifyTotpRequest
+	(*VerifyTotpResponse)(nil),         // 9: ezdr.portal.v1.VerifyTotpResponse
+	(*LogoutRequest)(nil),              // 10: ezdr.portal.v1.LogoutRequest
+	(*LogoutResponse)(nil),             // 11: ezdr.portal.v1.LogoutResponse
+	(*GetCurrentUserRequest)(nil),      // 12: ezdr.portal.v1.GetCurrentUserRequest
+	(*GetCurrentUserResponse)(nil),     // 13: ezdr.portal.v1.GetCurrentUserResponse
+	(*User)(nil),                       // 14: ezdr.portal.v1.User
+	(*CreateTokenRequest)(nil),         // 15: ezdr.portal.v1.CreateTokenRequest
+	(*CreateTokenResponse)(nil),        // 16: ezdr.portal.v1.CreateTokenResponse
+	(*ListTokensRequest)(nil),          // 17: ezdr.portal.v1.ListTokensRequest
+	(*ListTokensResponse)(nil),         // 18: ezdr.portal.v1.ListTokensResponse
+	(*RevokeTokenRequest)(nil),         // 19: ezdr.portal.v1.RevokeTokenRequest
+	(*RevokeTokenResponse)(nil),        // 20: ezdr.portal.v1.RevokeTokenResponse
+	(*EnrollmentToken)(nil),            // 21: ezdr.portal.v1.EnrollmentToken
+	(*GetHostInventoryRequest)(nil),    // 22: ezdr.portal.v1.GetHostInventoryRequest
+	(*GetHostInventoryResponse)(nil),   // 23: ezdr.portal.v1.GetHostInventoryResponse
+	(*PlanRef)(nil),                    // 24: ezdr.portal.v1.PlanRef
+	(*RefreshInventoryRequest)(nil),    // 25: ezdr.portal.v1.RefreshInventoryRequest
+	(*RefreshInventoryResponse)(nil),   // 26: ezdr.portal.v1.RefreshInventoryResponse
+	(*ListHostsRequest)(nil),           // 27: ezdr.portal.v1.ListHostsRequest
+	(*ListHostsResponse)(nil),          // 28: ezdr.portal.v1.ListHostsResponse
+	(*DeleteHostRequest)(nil),          // 29: ezdr.portal.v1.DeleteHostRequest
+	(*DeleteHostResponse)(nil),         // 30: ezdr.portal.v1.DeleteHostResponse
+	(*Host)(nil),                       // 31: ezdr.portal.v1.Host
+	(*ListAuditEventsRequest)(nil),     // 32: ezdr.portal.v1.ListAuditEventsRequest
+	(*ListAuditEventsResponse)(nil),    // 33: ezdr.portal.v1.ListAuditEventsResponse
+	(*AuditEvent)(nil),                 // 34: ezdr.portal.v1.AuditEvent
+	(*HostChanges)(nil),                // 35: ezdr.portal.v1.HostChanges
+	(*PreviewPlanChangesRequest)(nil),  // 36: ezdr.portal.v1.PreviewPlanChangesRequest
+	(*PreviewPlanChangesResponse)(nil), // 37: ezdr.portal.v1.PreviewPlanChangesResponse
+	(*ActivatePlanRequest)(nil),        // 38: ezdr.portal.v1.ActivatePlanRequest
+	(*ActivatePlanResponse)(nil),       // 39: ezdr.portal.v1.ActivatePlanResponse
+	(*ApplyPlanChangesRequest)(nil),    // 40: ezdr.portal.v1.ApplyPlanChangesRequest
+	(*ApplyPlanChangesResponse)(nil),   // 41: ezdr.portal.v1.ApplyPlanChangesResponse
+	(*DiscardPlanChangesRequest)(nil),  // 42: ezdr.portal.v1.DiscardPlanChangesRequest
+	(*DiscardPlanChangesResponse)(nil), // 43: ezdr.portal.v1.DiscardPlanChangesResponse
+	(*PausePlanRequest)(nil),           // 44: ezdr.portal.v1.PausePlanRequest
+	(*PausePlanResponse)(nil),          // 45: ezdr.portal.v1.PausePlanResponse
+	(*ResumePlanRequest)(nil),          // 46: ezdr.portal.v1.ResumePlanRequest
+	(*ResumePlanResponse)(nil),         // 47: ezdr.portal.v1.ResumePlanResponse
+	(*DeactivatePlanRequest)(nil),      // 48: ezdr.portal.v1.DeactivatePlanRequest
+	(*DeactivatePlanResponse)(nil),     // 49: ezdr.portal.v1.DeactivatePlanResponse
+	(*Plan)(nil),                       // 50: ezdr.portal.v1.Plan
+	(*HostApplyStatus)(nil),            // 51: ezdr.portal.v1.HostApplyStatus
+	(*PlanSummary)(nil),                // 52: ezdr.portal.v1.PlanSummary
+	(*ListPlansRequest)(nil),           // 53: ezdr.portal.v1.ListPlansRequest
+	(*ListPlansResponse)(nil),          // 54: ezdr.portal.v1.ListPlansResponse
+	(*GetPlanRequest)(nil),             // 55: ezdr.portal.v1.GetPlanRequest
+	(*GetPlanResponse)(nil),            // 56: ezdr.portal.v1.GetPlanResponse
+	(*CreatePlanRequest)(nil),          // 57: ezdr.portal.v1.CreatePlanRequest
+	(*CreatePlanResponse)(nil),         // 58: ezdr.portal.v1.CreatePlanResponse
+	(*UpdatePlanRequest)(nil),          // 59: ezdr.portal.v1.UpdatePlanRequest
+	(*UpdatePlanResponse)(nil),         // 60: ezdr.portal.v1.UpdatePlanResponse
+	(*DeletePlanRequest)(nil),          // 61: ezdr.portal.v1.DeletePlanRequest
+	(*DeletePlanResponse)(nil),         // 62: ezdr.portal.v1.DeletePlanResponse
+	(*ValidatePlanRequest)(nil),        // 63: ezdr.portal.v1.ValidatePlanRequest
+	(*ValidatePlanResponse)(nil),       // 64: ezdr.portal.v1.ValidatePlanResponse
+	(*SuggestPlanRequest)(nil),         // 65: ezdr.portal.v1.SuggestPlanRequest
+	(*SuggestPlanResponse)(nil),        // 66: ezdr.portal.v1.SuggestPlanResponse
+	nil,                                // 67: ezdr.portal.v1.GetHostInventoryResponse.GuestPlansEntry
+	(*timestamppb.Timestamp)(nil),      // 68: google.protobuf.Timestamp
+	(*v1.Inventory)(nil),               // 69: ezdr.inventory.v1.Inventory
+	(*v11.Issue)(nil),                  // 70: ezdr.plan.v1.Issue
+	(*v11.PlanSpec)(nil),               // 71: ezdr.plan.v1.PlanSpec
 }
 var file_ezdr_portal_v1_portal_proto_depIdxs = []int32{
-	6,  // 0: ezdr.portal.v1.LoginResponse.totp_setup:type_name -> ezdr.portal.v1.TotpSetup
-	13, // 1: ezdr.portal.v1.VerifyTotpResponse.user:type_name -> ezdr.portal.v1.User
-	13, // 2: ezdr.portal.v1.GetCurrentUserResponse.user:type_name -> ezdr.portal.v1.User
-	20, // 3: ezdr.portal.v1.CreateTokenResponse.token:type_name -> ezdr.portal.v1.EnrollmentToken
-	20, // 4: ezdr.portal.v1.ListTokensResponse.tokens:type_name -> ezdr.portal.v1.EnrollmentToken
-	51, // 5: ezdr.portal.v1.EnrollmentToken.created_at:type_name -> google.protobuf.Timestamp
-	51, // 6: ezdr.portal.v1.EnrollmentToken.expires_at:type_name -> google.protobuf.Timestamp
-	51, // 7: ezdr.portal.v1.EnrollmentToken.used_at:type_name -> google.protobuf.Timestamp
-	51, // 8: ezdr.portal.v1.EnrollmentToken.revoked_at:type_name -> google.protobuf.Timestamp
-	30, // 9: ezdr.portal.v1.GetHostInventoryResponse.host:type_name -> ezdr.portal.v1.Host
-	52, // 10: ezdr.portal.v1.GetHostInventoryResponse.inventory:type_name -> ezdr.inventory.v1.Inventory
-	51, // 11: ezdr.portal.v1.GetHostInventoryResponse.changed_at:type_name -> google.protobuf.Timestamp
-	51, // 12: ezdr.portal.v1.GetHostInventoryResponse.received_at:type_name -> google.protobuf.Timestamp
-	50, // 13: ezdr.portal.v1.GetHostInventoryResponse.guest_plans:type_name -> ezdr.portal.v1.GetHostInventoryResponse.GuestPlansEntry
-	30, // 14: ezdr.portal.v1.ListHostsResponse.hosts:type_name -> ezdr.portal.v1.Host
-	51, // 15: ezdr.portal.v1.Host.enrolled_at:type_name -> google.protobuf.Timestamp
-	51, // 16: ezdr.portal.v1.Host.last_seen_at:type_name -> google.protobuf.Timestamp
-	33, // 17: ezdr.portal.v1.ListAuditEventsResponse.events:type_name -> ezdr.portal.v1.AuditEvent
-	51, // 18: ezdr.portal.v1.AuditEvent.time:type_name -> google.protobuf.Timestamp
-	53, // 19: ezdr.portal.v1.Plan.spec:type_name -> ezdr.plan.v1.PlanSpec
-	51, // 20: ezdr.portal.v1.Plan.created_at:type_name -> google.protobuf.Timestamp
-	51, // 21: ezdr.portal.v1.Plan.updated_at:type_name -> google.protobuf.Timestamp
-	35, // 22: ezdr.portal.v1.ListPlansResponse.plans:type_name -> ezdr.portal.v1.PlanSummary
-	34, // 23: ezdr.portal.v1.GetPlanResponse.plan:type_name -> ezdr.portal.v1.Plan
-	54, // 24: ezdr.portal.v1.GetPlanResponse.issues:type_name -> ezdr.plan.v1.Issue
-	53, // 25: ezdr.portal.v1.CreatePlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
-	34, // 26: ezdr.portal.v1.CreatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
-	54, // 27: ezdr.portal.v1.CreatePlanResponse.issues:type_name -> ezdr.plan.v1.Issue
-	53, // 28: ezdr.portal.v1.UpdatePlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
-	34, // 29: ezdr.portal.v1.UpdatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
-	54, // 30: ezdr.portal.v1.UpdatePlanResponse.issues:type_name -> ezdr.plan.v1.Issue
-	53, // 31: ezdr.portal.v1.ValidatePlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
-	54, // 32: ezdr.portal.v1.ValidatePlanResponse.issues:type_name -> ezdr.plan.v1.Issue
-	53, // 33: ezdr.portal.v1.SuggestPlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
-	53, // 34: ezdr.portal.v1.SuggestPlanResponse.spec:type_name -> ezdr.plan.v1.PlanSpec
-	23, // 35: ezdr.portal.v1.GetHostInventoryResponse.GuestPlansEntry.value:type_name -> ezdr.portal.v1.PlanRef
-	0,  // 36: ezdr.portal.v1.SetupService.GetSetupStatus:input_type -> ezdr.portal.v1.GetSetupStatusRequest
-	2,  // 37: ezdr.portal.v1.SetupService.CompleteSetup:input_type -> ezdr.portal.v1.CompleteSetupRequest
-	4,  // 38: ezdr.portal.v1.AuthService.Login:input_type -> ezdr.portal.v1.LoginRequest
-	7,  // 39: ezdr.portal.v1.AuthService.VerifyTotp:input_type -> ezdr.portal.v1.VerifyTotpRequest
-	9,  // 40: ezdr.portal.v1.AuthService.Logout:input_type -> ezdr.portal.v1.LogoutRequest
-	11, // 41: ezdr.portal.v1.AuthService.GetCurrentUser:input_type -> ezdr.portal.v1.GetCurrentUserRequest
-	14, // 42: ezdr.portal.v1.TokenService.CreateToken:input_type -> ezdr.portal.v1.CreateTokenRequest
-	16, // 43: ezdr.portal.v1.TokenService.ListTokens:input_type -> ezdr.portal.v1.ListTokensRequest
-	18, // 44: ezdr.portal.v1.TokenService.RevokeToken:input_type -> ezdr.portal.v1.RevokeTokenRequest
-	26, // 45: ezdr.portal.v1.HostService.ListHosts:input_type -> ezdr.portal.v1.ListHostsRequest
-	28, // 46: ezdr.portal.v1.HostService.DeleteHost:input_type -> ezdr.portal.v1.DeleteHostRequest
-	21, // 47: ezdr.portal.v1.HostService.GetHostInventory:input_type -> ezdr.portal.v1.GetHostInventoryRequest
-	24, // 48: ezdr.portal.v1.HostService.RefreshInventory:input_type -> ezdr.portal.v1.RefreshInventoryRequest
-	31, // 49: ezdr.portal.v1.AuditService.ListAuditEvents:input_type -> ezdr.portal.v1.ListAuditEventsRequest
-	36, // 50: ezdr.portal.v1.PlanService.ListPlans:input_type -> ezdr.portal.v1.ListPlansRequest
-	38, // 51: ezdr.portal.v1.PlanService.GetPlan:input_type -> ezdr.portal.v1.GetPlanRequest
-	40, // 52: ezdr.portal.v1.PlanService.CreatePlan:input_type -> ezdr.portal.v1.CreatePlanRequest
-	42, // 53: ezdr.portal.v1.PlanService.UpdatePlan:input_type -> ezdr.portal.v1.UpdatePlanRequest
-	44, // 54: ezdr.portal.v1.PlanService.DeletePlan:input_type -> ezdr.portal.v1.DeletePlanRequest
-	46, // 55: ezdr.portal.v1.PlanService.ValidatePlan:input_type -> ezdr.portal.v1.ValidatePlanRequest
-	48, // 56: ezdr.portal.v1.PlanService.SuggestPlan:input_type -> ezdr.portal.v1.SuggestPlanRequest
-	1,  // 57: ezdr.portal.v1.SetupService.GetSetupStatus:output_type -> ezdr.portal.v1.GetSetupStatusResponse
-	3,  // 58: ezdr.portal.v1.SetupService.CompleteSetup:output_type -> ezdr.portal.v1.CompleteSetupResponse
-	5,  // 59: ezdr.portal.v1.AuthService.Login:output_type -> ezdr.portal.v1.LoginResponse
-	8,  // 60: ezdr.portal.v1.AuthService.VerifyTotp:output_type -> ezdr.portal.v1.VerifyTotpResponse
-	10, // 61: ezdr.portal.v1.AuthService.Logout:output_type -> ezdr.portal.v1.LogoutResponse
-	12, // 62: ezdr.portal.v1.AuthService.GetCurrentUser:output_type -> ezdr.portal.v1.GetCurrentUserResponse
-	15, // 63: ezdr.portal.v1.TokenService.CreateToken:output_type -> ezdr.portal.v1.CreateTokenResponse
-	17, // 64: ezdr.portal.v1.TokenService.ListTokens:output_type -> ezdr.portal.v1.ListTokensResponse
-	19, // 65: ezdr.portal.v1.TokenService.RevokeToken:output_type -> ezdr.portal.v1.RevokeTokenResponse
-	27, // 66: ezdr.portal.v1.HostService.ListHosts:output_type -> ezdr.portal.v1.ListHostsResponse
-	29, // 67: ezdr.portal.v1.HostService.DeleteHost:output_type -> ezdr.portal.v1.DeleteHostResponse
-	22, // 68: ezdr.portal.v1.HostService.GetHostInventory:output_type -> ezdr.portal.v1.GetHostInventoryResponse
-	25, // 69: ezdr.portal.v1.HostService.RefreshInventory:output_type -> ezdr.portal.v1.RefreshInventoryResponse
-	32, // 70: ezdr.portal.v1.AuditService.ListAuditEvents:output_type -> ezdr.portal.v1.ListAuditEventsResponse
-	37, // 71: ezdr.portal.v1.PlanService.ListPlans:output_type -> ezdr.portal.v1.ListPlansResponse
-	39, // 72: ezdr.portal.v1.PlanService.GetPlan:output_type -> ezdr.portal.v1.GetPlanResponse
-	41, // 73: ezdr.portal.v1.PlanService.CreatePlan:output_type -> ezdr.portal.v1.CreatePlanResponse
-	43, // 74: ezdr.portal.v1.PlanService.UpdatePlan:output_type -> ezdr.portal.v1.UpdatePlanResponse
-	45, // 75: ezdr.portal.v1.PlanService.DeletePlan:output_type -> ezdr.portal.v1.DeletePlanResponse
-	47, // 76: ezdr.portal.v1.PlanService.ValidatePlan:output_type -> ezdr.portal.v1.ValidatePlanResponse
-	49, // 77: ezdr.portal.v1.PlanService.SuggestPlan:output_type -> ezdr.portal.v1.SuggestPlanResponse
-	57, // [57:78] is the sub-list for method output_type
-	36, // [36:57] is the sub-list for method input_type
-	36, // [36:36] is the sub-list for extension type_name
-	36, // [36:36] is the sub-list for extension extendee
-	0,  // [0:36] is the sub-list for field type_name
+	7,  // 0: ezdr.portal.v1.LoginResponse.totp_setup:type_name -> ezdr.portal.v1.TotpSetup
+	14, // 1: ezdr.portal.v1.VerifyTotpResponse.user:type_name -> ezdr.portal.v1.User
+	14, // 2: ezdr.portal.v1.GetCurrentUserResponse.user:type_name -> ezdr.portal.v1.User
+	21, // 3: ezdr.portal.v1.CreateTokenResponse.token:type_name -> ezdr.portal.v1.EnrollmentToken
+	21, // 4: ezdr.portal.v1.ListTokensResponse.tokens:type_name -> ezdr.portal.v1.EnrollmentToken
+	68, // 5: ezdr.portal.v1.EnrollmentToken.created_at:type_name -> google.protobuf.Timestamp
+	68, // 6: ezdr.portal.v1.EnrollmentToken.expires_at:type_name -> google.protobuf.Timestamp
+	68, // 7: ezdr.portal.v1.EnrollmentToken.used_at:type_name -> google.protobuf.Timestamp
+	68, // 8: ezdr.portal.v1.EnrollmentToken.revoked_at:type_name -> google.protobuf.Timestamp
+	31, // 9: ezdr.portal.v1.GetHostInventoryResponse.host:type_name -> ezdr.portal.v1.Host
+	69, // 10: ezdr.portal.v1.GetHostInventoryResponse.inventory:type_name -> ezdr.inventory.v1.Inventory
+	68, // 11: ezdr.portal.v1.GetHostInventoryResponse.changed_at:type_name -> google.protobuf.Timestamp
+	68, // 12: ezdr.portal.v1.GetHostInventoryResponse.received_at:type_name -> google.protobuf.Timestamp
+	67, // 13: ezdr.portal.v1.GetHostInventoryResponse.guest_plans:type_name -> ezdr.portal.v1.GetHostInventoryResponse.GuestPlansEntry
+	31, // 14: ezdr.portal.v1.ListHostsResponse.hosts:type_name -> ezdr.portal.v1.Host
+	68, // 15: ezdr.portal.v1.Host.enrolled_at:type_name -> google.protobuf.Timestamp
+	68, // 16: ezdr.portal.v1.Host.last_seen_at:type_name -> google.protobuf.Timestamp
+	34, // 17: ezdr.portal.v1.ListAuditEventsResponse.events:type_name -> ezdr.portal.v1.AuditEvent
+	68, // 18: ezdr.portal.v1.AuditEvent.time:type_name -> google.protobuf.Timestamp
+	35, // 19: ezdr.portal.v1.PreviewPlanChangesResponse.hosts:type_name -> ezdr.portal.v1.HostChanges
+	70, // 20: ezdr.portal.v1.PreviewPlanChangesResponse.issues:type_name -> ezdr.plan.v1.Issue
+	50, // 21: ezdr.portal.v1.ActivatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	50, // 22: ezdr.portal.v1.ApplyPlanChangesResponse.plan:type_name -> ezdr.portal.v1.Plan
+	50, // 23: ezdr.portal.v1.DiscardPlanChangesResponse.plan:type_name -> ezdr.portal.v1.Plan
+	50, // 24: ezdr.portal.v1.PausePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	50, // 25: ezdr.portal.v1.ResumePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	50, // 26: ezdr.portal.v1.DeactivatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	71, // 27: ezdr.portal.v1.Plan.spec:type_name -> ezdr.plan.v1.PlanSpec
+	68, // 28: ezdr.portal.v1.Plan.created_at:type_name -> google.protobuf.Timestamp
+	68, // 29: ezdr.portal.v1.Plan.updated_at:type_name -> google.protobuf.Timestamp
+	0,  // 30: ezdr.portal.v1.Plan.state:type_name -> ezdr.portal.v1.PlanState
+	71, // 31: ezdr.portal.v1.Plan.applied_spec:type_name -> ezdr.plan.v1.PlanSpec
+	68, // 32: ezdr.portal.v1.Plan.applied_at:type_name -> google.protobuf.Timestamp
+	51, // 33: ezdr.portal.v1.Plan.hosts:type_name -> ezdr.portal.v1.HostApplyStatus
+	0,  // 34: ezdr.portal.v1.PlanSummary.state:type_name -> ezdr.portal.v1.PlanState
+	52, // 35: ezdr.portal.v1.ListPlansResponse.plans:type_name -> ezdr.portal.v1.PlanSummary
+	50, // 36: ezdr.portal.v1.GetPlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	70, // 37: ezdr.portal.v1.GetPlanResponse.issues:type_name -> ezdr.plan.v1.Issue
+	71, // 38: ezdr.portal.v1.CreatePlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
+	50, // 39: ezdr.portal.v1.CreatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	70, // 40: ezdr.portal.v1.CreatePlanResponse.issues:type_name -> ezdr.plan.v1.Issue
+	71, // 41: ezdr.portal.v1.UpdatePlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
+	50, // 42: ezdr.portal.v1.UpdatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	70, // 43: ezdr.portal.v1.UpdatePlanResponse.issues:type_name -> ezdr.plan.v1.Issue
+	71, // 44: ezdr.portal.v1.ValidatePlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
+	70, // 45: ezdr.portal.v1.ValidatePlanResponse.issues:type_name -> ezdr.plan.v1.Issue
+	71, // 46: ezdr.portal.v1.SuggestPlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
+	71, // 47: ezdr.portal.v1.SuggestPlanResponse.spec:type_name -> ezdr.plan.v1.PlanSpec
+	24, // 48: ezdr.portal.v1.GetHostInventoryResponse.GuestPlansEntry.value:type_name -> ezdr.portal.v1.PlanRef
+	1,  // 49: ezdr.portal.v1.SetupService.GetSetupStatus:input_type -> ezdr.portal.v1.GetSetupStatusRequest
+	3,  // 50: ezdr.portal.v1.SetupService.CompleteSetup:input_type -> ezdr.portal.v1.CompleteSetupRequest
+	5,  // 51: ezdr.portal.v1.AuthService.Login:input_type -> ezdr.portal.v1.LoginRequest
+	8,  // 52: ezdr.portal.v1.AuthService.VerifyTotp:input_type -> ezdr.portal.v1.VerifyTotpRequest
+	10, // 53: ezdr.portal.v1.AuthService.Logout:input_type -> ezdr.portal.v1.LogoutRequest
+	12, // 54: ezdr.portal.v1.AuthService.GetCurrentUser:input_type -> ezdr.portal.v1.GetCurrentUserRequest
+	15, // 55: ezdr.portal.v1.TokenService.CreateToken:input_type -> ezdr.portal.v1.CreateTokenRequest
+	17, // 56: ezdr.portal.v1.TokenService.ListTokens:input_type -> ezdr.portal.v1.ListTokensRequest
+	19, // 57: ezdr.portal.v1.TokenService.RevokeToken:input_type -> ezdr.portal.v1.RevokeTokenRequest
+	27, // 58: ezdr.portal.v1.HostService.ListHosts:input_type -> ezdr.portal.v1.ListHostsRequest
+	29, // 59: ezdr.portal.v1.HostService.DeleteHost:input_type -> ezdr.portal.v1.DeleteHostRequest
+	22, // 60: ezdr.portal.v1.HostService.GetHostInventory:input_type -> ezdr.portal.v1.GetHostInventoryRequest
+	25, // 61: ezdr.portal.v1.HostService.RefreshInventory:input_type -> ezdr.portal.v1.RefreshInventoryRequest
+	32, // 62: ezdr.portal.v1.AuditService.ListAuditEvents:input_type -> ezdr.portal.v1.ListAuditEventsRequest
+	53, // 63: ezdr.portal.v1.PlanService.ListPlans:input_type -> ezdr.portal.v1.ListPlansRequest
+	55, // 64: ezdr.portal.v1.PlanService.GetPlan:input_type -> ezdr.portal.v1.GetPlanRequest
+	57, // 65: ezdr.portal.v1.PlanService.CreatePlan:input_type -> ezdr.portal.v1.CreatePlanRequest
+	59, // 66: ezdr.portal.v1.PlanService.UpdatePlan:input_type -> ezdr.portal.v1.UpdatePlanRequest
+	61, // 67: ezdr.portal.v1.PlanService.DeletePlan:input_type -> ezdr.portal.v1.DeletePlanRequest
+	63, // 68: ezdr.portal.v1.PlanService.ValidatePlan:input_type -> ezdr.portal.v1.ValidatePlanRequest
+	65, // 69: ezdr.portal.v1.PlanService.SuggestPlan:input_type -> ezdr.portal.v1.SuggestPlanRequest
+	36, // 70: ezdr.portal.v1.PlanService.PreviewPlanChanges:input_type -> ezdr.portal.v1.PreviewPlanChangesRequest
+	38, // 71: ezdr.portal.v1.PlanService.ActivatePlan:input_type -> ezdr.portal.v1.ActivatePlanRequest
+	40, // 72: ezdr.portal.v1.PlanService.ApplyPlanChanges:input_type -> ezdr.portal.v1.ApplyPlanChangesRequest
+	42, // 73: ezdr.portal.v1.PlanService.DiscardPlanChanges:input_type -> ezdr.portal.v1.DiscardPlanChangesRequest
+	44, // 74: ezdr.portal.v1.PlanService.PausePlan:input_type -> ezdr.portal.v1.PausePlanRequest
+	46, // 75: ezdr.portal.v1.PlanService.ResumePlan:input_type -> ezdr.portal.v1.ResumePlanRequest
+	48, // 76: ezdr.portal.v1.PlanService.DeactivatePlan:input_type -> ezdr.portal.v1.DeactivatePlanRequest
+	2,  // 77: ezdr.portal.v1.SetupService.GetSetupStatus:output_type -> ezdr.portal.v1.GetSetupStatusResponse
+	4,  // 78: ezdr.portal.v1.SetupService.CompleteSetup:output_type -> ezdr.portal.v1.CompleteSetupResponse
+	6,  // 79: ezdr.portal.v1.AuthService.Login:output_type -> ezdr.portal.v1.LoginResponse
+	9,  // 80: ezdr.portal.v1.AuthService.VerifyTotp:output_type -> ezdr.portal.v1.VerifyTotpResponse
+	11, // 81: ezdr.portal.v1.AuthService.Logout:output_type -> ezdr.portal.v1.LogoutResponse
+	13, // 82: ezdr.portal.v1.AuthService.GetCurrentUser:output_type -> ezdr.portal.v1.GetCurrentUserResponse
+	16, // 83: ezdr.portal.v1.TokenService.CreateToken:output_type -> ezdr.portal.v1.CreateTokenResponse
+	18, // 84: ezdr.portal.v1.TokenService.ListTokens:output_type -> ezdr.portal.v1.ListTokensResponse
+	20, // 85: ezdr.portal.v1.TokenService.RevokeToken:output_type -> ezdr.portal.v1.RevokeTokenResponse
+	28, // 86: ezdr.portal.v1.HostService.ListHosts:output_type -> ezdr.portal.v1.ListHostsResponse
+	30, // 87: ezdr.portal.v1.HostService.DeleteHost:output_type -> ezdr.portal.v1.DeleteHostResponse
+	23, // 88: ezdr.portal.v1.HostService.GetHostInventory:output_type -> ezdr.portal.v1.GetHostInventoryResponse
+	26, // 89: ezdr.portal.v1.HostService.RefreshInventory:output_type -> ezdr.portal.v1.RefreshInventoryResponse
+	33, // 90: ezdr.portal.v1.AuditService.ListAuditEvents:output_type -> ezdr.portal.v1.ListAuditEventsResponse
+	54, // 91: ezdr.portal.v1.PlanService.ListPlans:output_type -> ezdr.portal.v1.ListPlansResponse
+	56, // 92: ezdr.portal.v1.PlanService.GetPlan:output_type -> ezdr.portal.v1.GetPlanResponse
+	58, // 93: ezdr.portal.v1.PlanService.CreatePlan:output_type -> ezdr.portal.v1.CreatePlanResponse
+	60, // 94: ezdr.portal.v1.PlanService.UpdatePlan:output_type -> ezdr.portal.v1.UpdatePlanResponse
+	62, // 95: ezdr.portal.v1.PlanService.DeletePlan:output_type -> ezdr.portal.v1.DeletePlanResponse
+	64, // 96: ezdr.portal.v1.PlanService.ValidatePlan:output_type -> ezdr.portal.v1.ValidatePlanResponse
+	66, // 97: ezdr.portal.v1.PlanService.SuggestPlan:output_type -> ezdr.portal.v1.SuggestPlanResponse
+	37, // 98: ezdr.portal.v1.PlanService.PreviewPlanChanges:output_type -> ezdr.portal.v1.PreviewPlanChangesResponse
+	39, // 99: ezdr.portal.v1.PlanService.ActivatePlan:output_type -> ezdr.portal.v1.ActivatePlanResponse
+	41, // 100: ezdr.portal.v1.PlanService.ApplyPlanChanges:output_type -> ezdr.portal.v1.ApplyPlanChangesResponse
+	43, // 101: ezdr.portal.v1.PlanService.DiscardPlanChanges:output_type -> ezdr.portal.v1.DiscardPlanChangesResponse
+	45, // 102: ezdr.portal.v1.PlanService.PausePlan:output_type -> ezdr.portal.v1.PausePlanResponse
+	47, // 103: ezdr.portal.v1.PlanService.ResumePlan:output_type -> ezdr.portal.v1.ResumePlanResponse
+	49, // 104: ezdr.portal.v1.PlanService.DeactivatePlan:output_type -> ezdr.portal.v1.DeactivatePlanResponse
+	77, // [77:105] is the sub-list for method output_type
+	49, // [49:77] is the sub-list for method input_type
+	49, // [49:49] is the sub-list for extension type_name
+	49, // [49:49] is the sub-list for extension extendee
+	0,  // [0:49] is the sub-list for field type_name
 }
 
 func init() { file_ezdr_portal_v1_portal_proto_init() }
@@ -2993,13 +3993,14 @@ func file_ezdr_portal_v1_portal_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ezdr_portal_v1_portal_proto_rawDesc), len(file_ezdr_portal_v1_portal_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   51,
+			NumEnums:      1,
+			NumMessages:   67,
 			NumExtensions: 0,
 			NumServices:   6,
 		},
 		GoTypes:           file_ezdr_portal_v1_portal_proto_goTypes,
 		DependencyIndexes: file_ezdr_portal_v1_portal_proto_depIdxs,
+		EnumInfos:         file_ezdr_portal_v1_portal_proto_enumTypes,
 		MessageInfos:      file_ezdr_portal_v1_portal_proto_msgTypes,
 	}.Build()
 	File_ezdr_portal_v1_portal_proto = out.File

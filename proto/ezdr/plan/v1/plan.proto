@@ -19,6 +19,46 @@ message PlanSpec {
   repeated RetentionTier dr_retention = 11;
   // Prefix of the snapshots this plan manages, such as "ezdr_".
   string snapshot_prefix = 12;
+  // How the DR host reaches the primary's zrepl source jobs.
+  ReplicationNetwork network = 13;
+  // Alert when the newest replicated snapshot is older than this. Zero means
+  // three times the snapshot interval.
+  uint32 rpo_alert_seconds = 14;
+}
+
+message ReplicationNetwork {
+  oneof path {
+    ExistingNetwork existing = 1;
+    EzdrTunnel tunnel = 2;
+  }
+}
+
+// ExistingNetwork replicates over a network the hosts can already use, such as
+// a router site-to-site VPN.
+message ExistingNetwork {
+  // The primary's address as seen from the DR host (IP address or DNS name).
+  string primary_address = 1;
+  // First zrepl port. A plan uses one port per source job, counting up from
+  // this one.
+  uint32 port = 2;
+}
+
+// EzdrTunnel replicates over an EZDR-managed WireGuard tunnel between the
+// hosts.
+message EzdrTunnel {
+  enum Listener {
+    LISTENER_UNSPECIFIED = 0;
+    LISTENER_PRIMARY = 1;
+    LISTENER_DR = 2;
+  }
+  // Which host accepts the WireGuard connection.
+  Listener listener = 1;
+  // The listening host's public endpoint as host:port.
+  string endpoint = 2;
+  // WireGuard UDP port on the listening host.
+  uint32 listen_port = 3;
+  // First zrepl port inside the tunnel.
+  uint32 port = 4;
 }
 
 message PlanGuest {

@@ -394,3 +394,65 @@ func TestPlans(t *testing.T) {
 		t.Errorf("plan guests not removed: %v", gp)
 	}
 }
+
+func TestPlanStateAndHostZrepl(t *testing.T) {
+	s := openTest(t)
+	ctx := context.Background()
+	alloc := seqAlloc(netip.MustParseAddr("100.64.42.2"))
+	var ids []string
+	for _, id := range []string{"p1", "d1"} {
+		if _, err := s.CreateToken(ctx, Token{ID: "t" + id, SecretHash: []byte("s"), CreatedBy: "admin",
+			ExpiresAt: time.Now().Add(time.Hour)}); err != nil {
+			t.Fatal(err)
+		}
+		h, err := s.EnrollHost(ctx, "t"+id, []byte("s"), newHost(id, "m"+id), alloc)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ids = append(ids, h.ID)
+	}
+	p, err := s.SavePlan(ctx, Plan{Name: "A", Spec: []byte("a"), PrimaryHostID: ids[0], DRHostID: ids[1]})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.State != PlanDraft || p.AppliedSpec != nil {
+		t.Fatalf("new plan = %+v", p)
+	}
+	if err := s.SetPlanState(ctx, p.ID, PlanActive, []byte("applied")); err != nil {
+		t.Fatal(err)
+	}
+	// Saving edits keeps the state and applied specification.
+	p.Spec = []byte("edited")
+	p, _ = s.SavePlan(ctx, p)
+	if p.State != PlanActive || string(p.AppliedSpec) != "applied" || p.AppliedAt.IsZero() || string(p.Spec) != "edited" {
+		t.Fatalf("active plan after edit = %+v", p)
+	}
+	if err := s.SetPlanState(ctx, p.ID, PlanDraft, nil); err != nil {
+		t.Fatal(err)
+	}
+	if p, _ = s.PlanByID(ctx, p.ID); p.AppliedSpec != nil || !p.AppliedAt.IsZero() {
+		t.Errorf("deactivated plan = %+v", p)
+	}
+
+	h := ids[0]
+	if changed, _ := s.SetHostZrepl(ctx, h, "CERT", "v0.7.0"); !changed {
+		t.Error("first certificate not reported as changed")
+	}
+	if changed, _ := s.SetHostZrepl(ctx, h, "CERT", "v0.7.1"); changed {
+		t.Error("same certificate reported as changed")
+	}
+	g1, _ := s.SetDesiredHash(ctx, h, []byte("h1"))
+	g2, _ := s.SetDesiredHash(ctx, h, []byte("h1"))
+	g3, _ := s.SetDesiredHash(ctx, h, []byte("h2"))
+	if g1 != 2 || g2 != 2 || g3 != 3 {
+		t.Errorf("generations = %d %d %d, want 2 2 3", g1, g2, g3)
+	}
+	if err := s.SetHostApplied(ctx, h, 3, "boom"); err != nil {
+		t.Fatal(err)
+	}
+	host, _ := s.HostByID(ctx, h)
+	if host.ZreplCertificate != "CERT" || host.ZreplVersion != "v0.7.1" || host.DesiredGeneration != 3 ||
+		host.AppliedGeneration != 3 || host.ApplyError != "boom" {
+		t.Errorf("host zrepl state = %+v", host)
+	}
+}

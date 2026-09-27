@@ -232,14 +232,118 @@ service PlanService {
   rpc ValidatePlan(ValidatePlanRequest) returns (ValidatePlanResponse);
   // SuggestPlan fills in missing mappings, startup order, and defaults.
   rpc SuggestPlan(SuggestPlanRequest) returns (SuggestPlanResponse);
+  // PreviewPlanChanges lists what activating or applying the plan's
+  // editing specification would change on each host.
+  rpc PreviewPlanChanges(PreviewPlanChangesRequest) returns (PreviewPlanChangesResponse);
+  // ActivatePlan applies a valid draft to its hosts.
+  rpc ActivatePlan(ActivatePlanRequest) returns (ActivatePlanResponse);
+  // ApplyPlanChanges applies an active plan's pending changes.
+  rpc ApplyPlanChanges(ApplyPlanChangesRequest) returns (ApplyPlanChangesResponse);
+  // DiscardPlanChanges reverts pending changes to the applied specification.
+  rpc DiscardPlanChanges(DiscardPlanChangesRequest) returns (DiscardPlanChangesResponse);
+  rpc PausePlan(PausePlanRequest) returns (PausePlanResponse);
+  rpc ResumePlan(ResumePlanRequest) returns (ResumePlanResponse);
+  // DeactivatePlan removes the plan's jobs from its hosts and returns it to
+  // draft. Replicas and snapshots are kept.
+  rpc DeactivatePlan(DeactivatePlanRequest) returns (DeactivatePlanResponse);
+}
+
+message HostChanges {
+  string host_id = 1;
+  string hostname = 2;
+  repeated string changes = 3;
+}
+
+message PreviewPlanChangesRequest {
+  string id = 1;
+}
+
+message PreviewPlanChangesResponse {
+  repeated HostChanges hosts = 1;
+  repeated ezdr.plan.v1.Issue issues = 2;
+}
+
+message ActivatePlanRequest {
+  string id = 1;
+}
+
+message ActivatePlanResponse {
+  Plan plan = 1;
+}
+
+message ApplyPlanChangesRequest {
+  string id = 1;
+}
+
+message ApplyPlanChangesResponse {
+  Plan plan = 1;
+}
+
+message DiscardPlanChangesRequest {
+  string id = 1;
+}
+
+message DiscardPlanChangesResponse {
+  Plan plan = 1;
+}
+
+message PausePlanRequest {
+  string id = 1;
+}
+
+message PausePlanResponse {
+  Plan plan = 1;
+}
+
+message ResumePlanRequest {
+  string id = 1;
+}
+
+message ResumePlanResponse {
+  Plan plan = 1;
+}
+
+message DeactivatePlanRequest {
+  string id = 1;
+}
+
+message DeactivatePlanResponse {
+  Plan plan = 1;
+}
+
+enum PlanState {
+  PLAN_STATE_UNSPECIFIED = 0;
+  PLAN_STATE_DRAFT = 1;
+  PLAN_STATE_ACTIVE = 2;
+  PLAN_STATE_PAUSED = 3;
 }
 
 message Plan {
   string id = 1;
+  // The editing specification.
   ezdr.plan.v1.PlanSpec spec = 2;
   string created_by = 3;
   google.protobuf.Timestamp created_at = 4;
   google.protobuf.Timestamp updated_at = 5;
+  PlanState state = 6;
+  // The specification applied to the hosts; unset for drafts.
+  ezdr.plan.v1.PlanSpec applied_spec = 7;
+  google.protobuf.Timestamp applied_at = 8;
+  // True when an active or paused plan has edits not yet applied.
+  bool pending_changes = 9;
+  // Per-host progress applying the plan's configuration.
+  repeated HostApplyStatus hosts = 10;
+}
+
+message HostApplyStatus {
+  string host_id = 1;
+  string hostname = 2;
+  bool online = 3;
+  // True once the host has applied its latest configuration.
+  bool applied = 4;
+  string apply_error = 5;
+  string zrepl_version = 6;
+  bool has_certificate = 7;
 }
 
 message PlanSummary {
@@ -251,6 +355,8 @@ message PlanSummary {
   uint32 interval_seconds = 6;
   uint32 error_count = 7;
   uint32 warning_count = 8;
+  PlanState state = 9;
+  bool pending_changes = 10;
 }
 
 message ListPlansRequest {}

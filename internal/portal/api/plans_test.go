@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/netip"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -59,7 +60,8 @@ func planTestDeps(t *testing.T) (*Deps, context.Context, string, string) {
 				Nics: []*inventoryv1.Nic{{Key: "net0", Bridge: "vmbr0"}}},
 			{Vmid: 102, Name: "db", Ready: true},
 		},
-		Storages: []*inventoryv1.Storage{{Id: "local-zfs", Type: "zfspool", ZfsPool: "rpool"}},
+		Storages:   []*inventoryv1.Storage{{Id: "local-zfs", Type: "zfspool", ZfsPool: "rpool"}},
+		Interfaces: []*inventoryv1.NetworkInterface{{Name: "vmbr0", Type: "bridge", Cidr: "192.0.2.10/24", Gateway: "192.0.2.1"}},
 	})
 	dr := enroll("dr1", &inventoryv1.Inventory{
 		Host:       &inventoryv1.HostInfo{Hostname: "dr1"},
@@ -160,5 +162,125 @@ func TestCheckSpec(t *testing.T) {
 		if err := checkSpec(spec); connect.CodeOf(err) != connect.CodeInvalidArgument {
 			t.Errorf("%s: err = %v", name, err)
 		}
+	}
+}
+
+func TestPlanLifecycle(t *testing.T) {
+	d, ctx, primary, dr := planTestDeps(t)
+	svc := PlanService{Deps: d}
+	for _, id := range []string{primary, dr} {
+		if _, err := d.Store.SetHostZrepl(ctx, id, "CERT-"+id, "v0.7.0"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// Watch what the DR host is sent.
+	_, drOutbox, release := d.Hub.connect(ctx, dr)
+	defer release()
+
+	sug, _ := svc.SuggestPlan(ctx, connect.NewRequest(&portalv1.SuggestPlanRequest{Spec: &planv1.PlanSpec{
+		Name: "Main", PrimaryHostId: primary, DrHostId: dr, Guests: []*planv1.PlanGuest{{Vmid: 101}},
+	}}))
+	created, err := svc.CreatePlan(ctx, connect.NewRequest(&portalv1.CreatePlanRequest{Spec: sug.Msg.Spec}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	id := created.Msg.Plan.Id
+	if created.Msg.Plan.State != portalv1.PlanState_PLAN_STATE_DRAFT {
+		t.Fatalf("state = %v", created.Msg.Plan.State)
+	}
+
+	preview, err := svc.PreviewPlanChanges(ctx, connect.NewRequest(&portalv1.PreviewPlanChangesRequest{Id: id}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var drChanges []string
+	for _, h := range preview.Msg.Hosts {
+		if h.HostId == dr {
+			drChanges = h.Changes
+		}
+	}
+	if len(drChanges) == 0 || !strings.Contains(strings.Join(drChanges, "\n"), "pull from 192.0.2.10:8888") {
+		t.Fatalf("DR preview = %v", drChanges)
+	}
+
+	act, err := svc.ActivatePlan(ctx, connect.NewRequest(&portalv1.ActivatePlanRequest{Id: id}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if act.Msg.Plan.State != portalv1.PlanState_PLAN_STATE_ACTIVE || act.Msg.Plan.PendingChanges {
+		t.Fatalf("activated plan = %v", act.Msg.Plan)
+	}
+	msg := <-drOutbox
+	ds := msg.GetDesiredState()
+	if ds == nil || len(ds.Zrepl.PullJobs) != 1 || ds.Zrepl.PullJobs[0].Peer.CertificatePem != "CERT-"+primary {
+		t.Fatalf("DR desired state = %v", msg)
+	}
+	gen := ds.Generation
+
+	// Active plans can't be deleted, and edits become pending changes.
+	if _, err := svc.DeletePlan(ctx, connect.NewRequest(&portalv1.DeletePlanRequest{Id: id})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+		t.Errorf("deleting an active plan: err = %v", err)
+	}
+	spec := act.Msg.Plan.Spec
+	spec.IntervalSeconds = 300
+	up, err := svc.UpdatePlan(ctx, connect.NewRequest(&portalv1.UpdatePlanRequest{Id: id, Spec: spec}))
+	if err != nil || !up.Msg.Plan.PendingChanges || up.Msg.Plan.AppliedSpec.IntervalSeconds == 300 {
+		t.Fatalf("pending changes not tracked: %v, %v", up.Msg.GetPlan(), err)
+	}
+	disc, err := svc.DiscardPlanChanges(ctx, connect.NewRequest(&portalv1.DiscardPlanChangesRequest{Id: id}))
+	if err != nil || disc.Msg.Plan.PendingChanges || disc.Msg.Plan.Spec.IntervalSeconds == 300 {
+		t.Fatalf("discard: %v, %v", disc.Msg.GetPlan(), err)
+	}
+	spec.IntervalSeconds = 300
+	if _, err := svc.UpdatePlan(ctx, connect.NewRequest(&portalv1.UpdatePlanRequest{Id: id, Spec: spec})); err != nil {
+		t.Fatal(err)
+	}
+	applied, err := svc.ApplyPlanChanges(ctx, connect.NewRequest(&portalv1.ApplyPlanChangesRequest{Id: id}))
+	if err != nil || applied.Msg.Plan.PendingChanges || applied.Msg.Plan.AppliedSpec.IntervalSeconds != 300 {
+		t.Fatalf("apply: %v, %v", applied.Msg.GetPlan(), err)
+	}
+	if next := (<-drOutbox).GetDesiredState(); next.Generation <= gen || next.Zrepl.PullJobs[0].IntervalSeconds != 300 {
+		t.Fatalf("applied change not pushed: %v", next)
+	}
+
+	// Pausing removes the jobs; resuming restores them.
+	if _, err := svc.PausePlan(ctx, connect.NewRequest(&portalv1.PausePlanRequest{Id: id})); err != nil {
+		t.Fatal(err)
+	}
+	if paused := (<-drOutbox).GetDesiredState(); len(paused.Zrepl.PullJobs) != 0 {
+		t.Fatalf("paused plan still has jobs: %v", paused)
+	}
+	if _, err := svc.ResumePlan(ctx, connect.NewRequest(&portalv1.ResumePlanRequest{Id: id})); err != nil {
+		t.Fatal(err)
+	}
+	if resumed := (<-drOutbox).GetDesiredState(); len(resumed.Zrepl.PullJobs) != 1 {
+		t.Fatalf("resumed plan has no jobs: %v", resumed)
+	}
+
+	// Deactivating returns to draft; then the plan can be deleted.
+	deact, err := svc.DeactivatePlan(ctx, connect.NewRequest(&portalv1.DeactivatePlanRequest{Id: id}))
+	if err != nil || deact.Msg.Plan.State != portalv1.PlanState_PLAN_STATE_DRAFT || deact.Msg.Plan.AppliedSpec != nil {
+		t.Fatalf("deactivate: %v, %v", deact.Msg.GetPlan(), err)
+	}
+	if gone := (<-drOutbox).GetDesiredState(); len(gone.Zrepl.PullJobs) != 0 {
+		t.Fatalf("deactivated plan still has jobs: %v", gone)
+	}
+	if _, err := svc.DeletePlan(ctx, connect.NewRequest(&portalv1.DeletePlanRequest{Id: id})); err != nil {
+		t.Errorf("deleting a draft: %v", err)
+	}
+}
+
+func TestActivateRequiresValidPlan(t *testing.T) {
+	d, ctx, primary, dr := planTestDeps(t)
+	svc := PlanService{Deps: d}
+	created, err := svc.CreatePlan(ctx, connect.NewRequest(&portalv1.CreatePlanRequest{Spec: &planv1.PlanSpec{
+		Name: "Incomplete", PrimaryHostId: primary, DrHostId: dr, Guests: []*planv1.PlanGuest{{Vmid: 101}},
+	}}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = svc.ActivatePlan(ctx, connect.NewRequest(&portalv1.ActivatePlanRequest{Id: created.Msg.Plan.Id}))
+	if connect.CodeOf(err) != connect.CodeFailedPrecondition {
+		t.Errorf("activating an invalid plan: err = %v", err)
 	}
 }

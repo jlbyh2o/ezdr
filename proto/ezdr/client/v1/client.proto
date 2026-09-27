@@ -46,15 +46,72 @@ message RefreshInventory {}
 
 message Heartbeat {}
 
-// DesiredState is the full configuration the host should have. It is empty in
-// phase 1 and gains fields in later phases.
+// DesiredState is the full configuration the host should have.
 message DesiredState {
   uint64 generation = 1;
+  Zrepl zrepl = 2;
+}
+
+// Zrepl describes the zrepl jobs EZDR manages on the host. The client renders
+// them into /etc/zrepl/ezdr.d/ezdr.yml. With no jobs, zrepl is not installed
+// (or EZDR's jobs are removed if it is).
+message Zrepl {
+  repeated SourceJob source_jobs = 1;
+  repeated PullJob pull_jobs = 2;
+}
+
+// Peer identifies the other end of a zrepl connection by its exact
+// self-signed certificate.
+message Peer {
+  // Certificate common name, such as "ezdr-<host ID>".
+  string name = 1;
+  string certificate_pem = 2;
+}
+
+message SourceJob {
+  string name = 1;
+  // Exact datasets to snapshot and serve.
+  repeated string datasets = 2;
+  string snapshot_prefix = 3;
+  uint32 interval_seconds = 4;
+  // Address to listen on, as host:port; the host may be empty for all
+  // addresses.
+  string listen_address = 5;
+  // The DR host allowed to connect.
+  Peer peer = 6;
+  // Raw sends, for encrypted datasets.
+  bool encrypted = 7;
+}
+
+message PullJob {
+  string name = 1;
+  // The primary's source job address as host:port.
+  string address = 2;
+  Peer peer = 3;
+  // Dataset replicas are received under (zrepl root_fs).
+  string receive_dataset = 4;
+  uint32 interval_seconds = 5;
+  string snapshot_prefix = 6;
+  repeated RetentionTier primary_retention = 7;
+  repeated RetentionTier dr_retention = 8;
+}
+
+message RetentionTier {
+  uint32 count = 1;
+  uint32 period_seconds = 2;
+  bool keep_all = 3;
 }
 
 message ReportStatusRequest {
   string client_version = 1;
+  // The newest desired state generation the client has handled.
   uint64 applied_generation = 2;
+  // Why applying that generation failed; empty on success.
+  string apply_error = 3;
+  // The host's zrepl TLS certificate (PEM), shared with its peers.
+  string zrepl_certificate = 4;
+  // Installed zrepl version; empty if not installed.
+  string zrepl_version = 5;
 }
 
 message ReportStatusResponse {}

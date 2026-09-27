@@ -125,6 +125,55 @@ func (Severity) EnumDescriptor() ([]byte, []int) {
 	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{1}
 }
 
+type EzdrTunnel_Listener int32
+
+const (
+	EzdrTunnel_LISTENER_UNSPECIFIED EzdrTunnel_Listener = 0
+	EzdrTunnel_LISTENER_PRIMARY     EzdrTunnel_Listener = 1
+	EzdrTunnel_LISTENER_DR          EzdrTunnel_Listener = 2
+)
+
+// Enum value maps for EzdrTunnel_Listener.
+var (
+	EzdrTunnel_Listener_name = map[int32]string{
+		0: "LISTENER_UNSPECIFIED",
+		1: "LISTENER_PRIMARY",
+		2: "LISTENER_DR",
+	}
+	EzdrTunnel_Listener_value = map[string]int32{
+		"LISTENER_UNSPECIFIED": 0,
+		"LISTENER_PRIMARY":     1,
+		"LISTENER_DR":          2,
+	}
+)
+
+func (x EzdrTunnel_Listener) Enum() *EzdrTunnel_Listener {
+	p := new(EzdrTunnel_Listener)
+	*p = x
+	return p
+}
+
+func (x EzdrTunnel_Listener) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (EzdrTunnel_Listener) Descriptor() protoreflect.EnumDescriptor {
+	return file_ezdr_plan_v1_plan_proto_enumTypes[2].Descriptor()
+}
+
+func (EzdrTunnel_Listener) Type() protoreflect.EnumType {
+	return &file_ezdr_plan_v1_plan_proto_enumTypes[2]
+}
+
+func (x EzdrTunnel_Listener) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use EzdrTunnel_Listener.Descriptor instead.
+func (EzdrTunnel_Listener) EnumDescriptor() ([]byte, []int) {
+	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{3, 0}
+}
+
 // PlanSpec is a DR plan's configuration. See docs/design/dr-plans.md.
 type PlanSpec struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
@@ -143,8 +192,13 @@ type PlanSpec struct {
 	DrRetention      []*RetentionTier `protobuf:"bytes,11,rep,name=dr_retention,json=drRetention,proto3" json:"dr_retention,omitempty"`
 	// Prefix of the snapshots this plan manages, such as "ezdr_".
 	SnapshotPrefix string `protobuf:"bytes,12,opt,name=snapshot_prefix,json=snapshotPrefix,proto3" json:"snapshot_prefix,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// How the DR host reaches the primary's zrepl source jobs.
+	Network *ReplicationNetwork `protobuf:"bytes,13,opt,name=network,proto3" json:"network,omitempty"`
+	// Alert when the newest replicated snapshot is older than this. Zero means
+	// three times the snapshot interval.
+	RpoAlertSeconds uint32 `protobuf:"varint,14,opt,name=rpo_alert_seconds,json=rpoAlertSeconds,proto3" json:"rpo_alert_seconds,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *PlanSpec) Reset() {
@@ -261,6 +315,233 @@ func (x *PlanSpec) GetSnapshotPrefix() string {
 	return ""
 }
 
+func (x *PlanSpec) GetNetwork() *ReplicationNetwork {
+	if x != nil {
+		return x.Network
+	}
+	return nil
+}
+
+func (x *PlanSpec) GetRpoAlertSeconds() uint32 {
+	if x != nil {
+		return x.RpoAlertSeconds
+	}
+	return 0
+}
+
+type ReplicationNetwork struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Path:
+	//
+	//	*ReplicationNetwork_Existing
+	//	*ReplicationNetwork_Tunnel
+	Path          isReplicationNetwork_Path `protobuf_oneof:"path"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReplicationNetwork) Reset() {
+	*x = ReplicationNetwork{}
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReplicationNetwork) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReplicationNetwork) ProtoMessage() {}
+
+func (x *ReplicationNetwork) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReplicationNetwork.ProtoReflect.Descriptor instead.
+func (*ReplicationNetwork) Descriptor() ([]byte, []int) {
+	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ReplicationNetwork) GetPath() isReplicationNetwork_Path {
+	if x != nil {
+		return x.Path
+	}
+	return nil
+}
+
+func (x *ReplicationNetwork) GetExisting() *ExistingNetwork {
+	if x != nil {
+		if x, ok := x.Path.(*ReplicationNetwork_Existing); ok {
+			return x.Existing
+		}
+	}
+	return nil
+}
+
+func (x *ReplicationNetwork) GetTunnel() *EzdrTunnel {
+	if x != nil {
+		if x, ok := x.Path.(*ReplicationNetwork_Tunnel); ok {
+			return x.Tunnel
+		}
+	}
+	return nil
+}
+
+type isReplicationNetwork_Path interface {
+	isReplicationNetwork_Path()
+}
+
+type ReplicationNetwork_Existing struct {
+	Existing *ExistingNetwork `protobuf:"bytes,1,opt,name=existing,proto3,oneof"`
+}
+
+type ReplicationNetwork_Tunnel struct {
+	Tunnel *EzdrTunnel `protobuf:"bytes,2,opt,name=tunnel,proto3,oneof"`
+}
+
+func (*ReplicationNetwork_Existing) isReplicationNetwork_Path() {}
+
+func (*ReplicationNetwork_Tunnel) isReplicationNetwork_Path() {}
+
+// ExistingNetwork replicates over a network the hosts can already use, such as
+// a router site-to-site VPN.
+type ExistingNetwork struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The primary's address as seen from the DR host (IP address or DNS name).
+	PrimaryAddress string `protobuf:"bytes,1,opt,name=primary_address,json=primaryAddress,proto3" json:"primary_address,omitempty"`
+	// First zrepl port. A plan uses one port per source job, counting up from
+	// this one.
+	Port          uint32 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExistingNetwork) Reset() {
+	*x = ExistingNetwork{}
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExistingNetwork) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExistingNetwork) ProtoMessage() {}
+
+func (x *ExistingNetwork) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExistingNetwork.ProtoReflect.Descriptor instead.
+func (*ExistingNetwork) Descriptor() ([]byte, []int) {
+	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ExistingNetwork) GetPrimaryAddress() string {
+	if x != nil {
+		return x.PrimaryAddress
+	}
+	return ""
+}
+
+func (x *ExistingNetwork) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+// EzdrTunnel replicates over an EZDR-managed WireGuard tunnel between the
+// hosts.
+type EzdrTunnel struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Which host accepts the WireGuard connection.
+	Listener EzdrTunnel_Listener `protobuf:"varint,1,opt,name=listener,proto3,enum=ezdr.plan.v1.EzdrTunnel_Listener" json:"listener,omitempty"`
+	// The listening host's public endpoint as host:port.
+	Endpoint string `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	// WireGuard UDP port on the listening host.
+	ListenPort uint32 `protobuf:"varint,3,opt,name=listen_port,json=listenPort,proto3" json:"listen_port,omitempty"`
+	// First zrepl port inside the tunnel.
+	Port          uint32 `protobuf:"varint,4,opt,name=port,proto3" json:"port,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EzdrTunnel) Reset() {
+	*x = EzdrTunnel{}
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EzdrTunnel) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EzdrTunnel) ProtoMessage() {}
+
+func (x *EzdrTunnel) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EzdrTunnel.ProtoReflect.Descriptor instead.
+func (*EzdrTunnel) Descriptor() ([]byte, []int) {
+	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *EzdrTunnel) GetListener() EzdrTunnel_Listener {
+	if x != nil {
+		return x.Listener
+	}
+	return EzdrTunnel_LISTENER_UNSPECIFIED
+}
+
+func (x *EzdrTunnel) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
+func (x *EzdrTunnel) GetListenPort() uint32 {
+	if x != nil {
+		return x.ListenPort
+	}
+	return 0
+}
+
+func (x *EzdrTunnel) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
 type PlanGuest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Vmid  uint32                 `protobuf:"varint,1,opt,name=vmid,proto3" json:"vmid,omitempty"`
@@ -275,7 +556,7 @@ type PlanGuest struct {
 
 func (x *PlanGuest) Reset() {
 	*x = PlanGuest{}
-	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[1]
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -287,7 +568,7 @@ func (x *PlanGuest) String() string {
 func (*PlanGuest) ProtoMessage() {}
 
 func (x *PlanGuest) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[1]
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -300,7 +581,7 @@ func (x *PlanGuest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanGuest.ProtoReflect.Descriptor instead.
 func (*PlanGuest) Descriptor() ([]byte, []int) {
-	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{1}
+	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PlanGuest) GetVmid() uint32 {
@@ -343,7 +624,7 @@ type DnsRecord struct {
 
 func (x *DnsRecord) Reset() {
 	*x = DnsRecord{}
-	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[2]
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -355,7 +636,7 @@ func (x *DnsRecord) String() string {
 func (*DnsRecord) ProtoMessage() {}
 
 func (x *DnsRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[2]
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -368,7 +649,7 @@ func (x *DnsRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DnsRecord.ProtoReflect.Descriptor instead.
 func (*DnsRecord) Descriptor() ([]byte, []int) {
-	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{2}
+	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *DnsRecord) GetName() string {
@@ -414,7 +695,7 @@ type StorageMapping struct {
 
 func (x *StorageMapping) Reset() {
 	*x = StorageMapping{}
-	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[3]
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -426,7 +707,7 @@ func (x *StorageMapping) String() string {
 func (*StorageMapping) ProtoMessage() {}
 
 func (x *StorageMapping) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[3]
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -439,7 +720,7 @@ func (x *StorageMapping) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StorageMapping.ProtoReflect.Descriptor instead.
 func (*StorageMapping) Descriptor() ([]byte, []int) {
-	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{3}
+	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *StorageMapping) GetSourceStorage() string {
@@ -473,7 +754,7 @@ type NetworkMapping struct {
 
 func (x *NetworkMapping) Reset() {
 	*x = NetworkMapping{}
-	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[4]
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -485,7 +766,7 @@ func (x *NetworkMapping) String() string {
 func (*NetworkMapping) ProtoMessage() {}
 
 func (x *NetworkMapping) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[4]
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -498,7 +779,7 @@ func (x *NetworkMapping) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetworkMapping.ProtoReflect.Descriptor instead.
 func (*NetworkMapping) Descriptor() ([]byte, []int) {
-	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{4}
+	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *NetworkMapping) GetSourceBridge() string {
@@ -529,7 +810,7 @@ type RetentionTier struct {
 
 func (x *RetentionTier) Reset() {
 	*x = RetentionTier{}
-	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[5]
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -541,7 +822,7 @@ func (x *RetentionTier) String() string {
 func (*RetentionTier) ProtoMessage() {}
 
 func (x *RetentionTier) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[5]
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -554,7 +835,7 @@ func (x *RetentionTier) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RetentionTier.ProtoReflect.Descriptor instead.
 func (*RetentionTier) Descriptor() ([]byte, []int) {
-	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{5}
+	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *RetentionTier) GetCount() uint32 {
@@ -591,7 +872,7 @@ type Issue struct {
 
 func (x *Issue) Reset() {
 	*x = Issue{}
-	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[6]
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -603,7 +884,7 @@ func (x *Issue) String() string {
 func (*Issue) ProtoMessage() {}
 
 func (x *Issue) ProtoReflect() protoreflect.Message {
-	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[6]
+	mi := &file_ezdr_plan_v1_plan_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -616,7 +897,7 @@ func (x *Issue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Issue.ProtoReflect.Descriptor instead.
 func (*Issue) Descriptor() ([]byte, []int) {
-	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{6}
+	return file_ezdr_plan_v1_plan_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Issue) GetSeverity() Severity {
@@ -644,7 +925,7 @@ var File_ezdr_plan_v1_plan_proto protoreflect.FileDescriptor
 
 const file_ezdr_plan_v1_plan_proto_rawDesc = "" +
 	"\n" +
-	"\x17ezdr/plan/v1/plan.proto\x12\fezdr.plan.v1\"\xc8\x04\n" +
+	"\x17ezdr/plan/v1/plan.proto\x12\fezdr.plan.v1\"\xb0\x05\n" +
 	"\bPlanSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12&\n" +
@@ -660,7 +941,27 @@ const file_ezdr_plan_v1_plan_proto_rawDesc = "" +
 	"\x11primary_retention\x18\n" +
 	" \x03(\v2\x1b.ezdr.plan.v1.RetentionTierR\x10primaryRetention\x12>\n" +
 	"\fdr_retention\x18\v \x03(\v2\x1b.ezdr.plan.v1.RetentionTierR\vdrRetention\x12'\n" +
-	"\x0fsnapshot_prefix\x18\f \x01(\tR\x0esnapshotPrefix\"\xb2\x01\n" +
+	"\x0fsnapshot_prefix\x18\f \x01(\tR\x0esnapshotPrefix\x12:\n" +
+	"\anetwork\x18\r \x01(\v2 .ezdr.plan.v1.ReplicationNetworkR\anetwork\x12*\n" +
+	"\x11rpo_alert_seconds\x18\x0e \x01(\rR\x0frpoAlertSeconds\"\x8d\x01\n" +
+	"\x12ReplicationNetwork\x12;\n" +
+	"\bexisting\x18\x01 \x01(\v2\x1d.ezdr.plan.v1.ExistingNetworkH\x00R\bexisting\x122\n" +
+	"\x06tunnel\x18\x02 \x01(\v2\x18.ezdr.plan.v1.EzdrTunnelH\x00R\x06tunnelB\x06\n" +
+	"\x04path\"N\n" +
+	"\x0fExistingNetwork\x12'\n" +
+	"\x0fprimary_address\x18\x01 \x01(\tR\x0eprimaryAddress\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\"\xe9\x01\n" +
+	"\n" +
+	"EzdrTunnel\x12=\n" +
+	"\blistener\x18\x01 \x01(\x0e2!.ezdr.plan.v1.EzdrTunnel.ListenerR\blistener\x12\x1a\n" +
+	"\bendpoint\x18\x02 \x01(\tR\bendpoint\x12\x1f\n" +
+	"\vlisten_port\x18\x03 \x01(\rR\n" +
+	"listenPort\x12\x12\n" +
+	"\x04port\x18\x04 \x01(\rR\x04port\"K\n" +
+	"\bListener\x12\x18\n" +
+	"\x14LISTENER_UNSPECIFIED\x10\x00\x12\x14\n" +
+	"\x10LISTENER_PRIMARY\x10\x01\x12\x0f\n" +
+	"\vLISTENER_DR\x10\x02\"\xb2\x01\n" +
 	"\tPlanGuest\x12\x12\n" +
 	"\x04vmid\x18\x01 \x01(\rR\x04vmid\x12#\n" +
 	"\rstartup_order\x18\x02 \x01(\x05R\fstartupOrder\x122\n" +
@@ -711,33 +1012,41 @@ func file_ezdr_plan_v1_plan_proto_rawDescGZIP() []byte {
 	return file_ezdr_plan_v1_plan_proto_rawDescData
 }
 
-var file_ezdr_plan_v1_plan_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_ezdr_plan_v1_plan_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_ezdr_plan_v1_plan_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_ezdr_plan_v1_plan_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_ezdr_plan_v1_plan_proto_goTypes = []any{
-	(DnsRecordType)(0),     // 0: ezdr.plan.v1.DnsRecordType
-	(Severity)(0),          // 1: ezdr.plan.v1.Severity
-	(*PlanSpec)(nil),       // 2: ezdr.plan.v1.PlanSpec
-	(*PlanGuest)(nil),      // 3: ezdr.plan.v1.PlanGuest
-	(*DnsRecord)(nil),      // 4: ezdr.plan.v1.DnsRecord
-	(*StorageMapping)(nil), // 5: ezdr.plan.v1.StorageMapping
-	(*NetworkMapping)(nil), // 6: ezdr.plan.v1.NetworkMapping
-	(*RetentionTier)(nil),  // 7: ezdr.plan.v1.RetentionTier
-	(*Issue)(nil),          // 8: ezdr.plan.v1.Issue
+	(DnsRecordType)(0),         // 0: ezdr.plan.v1.DnsRecordType
+	(Severity)(0),              // 1: ezdr.plan.v1.Severity
+	(EzdrTunnel_Listener)(0),   // 2: ezdr.plan.v1.EzdrTunnel.Listener
+	(*PlanSpec)(nil),           // 3: ezdr.plan.v1.PlanSpec
+	(*ReplicationNetwork)(nil), // 4: ezdr.plan.v1.ReplicationNetwork
+	(*ExistingNetwork)(nil),    // 5: ezdr.plan.v1.ExistingNetwork
+	(*EzdrTunnel)(nil),         // 6: ezdr.plan.v1.EzdrTunnel
+	(*PlanGuest)(nil),          // 7: ezdr.plan.v1.PlanGuest
+	(*DnsRecord)(nil),          // 8: ezdr.plan.v1.DnsRecord
+	(*StorageMapping)(nil),     // 9: ezdr.plan.v1.StorageMapping
+	(*NetworkMapping)(nil),     // 10: ezdr.plan.v1.NetworkMapping
+	(*RetentionTier)(nil),      // 11: ezdr.plan.v1.RetentionTier
+	(*Issue)(nil),              // 12: ezdr.plan.v1.Issue
 }
 var file_ezdr_plan_v1_plan_proto_depIdxs = []int32{
-	3, // 0: ezdr.plan.v1.PlanSpec.guests:type_name -> ezdr.plan.v1.PlanGuest
-	5, // 1: ezdr.plan.v1.PlanSpec.storage_mappings:type_name -> ezdr.plan.v1.StorageMapping
-	6, // 2: ezdr.plan.v1.PlanSpec.network_mappings:type_name -> ezdr.plan.v1.NetworkMapping
-	7, // 3: ezdr.plan.v1.PlanSpec.primary_retention:type_name -> ezdr.plan.v1.RetentionTier
-	7, // 4: ezdr.plan.v1.PlanSpec.dr_retention:type_name -> ezdr.plan.v1.RetentionTier
-	4, // 5: ezdr.plan.v1.PlanGuest.dns_records:type_name -> ezdr.plan.v1.DnsRecord
-	0, // 6: ezdr.plan.v1.DnsRecord.type:type_name -> ezdr.plan.v1.DnsRecordType
-	1, // 7: ezdr.plan.v1.Issue.severity:type_name -> ezdr.plan.v1.Severity
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	7,  // 0: ezdr.plan.v1.PlanSpec.guests:type_name -> ezdr.plan.v1.PlanGuest
+	9,  // 1: ezdr.plan.v1.PlanSpec.storage_mappings:type_name -> ezdr.plan.v1.StorageMapping
+	10, // 2: ezdr.plan.v1.PlanSpec.network_mappings:type_name -> ezdr.plan.v1.NetworkMapping
+	11, // 3: ezdr.plan.v1.PlanSpec.primary_retention:type_name -> ezdr.plan.v1.RetentionTier
+	11, // 4: ezdr.plan.v1.PlanSpec.dr_retention:type_name -> ezdr.plan.v1.RetentionTier
+	4,  // 5: ezdr.plan.v1.PlanSpec.network:type_name -> ezdr.plan.v1.ReplicationNetwork
+	5,  // 6: ezdr.plan.v1.ReplicationNetwork.existing:type_name -> ezdr.plan.v1.ExistingNetwork
+	6,  // 7: ezdr.plan.v1.ReplicationNetwork.tunnel:type_name -> ezdr.plan.v1.EzdrTunnel
+	2,  // 8: ezdr.plan.v1.EzdrTunnel.listener:type_name -> ezdr.plan.v1.EzdrTunnel.Listener
+	8,  // 9: ezdr.plan.v1.PlanGuest.dns_records:type_name -> ezdr.plan.v1.DnsRecord
+	0,  // 10: ezdr.plan.v1.DnsRecord.type:type_name -> ezdr.plan.v1.DnsRecordType
+	1,  // 11: ezdr.plan.v1.Issue.severity:type_name -> ezdr.plan.v1.Severity
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_ezdr_plan_v1_plan_proto_init() }
@@ -745,13 +1054,17 @@ func file_ezdr_plan_v1_plan_proto_init() {
 	if File_ezdr_plan_v1_plan_proto != nil {
 		return
 	}
+	file_ezdr_plan_v1_plan_proto_msgTypes[1].OneofWrappers = []any{
+		(*ReplicationNetwork_Existing)(nil),
+		(*ReplicationNetwork_Tunnel)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ezdr_plan_v1_plan_proto_rawDesc), len(file_ezdr_plan_v1_plan_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   7,
+			NumEnums:      3,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

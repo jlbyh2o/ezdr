@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"math/rand/v2"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/jlbyh2o/ezdr/internal/client/zrepl"
 	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
 	"github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1/clientv1connect"
 	"github.com/jlbyh2o/ezdr/internal/version"
@@ -42,12 +44,20 @@ func Run(ctx context.Context) error {
 	slog.Info("ezdr client starting", "version", version.Version, "portal", cfg.PortalURL,
 		"tunnel_address", cfg.TunnelAddress.String())
 
+	// The zrepl certificate identifies this host to its replication peers.
+	cert, err := zrepl.EnsureCertificate(zrepl.DefaultPaths, "ezdr-"+cfg.HostID)
+	if err != nil {
+		return fmt.Errorf("zrepl certificate: %w", err)
+	}
+	app := newApplier(api, cert)
+	go app.run(ctx)
+
 	backoff := time.Second
 	for {
 		// Re-applying the interface also re-resolves the portal endpoint.
 		if err := EnsureInterface(cfg, key); err != nil {
 			slog.Error("set up tunnel", "err", err)
-		} else if received, err := subscribe(ctx, api); ctx.Err() != nil {
+		} else if received, err := subscribe(ctx, api, app); ctx.Err() != nil {
 			return nil
 		} else {
 			slog.Warn("command stream ended", "err", err)
@@ -68,7 +78,7 @@ func Run(ctx context.Context) error {
 
 // subscribe runs one command stream until it fails. It reports whether any
 // message was received, so the caller can reset its backoff.
-func subscribe(ctx context.Context, api clientv1connect.ClientServiceClient) (bool, error) {
+func subscribe(ctx context.Context, api clientv1connect.ClientServiceClient, app *applier) (bool, error) {
 	ctx, cancel := context.WithCancelCause(ctx)
 	defer cancel(nil)
 	stream, err := api.Subscribe(ctx, connect.NewRequest(&clientv1.SubscribeRequest{ClientVersion: version.Version}))
@@ -83,6 +93,9 @@ func subscribe(ctx context.Context, api clientv1connect.ClientServiceClient) (bo
 	refresh := make(chan string, 1)
 	go inventoryLoop(ctx, api, refresh)
 
+	// Report status (including the zrepl certificate) on every connection.
+	go app.report(ctx)
+
 	received := false
 	for stream.Receive() {
 		watchdog.Reset(streamTimeout)
@@ -94,13 +107,7 @@ func subscribe(ctx context.Context, api clientv1connect.ClientServiceClient) (bo
 			handleAction(ctx, api, a, refresh)
 		}
 		if ds := stream.Msg().GetDesiredState(); ds != nil {
-			// Phase 1 has nothing to apply; acknowledge the generation.
-			_, err := api.ReportStatus(ctx, connect.NewRequest(&clientv1.ReportStatusRequest{
-				ClientVersion: version.Version, AppliedGeneration: ds.Generation,
-			}))
-			if err != nil {
-				slog.Warn("report status", "err", err)
-			}
+			app.submit(ds)
 		}
 	}
 	if cause := context.Cause(ctx); errors.Is(cause, errStreamTimeout) {

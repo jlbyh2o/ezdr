@@ -25,6 +25,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GuestType, type Inventory } from '@/gen/ezdr/inventory/v1/inventory_pb'
 import {
   DnsRecordSchema,
+  ExistingNetworkSchema,
+  ReplicationNetworkSchema,
   DnsRecordType,
   type Issue,
   PlanGuestSchema,
@@ -34,7 +36,8 @@ import {
   RetentionTierSchema,
   Severity,
 } from '@/gen/ezdr/plan/v1/plan_pb'
-import type { GetHostInventoryResponse, Host } from '@/gen/ezdr/portal/v1/portal_pb'
+import { type GetHostInventoryResponse, type Host, type Plan, PlanState } from '@/gen/ezdr/portal/v1/portal_pb'
+import { HostStatusPanel, PlanActions, StateBadge } from '@/pages/plan-actions'
 import { errorMessage, hostClient, planClient } from '@/lib/api'
 import { drPresets, grid, primaryPresets, splitPeriod, units } from '@/lib/retention'
 import { PageHeader } from '@/pages/layout'
@@ -47,6 +50,8 @@ export function PlanEditorPage() {
   const isNew = !id
   const navigate = useNavigate()
   const [spec, setSpec] = useState<PlanSpec>()
+  const [plan, setPlan] = useState<Plan>()
+  const [dirty, setDirty] = useState(false)
   const [hosts, setHosts] = useState<Host[]>([])
   const [primary, setPrimary] = useState<GetHostInventoryResponse>()
   const [dr, setDr] = useState<GetHostInventoryResponse>()
@@ -62,11 +67,12 @@ export function PlanEditorPage() {
       try {
         const [list, loaded] = await Promise.all([
           hostClient.listHosts({}),
-          isNew ? planClient.suggestPlan({}).then((r) => r.spec) : planClient.getPlan({ id }).then((r) => r.plan?.spec),
+          isNew ? planClient.suggestPlan({}).then((r) => ({ spec: r.spec, plan: undefined })) : planClient.getPlan({ id }).then((r) => ({ spec: r.plan?.spec, plan: r.plan })),
         ])
         if (!active) return
         setHosts(list.hosts)
-        setSpec(loaded ?? create(PlanSpecSchema))
+        setSpec(loaded.spec ?? create(PlanSpecSchema))
+        setPlan(loaded.plan)
       } catch (err) {
         if (active) setError(errorMessage(err))
       }
@@ -74,6 +80,15 @@ export function PlanEditorPage() {
     return () => {
       active = false
     }
+  }, [id, isNew])
+
+  // Refresh the stored plan (state and host progress) periodically.
+  useEffect(() => {
+    if (isNew) return
+    const t = setInterval(() => {
+      void planClient.getPlan({ id }).then((r) => setPlan(r.plan), () => undefined)
+    }, 5000)
+    return () => clearInterval(t)
   }, [id, isNew])
 
   // Load inventories when hosts change.
@@ -99,13 +114,15 @@ export function PlanEditorPage() {
     return () => clearTimeout(validateTimer.current)
   }, [spec, id])
 
-  const update: Update = (fn) =>
+  const update: Update = (fn) => {
+    setDirty(true)
     setSpec((prev) => {
       if (!prev) return prev
       const next = clone(PlanSpecSchema, prev)
       fn(next)
       return next
     })
+  }
 
   // Changes to hosts or guests can introduce new storage, bridges, or
   // guests; ask the portal to fill in suggestions for them.
@@ -114,6 +131,7 @@ export function PlanEditorPage() {
     const next = clone(PlanSpecSchema, spec)
     fn(next)
     setSpec(next)
+    setDirty(true)
     try {
       const r = await planClient.suggestPlan({ spec: next })
       if (r.spec) setSpec(r.spec)
@@ -133,8 +151,10 @@ export function PlanEditorPage() {
       } else {
         const r = await planClient.updatePlan({ id, spec })
         setIssues(r.issues)
+        setPlan(r.plan)
         setSavedAt(new Date())
       }
+      setDirty(false)
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -160,15 +180,33 @@ export function PlanEditorPage() {
       <Link to="/plans" className="flex items-center gap-1 pt-4 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> DR plans
       </Link>
-      <PageHeader title={isNew ? 'New DR plan' : spec.name || 'DR plan'} description="Changes are saved as a draft. Replication starts once plans can be activated (phase 4).">
+      <PageHeader
+        title={isNew ? 'New DR plan' : spec.name || 'DR plan'}
+        description={
+          !plan || plan.state === PlanState.DRAFT
+            ? 'Drafts are saved without changing the hosts. Activate the plan to start replication.'
+            : 'Edits to an active plan are saved as pending changes; replication keeps its applied settings until you apply them.'
+        }
+      >
         <div className="flex items-center gap-2">
+          {plan && <StateBadge state={plan.state} pending={plan.pendingChanges} />}
           {savedAt && <span className="text-xs text-muted-foreground">Saved {savedAt.toLocaleTimeString()}</span>}
-          {!isNew && <DeletePlanButton name={spec.name} onDelete={() => void remove()} />}
-          <Button onClick={() => void save()} disabled={saving}>
+          {plan?.state === PlanState.DRAFT && <DeletePlanButton name={spec.name} onDelete={() => void remove()} />}
+          <Button variant={plan ? 'outline' : 'default'} onClick={() => void save()} disabled={saving}>
             {isNew ? 'Create plan' : 'Save'}
           </Button>
         </div>
       </PageHeader>
+      {plan && (
+        <PlanActions
+          plan={plan}
+          dirty={dirty}
+          onChanged={(p) => {
+            setPlan(p)
+            if (p.spec) setSpec(p.spec)
+          }}
+        />
+      )}
       <ErrorAlert message={error} />
       <div className="grid items-start gap-4 lg:grid-cols-[1fr_320px]">
         <div className="grid gap-4">
@@ -179,12 +217,16 @@ export function PlanEditorPage() {
           {primaryInv && drInv && spec.guests.length > 0 && (
             <MappingsCard spec={spec} primaryInv={primaryInv} drInv={drInv} update={update} updateAndSuggest={updateAndSuggest} />
           )}
+          {primaryInv && <NetworkCard spec={spec} update={update} />}
           <ScheduleCard spec={spec} update={update} />
           {primaryInv && spec.guests.length > 0 && <StartupCard spec={spec} inv={primaryInv} update={update} />}
           {primaryInv && spec.guests.length > 0 && <DnsCard spec={spec} inv={primaryInv} update={update} />}
           <AdvancedCard spec={spec} update={update} />
         </div>
-        <ValidationPanel issues={issues} />
+        <div className="grid gap-4 lg:sticky lg:top-4">
+          {plan && <HostStatusPanel plan={plan} />}
+          <ValidationPanel issues={issues} />
+        </div>
       </div>
     </>
   )
@@ -483,6 +525,65 @@ function MappingsCard({
   )
 }
 
+function NetworkCard({ spec, update }: { spec: PlanSpec; update: Update }) {
+  const existing = spec.network?.path.case === 'existing' ? spec.network.path.value : undefined
+  return (
+    <Section title="Replication network" description="How the DR host reaches the primary's zrepl jobs. zrepl connections always use TLS with each host's own certificate.">
+      <div className="grid gap-2 text-sm">
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="network"
+            checked={!!existing}
+            onChange={() =>
+              update((s) => {
+                s.network = create(ReplicationNetworkSchema, {
+                  path: { case: 'existing', value: create(ExistingNetworkSchema, { port: 8888 }) },
+                })
+              })
+            }
+          />
+          Existing network (for example, a router site-to-site VPN)
+        </label>
+        <label className="flex items-center gap-2 text-muted-foreground">
+          <input type="radio" name="network" disabled />
+          EZDR tunnel between the hosts (coming in a later update)
+        </label>
+      </div>
+      {existing && (
+        <div className="grid gap-4 sm:grid-cols-[1fr_140px]">
+          <Field id="primary-address" label="Primary's address, as seen from the DR host">
+            <Input
+              id="primary-address"
+              value={existing.primaryAddress}
+              placeholder="192.0.2.10 or primary.example.com"
+              onChange={(e) =>
+                update((s) => {
+                  if (s.network?.path.case === 'existing') s.network.path.value.primaryAddress = e.target.value
+                })
+              }
+            />
+          </Field>
+          <Field id="zrepl-port" label="zrepl port">
+            <Input
+              id="zrepl-port"
+              type="number"
+              min={1024}
+              max={65535}
+              value={existing.port || ''}
+              onChange={(e) =>
+                update((s) => {
+                  if (s.network?.path.case === 'existing') s.network.path.value.port = Math.round(Number(e.target.value))
+                })
+              }
+            />
+          </Field>
+        </div>
+      )}
+    </Section>
+  )
+}
+
 function ScheduleCard({ spec, update }: { spec: PlanSpec; update: Update }) {
   const minutes = Math.round(spec.intervalSeconds / 60)
   return (
@@ -772,7 +873,7 @@ function ValidationPanel({ issues }: { issues: Issue[] }) {
   const errors = issues.filter((i) => i.severity === Severity.ERROR)
   const warnings = issues.filter((i) => i.severity === Severity.WARNING)
   return (
-    <Card className="lg:sticky lg:top-4">
+    <Card>
       <CardHeader>
         <CardTitle>Validation</CardTitle>
         <CardDescription>

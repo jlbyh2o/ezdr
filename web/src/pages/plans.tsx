@@ -9,6 +9,7 @@ import { planClient } from '@/lib/api'
 import { describeInterval } from '@/lib/retention'
 import { usePoll } from '@/lib/use-poll'
 import { PageHeader } from '@/pages/layout'
+import { StateBadge } from '@/pages/plan-actions'
 
 export function PlansPage() {
   const { data, error } = usePoll(async () => (await planClient.listPlans({})).plans, 30_000)
@@ -29,6 +30,7 @@ export function PlansPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Plan</TableHead>
+              <TableHead>State</TableHead>
               <TableHead>Primary → DR</TableHead>
               <TableHead>Guests</TableHead>
               <TableHead>Snapshots</TableHead>
@@ -42,6 +44,9 @@ export function PlansPage() {
                   <Link to={`/plans/${p.id}`} className="hover:underline">
                     {p.name}
                   </Link>
+                </TableCell>
+                <TableCell>
+                  <StateBadge state={p.state} pending={p.pendingChanges} />
                 </TableCell>
                 <TableCell className="text-sm">
                   {p.primaryHostname} → {p.drHostname}

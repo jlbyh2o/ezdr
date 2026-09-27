@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file ezdr/plan/v1/plan.proto.
  */
 export const file_ezdr_plan_v1_plan: GenFile = /*@__PURE__*/
-  fileDesc("ChdlemRyL3BsYW4vdjEvcGxhbi5wcm90bxIMZXpkci5wbGFuLnYxIqYDCghQbGFuU3BlYxIMCgRuYW1lGAEgASgJEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhcKD3ByaW1hcnlfaG9zdF9pZBgDIAEoCRISCgpkcl9ob3N0X2lkGAQgASgJEicKBmd1ZXN0cxgFIAMoCzIXLmV6ZHIucGxhbi52MS5QbGFuR3Vlc3QSNgoQc3RvcmFnZV9tYXBwaW5ncxgGIAMoCzIcLmV6ZHIucGxhbi52MS5TdG9yYWdlTWFwcGluZxI2ChBuZXR3b3JrX21hcHBpbmdzGAcgAygLMhwuZXpkci5wbGFuLnYxLk5ldHdvcmtNYXBwaW5nEhMKC3Rlc3RfYnJpZGdlGAggASgJEhgKEGludGVydmFsX3NlY29uZHMYCSABKA0SNgoRcHJpbWFyeV9yZXRlbnRpb24YCiADKAsyGy5lemRyLnBsYW4udjEuUmV0ZW50aW9uVGllchIxCgxkcl9yZXRlbnRpb24YCyADKAsyGy5lemRyLnBsYW4udjEuUmV0ZW50aW9uVGllchIXCg9zbmFwc2hvdF9wcmVmaXgYDCABKAkifQoJUGxhbkd1ZXN0EgwKBHZtaWQYASABKA0SFQoNc3RhcnR1cF9vcmRlchgCIAEoBRIdChVzdGFydHVwX2RlbGF5X3NlY29uZHMYAyABKA0SLAoLZG5zX3JlY29yZHMYBCADKAsyFy5lemRyLnBsYW4udjEuRG5zUmVjb3JkInYKCURuc1JlY29yZBIMCgRuYW1lGAEgASgJEikKBHR5cGUYAiABKA4yGy5lemRyLnBsYW4udjEuRG5zUmVjb3JkVHlwZRIYChBwcm9kdWN0aW9uX3ZhbHVlGAMgASgJEhYKDmZhaWxvdmVyX3ZhbHVlGAQgASgJIlkKDlN0b3JhZ2VNYXBwaW5nEhYKDnNvdXJjZV9zdG9yYWdlGAEgASgJEhYKDnRhcmdldF9zdG9yYWdlGAIgASgJEhcKD3JlY2VpdmVfZGF0YXNldBgDIAEoCSI+Cg5OZXR3b3JrTWFwcGluZxIVCg1zb3VyY2VfYnJpZGdlGAEgASgJEhUKDXRhcmdldF9icmlkZ2UYAiABKAkiSAoNUmV0ZW50aW9uVGllchINCgVjb3VudBgBIAEoDRIWCg5wZXJpb2Rfc2Vjb25kcxgCIAEoDRIQCghrZWVwX2FsbBgDIAEoCCJQCgVJc3N1ZRIoCghzZXZlcml0eRgBIAEoDjIWLmV6ZHIucGxhbi52MS5TZXZlcml0eRIPCgdtZXNzYWdlGAIgASgJEgwKBHZtaWQYAyABKA0qlQEKDURuc1JlY29yZFR5cGUSHwobRE5TX1JFQ09SRF9UWVBFX1VOU1BFQ0lGSUVEEAASFQoRRE5TX1JFQ09SRF9UWVBFX0EQARIYChRETlNfUkVDT1JEX1RZUEVfQUFBQRACEhkKFUROU19SRUNPUkRfVFlQRV9DTkFNRRADEhcKE0ROU19SRUNPUkRfVFlQRV9UWFQQBCpOCghTZXZlcml0eRIYChRTRVZFUklUWV9VTlNQRUNJRklFRBAAEhIKDlNFVkVSSVRZX0VSUk9SEAESFAoQU0VWRVJJVFlfV0FSTklORxACQqkBChBjb20uZXpkci5wbGFuLnYxQglQbGFuUHJvdG9QAVo4Z2l0aHViLmNvbS9qbGJ5aDJvL2V6ZHIvaW50ZXJuYWwvZ2VuL2V6ZHIvcGxhbi92MTtwbGFudjGiAgNFUFiqAgxFemRyLlBsYW4uVjHKAgxFemRyXFBsYW5cVjHiAhhFemRyXFBsYW5cVjFcR1BCTWV0YWRhdGHqAg5FemRyOjpQbGFuOjpWMWIGcHJvdG8z");
+  fileDesc("ChdlemRyL3BsYW4vdjEvcGxhbi5wcm90bxIMZXpkci5wbGFuLnYxIvQDCghQbGFuU3BlYxIMCgRuYW1lGAEgASgJEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhcKD3ByaW1hcnlfaG9zdF9pZBgDIAEoCRISCgpkcl9ob3N0X2lkGAQgASgJEicKBmd1ZXN0cxgFIAMoCzIXLmV6ZHIucGxhbi52MS5QbGFuR3Vlc3QSNgoQc3RvcmFnZV9tYXBwaW5ncxgGIAMoCzIcLmV6ZHIucGxhbi52MS5TdG9yYWdlTWFwcGluZxI2ChBuZXR3b3JrX21hcHBpbmdzGAcgAygLMhwuZXpkci5wbGFuLnYxLk5ldHdvcmtNYXBwaW5nEhMKC3Rlc3RfYnJpZGdlGAggASgJEhgKEGludGVydmFsX3NlY29uZHMYCSABKA0SNgoRcHJpbWFyeV9yZXRlbnRpb24YCiADKAsyGy5lemRyLnBsYW4udjEuUmV0ZW50aW9uVGllchIxCgxkcl9yZXRlbnRpb24YCyADKAsyGy5lemRyLnBsYW4udjEuUmV0ZW50aW9uVGllchIXCg9zbmFwc2hvdF9wcmVmaXgYDCABKAkSMQoHbmV0d29yaxgNIAEoCzIgLmV6ZHIucGxhbi52MS5SZXBsaWNhdGlvbk5ldHdvcmsSGQoRcnBvX2FsZXJ0X3NlY29uZHMYDiABKA0iewoSUmVwbGljYXRpb25OZXR3b3JrEjEKCGV4aXN0aW5nGAEgASgLMh0uZXpkci5wbGFuLnYxLkV4aXN0aW5nTmV0d29ya0gAEioKBnR1bm5lbBgCIAEoCzIYLmV6ZHIucGxhbi52MS5FemRyVHVubmVsSABCBgoEcGF0aCI4Cg9FeGlzdGluZ05ldHdvcmsSFwoPcHJpbWFyeV9hZGRyZXNzGAEgASgJEgwKBHBvcnQYAiABKA0iwwEKCkV6ZHJUdW5uZWwSMwoIbGlzdGVuZXIYASABKA4yIS5lemRyLnBsYW4udjEuRXpkclR1bm5lbC5MaXN0ZW5lchIQCghlbmRwb2ludBgCIAEoCRITCgtsaXN0ZW5fcG9ydBgDIAEoDRIMCgRwb3J0GAQgASgNIksKCExpc3RlbmVyEhgKFExJU1RFTkVSX1VOU1BFQ0lGSUVEEAASFAoQTElTVEVORVJfUFJJTUFSWRABEg8KC0xJU1RFTkVSX0RSEAIifQoJUGxhbkd1ZXN0EgwKBHZtaWQYASABKA0SFQoNc3RhcnR1cF9vcmRlchgCIAEoBRIdChVzdGFydHVwX2RlbGF5X3NlY29uZHMYAyABKA0SLAoLZG5zX3JlY29yZHMYBCADKAsyFy5lemRyLnBsYW4udjEuRG5zUmVjb3JkInYKCURuc1JlY29yZBIMCgRuYW1lGAEgASgJEikKBHR5cGUYAiABKA4yGy5lemRyLnBsYW4udjEuRG5zUmVjb3JkVHlwZRIYChBwcm9kdWN0aW9uX3ZhbHVlGAMgASgJEhYKDmZhaWxvdmVyX3ZhbHVlGAQgASgJIlkKDlN0b3JhZ2VNYXBwaW5nEhYKDnNvdXJjZV9zdG9yYWdlGAEgASgJEhYKDnRhcmdldF9zdG9yYWdlGAIgASgJEhcKD3JlY2VpdmVfZGF0YXNldBgDIAEoCSI+Cg5OZXR3b3JrTWFwcGluZxIVCg1zb3VyY2VfYnJpZGdlGAEgASgJEhUKDXRhcmdldF9icmlkZ2UYAiABKAkiSAoNUmV0ZW50aW9uVGllchINCgVjb3VudBgBIAEoDRIWCg5wZXJpb2Rfc2Vjb25kcxgCIAEoDRIQCghrZWVwX2FsbBgDIAEoCCJQCgVJc3N1ZRIoCghzZXZlcml0eRgBIAEoDjIWLmV6ZHIucGxhbi52MS5TZXZlcml0eRIPCgdtZXNzYWdlGAIgASgJEgwKBHZtaWQYAyABKA0qlQEKDURuc1JlY29yZFR5cGUSHwobRE5TX1JFQ09SRF9UWVBFX1VOU1BFQ0lGSUVEEAASFQoRRE5TX1JFQ09SRF9UWVBFX0EQARIYChRETlNfUkVDT1JEX1RZUEVfQUFBQRACEhkKFUROU19SRUNPUkRfVFlQRV9DTkFNRRADEhcKE0ROU19SRUNPUkRfVFlQRV9UWFQQBCpOCghTZXZlcml0eRIYChRTRVZFUklUWV9VTlNQRUNJRklFRBAAEhIKDlNFVkVSSVRZX0VSUk9SEAESFAoQU0VWRVJJVFlfV0FSTklORxACQqkBChBjb20uZXpkci5wbGFuLnYxQglQbGFuUHJvdG9QAVo4Z2l0aHViLmNvbS9qbGJ5aDJvL2V6ZHIvaW50ZXJuYWwvZ2VuL2V6ZHIvcGxhbi92MTtwbGFudjGiAgNFUFiqAgxFemRyLlBsYW4uVjHKAgxFemRyXFBsYW5cVjHiAhhFemRyXFBsYW5cVjFcR1BCTWV0YWRhdGHqAg5FemRyOjpQbGFuOjpWMWIGcHJvdG8z");
 
 /**
  * PlanSpec is a DR plan's configuration. See docs/design/dr-plans.md.
@@ -83,6 +83,21 @@ export type PlanSpec = Message<"ezdr.plan.v1.PlanSpec"> & {
    * @generated from field: string snapshot_prefix = 12;
    */
   snapshotPrefix: string;
+
+  /**
+   * How the DR host reaches the primary's zrepl source jobs.
+   *
+   * @generated from field: ezdr.plan.v1.ReplicationNetwork network = 13;
+   */
+  network?: ReplicationNetwork | undefined;
+
+  /**
+   * Alert when the newest replicated snapshot is older than this. Zero means
+   * three times the snapshot interval.
+   *
+   * @generated from field: uint32 rpo_alert_seconds = 14;
+   */
+  rpoAlertSeconds: number;
 };
 
 /**
@@ -91,6 +106,134 @@ export type PlanSpec = Message<"ezdr.plan.v1.PlanSpec"> & {
  */
 export const PlanSpecSchema: GenMessage<PlanSpec> = /*@__PURE__*/
   messageDesc(file_ezdr_plan_v1_plan, 0);
+
+/**
+ * @generated from message ezdr.plan.v1.ReplicationNetwork
+ */
+export type ReplicationNetwork = Message<"ezdr.plan.v1.ReplicationNetwork"> & {
+  /**
+   * @generated from oneof ezdr.plan.v1.ReplicationNetwork.path
+   */
+  path: {
+    /**
+     * @generated from field: ezdr.plan.v1.ExistingNetwork existing = 1;
+     */
+    value: ExistingNetwork;
+    case: "existing";
+  } | {
+    /**
+     * @generated from field: ezdr.plan.v1.EzdrTunnel tunnel = 2;
+     */
+    value: EzdrTunnel;
+    case: "tunnel";
+  } | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message ezdr.plan.v1.ReplicationNetwork.
+ * Use `create(ReplicationNetworkSchema)` to create a new message.
+ */
+export const ReplicationNetworkSchema: GenMessage<ReplicationNetwork> = /*@__PURE__*/
+  messageDesc(file_ezdr_plan_v1_plan, 1);
+
+/**
+ * ExistingNetwork replicates over a network the hosts can already use, such as
+ * a router site-to-site VPN.
+ *
+ * @generated from message ezdr.plan.v1.ExistingNetwork
+ */
+export type ExistingNetwork = Message<"ezdr.plan.v1.ExistingNetwork"> & {
+  /**
+   * The primary's address as seen from the DR host (IP address or DNS name).
+   *
+   * @generated from field: string primary_address = 1;
+   */
+  primaryAddress: string;
+
+  /**
+   * First zrepl port. A plan uses one port per source job, counting up from
+   * this one.
+   *
+   * @generated from field: uint32 port = 2;
+   */
+  port: number;
+};
+
+/**
+ * Describes the message ezdr.plan.v1.ExistingNetwork.
+ * Use `create(ExistingNetworkSchema)` to create a new message.
+ */
+export const ExistingNetworkSchema: GenMessage<ExistingNetwork> = /*@__PURE__*/
+  messageDesc(file_ezdr_plan_v1_plan, 2);
+
+/**
+ * EzdrTunnel replicates over an EZDR-managed WireGuard tunnel between the
+ * hosts.
+ *
+ * @generated from message ezdr.plan.v1.EzdrTunnel
+ */
+export type EzdrTunnel = Message<"ezdr.plan.v1.EzdrTunnel"> & {
+  /**
+   * Which host accepts the WireGuard connection.
+   *
+   * @generated from field: ezdr.plan.v1.EzdrTunnel.Listener listener = 1;
+   */
+  listener: EzdrTunnel_Listener;
+
+  /**
+   * The listening host's public endpoint as host:port.
+   *
+   * @generated from field: string endpoint = 2;
+   */
+  endpoint: string;
+
+  /**
+   * WireGuard UDP port on the listening host.
+   *
+   * @generated from field: uint32 listen_port = 3;
+   */
+  listenPort: number;
+
+  /**
+   * First zrepl port inside the tunnel.
+   *
+   * @generated from field: uint32 port = 4;
+   */
+  port: number;
+};
+
+/**
+ * Describes the message ezdr.plan.v1.EzdrTunnel.
+ * Use `create(EzdrTunnelSchema)` to create a new message.
+ */
+export const EzdrTunnelSchema: GenMessage<EzdrTunnel> = /*@__PURE__*/
+  messageDesc(file_ezdr_plan_v1_plan, 3);
+
+/**
+ * @generated from enum ezdr.plan.v1.EzdrTunnel.Listener
+ */
+export enum EzdrTunnel_Listener {
+  /**
+   * @generated from enum value: LISTENER_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: LISTENER_PRIMARY = 1;
+   */
+  PRIMARY = 1,
+
+  /**
+   * @generated from enum value: LISTENER_DR = 2;
+   */
+  DR = 2,
+}
+
+/**
+ * Describes the enum ezdr.plan.v1.EzdrTunnel.Listener.
+ */
+export const EzdrTunnel_ListenerSchema: GenEnum<EzdrTunnel_Listener> = /*@__PURE__*/
+  enumDesc(file_ezdr_plan_v1_plan, 3, 0);
 
 /**
  * @generated from message ezdr.plan.v1.PlanGuest
@@ -126,7 +269,7 @@ export type PlanGuest = Message<"ezdr.plan.v1.PlanGuest"> & {
  * Use `create(PlanGuestSchema)` to create a new message.
  */
 export const PlanGuestSchema: GenMessage<PlanGuest> = /*@__PURE__*/
-  messageDesc(file_ezdr_plan_v1_plan, 1);
+  messageDesc(file_ezdr_plan_v1_plan, 4);
 
 /**
  * @generated from message ezdr.plan.v1.DnsRecord
@@ -158,7 +301,7 @@ export type DnsRecord = Message<"ezdr.plan.v1.DnsRecord"> & {
  * Use `create(DnsRecordSchema)` to create a new message.
  */
 export const DnsRecordSchema: GenMessage<DnsRecord> = /*@__PURE__*/
-  messageDesc(file_ezdr_plan_v1_plan, 2);
+  messageDesc(file_ezdr_plan_v1_plan, 5);
 
 /**
  * @generated from message ezdr.plan.v1.StorageMapping
@@ -192,7 +335,7 @@ export type StorageMapping = Message<"ezdr.plan.v1.StorageMapping"> & {
  * Use `create(StorageMappingSchema)` to create a new message.
  */
 export const StorageMappingSchema: GenMessage<StorageMapping> = /*@__PURE__*/
-  messageDesc(file_ezdr_plan_v1_plan, 3);
+  messageDesc(file_ezdr_plan_v1_plan, 6);
 
 /**
  * @generated from message ezdr.plan.v1.NetworkMapping
@@ -214,7 +357,7 @@ export type NetworkMapping = Message<"ezdr.plan.v1.NetworkMapping"> & {
  * Use `create(NetworkMappingSchema)` to create a new message.
  */
 export const NetworkMappingSchema: GenMessage<NetworkMapping> = /*@__PURE__*/
-  messageDesc(file_ezdr_plan_v1_plan, 4);
+  messageDesc(file_ezdr_plan_v1_plan, 7);
 
 /**
  * RetentionTier keeps one snapshot per period for count periods (zrepl grid
@@ -245,7 +388,7 @@ export type RetentionTier = Message<"ezdr.plan.v1.RetentionTier"> & {
  * Use `create(RetentionTierSchema)` to create a new message.
  */
 export const RetentionTierSchema: GenMessage<RetentionTier> = /*@__PURE__*/
-  messageDesc(file_ezdr_plan_v1_plan, 5);
+  messageDesc(file_ezdr_plan_v1_plan, 8);
 
 /**
  * Issue is a validation result. Errors block activation.
@@ -276,7 +419,7 @@ export type Issue = Message<"ezdr.plan.v1.Issue"> & {
  * Use `create(IssueSchema)` to create a new message.
  */
 export const IssueSchema: GenMessage<Issue> = /*@__PURE__*/
-  messageDesc(file_ezdr_plan_v1_plan, 6);
+  messageDesc(file_ezdr_plan_v1_plan, 9);
 
 /**
  * @generated from enum ezdr.plan.v1.DnsRecordType

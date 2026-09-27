@@ -31,6 +31,11 @@ func Suggest(spec *planv1.PlanSpec, primary, dr *inventoryv1.Inventory) *planv1.
 	if primary == nil {
 		return s
 	}
+	if s.Network == nil {
+		s.Network = &planv1.ReplicationNetwork{Path: &planv1.ReplicationNetwork_Existing{
+			Existing: &planv1.ExistingNetwork{PrimaryAddress: managementAddress(primary), Port: DefaultZreplPort},
+		}}
+	}
 
 	guests := guestsByID(primary)
 	startupAssigned := false
@@ -226,4 +231,16 @@ func placeUnordered(guests []*planv1.PlanGuest) {
 	for i, g := range unordered {
 		g.StartupOrder = maxOrder + int32(i) + 1 //nolint:gosec // small counts
 	}
+}
+
+// managementAddress guesses the primary's address from the interface with
+// the default gateway.
+func managementAddress(inv *inventoryv1.Inventory) string {
+	for _, i := range inv.GetInterfaces() {
+		if i.Gateway != "" && i.Cidr != "" {
+			addr, _, _ := strings.Cut(i.Cidr, "/")
+			return addr
+		}
+	}
+	return ""
 }

@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file ezdr/client/v1/client.proto.
  */
 export const file_ezdr_client_v1_client: GenFile = /*@__PURE__*/
-  fileDesc("ChtlemRyL2NsaWVudC92MS9jbGllbnQucHJvdG8SDmV6ZHIuY2xpZW50LnYxIioKEFN1YnNjcmliZVJlcXVlc3QSFgoOY2xpZW50X3ZlcnNpb24YASABKAkirwEKEVN1YnNjcmliZVJlc3BvbnNlEi4KCWhlYXJ0YmVhdBgBIAEoCzIZLmV6ZHIuY2xpZW50LnYxLkhlYXJ0YmVhdEgAEjUKDWRlc2lyZWRfc3RhdGUYAiABKAsyHC5lemRyLmNsaWVudC52MS5EZXNpcmVkU3RhdGVIABIoCgZhY3Rpb24YAyABKAsyFi5lemRyLmNsaWVudC52MS5BY3Rpb25IAEIJCgdtZXNzYWdlIlsKBkFjdGlvbhIKCgJpZBgBIAEoCRI9ChFyZWZyZXNoX2ludmVudG9yeRgCIAEoCzIgLmV6ZHIuY2xpZW50LnYxLlJlZnJlc2hJbnZlbnRvcnlIAEIGCgRraW5kIhIKEFJlZnJlc2hJbnZlbnRvcnkiCwoJSGVhcnRiZWF0IiIKDERlc2lyZWRTdGF0ZRISCgpnZW5lcmF0aW9uGAEgASgEIkkKE1JlcG9ydFN0YXR1c1JlcXVlc3QSFgoOY2xpZW50X3ZlcnNpb24YASABKAkSGgoSYXBwbGllZF9nZW5lcmF0aW9uGAIgASgEIhYKFFJlcG9ydFN0YXR1c1Jlc3BvbnNlIkkKFlJlcG9ydEludmVudG9yeVJlcXVlc3QSLwoJaW52ZW50b3J5GAEgASgLMhwuZXpkci5pbnZlbnRvcnkudjEuSW52ZW50b3J5IhkKF1JlcG9ydEludmVudG9yeVJlc3BvbnNlIkkKEEFja0FjdGlvblJlcXVlc3QSEQoJYWN0aW9uX2lkGAEgASgJEhEKCXN1Y2NlZWRlZBgCIAEoCBIPCgdtZXNzYWdlGAMgASgJIhMKEUFja0FjdGlvblJlc3BvbnNlMvQCCg1DbGllbnRTZXJ2aWNlElIKCVN1YnNjcmliZRIgLmV6ZHIuY2xpZW50LnYxLlN1YnNjcmliZVJlcXVlc3QaIS5lemRyLmNsaWVudC52MS5TdWJzY3JpYmVSZXNwb25zZTABElkKDFJlcG9ydFN0YXR1cxIjLmV6ZHIuY2xpZW50LnYxLlJlcG9ydFN0YXR1c1JlcXVlc3QaJC5lemRyLmNsaWVudC52MS5SZXBvcnRTdGF0dXNSZXNwb25zZRJiCg9SZXBvcnRJbnZlbnRvcnkSJi5lemRyLmNsaWVudC52MS5SZXBvcnRJbnZlbnRvcnlSZXF1ZXN0GicuZXpkci5jbGllbnQudjEuUmVwb3J0SW52ZW50b3J5UmVzcG9uc2USUAoJQWNrQWN0aW9uEiAuZXpkci5jbGllbnQudjEuQWNrQWN0aW9uUmVxdWVzdBohLmV6ZHIuY2xpZW50LnYxLkFja0FjdGlvblJlc3BvbnNlQrkBChJjb20uZXpkci5jbGllbnQudjFCC0NsaWVudFByb3RvUAFaPGdpdGh1Yi5jb20vamxieWgyby9lemRyL2ludGVybmFsL2dlbi9lemRyL2NsaWVudC92MTtjbGllbnR2MaICA0VDWKoCDkV6ZHIuQ2xpZW50LlYxygIORXpkclxDbGllbnRcVjHiAhpFemRyXENsaWVudFxWMVxHUEJNZXRhZGF0YeoCEEV6ZHI6OkNsaWVudDo6VjFiBnByb3RvMw", [file_ezdr_inventory_v1_inventory]);
+  fileDesc("ChtlemRyL2NsaWVudC92MS9jbGllbnQucHJvdG8SDmV6ZHIuY2xpZW50LnYxIioKEFN1YnNjcmliZVJlcXVlc3QSFgoOY2xpZW50X3ZlcnNpb24YASABKAkirwEKEVN1YnNjcmliZVJlc3BvbnNlEi4KCWhlYXJ0YmVhdBgBIAEoCzIZLmV6ZHIuY2xpZW50LnYxLkhlYXJ0YmVhdEgAEjUKDWRlc2lyZWRfc3RhdGUYAiABKAsyHC5lemRyLmNsaWVudC52MS5EZXNpcmVkU3RhdGVIABIoCgZhY3Rpb24YAyABKAsyFi5lemRyLmNsaWVudC52MS5BY3Rpb25IAEIJCgdtZXNzYWdlIlsKBkFjdGlvbhIKCgJpZBgBIAEoCRI9ChFyZWZyZXNoX2ludmVudG9yeRgCIAEoCzIgLmV6ZHIuY2xpZW50LnYxLlJlZnJlc2hJbnZlbnRvcnlIAEIGCgRraW5kIhIKEFJlZnJlc2hJbnZlbnRvcnkiCwoJSGVhcnRiZWF0IkgKDERlc2lyZWRTdGF0ZRISCgpnZW5lcmF0aW9uGAEgASgEEiQKBXpyZXBsGAIgASgLMhUuZXpkci5jbGllbnQudjEuWnJlcGwiYwoFWnJlcGwSLgoLc291cmNlX2pvYnMYASADKAsyGS5lemRyLmNsaWVudC52MS5Tb3VyY2VKb2ISKgoJcHVsbF9qb2JzGAIgAygLMhcuZXpkci5jbGllbnQudjEuUHVsbEpvYiItCgRQZWVyEgwKBG5hbWUYASABKAkSFwoPY2VydGlmaWNhdGVfcGVtGAIgASgJIq0BCglTb3VyY2VKb2ISDAoEbmFtZRgBIAEoCRIQCghkYXRhc2V0cxgCIAMoCRIXCg9zbmFwc2hvdF9wcmVmaXgYAyABKAkSGAoQaW50ZXJ2YWxfc2Vjb25kcxgEIAEoDRIWCg5saXN0ZW5fYWRkcmVzcxgFIAEoCRIiCgRwZWVyGAYgASgLMhQuZXpkci5jbGllbnQudjEuUGVlchIRCgllbmNyeXB0ZWQYByABKAgihwIKB1B1bGxKb2ISDAoEbmFtZRgBIAEoCRIPCgdhZGRyZXNzGAIgASgJEiIKBHBlZXIYAyABKAsyFC5lemRyLmNsaWVudC52MS5QZWVyEhcKD3JlY2VpdmVfZGF0YXNldBgEIAEoCRIYChBpbnRlcnZhbF9zZWNvbmRzGAUgASgNEhcKD3NuYXBzaG90X3ByZWZpeBgGIAEoCRI4ChFwcmltYXJ5X3JldGVudGlvbhgHIAMoCzIdLmV6ZHIuY2xpZW50LnYxLlJldGVudGlvblRpZXISMwoMZHJfcmV0ZW50aW9uGAggAygLMh0uZXpkci5jbGllbnQudjEuUmV0ZW50aW9uVGllciJICg1SZXRlbnRpb25UaWVyEg0KBWNvdW50GAEgASgNEhYKDnBlcmlvZF9zZWNvbmRzGAIgASgNEhAKCGtlZXBfYWxsGAMgASgIIpABChNSZXBvcnRTdGF0dXNSZXF1ZXN0EhYKDmNsaWVudF92ZXJzaW9uGAEgASgJEhoKEmFwcGxpZWRfZ2VuZXJhdGlvbhgCIAEoBBITCgthcHBseV9lcnJvchgDIAEoCRIZChF6cmVwbF9jZXJ0aWZpY2F0ZRgEIAEoCRIVCg16cmVwbF92ZXJzaW9uGAUgASgJIhYKFFJlcG9ydFN0YXR1c1Jlc3BvbnNlIkkKFlJlcG9ydEludmVudG9yeVJlcXVlc3QSLwoJaW52ZW50b3J5GAEgASgLMhwuZXpkci5pbnZlbnRvcnkudjEuSW52ZW50b3J5IhkKF1JlcG9ydEludmVudG9yeVJlc3BvbnNlIkkKEEFja0FjdGlvblJlcXVlc3QSEQoJYWN0aW9uX2lkGAEgASgJEhEKCXN1Y2NlZWRlZBgCIAEoCBIPCgdtZXNzYWdlGAMgASgJIhMKEUFja0FjdGlvblJlc3BvbnNlMvQCCg1DbGllbnRTZXJ2aWNlElIKCVN1YnNjcmliZRIgLmV6ZHIuY2xpZW50LnYxLlN1YnNjcmliZVJlcXVlc3QaIS5lemRyLmNsaWVudC52MS5TdWJzY3JpYmVSZXNwb25zZTABElkKDFJlcG9ydFN0YXR1cxIjLmV6ZHIuY2xpZW50LnYxLlJlcG9ydFN0YXR1c1JlcXVlc3QaJC5lemRyLmNsaWVudC52MS5SZXBvcnRTdGF0dXNSZXNwb25zZRJiCg9SZXBvcnRJbnZlbnRvcnkSJi5lemRyLmNsaWVudC52MS5SZXBvcnRJbnZlbnRvcnlSZXF1ZXN0GicuZXpkci5jbGllbnQudjEuUmVwb3J0SW52ZW50b3J5UmVzcG9uc2USUAoJQWNrQWN0aW9uEiAuZXpkci5jbGllbnQudjEuQWNrQWN0aW9uUmVxdWVzdBohLmV6ZHIuY2xpZW50LnYxLkFja0FjdGlvblJlc3BvbnNlQrkBChJjb20uZXpkci5jbGllbnQudjFCC0NsaWVudFByb3RvUAFaPGdpdGh1Yi5jb20vamxieWgyby9lemRyL2ludGVybmFsL2dlbi9lemRyL2NsaWVudC92MTtjbGllbnR2MaICA0VDWKoCDkV6ZHIuQ2xpZW50LlYxygIORXpkclxDbGllbnRcVjHiAhpFemRyXENsaWVudFxWMVxHUEJNZXRhZGF0YeoCEEV6ZHI6OkNsaWVudDo6VjFiBnByb3RvMw", [file_ezdr_inventory_v1_inventory]);
 
 /**
  * @generated from message ezdr.client.v1.SubscribeRequest
@@ -125,8 +125,7 @@ export const HeartbeatSchema: GenMessage<Heartbeat> = /*@__PURE__*/
   messageDesc(file_ezdr_client_v1_client, 4);
 
 /**
- * DesiredState is the full configuration the host should have. It is empty in
- * phase 1 and gains fields in later phases.
+ * DesiredState is the full configuration the host should have.
  *
  * @generated from message ezdr.client.v1.DesiredState
  */
@@ -135,6 +134,11 @@ export type DesiredState = Message<"ezdr.client.v1.DesiredState"> & {
    * @generated from field: uint64 generation = 1;
    */
   generation: bigint;
+
+  /**
+   * @generated from field: ezdr.client.v1.Zrepl zrepl = 2;
+   */
+  zrepl?: Zrepl | undefined;
 };
 
 /**
@@ -143,6 +147,198 @@ export type DesiredState = Message<"ezdr.client.v1.DesiredState"> & {
  */
 export const DesiredStateSchema: GenMessage<DesiredState> = /*@__PURE__*/
   messageDesc(file_ezdr_client_v1_client, 5);
+
+/**
+ * Zrepl describes the zrepl jobs EZDR manages on the host. The client renders
+ * them into /etc/zrepl/ezdr.d/ezdr.yml. With no jobs, zrepl is not installed
+ * (or EZDR's jobs are removed if it is).
+ *
+ * @generated from message ezdr.client.v1.Zrepl
+ */
+export type Zrepl = Message<"ezdr.client.v1.Zrepl"> & {
+  /**
+   * @generated from field: repeated ezdr.client.v1.SourceJob source_jobs = 1;
+   */
+  sourceJobs: SourceJob[];
+
+  /**
+   * @generated from field: repeated ezdr.client.v1.PullJob pull_jobs = 2;
+   */
+  pullJobs: PullJob[];
+};
+
+/**
+ * Describes the message ezdr.client.v1.Zrepl.
+ * Use `create(ZreplSchema)` to create a new message.
+ */
+export const ZreplSchema: GenMessage<Zrepl> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 6);
+
+/**
+ * Peer identifies the other end of a zrepl connection by its exact
+ * self-signed certificate.
+ *
+ * @generated from message ezdr.client.v1.Peer
+ */
+export type Peer = Message<"ezdr.client.v1.Peer"> & {
+  /**
+   * Certificate common name, such as "ezdr-<host ID>".
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string certificate_pem = 2;
+   */
+  certificatePem: string;
+};
+
+/**
+ * Describes the message ezdr.client.v1.Peer.
+ * Use `create(PeerSchema)` to create a new message.
+ */
+export const PeerSchema: GenMessage<Peer> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 7);
+
+/**
+ * @generated from message ezdr.client.v1.SourceJob
+ */
+export type SourceJob = Message<"ezdr.client.v1.SourceJob"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * Exact datasets to snapshot and serve.
+   *
+   * @generated from field: repeated string datasets = 2;
+   */
+  datasets: string[];
+
+  /**
+   * @generated from field: string snapshot_prefix = 3;
+   */
+  snapshotPrefix: string;
+
+  /**
+   * @generated from field: uint32 interval_seconds = 4;
+   */
+  intervalSeconds: number;
+
+  /**
+   * Address to listen on, as host:port; the host may be empty for all
+   * addresses.
+   *
+   * @generated from field: string listen_address = 5;
+   */
+  listenAddress: string;
+
+  /**
+   * The DR host allowed to connect.
+   *
+   * @generated from field: ezdr.client.v1.Peer peer = 6;
+   */
+  peer?: Peer | undefined;
+
+  /**
+   * Raw sends, for encrypted datasets.
+   *
+   * @generated from field: bool encrypted = 7;
+   */
+  encrypted: boolean;
+};
+
+/**
+ * Describes the message ezdr.client.v1.SourceJob.
+ * Use `create(SourceJobSchema)` to create a new message.
+ */
+export const SourceJobSchema: GenMessage<SourceJob> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 8);
+
+/**
+ * @generated from message ezdr.client.v1.PullJob
+ */
+export type PullJob = Message<"ezdr.client.v1.PullJob"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * The primary's source job address as host:port.
+   *
+   * @generated from field: string address = 2;
+   */
+  address: string;
+
+  /**
+   * @generated from field: ezdr.client.v1.Peer peer = 3;
+   */
+  peer?: Peer | undefined;
+
+  /**
+   * Dataset replicas are received under (zrepl root_fs).
+   *
+   * @generated from field: string receive_dataset = 4;
+   */
+  receiveDataset: string;
+
+  /**
+   * @generated from field: uint32 interval_seconds = 5;
+   */
+  intervalSeconds: number;
+
+  /**
+   * @generated from field: string snapshot_prefix = 6;
+   */
+  snapshotPrefix: string;
+
+  /**
+   * @generated from field: repeated ezdr.client.v1.RetentionTier primary_retention = 7;
+   */
+  primaryRetention: RetentionTier[];
+
+  /**
+   * @generated from field: repeated ezdr.client.v1.RetentionTier dr_retention = 8;
+   */
+  drRetention: RetentionTier[];
+};
+
+/**
+ * Describes the message ezdr.client.v1.PullJob.
+ * Use `create(PullJobSchema)` to create a new message.
+ */
+export const PullJobSchema: GenMessage<PullJob> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 9);
+
+/**
+ * @generated from message ezdr.client.v1.RetentionTier
+ */
+export type RetentionTier = Message<"ezdr.client.v1.RetentionTier"> & {
+  /**
+   * @generated from field: uint32 count = 1;
+   */
+  count: number;
+
+  /**
+   * @generated from field: uint32 period_seconds = 2;
+   */
+  periodSeconds: number;
+
+  /**
+   * @generated from field: bool keep_all = 3;
+   */
+  keepAll: boolean;
+};
+
+/**
+ * Describes the message ezdr.client.v1.RetentionTier.
+ * Use `create(RetentionTierSchema)` to create a new message.
+ */
+export const RetentionTierSchema: GenMessage<RetentionTier> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 10);
 
 /**
  * @generated from message ezdr.client.v1.ReportStatusRequest
@@ -154,9 +350,32 @@ export type ReportStatusRequest = Message<"ezdr.client.v1.ReportStatusRequest"> 
   clientVersion: string;
 
   /**
+   * The newest desired state generation the client has handled.
+   *
    * @generated from field: uint64 applied_generation = 2;
    */
   appliedGeneration: bigint;
+
+  /**
+   * Why applying that generation failed; empty on success.
+   *
+   * @generated from field: string apply_error = 3;
+   */
+  applyError: string;
+
+  /**
+   * The host's zrepl TLS certificate (PEM), shared with its peers.
+   *
+   * @generated from field: string zrepl_certificate = 4;
+   */
+  zreplCertificate: string;
+
+  /**
+   * Installed zrepl version; empty if not installed.
+   *
+   * @generated from field: string zrepl_version = 5;
+   */
+  zreplVersion: string;
 };
 
 /**
@@ -164,7 +383,7 @@ export type ReportStatusRequest = Message<"ezdr.client.v1.ReportStatusRequest"> 
  * Use `create(ReportStatusRequestSchema)` to create a new message.
  */
 export const ReportStatusRequestSchema: GenMessage<ReportStatusRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 6);
+  messageDesc(file_ezdr_client_v1_client, 11);
 
 /**
  * @generated from message ezdr.client.v1.ReportStatusResponse
@@ -177,7 +396,7 @@ export type ReportStatusResponse = Message<"ezdr.client.v1.ReportStatusResponse"
  * Use `create(ReportStatusResponseSchema)` to create a new message.
  */
 export const ReportStatusResponseSchema: GenMessage<ReportStatusResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 7);
+  messageDesc(file_ezdr_client_v1_client, 12);
 
 /**
  * @generated from message ezdr.client.v1.ReportInventoryRequest
@@ -194,7 +413,7 @@ export type ReportInventoryRequest = Message<"ezdr.client.v1.ReportInventoryRequ
  * Use `create(ReportInventoryRequestSchema)` to create a new message.
  */
 export const ReportInventoryRequestSchema: GenMessage<ReportInventoryRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 8);
+  messageDesc(file_ezdr_client_v1_client, 13);
 
 /**
  * @generated from message ezdr.client.v1.ReportInventoryResponse
@@ -207,7 +426,7 @@ export type ReportInventoryResponse = Message<"ezdr.client.v1.ReportInventoryRes
  * Use `create(ReportInventoryResponseSchema)` to create a new message.
  */
 export const ReportInventoryResponseSchema: GenMessage<ReportInventoryResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 9);
+  messageDesc(file_ezdr_client_v1_client, 14);
 
 /**
  * @generated from message ezdr.client.v1.AckActionRequest
@@ -234,7 +453,7 @@ export type AckActionRequest = Message<"ezdr.client.v1.AckActionRequest"> & {
  * Use `create(AckActionRequestSchema)` to create a new message.
  */
 export const AckActionRequestSchema: GenMessage<AckActionRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 10);
+  messageDesc(file_ezdr_client_v1_client, 15);
 
 /**
  * @generated from message ezdr.client.v1.AckActionResponse
@@ -247,7 +466,7 @@ export type AckActionResponse = Message<"ezdr.client.v1.AckActionResponse"> & {
  * Use `create(AckActionResponseSchema)` to create a new message.
  */
 export const AckActionResponseSchema: GenMessage<AckActionResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 11);
+  messageDesc(file_ezdr_client_v1_client, 16);
 
 /**
  * ClientService is served only on the portal's tunnel listener. The portal

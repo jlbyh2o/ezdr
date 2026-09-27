@@ -94,6 +94,25 @@ const (
 	PlanServiceValidatePlanProcedure = "/ezdr.portal.v1.PlanService/ValidatePlan"
 	// PlanServiceSuggestPlanProcedure is the fully-qualified name of the PlanService's SuggestPlan RPC.
 	PlanServiceSuggestPlanProcedure = "/ezdr.portal.v1.PlanService/SuggestPlan"
+	// PlanServicePreviewPlanChangesProcedure is the fully-qualified name of the PlanService's
+	// PreviewPlanChanges RPC.
+	PlanServicePreviewPlanChangesProcedure = "/ezdr.portal.v1.PlanService/PreviewPlanChanges"
+	// PlanServiceActivatePlanProcedure is the fully-qualified name of the PlanService's ActivatePlan
+	// RPC.
+	PlanServiceActivatePlanProcedure = "/ezdr.portal.v1.PlanService/ActivatePlan"
+	// PlanServiceApplyPlanChangesProcedure is the fully-qualified name of the PlanService's
+	// ApplyPlanChanges RPC.
+	PlanServiceApplyPlanChangesProcedure = "/ezdr.portal.v1.PlanService/ApplyPlanChanges"
+	// PlanServiceDiscardPlanChangesProcedure is the fully-qualified name of the PlanService's
+	// DiscardPlanChanges RPC.
+	PlanServiceDiscardPlanChangesProcedure = "/ezdr.portal.v1.PlanService/DiscardPlanChanges"
+	// PlanServicePausePlanProcedure is the fully-qualified name of the PlanService's PausePlan RPC.
+	PlanServicePausePlanProcedure = "/ezdr.portal.v1.PlanService/PausePlan"
+	// PlanServiceResumePlanProcedure is the fully-qualified name of the PlanService's ResumePlan RPC.
+	PlanServiceResumePlanProcedure = "/ezdr.portal.v1.PlanService/ResumePlan"
+	// PlanServiceDeactivatePlanProcedure is the fully-qualified name of the PlanService's
+	// DeactivatePlan RPC.
+	PlanServiceDeactivatePlanProcedure = "/ezdr.portal.v1.PlanService/DeactivatePlan"
 )
 
 // SetupServiceClient is a client for the ezdr.portal.v1.SetupService service.
@@ -693,6 +712,20 @@ type PlanServiceClient interface {
 	ValidatePlan(context.Context, *connect.Request[v1.ValidatePlanRequest]) (*connect.Response[v1.ValidatePlanResponse], error)
 	// SuggestPlan fills in missing mappings, startup order, and defaults.
 	SuggestPlan(context.Context, *connect.Request[v1.SuggestPlanRequest]) (*connect.Response[v1.SuggestPlanResponse], error)
+	// PreviewPlanChanges lists what activating or applying the plan's
+	// editing specification would change on each host.
+	PreviewPlanChanges(context.Context, *connect.Request[v1.PreviewPlanChangesRequest]) (*connect.Response[v1.PreviewPlanChangesResponse], error)
+	// ActivatePlan applies a valid draft to its hosts.
+	ActivatePlan(context.Context, *connect.Request[v1.ActivatePlanRequest]) (*connect.Response[v1.ActivatePlanResponse], error)
+	// ApplyPlanChanges applies an active plan's pending changes.
+	ApplyPlanChanges(context.Context, *connect.Request[v1.ApplyPlanChangesRequest]) (*connect.Response[v1.ApplyPlanChangesResponse], error)
+	// DiscardPlanChanges reverts pending changes to the applied specification.
+	DiscardPlanChanges(context.Context, *connect.Request[v1.DiscardPlanChangesRequest]) (*connect.Response[v1.DiscardPlanChangesResponse], error)
+	PausePlan(context.Context, *connect.Request[v1.PausePlanRequest]) (*connect.Response[v1.PausePlanResponse], error)
+	ResumePlan(context.Context, *connect.Request[v1.ResumePlanRequest]) (*connect.Response[v1.ResumePlanResponse], error)
+	// DeactivatePlan removes the plan's jobs from its hosts and returns it to
+	// draft. Replicas and snapshots are kept.
+	DeactivatePlan(context.Context, *connect.Request[v1.DeactivatePlanRequest]) (*connect.Response[v1.DeactivatePlanResponse], error)
 }
 
 // NewPlanServiceClient constructs a client for the ezdr.portal.v1.PlanService service. By default,
@@ -748,18 +781,67 @@ func NewPlanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(planServiceMethods.ByName("SuggestPlan")),
 			connect.WithClientOptions(opts...),
 		),
+		previewPlanChanges: connect.NewClient[v1.PreviewPlanChangesRequest, v1.PreviewPlanChangesResponse](
+			httpClient,
+			baseURL+PlanServicePreviewPlanChangesProcedure,
+			connect.WithSchema(planServiceMethods.ByName("PreviewPlanChanges")),
+			connect.WithClientOptions(opts...),
+		),
+		activatePlan: connect.NewClient[v1.ActivatePlanRequest, v1.ActivatePlanResponse](
+			httpClient,
+			baseURL+PlanServiceActivatePlanProcedure,
+			connect.WithSchema(planServiceMethods.ByName("ActivatePlan")),
+			connect.WithClientOptions(opts...),
+		),
+		applyPlanChanges: connect.NewClient[v1.ApplyPlanChangesRequest, v1.ApplyPlanChangesResponse](
+			httpClient,
+			baseURL+PlanServiceApplyPlanChangesProcedure,
+			connect.WithSchema(planServiceMethods.ByName("ApplyPlanChanges")),
+			connect.WithClientOptions(opts...),
+		),
+		discardPlanChanges: connect.NewClient[v1.DiscardPlanChangesRequest, v1.DiscardPlanChangesResponse](
+			httpClient,
+			baseURL+PlanServiceDiscardPlanChangesProcedure,
+			connect.WithSchema(planServiceMethods.ByName("DiscardPlanChanges")),
+			connect.WithClientOptions(opts...),
+		),
+		pausePlan: connect.NewClient[v1.PausePlanRequest, v1.PausePlanResponse](
+			httpClient,
+			baseURL+PlanServicePausePlanProcedure,
+			connect.WithSchema(planServiceMethods.ByName("PausePlan")),
+			connect.WithClientOptions(opts...),
+		),
+		resumePlan: connect.NewClient[v1.ResumePlanRequest, v1.ResumePlanResponse](
+			httpClient,
+			baseURL+PlanServiceResumePlanProcedure,
+			connect.WithSchema(planServiceMethods.ByName("ResumePlan")),
+			connect.WithClientOptions(opts...),
+		),
+		deactivatePlan: connect.NewClient[v1.DeactivatePlanRequest, v1.DeactivatePlanResponse](
+			httpClient,
+			baseURL+PlanServiceDeactivatePlanProcedure,
+			connect.WithSchema(planServiceMethods.ByName("DeactivatePlan")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // planServiceClient implements PlanServiceClient.
 type planServiceClient struct {
-	listPlans    *connect.Client[v1.ListPlansRequest, v1.ListPlansResponse]
-	getPlan      *connect.Client[v1.GetPlanRequest, v1.GetPlanResponse]
-	createPlan   *connect.Client[v1.CreatePlanRequest, v1.CreatePlanResponse]
-	updatePlan   *connect.Client[v1.UpdatePlanRequest, v1.UpdatePlanResponse]
-	deletePlan   *connect.Client[v1.DeletePlanRequest, v1.DeletePlanResponse]
-	validatePlan *connect.Client[v1.ValidatePlanRequest, v1.ValidatePlanResponse]
-	suggestPlan  *connect.Client[v1.SuggestPlanRequest, v1.SuggestPlanResponse]
+	listPlans          *connect.Client[v1.ListPlansRequest, v1.ListPlansResponse]
+	getPlan            *connect.Client[v1.GetPlanRequest, v1.GetPlanResponse]
+	createPlan         *connect.Client[v1.CreatePlanRequest, v1.CreatePlanResponse]
+	updatePlan         *connect.Client[v1.UpdatePlanRequest, v1.UpdatePlanResponse]
+	deletePlan         *connect.Client[v1.DeletePlanRequest, v1.DeletePlanResponse]
+	validatePlan       *connect.Client[v1.ValidatePlanRequest, v1.ValidatePlanResponse]
+	suggestPlan        *connect.Client[v1.SuggestPlanRequest, v1.SuggestPlanResponse]
+	previewPlanChanges *connect.Client[v1.PreviewPlanChangesRequest, v1.PreviewPlanChangesResponse]
+	activatePlan       *connect.Client[v1.ActivatePlanRequest, v1.ActivatePlanResponse]
+	applyPlanChanges   *connect.Client[v1.ApplyPlanChangesRequest, v1.ApplyPlanChangesResponse]
+	discardPlanChanges *connect.Client[v1.DiscardPlanChangesRequest, v1.DiscardPlanChangesResponse]
+	pausePlan          *connect.Client[v1.PausePlanRequest, v1.PausePlanResponse]
+	resumePlan         *connect.Client[v1.ResumePlanRequest, v1.ResumePlanResponse]
+	deactivatePlan     *connect.Client[v1.DeactivatePlanRequest, v1.DeactivatePlanResponse]
 }
 
 // ListPlans calls ezdr.portal.v1.PlanService.ListPlans.
@@ -797,6 +879,41 @@ func (c *planServiceClient) SuggestPlan(ctx context.Context, req *connect.Reques
 	return c.suggestPlan.CallUnary(ctx, req)
 }
 
+// PreviewPlanChanges calls ezdr.portal.v1.PlanService.PreviewPlanChanges.
+func (c *planServiceClient) PreviewPlanChanges(ctx context.Context, req *connect.Request[v1.PreviewPlanChangesRequest]) (*connect.Response[v1.PreviewPlanChangesResponse], error) {
+	return c.previewPlanChanges.CallUnary(ctx, req)
+}
+
+// ActivatePlan calls ezdr.portal.v1.PlanService.ActivatePlan.
+func (c *planServiceClient) ActivatePlan(ctx context.Context, req *connect.Request[v1.ActivatePlanRequest]) (*connect.Response[v1.ActivatePlanResponse], error) {
+	return c.activatePlan.CallUnary(ctx, req)
+}
+
+// ApplyPlanChanges calls ezdr.portal.v1.PlanService.ApplyPlanChanges.
+func (c *planServiceClient) ApplyPlanChanges(ctx context.Context, req *connect.Request[v1.ApplyPlanChangesRequest]) (*connect.Response[v1.ApplyPlanChangesResponse], error) {
+	return c.applyPlanChanges.CallUnary(ctx, req)
+}
+
+// DiscardPlanChanges calls ezdr.portal.v1.PlanService.DiscardPlanChanges.
+func (c *planServiceClient) DiscardPlanChanges(ctx context.Context, req *connect.Request[v1.DiscardPlanChangesRequest]) (*connect.Response[v1.DiscardPlanChangesResponse], error) {
+	return c.discardPlanChanges.CallUnary(ctx, req)
+}
+
+// PausePlan calls ezdr.portal.v1.PlanService.PausePlan.
+func (c *planServiceClient) PausePlan(ctx context.Context, req *connect.Request[v1.PausePlanRequest]) (*connect.Response[v1.PausePlanResponse], error) {
+	return c.pausePlan.CallUnary(ctx, req)
+}
+
+// ResumePlan calls ezdr.portal.v1.PlanService.ResumePlan.
+func (c *planServiceClient) ResumePlan(ctx context.Context, req *connect.Request[v1.ResumePlanRequest]) (*connect.Response[v1.ResumePlanResponse], error) {
+	return c.resumePlan.CallUnary(ctx, req)
+}
+
+// DeactivatePlan calls ezdr.portal.v1.PlanService.DeactivatePlan.
+func (c *planServiceClient) DeactivatePlan(ctx context.Context, req *connect.Request[v1.DeactivatePlanRequest]) (*connect.Response[v1.DeactivatePlanResponse], error) {
+	return c.deactivatePlan.CallUnary(ctx, req)
+}
+
 // PlanServiceHandler is an implementation of the ezdr.portal.v1.PlanService service.
 type PlanServiceHandler interface {
 	ListPlans(context.Context, *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error)
@@ -808,6 +925,20 @@ type PlanServiceHandler interface {
 	ValidatePlan(context.Context, *connect.Request[v1.ValidatePlanRequest]) (*connect.Response[v1.ValidatePlanResponse], error)
 	// SuggestPlan fills in missing mappings, startup order, and defaults.
 	SuggestPlan(context.Context, *connect.Request[v1.SuggestPlanRequest]) (*connect.Response[v1.SuggestPlanResponse], error)
+	// PreviewPlanChanges lists what activating or applying the plan's
+	// editing specification would change on each host.
+	PreviewPlanChanges(context.Context, *connect.Request[v1.PreviewPlanChangesRequest]) (*connect.Response[v1.PreviewPlanChangesResponse], error)
+	// ActivatePlan applies a valid draft to its hosts.
+	ActivatePlan(context.Context, *connect.Request[v1.ActivatePlanRequest]) (*connect.Response[v1.ActivatePlanResponse], error)
+	// ApplyPlanChanges applies an active plan's pending changes.
+	ApplyPlanChanges(context.Context, *connect.Request[v1.ApplyPlanChangesRequest]) (*connect.Response[v1.ApplyPlanChangesResponse], error)
+	// DiscardPlanChanges reverts pending changes to the applied specification.
+	DiscardPlanChanges(context.Context, *connect.Request[v1.DiscardPlanChangesRequest]) (*connect.Response[v1.DiscardPlanChangesResponse], error)
+	PausePlan(context.Context, *connect.Request[v1.PausePlanRequest]) (*connect.Response[v1.PausePlanResponse], error)
+	ResumePlan(context.Context, *connect.Request[v1.ResumePlanRequest]) (*connect.Response[v1.ResumePlanResponse], error)
+	// DeactivatePlan removes the plan's jobs from its hosts and returns it to
+	// draft. Replicas and snapshots are kept.
+	DeactivatePlan(context.Context, *connect.Request[v1.DeactivatePlanRequest]) (*connect.Response[v1.DeactivatePlanResponse], error)
 }
 
 // NewPlanServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -859,6 +990,48 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(planServiceMethods.ByName("SuggestPlan")),
 		connect.WithHandlerOptions(opts...),
 	)
+	planServicePreviewPlanChangesHandler := connect.NewUnaryHandler(
+		PlanServicePreviewPlanChangesProcedure,
+		svc.PreviewPlanChanges,
+		connect.WithSchema(planServiceMethods.ByName("PreviewPlanChanges")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceActivatePlanHandler := connect.NewUnaryHandler(
+		PlanServiceActivatePlanProcedure,
+		svc.ActivatePlan,
+		connect.WithSchema(planServiceMethods.ByName("ActivatePlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceApplyPlanChangesHandler := connect.NewUnaryHandler(
+		PlanServiceApplyPlanChangesProcedure,
+		svc.ApplyPlanChanges,
+		connect.WithSchema(planServiceMethods.ByName("ApplyPlanChanges")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceDiscardPlanChangesHandler := connect.NewUnaryHandler(
+		PlanServiceDiscardPlanChangesProcedure,
+		svc.DiscardPlanChanges,
+		connect.WithSchema(planServiceMethods.ByName("DiscardPlanChanges")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServicePausePlanHandler := connect.NewUnaryHandler(
+		PlanServicePausePlanProcedure,
+		svc.PausePlan,
+		connect.WithSchema(planServiceMethods.ByName("PausePlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceResumePlanHandler := connect.NewUnaryHandler(
+		PlanServiceResumePlanProcedure,
+		svc.ResumePlan,
+		connect.WithSchema(planServiceMethods.ByName("ResumePlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceDeactivatePlanHandler := connect.NewUnaryHandler(
+		PlanServiceDeactivatePlanProcedure,
+		svc.DeactivatePlan,
+		connect.WithSchema(planServiceMethods.ByName("DeactivatePlan")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/ezdr.portal.v1.PlanService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PlanServiceListPlansProcedure:
@@ -875,6 +1048,20 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 			planServiceValidatePlanHandler.ServeHTTP(w, r)
 		case PlanServiceSuggestPlanProcedure:
 			planServiceSuggestPlanHandler.ServeHTTP(w, r)
+		case PlanServicePreviewPlanChangesProcedure:
+			planServicePreviewPlanChangesHandler.ServeHTTP(w, r)
+		case PlanServiceActivatePlanProcedure:
+			planServiceActivatePlanHandler.ServeHTTP(w, r)
+		case PlanServiceApplyPlanChangesProcedure:
+			planServiceApplyPlanChangesHandler.ServeHTTP(w, r)
+		case PlanServiceDiscardPlanChangesProcedure:
+			planServiceDiscardPlanChangesHandler.ServeHTTP(w, r)
+		case PlanServicePausePlanProcedure:
+			planServicePausePlanHandler.ServeHTTP(w, r)
+		case PlanServiceResumePlanProcedure:
+			planServiceResumePlanHandler.ServeHTTP(w, r)
+		case PlanServiceDeactivatePlanProcedure:
+			planServiceDeactivatePlanHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -910,4 +1097,32 @@ func (UnimplementedPlanServiceHandler) ValidatePlan(context.Context, *connect.Re
 
 func (UnimplementedPlanServiceHandler) SuggestPlan(context.Context, *connect.Request[v1.SuggestPlanRequest]) (*connect.Response[v1.SuggestPlanResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.SuggestPlan is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) PreviewPlanChanges(context.Context, *connect.Request[v1.PreviewPlanChangesRequest]) (*connect.Response[v1.PreviewPlanChangesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.PreviewPlanChanges is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) ActivatePlan(context.Context, *connect.Request[v1.ActivatePlanRequest]) (*connect.Response[v1.ActivatePlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.ActivatePlan is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) ApplyPlanChanges(context.Context, *connect.Request[v1.ApplyPlanChangesRequest]) (*connect.Response[v1.ApplyPlanChangesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.ApplyPlanChanges is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) DiscardPlanChanges(context.Context, *connect.Request[v1.DiscardPlanChangesRequest]) (*connect.Response[v1.DiscardPlanChangesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.DiscardPlanChanges is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) PausePlan(context.Context, *connect.Request[v1.PausePlanRequest]) (*connect.Response[v1.PausePlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.PausePlan is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) ResumePlan(context.Context, *connect.Request[v1.ResumePlanRequest]) (*connect.Response[v1.ResumePlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.ResumePlan is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) DeactivatePlan(context.Context, *connect.Request[v1.DeactivatePlanRequest]) (*connect.Response[v1.DeactivatePlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.DeactivatePlan is not implemented"))
 }
