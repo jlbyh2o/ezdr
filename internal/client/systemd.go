@@ -32,16 +32,15 @@ func InstallUnit(binaryPath string) (bool, error) {
 	return true, writeFileAtomic(LocalUnitFile, []byte(unit), 0o644)
 }
 
-// EnableService reloads systemd and enables and (re)starts the service.
-func EnableService(ctx context.Context) error {
+// StartService reloads systemd, enables the service, and (re)starts it once,
+// so a re-enrollment replaces any running instance.
+func StartService(ctx context.Context) error {
 	if err := run(ctx, "systemctl", "daemon-reload"); err != nil {
 		return err
 	}
-	return run(ctx, "systemctl", "enable", "--now", ServiceName)
-}
-
-// RestartService restarts the service.
-func RestartService(ctx context.Context) error {
+	if err := run(ctx, "systemctl", "enable", ServiceName); err != nil {
+		return err
+	}
 	return run(ctx, "systemctl", "restart", ServiceName)
 }
 

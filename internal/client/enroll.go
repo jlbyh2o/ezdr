@@ -140,10 +140,7 @@ func Enroll(ctx context.Context, opts EnrollOptions) error {
 	if err := EnsureInterface(cfg, key); err != nil {
 		return localSetupFailed("set up WireGuard", err)
 	}
-	if err := EnableService(ctx); err != nil {
-		return localSetupFailed("start service", err)
-	}
-	if err := RestartService(ctx); err != nil {
+	if err := StartService(ctx); err != nil {
 		return localSetupFailed("start service", err)
 	}
 
