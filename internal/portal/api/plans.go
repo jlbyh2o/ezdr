@@ -354,6 +354,54 @@ func (s PlanService) SuggestPlan(ctx context.Context, req *connect.Request[porta
 	return connect.NewResponse(&portalv1.SuggestPlanResponse{Spec: plan.Suggest(spec, pInv, dInv)}), nil
 }
 
+// ListZreplSetups lists hand-written zrepl setups between two hosts.
+func (s PlanService) ListZreplSetups(ctx context.Context, req *connect.Request[portalv1.ListZreplSetupsRequest]) (*connect.Response[portalv1.ListZreplSetupsResponse], error) {
+	primary, dr, err := s.loadInventories(ctx, req.Msg.PrimaryHostId, req.Msg.DrHostId)
+	if err != nil {
+		return nil, err
+	}
+	resp := &portalv1.ListZreplSetupsResponse{}
+	for _, c := range plan.ZreplSetups(primary, dr) {
+		resp.Setups = append(resp.Setups, &portalv1.ZreplSetup{SourceJob: c.Source, PullJob: c.Pull})
+	}
+	return connect.NewResponse(resp), nil
+}
+
+// AdoptZreplSetup fills in a specification from an existing zrepl setup.
+func (s PlanService) AdoptZreplSetup(ctx context.Context, req *connect.Request[portalv1.AdoptZreplSetupRequest]) (*connect.Response[portalv1.AdoptZreplSetupResponse], error) {
+	spec := req.Msg.Spec
+	if spec == nil {
+		spec = &planv1.PlanSpec{}
+	}
+	primary, dr, err := s.loadInventories(ctx, spec.PrimaryHostId, spec.DrHostId)
+	if err != nil {
+		return nil, err
+	}
+	adopted, notes, err := plan.Adopt(spec, primary, dr, req.Msg.SourceJob, req.Msg.PullJob)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, err)
+	}
+	return connect.NewResponse(&portalv1.AdoptZreplSetupResponse{Spec: adopted, Notes: notes}), nil
+}
+
+// loadInventories returns both hosts' inventories, which must exist.
+func (s PlanService) loadInventories(ctx context.Context, primaryID, drID string) (primary, dr *inventoryv1.Inventory, err error) {
+	for _, h := range []struct {
+		id  string
+		out **inventoryv1.Inventory
+	}{{primaryID, &primary}, {drID, &dr}} {
+		host, err := s.loadHost(ctx, h.id)
+		if err != nil {
+			return nil, nil, internalError(err)
+		}
+		if host == nil || host.Inventory == nil {
+			return nil, nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("choose both hosts first; each must have reported its inventory"))
+		}
+		*h.out = host.Inventory
+	}
+	return primary, dr, nil
+}
+
 // loadPlan returns a stored plan and its decoded editing specification.
 func (s PlanService) loadPlan(ctx context.Context, id string) (store.Plan, *planv1.PlanSpec, error) {
 	sp, err := s.Store.PlanByID(ctx, id)
@@ -473,6 +521,9 @@ func (s PlanService) ActivatePlan(ctx context.Context, req *connect.Request[port
 	if sp.State != store.PlanDraft {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan is already active or paused"))
 	}
+	if spec.Takeover != nil {
+		return nil, connect.NewError(connect.CodeUnimplemented, errors.New("taking over an existing zrepl setup isn't available yet"))
+	}
 	if err := s.requireValid(ctx, spec, sp.ID); err != nil {
 		return nil, err
 	}
@@ -491,6 +542,9 @@ func (s PlanService) ApplyPlanChanges(ctx context.Context, req *connect.Request[
 	}
 	if sp.State == store.PlanDraft {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("activate the plan instead"))
+	}
+	if spec.Takeover != nil {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("an existing zrepl setup can only be adopted by a draft plan"))
 	}
 	if err := s.requireValid(ctx, spec, sp.ID); err != nil {
 		return nil, err

@@ -202,9 +202,12 @@ in the receive dataset, snapshot prefix, interval, retention, and the
 existing-network settings (address, port, and listen address) from those
 jobs, and selects the guests whose disks the old filter replicates. The plan
 records the adopted job names, so activating it runs a takeover instead of a
-plain activation. Removing the adoption, or changing a setting that
-incremental sends depend on (receive dataset or prefix), turns it back into
-an ordinary plan; the editor warns first.
+plain activation. Validation reports an error if a setting that incremental
+sends depend on (receive dataset or prefix) no longer matches the adopted
+jobs, or if those jobs disappear. It warns about protected datasets the old
+job doesn't replicate (they need a full send) and datasets it replicates
+that the plan doesn't (they stop being replicated). **Stop adopting** turns
+the plan back into an ordinary one.
 
 ### 5.2 Preflight
 

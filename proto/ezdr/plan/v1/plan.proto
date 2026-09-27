@@ -24,6 +24,18 @@ message PlanSpec {
   // Alert when the newest replicated snapshot is older than this. Zero means
   // three times the snapshot interval.
   uint32 rpo_alert_seconds = 14;
+  // Set when the plan takes over an existing hand-written zrepl setup:
+  // activating it replaces these jobs instead of starting from scratch.
+  ZreplTakeover takeover = 15;
+}
+
+// ZreplTakeover names the existing zrepl jobs a plan replaces. See
+// docs/design/replication.md, section 5.
+message ZreplTakeover {
+  // The old source job on the primary.
+  string source_job = 1;
+  // The old pull job on the DR host.
+  string pull_job = 2;
 }
 
 message ReplicationNetwork {

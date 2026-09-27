@@ -103,6 +103,7 @@ func Validate(spec *planv1.PlanSpec, ctx Context) []*planv1.Issue {
 	validateStorage(spec, usedStorage, primary, dr, guests, &is)
 	validateNetwork(spec, usedBridges, dr, guests, &is)
 	validateReplicationNetwork(spec, primary, ctx, &is)
+	validateTakeover(spec, primary, dr, &is)
 
 	var unprotected []string
 	for _, g := range primary.Guests {

@@ -39,7 +39,7 @@ import {
   RetentionTierSchema,
   Severity,
 } from '@/gen/ezdr/plan/v1/plan_pb'
-import { type GetHostInventoryResponse, type Host, type Plan, PlanState } from '@/gen/ezdr/portal/v1/portal_pb'
+import { type GetHostInventoryResponse, type Host, type Plan, PlanState, type ZreplSetup } from '@/gen/ezdr/portal/v1/portal_pb'
 import { HostStatusPanel, PlanActions, StateBadge } from '@/pages/plan-actions'
 import { PlanStatusCard } from '@/pages/plan-status'
 import { errorMessage, hostClient, planClient } from '@/lib/api'
@@ -216,6 +216,17 @@ export function PlanEditorPage() {
         <div className="grid gap-4">
           {plan && <PlanStatusCard plan={plan} />}
           <GeneralCard spec={spec} hosts={hosts} update={update} updateAndSuggest={updateAndSuggest} />
+          {primaryInv && drInv && (!plan || plan.state === PlanState.DRAFT) && (
+            <TakeoverCard
+              spec={spec}
+              inventoriesAt={`${primary?.receivedAt?.seconds}/${dr?.receivedAt?.seconds}`}
+              update={update}
+              replace={(s) => {
+                setSpec(s)
+                setDirty(true)
+              }}
+            />
+          )}
           {primaryInv && (
             <GuestsCard spec={spec} inv={primaryInv} guestPlans={primary?.guestPlans ?? {}} planId={id} updateAndSuggest={updateAndSuggest} />
           )}
@@ -338,6 +349,113 @@ function GeneralCard({
           </NativeSelect>
         </Field>
       </div>
+    </Section>
+  )
+}
+
+// TakeoverCard offers existing hand-written zrepl setups between the plan's
+// hosts for adoption, and shows the adopted one.
+function TakeoverCard({
+  spec,
+  inventoriesAt,
+  update,
+  replace,
+}: {
+  spec: PlanSpec
+  inventoriesAt: string
+  update: Update
+  replace: (s: PlanSpec) => void
+}) {
+  const [setups, setSetups] = useState<ZreplSetup[]>([])
+  const [notes, setNotes] = useState<string[]>()
+  const [error, setError] = useState<string>()
+  const [busy, setBusy] = useState(false)
+  const { primaryHostId, drHostId } = spec
+  useEffect(() => {
+    void planClient.listZreplSetups({ primaryHostId, drHostId }).then(
+      (r) => setSetups(r.setups),
+      (e) => setError(errorMessage(e)),
+    )
+  }, [primaryHostId, drHostId, inventoriesAt])
+
+  async function adopt(setup: ZreplSetup) {
+    setBusy(true)
+    setError(undefined)
+    try {
+      const r = await planClient.adoptZreplSetup({ spec, sourceJob: setup.sourceJob?.name, pullJob: setup.pullJob?.name })
+      if (r.spec) replace(r.spec)
+      setNotes(r.notes)
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const t = spec.takeover
+  if (!t && setups.length === 0 && !error) return null
+  return (
+    <Section
+      title="Existing zrepl setup"
+      description={
+        t
+          ? 'Activating this plan takes over the hand-written zrepl jobs below. A preflight checks that replication continues incrementally before anything changes.'
+          : 'These hosts already replicate with hand-written zrepl jobs. Adopting them fills in the plan from their settings, so replication can continue incrementally instead of starting over.'
+      }
+    >
+      <ErrorAlert message={error} />
+      {t ? (
+        <>
+          <div className="grid gap-1 text-sm">
+            <div>
+              Primary: <span className="font-mono">{t.sourceJob}</span>
+            </div>
+            <div>
+              DR host: <span className="font-mono">{t.pullJob}</span>
+            </div>
+          </div>
+          {notes && notes.length > 0 && (
+            <div className="grid gap-1 text-sm">
+              <div className="font-medium">Differences from the old setup</div>
+              <ul className="list-disc pl-5 text-muted-foreground">
+                {notes.map((n) => (
+                  <li key={n}>{n}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {notes && <p className="text-sm text-muted-foreground">Review the settings below, then save the plan.</p>}
+          <div>
+            <Button
+              variant="outline"
+              onClick={() => {
+                update((s) => (s.takeover = undefined))
+                setNotes(undefined)
+              }}
+            >
+              Stop adopting
+            </Button>
+          </div>
+        </>
+      ) : (
+        setups.map((c) => (
+          <div key={`${c.sourceJob?.name}/${c.pullJob?.name}`} className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3 text-sm">
+            <div className="grid gap-1">
+              <div>
+                <span className="font-mono">{c.sourceJob?.name}</span> on the primary →{' '}
+                <span className="font-mono">{c.pullJob?.name}</span> on the DR host
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {c.pullJob?.connectAddress} · prefix <span className="font-mono">{c.sourceJob?.snapshotPrefix || '—'}</span> · receives into{' '}
+                <span className="font-mono">{c.pullJob?.rootFs}</span>
+              </div>
+            </div>
+            <Button onClick={() => void adopt(c)} disabled={busy}>
+              Adopt
+            </Button>
+          </div>
+        ))
+      )}
     </Section>
   )
 }
@@ -487,7 +605,7 @@ function MappingsCard({
           </div>
         ))}
         <p className="text-xs text-muted-foreground">
-          Replicas are received as &lt;receive dataset&gt;/&lt;source dataset&gt;. To take over an existing zrepl job, use its root_fs.
+          Replicas are received as &lt;receive dataset&gt;/&lt;source dataset&gt;.
         </p>
       </div>
       <div className="grid gap-2">
@@ -961,7 +1079,7 @@ function DnsCard({ spec, inv, update }: { spec: PlanSpec; inv: Inventory; update
 
 function AdvancedCard({ spec, update }: { spec: PlanSpec; update: Update }) {
   return (
-    <Section title="Advanced" description="For taking over an existing zrepl setup: match its snapshot prefix (and its root_fs in the storage mappings).">
+    <Section title="Advanced" description="Snapshots this plan creates and prunes carry this prefix. To take over an existing zrepl setup, use Adopt instead of changing it by hand.">
       <Field id="prefix" label="Snapshot prefix">
         <Input
           id="prefix"

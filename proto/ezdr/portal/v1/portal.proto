@@ -232,6 +232,12 @@ service PlanService {
   rpc ValidatePlan(ValidatePlanRequest) returns (ValidatePlanResponse);
   // SuggestPlan fills in missing mappings, startup order, and defaults.
   rpc SuggestPlan(SuggestPlanRequest) returns (SuggestPlanResponse);
+  // ListZreplSetups lists existing hand-written zrepl setups between a plan's
+  // hosts that the plan could adopt.
+  rpc ListZreplSetups(ListZreplSetupsRequest) returns (ListZreplSetupsResponse);
+  // AdoptZreplSetup fills in a specification from an existing zrepl setup,
+  // without saving it.
+  rpc AdoptZreplSetup(AdoptZreplSetupRequest) returns (AdoptZreplSetupResponse);
   // PreviewPlanChanges lists what activating or applying the plan's
   // editing specification would change on each host.
   rpc PreviewPlanChanges(PreviewPlanChangesRequest) returns (PreviewPlanChangesResponse);
@@ -559,4 +565,33 @@ message SuggestPlanRequest {
 
 message SuggestPlanResponse {
   ezdr.plan.v1.PlanSpec spec = 1;
+}
+
+message ListZreplSetupsRequest {
+  string primary_host_id = 1;
+  string dr_host_id = 2;
+}
+
+message ListZreplSetupsResponse {
+  repeated ZreplSetup setups = 1;
+}
+
+// ZreplSetup is a hand-written source job on the primary and the pull job on
+// the DR host that connects to it.
+message ZreplSetup {
+  ezdr.inventory.v1.ZreplJob source_job = 1;
+  ezdr.inventory.v1.ZreplJob pull_job = 2;
+}
+
+message AdoptZreplSetupRequest {
+  ezdr.plan.v1.PlanSpec spec = 1;
+  string source_job = 2;
+  string pull_job = 3;
+}
+
+message AdoptZreplSetupResponse {
+  ezdr.plan.v1.PlanSpec spec = 1;
+  // What the plan does differently from the old setup, such as guests whose
+  // disks were only partly replicated.
+  repeated string notes = 2;
 }

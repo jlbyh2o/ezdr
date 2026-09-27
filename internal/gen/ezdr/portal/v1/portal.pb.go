@@ -4633,6 +4633,270 @@ func (x *SuggestPlanResponse) GetSpec() *v11.PlanSpec {
 	return nil
 }
 
+type ListZreplSetupsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PrimaryHostId string                 `protobuf:"bytes,1,opt,name=primary_host_id,json=primaryHostId,proto3" json:"primary_host_id,omitempty"`
+	DrHostId      string                 `protobuf:"bytes,2,opt,name=dr_host_id,json=drHostId,proto3" json:"dr_host_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListZreplSetupsRequest) Reset() {
+	*x = ListZreplSetupsRequest{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[82]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListZreplSetupsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListZreplSetupsRequest) ProtoMessage() {}
+
+func (x *ListZreplSetupsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[82]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListZreplSetupsRequest.ProtoReflect.Descriptor instead.
+func (*ListZreplSetupsRequest) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{82}
+}
+
+func (x *ListZreplSetupsRequest) GetPrimaryHostId() string {
+	if x != nil {
+		return x.PrimaryHostId
+	}
+	return ""
+}
+
+func (x *ListZreplSetupsRequest) GetDrHostId() string {
+	if x != nil {
+		return x.DrHostId
+	}
+	return ""
+}
+
+type ListZreplSetupsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Setups        []*ZreplSetup          `protobuf:"bytes,1,rep,name=setups,proto3" json:"setups,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListZreplSetupsResponse) Reset() {
+	*x = ListZreplSetupsResponse{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[83]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListZreplSetupsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListZreplSetupsResponse) ProtoMessage() {}
+
+func (x *ListZreplSetupsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[83]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListZreplSetupsResponse.ProtoReflect.Descriptor instead.
+func (*ListZreplSetupsResponse) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{83}
+}
+
+func (x *ListZreplSetupsResponse) GetSetups() []*ZreplSetup {
+	if x != nil {
+		return x.Setups
+	}
+	return nil
+}
+
+// ZreplSetup is a hand-written source job on the primary and the pull job on
+// the DR host that connects to it.
+type ZreplSetup struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SourceJob     *v1.ZreplJob           `protobuf:"bytes,1,opt,name=source_job,json=sourceJob,proto3" json:"source_job,omitempty"`
+	PullJob       *v1.ZreplJob           `protobuf:"bytes,2,opt,name=pull_job,json=pullJob,proto3" json:"pull_job,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ZreplSetup) Reset() {
+	*x = ZreplSetup{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[84]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ZreplSetup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZreplSetup) ProtoMessage() {}
+
+func (x *ZreplSetup) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[84]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZreplSetup.ProtoReflect.Descriptor instead.
+func (*ZreplSetup) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{84}
+}
+
+func (x *ZreplSetup) GetSourceJob() *v1.ZreplJob {
+	if x != nil {
+		return x.SourceJob
+	}
+	return nil
+}
+
+func (x *ZreplSetup) GetPullJob() *v1.ZreplJob {
+	if x != nil {
+		return x.PullJob
+	}
+	return nil
+}
+
+type AdoptZreplSetupRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Spec          *v11.PlanSpec          `protobuf:"bytes,1,opt,name=spec,proto3" json:"spec,omitempty"`
+	SourceJob     string                 `protobuf:"bytes,2,opt,name=source_job,json=sourceJob,proto3" json:"source_job,omitempty"`
+	PullJob       string                 `protobuf:"bytes,3,opt,name=pull_job,json=pullJob,proto3" json:"pull_job,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdoptZreplSetupRequest) Reset() {
+	*x = AdoptZreplSetupRequest{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[85]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdoptZreplSetupRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdoptZreplSetupRequest) ProtoMessage() {}
+
+func (x *AdoptZreplSetupRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[85]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdoptZreplSetupRequest.ProtoReflect.Descriptor instead.
+func (*AdoptZreplSetupRequest) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{85}
+}
+
+func (x *AdoptZreplSetupRequest) GetSpec() *v11.PlanSpec {
+	if x != nil {
+		return x.Spec
+	}
+	return nil
+}
+
+func (x *AdoptZreplSetupRequest) GetSourceJob() string {
+	if x != nil {
+		return x.SourceJob
+	}
+	return ""
+}
+
+func (x *AdoptZreplSetupRequest) GetPullJob() string {
+	if x != nil {
+		return x.PullJob
+	}
+	return ""
+}
+
+type AdoptZreplSetupResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Spec  *v11.PlanSpec          `protobuf:"bytes,1,opt,name=spec,proto3" json:"spec,omitempty"`
+	// What the plan does differently from the old setup, such as guests whose
+	// disks were only partly replicated.
+	Notes         []string `protobuf:"bytes,2,rep,name=notes,proto3" json:"notes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdoptZreplSetupResponse) Reset() {
+	*x = AdoptZreplSetupResponse{}
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[86]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdoptZreplSetupResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdoptZreplSetupResponse) ProtoMessage() {}
+
+func (x *AdoptZreplSetupResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ezdr_portal_v1_portal_proto_msgTypes[86]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdoptZreplSetupResponse.ProtoReflect.Descriptor instead.
+func (*AdoptZreplSetupResponse) Descriptor() ([]byte, []int) {
+	return file_ezdr_portal_v1_portal_proto_rawDescGZIP(), []int{86}
+}
+
+func (x *AdoptZreplSetupResponse) GetSpec() *v11.PlanSpec {
+	if x != nil {
+		return x.Spec
+	}
+	return nil
+}
+
+func (x *AdoptZreplSetupResponse) GetNotes() []string {
+	if x != nil {
+		return x.Notes
+	}
+	return nil
+}
+
 var File_ezdr_portal_v1_portal_proto protoreflect.FileDescriptor
 
 const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
@@ -4931,7 +5195,26 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\x12SuggestPlanRequest\x12*\n" +
 	"\x04spec\x18\x01 \x01(\v2\x16.ezdr.plan.v1.PlanSpecR\x04spec\"A\n" +
 	"\x13SuggestPlanResponse\x12*\n" +
-	"\x04spec\x18\x01 \x01(\v2\x16.ezdr.plan.v1.PlanSpecR\x04spec*\xc4\x01\n" +
+	"\x04spec\x18\x01 \x01(\v2\x16.ezdr.plan.v1.PlanSpecR\x04spec\"^\n" +
+	"\x16ListZreplSetupsRequest\x12&\n" +
+	"\x0fprimary_host_id\x18\x01 \x01(\tR\rprimaryHostId\x12\x1c\n" +
+	"\n" +
+	"dr_host_id\x18\x02 \x01(\tR\bdrHostId\"M\n" +
+	"\x17ListZreplSetupsResponse\x122\n" +
+	"\x06setups\x18\x01 \x03(\v2\x1a.ezdr.portal.v1.ZreplSetupR\x06setups\"\x80\x01\n" +
+	"\n" +
+	"ZreplSetup\x12:\n" +
+	"\n" +
+	"source_job\x18\x01 \x01(\v2\x1b.ezdr.inventory.v1.ZreplJobR\tsourceJob\x126\n" +
+	"\bpull_job\x18\x02 \x01(\v2\x1b.ezdr.inventory.v1.ZreplJobR\apullJob\"~\n" +
+	"\x16AdoptZreplSetupRequest\x12*\n" +
+	"\x04spec\x18\x01 \x01(\v2\x16.ezdr.plan.v1.PlanSpecR\x04spec\x12\x1d\n" +
+	"\n" +
+	"source_job\x18\x02 \x01(\tR\tsourceJob\x12\x19\n" +
+	"\bpull_job\x18\x03 \x01(\tR\apullJob\"[\n" +
+	"\x17AdoptZreplSetupResponse\x12*\n" +
+	"\x04spec\x18\x01 \x01(\v2\x16.ezdr.plan.v1.PlanSpecR\x04spec\x12\x14\n" +
+	"\x05notes\x18\x02 \x03(\tR\x05notes*\xc4\x01\n" +
 	"\vHealthState\x12\x1c\n" +
 	"\x18HEALTH_STATE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11HEALTH_STATE_NONE\x10\x01\x12\x18\n" +
@@ -4975,8 +5258,7 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\x10GetHostInventory\x12'.ezdr.portal.v1.GetHostInventoryRequest\x1a(.ezdr.portal.v1.GetHostInventoryResponse\x12e\n" +
 	"\x10RefreshInventory\x12'.ezdr.portal.v1.RefreshInventoryRequest\x1a(.ezdr.portal.v1.RefreshInventoryResponse2r\n" +
 	"\fAuditService\x12b\n" +
-	"\x0fListAuditEvents\x12&.ezdr.portal.v1.ListAuditEventsRequest\x1a'.ezdr.portal.v1.ListAuditEventsResponse2\xdf\n" +
-	"\n" +
+	"\x0fListAuditEvents\x12&.ezdr.portal.v1.ListAuditEventsRequest\x1a'.ezdr.portal.v1.ListAuditEventsResponse2\xa7\f\n" +
 	"\vPlanService\x12P\n" +
 	"\tListPlans\x12 .ezdr.portal.v1.ListPlansRequest\x1a!.ezdr.portal.v1.ListPlansResponse\x12J\n" +
 	"\aGetPlan\x12\x1e.ezdr.portal.v1.GetPlanRequest\x1a\x1f.ezdr.portal.v1.GetPlanResponse\x12S\n" +
@@ -4987,7 +5269,9 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\n" +
 	"DeletePlan\x12!.ezdr.portal.v1.DeletePlanRequest\x1a\".ezdr.portal.v1.DeletePlanResponse\x12Y\n" +
 	"\fValidatePlan\x12#.ezdr.portal.v1.ValidatePlanRequest\x1a$.ezdr.portal.v1.ValidatePlanResponse\x12V\n" +
-	"\vSuggestPlan\x12\".ezdr.portal.v1.SuggestPlanRequest\x1a#.ezdr.portal.v1.SuggestPlanResponse\x12k\n" +
+	"\vSuggestPlan\x12\".ezdr.portal.v1.SuggestPlanRequest\x1a#.ezdr.portal.v1.SuggestPlanResponse\x12b\n" +
+	"\x0fListZreplSetups\x12&.ezdr.portal.v1.ListZreplSetupsRequest\x1a'.ezdr.portal.v1.ListZreplSetupsResponse\x12b\n" +
+	"\x0fAdoptZreplSetup\x12&.ezdr.portal.v1.AdoptZreplSetupRequest\x1a'.ezdr.portal.v1.AdoptZreplSetupResponse\x12k\n" +
 	"\x12PreviewPlanChanges\x12).ezdr.portal.v1.PreviewPlanChangesRequest\x1a*.ezdr.portal.v1.PreviewPlanChangesResponse\x12Y\n" +
 	"\fActivatePlan\x12#.ezdr.portal.v1.ActivatePlanRequest\x1a$.ezdr.portal.v1.ActivatePlanResponse\x12e\n" +
 	"\x10ApplyPlanChanges\x12'.ezdr.portal.v1.ApplyPlanChangesRequest\x1a(.ezdr.portal.v1.ApplyPlanChangesResponse\x12k\n" +
@@ -5018,7 +5302,7 @@ func file_ezdr_portal_v1_portal_proto_rawDescGZIP() []byte {
 }
 
 var file_ezdr_portal_v1_portal_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_ezdr_portal_v1_portal_proto_msgTypes = make([]protoimpl.MessageInfo, 83)
+var file_ezdr_portal_v1_portal_proto_msgTypes = make([]protoimpl.MessageInfo, 88)
 var file_ezdr_portal_v1_portal_proto_goTypes = []any{
 	(HealthState)(0),                    // 0: ezdr.portal.v1.HealthState
 	(SmtpSecurity)(0),                   // 1: ezdr.portal.v1.SmtpSecurity
@@ -5106,149 +5390,164 @@ var file_ezdr_portal_v1_portal_proto_goTypes = []any{
 	(*ValidatePlanResponse)(nil),        // 83: ezdr.portal.v1.ValidatePlanResponse
 	(*SuggestPlanRequest)(nil),          // 84: ezdr.portal.v1.SuggestPlanRequest
 	(*SuggestPlanResponse)(nil),         // 85: ezdr.portal.v1.SuggestPlanResponse
-	nil,                                 // 86: ezdr.portal.v1.GetHostInventoryResponse.GuestPlansEntry
-	(*timestamppb.Timestamp)(nil),       // 87: google.protobuf.Timestamp
-	(*v1.Inventory)(nil),                // 88: ezdr.inventory.v1.Inventory
-	(*v11.Issue)(nil),                   // 89: ezdr.plan.v1.Issue
-	(*v11.PlanSpec)(nil),                // 90: ezdr.plan.v1.PlanSpec
+	(*ListZreplSetupsRequest)(nil),      // 86: ezdr.portal.v1.ListZreplSetupsRequest
+	(*ListZreplSetupsResponse)(nil),     // 87: ezdr.portal.v1.ListZreplSetupsResponse
+	(*ZreplSetup)(nil),                  // 88: ezdr.portal.v1.ZreplSetup
+	(*AdoptZreplSetupRequest)(nil),      // 89: ezdr.portal.v1.AdoptZreplSetupRequest
+	(*AdoptZreplSetupResponse)(nil),     // 90: ezdr.portal.v1.AdoptZreplSetupResponse
+	nil,                                 // 91: ezdr.portal.v1.GetHostInventoryResponse.GuestPlansEntry
+	(*timestamppb.Timestamp)(nil),       // 92: google.protobuf.Timestamp
+	(*v1.Inventory)(nil),                // 93: ezdr.inventory.v1.Inventory
+	(*v11.Issue)(nil),                   // 94: ezdr.plan.v1.Issue
+	(*v11.PlanSpec)(nil),                // 95: ezdr.plan.v1.PlanSpec
+	(*v1.ZreplJob)(nil),                 // 96: ezdr.inventory.v1.ZreplJob
 }
 var file_ezdr_portal_v1_portal_proto_depIdxs = []int32{
-	10, // 0: ezdr.portal.v1.LoginResponse.totp_setup:type_name -> ezdr.portal.v1.TotpSetup
-	17, // 1: ezdr.portal.v1.VerifyTotpResponse.user:type_name -> ezdr.portal.v1.User
-	17, // 2: ezdr.portal.v1.GetCurrentUserResponse.user:type_name -> ezdr.portal.v1.User
-	24, // 3: ezdr.portal.v1.CreateTokenResponse.token:type_name -> ezdr.portal.v1.EnrollmentToken
-	24, // 4: ezdr.portal.v1.ListTokensResponse.tokens:type_name -> ezdr.portal.v1.EnrollmentToken
-	87, // 5: ezdr.portal.v1.EnrollmentToken.created_at:type_name -> google.protobuf.Timestamp
-	87, // 6: ezdr.portal.v1.EnrollmentToken.expires_at:type_name -> google.protobuf.Timestamp
-	87, // 7: ezdr.portal.v1.EnrollmentToken.used_at:type_name -> google.protobuf.Timestamp
-	87, // 8: ezdr.portal.v1.EnrollmentToken.revoked_at:type_name -> google.protobuf.Timestamp
-	34, // 9: ezdr.portal.v1.GetHostInventoryResponse.host:type_name -> ezdr.portal.v1.Host
-	88, // 10: ezdr.portal.v1.GetHostInventoryResponse.inventory:type_name -> ezdr.inventory.v1.Inventory
-	87, // 11: ezdr.portal.v1.GetHostInventoryResponse.changed_at:type_name -> google.protobuf.Timestamp
-	87, // 12: ezdr.portal.v1.GetHostInventoryResponse.received_at:type_name -> google.protobuf.Timestamp
-	86, // 13: ezdr.portal.v1.GetHostInventoryResponse.guest_plans:type_name -> ezdr.portal.v1.GetHostInventoryResponse.GuestPlansEntry
-	34, // 14: ezdr.portal.v1.ListHostsResponse.hosts:type_name -> ezdr.portal.v1.Host
-	87, // 15: ezdr.portal.v1.Host.enrolled_at:type_name -> google.protobuf.Timestamp
-	87, // 16: ezdr.portal.v1.Host.last_seen_at:type_name -> google.protobuf.Timestamp
-	37, // 17: ezdr.portal.v1.ListAuditEventsResponse.events:type_name -> ezdr.portal.v1.AuditEvent
-	87, // 18: ezdr.portal.v1.AuditEvent.time:type_name -> google.protobuf.Timestamp
-	0,  // 19: ezdr.portal.v1.PlanHealth.state:type_name -> ezdr.portal.v1.HealthState
-	87, // 20: ezdr.portal.v1.PlanHealth.last_replication_at:type_name -> google.protobuf.Timestamp
-	87, // 21: ezdr.portal.v1.DatasetHealth.latest_snapshot_at:type_name -> google.protobuf.Timestamp
-	38, // 22: ezdr.portal.v1.GetPlanStatusResponse.health:type_name -> ezdr.portal.v1.PlanHealth
-	39, // 23: ezdr.portal.v1.GetPlanStatusResponse.datasets:type_name -> ezdr.portal.v1.DatasetHealth
-	1,  // 24: ezdr.portal.v1.SmtpSettings.security:type_name -> ezdr.portal.v1.SmtpSecurity
-	42, // 25: ezdr.portal.v1.AlertSettings.smtp:type_name -> ezdr.portal.v1.SmtpSettings
-	43, // 26: ezdr.portal.v1.AlertSettings.webhooks:type_name -> ezdr.portal.v1.Webhook
-	44, // 27: ezdr.portal.v1.GetAlertSettingsResponse.settings:type_name -> ezdr.portal.v1.AlertSettings
-	44, // 28: ezdr.portal.v1.UpdateAlertSettingsRequest.settings:type_name -> ezdr.portal.v1.AlertSettings
-	44, // 29: ezdr.portal.v1.UpdateAlertSettingsResponse.settings:type_name -> ezdr.portal.v1.AlertSettings
-	2,  // 30: ezdr.portal.v1.Alert.severity:type_name -> ezdr.portal.v1.AlertSeverity
-	87, // 31: ezdr.portal.v1.Alert.fired_at:type_name -> google.protobuf.Timestamp
-	87, // 32: ezdr.portal.v1.Alert.resolved_at:type_name -> google.protobuf.Timestamp
-	51, // 33: ezdr.portal.v1.ListAlertsResponse.alerts:type_name -> ezdr.portal.v1.Alert
-	54, // 34: ezdr.portal.v1.PreviewPlanChangesResponse.hosts:type_name -> ezdr.portal.v1.HostChanges
-	89, // 35: ezdr.portal.v1.PreviewPlanChangesResponse.issues:type_name -> ezdr.plan.v1.Issue
-	69, // 36: ezdr.portal.v1.ActivatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
-	69, // 37: ezdr.portal.v1.ApplyPlanChangesResponse.plan:type_name -> ezdr.portal.v1.Plan
-	69, // 38: ezdr.portal.v1.DiscardPlanChangesResponse.plan:type_name -> ezdr.portal.v1.Plan
-	69, // 39: ezdr.portal.v1.PausePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
-	69, // 40: ezdr.portal.v1.ResumePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
-	69, // 41: ezdr.portal.v1.DeactivatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
-	90, // 42: ezdr.portal.v1.Plan.spec:type_name -> ezdr.plan.v1.PlanSpec
-	87, // 43: ezdr.portal.v1.Plan.created_at:type_name -> google.protobuf.Timestamp
-	87, // 44: ezdr.portal.v1.Plan.updated_at:type_name -> google.protobuf.Timestamp
-	3,  // 45: ezdr.portal.v1.Plan.state:type_name -> ezdr.portal.v1.PlanState
-	90, // 46: ezdr.portal.v1.Plan.applied_spec:type_name -> ezdr.plan.v1.PlanSpec
-	87, // 47: ezdr.portal.v1.Plan.applied_at:type_name -> google.protobuf.Timestamp
-	70, // 48: ezdr.portal.v1.Plan.hosts:type_name -> ezdr.portal.v1.HostApplyStatus
-	3,  // 49: ezdr.portal.v1.PlanSummary.state:type_name -> ezdr.portal.v1.PlanState
-	38, // 50: ezdr.portal.v1.PlanSummary.health:type_name -> ezdr.portal.v1.PlanHealth
-	71, // 51: ezdr.portal.v1.ListPlansResponse.plans:type_name -> ezdr.portal.v1.PlanSummary
-	69, // 52: ezdr.portal.v1.GetPlanResponse.plan:type_name -> ezdr.portal.v1.Plan
-	89, // 53: ezdr.portal.v1.GetPlanResponse.issues:type_name -> ezdr.plan.v1.Issue
-	90, // 54: ezdr.portal.v1.CreatePlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
-	69, // 55: ezdr.portal.v1.CreatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
-	89, // 56: ezdr.portal.v1.CreatePlanResponse.issues:type_name -> ezdr.plan.v1.Issue
-	90, // 57: ezdr.portal.v1.UpdatePlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
-	69, // 58: ezdr.portal.v1.UpdatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
-	89, // 59: ezdr.portal.v1.UpdatePlanResponse.issues:type_name -> ezdr.plan.v1.Issue
-	90, // 60: ezdr.portal.v1.ValidatePlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
-	89, // 61: ezdr.portal.v1.ValidatePlanResponse.issues:type_name -> ezdr.plan.v1.Issue
-	90, // 62: ezdr.portal.v1.SuggestPlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
-	90, // 63: ezdr.portal.v1.SuggestPlanResponse.spec:type_name -> ezdr.plan.v1.PlanSpec
-	27, // 64: ezdr.portal.v1.GetHostInventoryResponse.GuestPlansEntry.value:type_name -> ezdr.portal.v1.PlanRef
-	4,  // 65: ezdr.portal.v1.SetupService.GetSetupStatus:input_type -> ezdr.portal.v1.GetSetupStatusRequest
-	6,  // 66: ezdr.portal.v1.SetupService.CompleteSetup:input_type -> ezdr.portal.v1.CompleteSetupRequest
-	8,  // 67: ezdr.portal.v1.AuthService.Login:input_type -> ezdr.portal.v1.LoginRequest
-	11, // 68: ezdr.portal.v1.AuthService.VerifyTotp:input_type -> ezdr.portal.v1.VerifyTotpRequest
-	13, // 69: ezdr.portal.v1.AuthService.Logout:input_type -> ezdr.portal.v1.LogoutRequest
-	15, // 70: ezdr.portal.v1.AuthService.GetCurrentUser:input_type -> ezdr.portal.v1.GetCurrentUserRequest
-	18, // 71: ezdr.portal.v1.TokenService.CreateToken:input_type -> ezdr.portal.v1.CreateTokenRequest
-	20, // 72: ezdr.portal.v1.TokenService.ListTokens:input_type -> ezdr.portal.v1.ListTokensRequest
-	22, // 73: ezdr.portal.v1.TokenService.RevokeToken:input_type -> ezdr.portal.v1.RevokeTokenRequest
-	30, // 74: ezdr.portal.v1.HostService.ListHosts:input_type -> ezdr.portal.v1.ListHostsRequest
-	32, // 75: ezdr.portal.v1.HostService.DeleteHost:input_type -> ezdr.portal.v1.DeleteHostRequest
-	25, // 76: ezdr.portal.v1.HostService.GetHostInventory:input_type -> ezdr.portal.v1.GetHostInventoryRequest
-	28, // 77: ezdr.portal.v1.HostService.RefreshInventory:input_type -> ezdr.portal.v1.RefreshInventoryRequest
-	35, // 78: ezdr.portal.v1.AuditService.ListAuditEvents:input_type -> ezdr.portal.v1.ListAuditEventsRequest
-	72, // 79: ezdr.portal.v1.PlanService.ListPlans:input_type -> ezdr.portal.v1.ListPlansRequest
-	74, // 80: ezdr.portal.v1.PlanService.GetPlan:input_type -> ezdr.portal.v1.GetPlanRequest
-	76, // 81: ezdr.portal.v1.PlanService.CreatePlan:input_type -> ezdr.portal.v1.CreatePlanRequest
-	78, // 82: ezdr.portal.v1.PlanService.UpdatePlan:input_type -> ezdr.portal.v1.UpdatePlanRequest
-	80, // 83: ezdr.portal.v1.PlanService.DeletePlan:input_type -> ezdr.portal.v1.DeletePlanRequest
-	82, // 84: ezdr.portal.v1.PlanService.ValidatePlan:input_type -> ezdr.portal.v1.ValidatePlanRequest
-	84, // 85: ezdr.portal.v1.PlanService.SuggestPlan:input_type -> ezdr.portal.v1.SuggestPlanRequest
-	55, // 86: ezdr.portal.v1.PlanService.PreviewPlanChanges:input_type -> ezdr.portal.v1.PreviewPlanChangesRequest
-	57, // 87: ezdr.portal.v1.PlanService.ActivatePlan:input_type -> ezdr.portal.v1.ActivatePlanRequest
-	59, // 88: ezdr.portal.v1.PlanService.ApplyPlanChanges:input_type -> ezdr.portal.v1.ApplyPlanChangesRequest
-	61, // 89: ezdr.portal.v1.PlanService.DiscardPlanChanges:input_type -> ezdr.portal.v1.DiscardPlanChangesRequest
-	63, // 90: ezdr.portal.v1.PlanService.PausePlan:input_type -> ezdr.portal.v1.PausePlanRequest
-	65, // 91: ezdr.portal.v1.PlanService.ResumePlan:input_type -> ezdr.portal.v1.ResumePlanRequest
-	67, // 92: ezdr.portal.v1.PlanService.DeactivatePlan:input_type -> ezdr.portal.v1.DeactivatePlanRequest
-	40, // 93: ezdr.portal.v1.PlanService.GetPlanStatus:input_type -> ezdr.portal.v1.GetPlanStatusRequest
-	45, // 94: ezdr.portal.v1.AlertService.GetAlertSettings:input_type -> ezdr.portal.v1.GetAlertSettingsRequest
-	47, // 95: ezdr.portal.v1.AlertService.UpdateAlertSettings:input_type -> ezdr.portal.v1.UpdateAlertSettingsRequest
-	49, // 96: ezdr.portal.v1.AlertService.SendTestAlert:input_type -> ezdr.portal.v1.SendTestAlertRequest
-	52, // 97: ezdr.portal.v1.AlertService.ListAlerts:input_type -> ezdr.portal.v1.ListAlertsRequest
-	5,  // 98: ezdr.portal.v1.SetupService.GetSetupStatus:output_type -> ezdr.portal.v1.GetSetupStatusResponse
-	7,  // 99: ezdr.portal.v1.SetupService.CompleteSetup:output_type -> ezdr.portal.v1.CompleteSetupResponse
-	9,  // 100: ezdr.portal.v1.AuthService.Login:output_type -> ezdr.portal.v1.LoginResponse
-	12, // 101: ezdr.portal.v1.AuthService.VerifyTotp:output_type -> ezdr.portal.v1.VerifyTotpResponse
-	14, // 102: ezdr.portal.v1.AuthService.Logout:output_type -> ezdr.portal.v1.LogoutResponse
-	16, // 103: ezdr.portal.v1.AuthService.GetCurrentUser:output_type -> ezdr.portal.v1.GetCurrentUserResponse
-	19, // 104: ezdr.portal.v1.TokenService.CreateToken:output_type -> ezdr.portal.v1.CreateTokenResponse
-	21, // 105: ezdr.portal.v1.TokenService.ListTokens:output_type -> ezdr.portal.v1.ListTokensResponse
-	23, // 106: ezdr.portal.v1.TokenService.RevokeToken:output_type -> ezdr.portal.v1.RevokeTokenResponse
-	31, // 107: ezdr.portal.v1.HostService.ListHosts:output_type -> ezdr.portal.v1.ListHostsResponse
-	33, // 108: ezdr.portal.v1.HostService.DeleteHost:output_type -> ezdr.portal.v1.DeleteHostResponse
-	26, // 109: ezdr.portal.v1.HostService.GetHostInventory:output_type -> ezdr.portal.v1.GetHostInventoryResponse
-	29, // 110: ezdr.portal.v1.HostService.RefreshInventory:output_type -> ezdr.portal.v1.RefreshInventoryResponse
-	36, // 111: ezdr.portal.v1.AuditService.ListAuditEvents:output_type -> ezdr.portal.v1.ListAuditEventsResponse
-	73, // 112: ezdr.portal.v1.PlanService.ListPlans:output_type -> ezdr.portal.v1.ListPlansResponse
-	75, // 113: ezdr.portal.v1.PlanService.GetPlan:output_type -> ezdr.portal.v1.GetPlanResponse
-	77, // 114: ezdr.portal.v1.PlanService.CreatePlan:output_type -> ezdr.portal.v1.CreatePlanResponse
-	79, // 115: ezdr.portal.v1.PlanService.UpdatePlan:output_type -> ezdr.portal.v1.UpdatePlanResponse
-	81, // 116: ezdr.portal.v1.PlanService.DeletePlan:output_type -> ezdr.portal.v1.DeletePlanResponse
-	83, // 117: ezdr.portal.v1.PlanService.ValidatePlan:output_type -> ezdr.portal.v1.ValidatePlanResponse
-	85, // 118: ezdr.portal.v1.PlanService.SuggestPlan:output_type -> ezdr.portal.v1.SuggestPlanResponse
-	56, // 119: ezdr.portal.v1.PlanService.PreviewPlanChanges:output_type -> ezdr.portal.v1.PreviewPlanChangesResponse
-	58, // 120: ezdr.portal.v1.PlanService.ActivatePlan:output_type -> ezdr.portal.v1.ActivatePlanResponse
-	60, // 121: ezdr.portal.v1.PlanService.ApplyPlanChanges:output_type -> ezdr.portal.v1.ApplyPlanChangesResponse
-	62, // 122: ezdr.portal.v1.PlanService.DiscardPlanChanges:output_type -> ezdr.portal.v1.DiscardPlanChangesResponse
-	64, // 123: ezdr.portal.v1.PlanService.PausePlan:output_type -> ezdr.portal.v1.PausePlanResponse
-	66, // 124: ezdr.portal.v1.PlanService.ResumePlan:output_type -> ezdr.portal.v1.ResumePlanResponse
-	68, // 125: ezdr.portal.v1.PlanService.DeactivatePlan:output_type -> ezdr.portal.v1.DeactivatePlanResponse
-	41, // 126: ezdr.portal.v1.PlanService.GetPlanStatus:output_type -> ezdr.portal.v1.GetPlanStatusResponse
-	46, // 127: ezdr.portal.v1.AlertService.GetAlertSettings:output_type -> ezdr.portal.v1.GetAlertSettingsResponse
-	48, // 128: ezdr.portal.v1.AlertService.UpdateAlertSettings:output_type -> ezdr.portal.v1.UpdateAlertSettingsResponse
-	50, // 129: ezdr.portal.v1.AlertService.SendTestAlert:output_type -> ezdr.portal.v1.SendTestAlertResponse
-	53, // 130: ezdr.portal.v1.AlertService.ListAlerts:output_type -> ezdr.portal.v1.ListAlertsResponse
-	98, // [98:131] is the sub-list for method output_type
-	65, // [65:98] is the sub-list for method input_type
-	65, // [65:65] is the sub-list for extension type_name
-	65, // [65:65] is the sub-list for extension extendee
-	0,  // [0:65] is the sub-list for field type_name
+	10,  // 0: ezdr.portal.v1.LoginResponse.totp_setup:type_name -> ezdr.portal.v1.TotpSetup
+	17,  // 1: ezdr.portal.v1.VerifyTotpResponse.user:type_name -> ezdr.portal.v1.User
+	17,  // 2: ezdr.portal.v1.GetCurrentUserResponse.user:type_name -> ezdr.portal.v1.User
+	24,  // 3: ezdr.portal.v1.CreateTokenResponse.token:type_name -> ezdr.portal.v1.EnrollmentToken
+	24,  // 4: ezdr.portal.v1.ListTokensResponse.tokens:type_name -> ezdr.portal.v1.EnrollmentToken
+	92,  // 5: ezdr.portal.v1.EnrollmentToken.created_at:type_name -> google.protobuf.Timestamp
+	92,  // 6: ezdr.portal.v1.EnrollmentToken.expires_at:type_name -> google.protobuf.Timestamp
+	92,  // 7: ezdr.portal.v1.EnrollmentToken.used_at:type_name -> google.protobuf.Timestamp
+	92,  // 8: ezdr.portal.v1.EnrollmentToken.revoked_at:type_name -> google.protobuf.Timestamp
+	34,  // 9: ezdr.portal.v1.GetHostInventoryResponse.host:type_name -> ezdr.portal.v1.Host
+	93,  // 10: ezdr.portal.v1.GetHostInventoryResponse.inventory:type_name -> ezdr.inventory.v1.Inventory
+	92,  // 11: ezdr.portal.v1.GetHostInventoryResponse.changed_at:type_name -> google.protobuf.Timestamp
+	92,  // 12: ezdr.portal.v1.GetHostInventoryResponse.received_at:type_name -> google.protobuf.Timestamp
+	91,  // 13: ezdr.portal.v1.GetHostInventoryResponse.guest_plans:type_name -> ezdr.portal.v1.GetHostInventoryResponse.GuestPlansEntry
+	34,  // 14: ezdr.portal.v1.ListHostsResponse.hosts:type_name -> ezdr.portal.v1.Host
+	92,  // 15: ezdr.portal.v1.Host.enrolled_at:type_name -> google.protobuf.Timestamp
+	92,  // 16: ezdr.portal.v1.Host.last_seen_at:type_name -> google.protobuf.Timestamp
+	37,  // 17: ezdr.portal.v1.ListAuditEventsResponse.events:type_name -> ezdr.portal.v1.AuditEvent
+	92,  // 18: ezdr.portal.v1.AuditEvent.time:type_name -> google.protobuf.Timestamp
+	0,   // 19: ezdr.portal.v1.PlanHealth.state:type_name -> ezdr.portal.v1.HealthState
+	92,  // 20: ezdr.portal.v1.PlanHealth.last_replication_at:type_name -> google.protobuf.Timestamp
+	92,  // 21: ezdr.portal.v1.DatasetHealth.latest_snapshot_at:type_name -> google.protobuf.Timestamp
+	38,  // 22: ezdr.portal.v1.GetPlanStatusResponse.health:type_name -> ezdr.portal.v1.PlanHealth
+	39,  // 23: ezdr.portal.v1.GetPlanStatusResponse.datasets:type_name -> ezdr.portal.v1.DatasetHealth
+	1,   // 24: ezdr.portal.v1.SmtpSettings.security:type_name -> ezdr.portal.v1.SmtpSecurity
+	42,  // 25: ezdr.portal.v1.AlertSettings.smtp:type_name -> ezdr.portal.v1.SmtpSettings
+	43,  // 26: ezdr.portal.v1.AlertSettings.webhooks:type_name -> ezdr.portal.v1.Webhook
+	44,  // 27: ezdr.portal.v1.GetAlertSettingsResponse.settings:type_name -> ezdr.portal.v1.AlertSettings
+	44,  // 28: ezdr.portal.v1.UpdateAlertSettingsRequest.settings:type_name -> ezdr.portal.v1.AlertSettings
+	44,  // 29: ezdr.portal.v1.UpdateAlertSettingsResponse.settings:type_name -> ezdr.portal.v1.AlertSettings
+	2,   // 30: ezdr.portal.v1.Alert.severity:type_name -> ezdr.portal.v1.AlertSeverity
+	92,  // 31: ezdr.portal.v1.Alert.fired_at:type_name -> google.protobuf.Timestamp
+	92,  // 32: ezdr.portal.v1.Alert.resolved_at:type_name -> google.protobuf.Timestamp
+	51,  // 33: ezdr.portal.v1.ListAlertsResponse.alerts:type_name -> ezdr.portal.v1.Alert
+	54,  // 34: ezdr.portal.v1.PreviewPlanChangesResponse.hosts:type_name -> ezdr.portal.v1.HostChanges
+	94,  // 35: ezdr.portal.v1.PreviewPlanChangesResponse.issues:type_name -> ezdr.plan.v1.Issue
+	69,  // 36: ezdr.portal.v1.ActivatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	69,  // 37: ezdr.portal.v1.ApplyPlanChangesResponse.plan:type_name -> ezdr.portal.v1.Plan
+	69,  // 38: ezdr.portal.v1.DiscardPlanChangesResponse.plan:type_name -> ezdr.portal.v1.Plan
+	69,  // 39: ezdr.portal.v1.PausePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	69,  // 40: ezdr.portal.v1.ResumePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	69,  // 41: ezdr.portal.v1.DeactivatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	95,  // 42: ezdr.portal.v1.Plan.spec:type_name -> ezdr.plan.v1.PlanSpec
+	92,  // 43: ezdr.portal.v1.Plan.created_at:type_name -> google.protobuf.Timestamp
+	92,  // 44: ezdr.portal.v1.Plan.updated_at:type_name -> google.protobuf.Timestamp
+	3,   // 45: ezdr.portal.v1.Plan.state:type_name -> ezdr.portal.v1.PlanState
+	95,  // 46: ezdr.portal.v1.Plan.applied_spec:type_name -> ezdr.plan.v1.PlanSpec
+	92,  // 47: ezdr.portal.v1.Plan.applied_at:type_name -> google.protobuf.Timestamp
+	70,  // 48: ezdr.portal.v1.Plan.hosts:type_name -> ezdr.portal.v1.HostApplyStatus
+	3,   // 49: ezdr.portal.v1.PlanSummary.state:type_name -> ezdr.portal.v1.PlanState
+	38,  // 50: ezdr.portal.v1.PlanSummary.health:type_name -> ezdr.portal.v1.PlanHealth
+	71,  // 51: ezdr.portal.v1.ListPlansResponse.plans:type_name -> ezdr.portal.v1.PlanSummary
+	69,  // 52: ezdr.portal.v1.GetPlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	94,  // 53: ezdr.portal.v1.GetPlanResponse.issues:type_name -> ezdr.plan.v1.Issue
+	95,  // 54: ezdr.portal.v1.CreatePlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
+	69,  // 55: ezdr.portal.v1.CreatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	94,  // 56: ezdr.portal.v1.CreatePlanResponse.issues:type_name -> ezdr.plan.v1.Issue
+	95,  // 57: ezdr.portal.v1.UpdatePlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
+	69,  // 58: ezdr.portal.v1.UpdatePlanResponse.plan:type_name -> ezdr.portal.v1.Plan
+	94,  // 59: ezdr.portal.v1.UpdatePlanResponse.issues:type_name -> ezdr.plan.v1.Issue
+	95,  // 60: ezdr.portal.v1.ValidatePlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
+	94,  // 61: ezdr.portal.v1.ValidatePlanResponse.issues:type_name -> ezdr.plan.v1.Issue
+	95,  // 62: ezdr.portal.v1.SuggestPlanRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
+	95,  // 63: ezdr.portal.v1.SuggestPlanResponse.spec:type_name -> ezdr.plan.v1.PlanSpec
+	88,  // 64: ezdr.portal.v1.ListZreplSetupsResponse.setups:type_name -> ezdr.portal.v1.ZreplSetup
+	96,  // 65: ezdr.portal.v1.ZreplSetup.source_job:type_name -> ezdr.inventory.v1.ZreplJob
+	96,  // 66: ezdr.portal.v1.ZreplSetup.pull_job:type_name -> ezdr.inventory.v1.ZreplJob
+	95,  // 67: ezdr.portal.v1.AdoptZreplSetupRequest.spec:type_name -> ezdr.plan.v1.PlanSpec
+	95,  // 68: ezdr.portal.v1.AdoptZreplSetupResponse.spec:type_name -> ezdr.plan.v1.PlanSpec
+	27,  // 69: ezdr.portal.v1.GetHostInventoryResponse.GuestPlansEntry.value:type_name -> ezdr.portal.v1.PlanRef
+	4,   // 70: ezdr.portal.v1.SetupService.GetSetupStatus:input_type -> ezdr.portal.v1.GetSetupStatusRequest
+	6,   // 71: ezdr.portal.v1.SetupService.CompleteSetup:input_type -> ezdr.portal.v1.CompleteSetupRequest
+	8,   // 72: ezdr.portal.v1.AuthService.Login:input_type -> ezdr.portal.v1.LoginRequest
+	11,  // 73: ezdr.portal.v1.AuthService.VerifyTotp:input_type -> ezdr.portal.v1.VerifyTotpRequest
+	13,  // 74: ezdr.portal.v1.AuthService.Logout:input_type -> ezdr.portal.v1.LogoutRequest
+	15,  // 75: ezdr.portal.v1.AuthService.GetCurrentUser:input_type -> ezdr.portal.v1.GetCurrentUserRequest
+	18,  // 76: ezdr.portal.v1.TokenService.CreateToken:input_type -> ezdr.portal.v1.CreateTokenRequest
+	20,  // 77: ezdr.portal.v1.TokenService.ListTokens:input_type -> ezdr.portal.v1.ListTokensRequest
+	22,  // 78: ezdr.portal.v1.TokenService.RevokeToken:input_type -> ezdr.portal.v1.RevokeTokenRequest
+	30,  // 79: ezdr.portal.v1.HostService.ListHosts:input_type -> ezdr.portal.v1.ListHostsRequest
+	32,  // 80: ezdr.portal.v1.HostService.DeleteHost:input_type -> ezdr.portal.v1.DeleteHostRequest
+	25,  // 81: ezdr.portal.v1.HostService.GetHostInventory:input_type -> ezdr.portal.v1.GetHostInventoryRequest
+	28,  // 82: ezdr.portal.v1.HostService.RefreshInventory:input_type -> ezdr.portal.v1.RefreshInventoryRequest
+	35,  // 83: ezdr.portal.v1.AuditService.ListAuditEvents:input_type -> ezdr.portal.v1.ListAuditEventsRequest
+	72,  // 84: ezdr.portal.v1.PlanService.ListPlans:input_type -> ezdr.portal.v1.ListPlansRequest
+	74,  // 85: ezdr.portal.v1.PlanService.GetPlan:input_type -> ezdr.portal.v1.GetPlanRequest
+	76,  // 86: ezdr.portal.v1.PlanService.CreatePlan:input_type -> ezdr.portal.v1.CreatePlanRequest
+	78,  // 87: ezdr.portal.v1.PlanService.UpdatePlan:input_type -> ezdr.portal.v1.UpdatePlanRequest
+	80,  // 88: ezdr.portal.v1.PlanService.DeletePlan:input_type -> ezdr.portal.v1.DeletePlanRequest
+	82,  // 89: ezdr.portal.v1.PlanService.ValidatePlan:input_type -> ezdr.portal.v1.ValidatePlanRequest
+	84,  // 90: ezdr.portal.v1.PlanService.SuggestPlan:input_type -> ezdr.portal.v1.SuggestPlanRequest
+	86,  // 91: ezdr.portal.v1.PlanService.ListZreplSetups:input_type -> ezdr.portal.v1.ListZreplSetupsRequest
+	89,  // 92: ezdr.portal.v1.PlanService.AdoptZreplSetup:input_type -> ezdr.portal.v1.AdoptZreplSetupRequest
+	55,  // 93: ezdr.portal.v1.PlanService.PreviewPlanChanges:input_type -> ezdr.portal.v1.PreviewPlanChangesRequest
+	57,  // 94: ezdr.portal.v1.PlanService.ActivatePlan:input_type -> ezdr.portal.v1.ActivatePlanRequest
+	59,  // 95: ezdr.portal.v1.PlanService.ApplyPlanChanges:input_type -> ezdr.portal.v1.ApplyPlanChangesRequest
+	61,  // 96: ezdr.portal.v1.PlanService.DiscardPlanChanges:input_type -> ezdr.portal.v1.DiscardPlanChangesRequest
+	63,  // 97: ezdr.portal.v1.PlanService.PausePlan:input_type -> ezdr.portal.v1.PausePlanRequest
+	65,  // 98: ezdr.portal.v1.PlanService.ResumePlan:input_type -> ezdr.portal.v1.ResumePlanRequest
+	67,  // 99: ezdr.portal.v1.PlanService.DeactivatePlan:input_type -> ezdr.portal.v1.DeactivatePlanRequest
+	40,  // 100: ezdr.portal.v1.PlanService.GetPlanStatus:input_type -> ezdr.portal.v1.GetPlanStatusRequest
+	45,  // 101: ezdr.portal.v1.AlertService.GetAlertSettings:input_type -> ezdr.portal.v1.GetAlertSettingsRequest
+	47,  // 102: ezdr.portal.v1.AlertService.UpdateAlertSettings:input_type -> ezdr.portal.v1.UpdateAlertSettingsRequest
+	49,  // 103: ezdr.portal.v1.AlertService.SendTestAlert:input_type -> ezdr.portal.v1.SendTestAlertRequest
+	52,  // 104: ezdr.portal.v1.AlertService.ListAlerts:input_type -> ezdr.portal.v1.ListAlertsRequest
+	5,   // 105: ezdr.portal.v1.SetupService.GetSetupStatus:output_type -> ezdr.portal.v1.GetSetupStatusResponse
+	7,   // 106: ezdr.portal.v1.SetupService.CompleteSetup:output_type -> ezdr.portal.v1.CompleteSetupResponse
+	9,   // 107: ezdr.portal.v1.AuthService.Login:output_type -> ezdr.portal.v1.LoginResponse
+	12,  // 108: ezdr.portal.v1.AuthService.VerifyTotp:output_type -> ezdr.portal.v1.VerifyTotpResponse
+	14,  // 109: ezdr.portal.v1.AuthService.Logout:output_type -> ezdr.portal.v1.LogoutResponse
+	16,  // 110: ezdr.portal.v1.AuthService.GetCurrentUser:output_type -> ezdr.portal.v1.GetCurrentUserResponse
+	19,  // 111: ezdr.portal.v1.TokenService.CreateToken:output_type -> ezdr.portal.v1.CreateTokenResponse
+	21,  // 112: ezdr.portal.v1.TokenService.ListTokens:output_type -> ezdr.portal.v1.ListTokensResponse
+	23,  // 113: ezdr.portal.v1.TokenService.RevokeToken:output_type -> ezdr.portal.v1.RevokeTokenResponse
+	31,  // 114: ezdr.portal.v1.HostService.ListHosts:output_type -> ezdr.portal.v1.ListHostsResponse
+	33,  // 115: ezdr.portal.v1.HostService.DeleteHost:output_type -> ezdr.portal.v1.DeleteHostResponse
+	26,  // 116: ezdr.portal.v1.HostService.GetHostInventory:output_type -> ezdr.portal.v1.GetHostInventoryResponse
+	29,  // 117: ezdr.portal.v1.HostService.RefreshInventory:output_type -> ezdr.portal.v1.RefreshInventoryResponse
+	36,  // 118: ezdr.portal.v1.AuditService.ListAuditEvents:output_type -> ezdr.portal.v1.ListAuditEventsResponse
+	73,  // 119: ezdr.portal.v1.PlanService.ListPlans:output_type -> ezdr.portal.v1.ListPlansResponse
+	75,  // 120: ezdr.portal.v1.PlanService.GetPlan:output_type -> ezdr.portal.v1.GetPlanResponse
+	77,  // 121: ezdr.portal.v1.PlanService.CreatePlan:output_type -> ezdr.portal.v1.CreatePlanResponse
+	79,  // 122: ezdr.portal.v1.PlanService.UpdatePlan:output_type -> ezdr.portal.v1.UpdatePlanResponse
+	81,  // 123: ezdr.portal.v1.PlanService.DeletePlan:output_type -> ezdr.portal.v1.DeletePlanResponse
+	83,  // 124: ezdr.portal.v1.PlanService.ValidatePlan:output_type -> ezdr.portal.v1.ValidatePlanResponse
+	85,  // 125: ezdr.portal.v1.PlanService.SuggestPlan:output_type -> ezdr.portal.v1.SuggestPlanResponse
+	87,  // 126: ezdr.portal.v1.PlanService.ListZreplSetups:output_type -> ezdr.portal.v1.ListZreplSetupsResponse
+	90,  // 127: ezdr.portal.v1.PlanService.AdoptZreplSetup:output_type -> ezdr.portal.v1.AdoptZreplSetupResponse
+	56,  // 128: ezdr.portal.v1.PlanService.PreviewPlanChanges:output_type -> ezdr.portal.v1.PreviewPlanChangesResponse
+	58,  // 129: ezdr.portal.v1.PlanService.ActivatePlan:output_type -> ezdr.portal.v1.ActivatePlanResponse
+	60,  // 130: ezdr.portal.v1.PlanService.ApplyPlanChanges:output_type -> ezdr.portal.v1.ApplyPlanChangesResponse
+	62,  // 131: ezdr.portal.v1.PlanService.DiscardPlanChanges:output_type -> ezdr.portal.v1.DiscardPlanChangesResponse
+	64,  // 132: ezdr.portal.v1.PlanService.PausePlan:output_type -> ezdr.portal.v1.PausePlanResponse
+	66,  // 133: ezdr.portal.v1.PlanService.ResumePlan:output_type -> ezdr.portal.v1.ResumePlanResponse
+	68,  // 134: ezdr.portal.v1.PlanService.DeactivatePlan:output_type -> ezdr.portal.v1.DeactivatePlanResponse
+	41,  // 135: ezdr.portal.v1.PlanService.GetPlanStatus:output_type -> ezdr.portal.v1.GetPlanStatusResponse
+	46,  // 136: ezdr.portal.v1.AlertService.GetAlertSettings:output_type -> ezdr.portal.v1.GetAlertSettingsResponse
+	48,  // 137: ezdr.portal.v1.AlertService.UpdateAlertSettings:output_type -> ezdr.portal.v1.UpdateAlertSettingsResponse
+	50,  // 138: ezdr.portal.v1.AlertService.SendTestAlert:output_type -> ezdr.portal.v1.SendTestAlertResponse
+	53,  // 139: ezdr.portal.v1.AlertService.ListAlerts:output_type -> ezdr.portal.v1.ListAlertsResponse
+	105, // [105:140] is the sub-list for method output_type
+	70,  // [70:105] is the sub-list for method input_type
+	70,  // [70:70] is the sub-list for extension type_name
+	70,  // [70:70] is the sub-list for extension extendee
+	0,   // [0:70] is the sub-list for field type_name
 }
 
 func init() { file_ezdr_portal_v1_portal_proto_init() }
@@ -5262,7 +5561,7 @@ func file_ezdr_portal_v1_portal_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ezdr_portal_v1_portal_proto_rawDesc), len(file_ezdr_portal_v1_portal_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   83,
+			NumMessages:   88,
 			NumExtensions: 0,
 			NumServices:   7,
 		},

@@ -96,6 +96,12 @@ const (
 	PlanServiceValidatePlanProcedure = "/ezdr.portal.v1.PlanService/ValidatePlan"
 	// PlanServiceSuggestPlanProcedure is the fully-qualified name of the PlanService's SuggestPlan RPC.
 	PlanServiceSuggestPlanProcedure = "/ezdr.portal.v1.PlanService/SuggestPlan"
+	// PlanServiceListZreplSetupsProcedure is the fully-qualified name of the PlanService's
+	// ListZreplSetups RPC.
+	PlanServiceListZreplSetupsProcedure = "/ezdr.portal.v1.PlanService/ListZreplSetups"
+	// PlanServiceAdoptZreplSetupProcedure is the fully-qualified name of the PlanService's
+	// AdoptZreplSetup RPC.
+	PlanServiceAdoptZreplSetupProcedure = "/ezdr.portal.v1.PlanService/AdoptZreplSetup"
 	// PlanServicePreviewPlanChangesProcedure is the fully-qualified name of the PlanService's
 	// PreviewPlanChanges RPC.
 	PlanServicePreviewPlanChangesProcedure = "/ezdr.portal.v1.PlanService/PreviewPlanChanges"
@@ -728,6 +734,12 @@ type PlanServiceClient interface {
 	ValidatePlan(context.Context, *connect.Request[v1.ValidatePlanRequest]) (*connect.Response[v1.ValidatePlanResponse], error)
 	// SuggestPlan fills in missing mappings, startup order, and defaults.
 	SuggestPlan(context.Context, *connect.Request[v1.SuggestPlanRequest]) (*connect.Response[v1.SuggestPlanResponse], error)
+	// ListZreplSetups lists existing hand-written zrepl setups between a plan's
+	// hosts that the plan could adopt.
+	ListZreplSetups(context.Context, *connect.Request[v1.ListZreplSetupsRequest]) (*connect.Response[v1.ListZreplSetupsResponse], error)
+	// AdoptZreplSetup fills in a specification from an existing zrepl setup,
+	// without saving it.
+	AdoptZreplSetup(context.Context, *connect.Request[v1.AdoptZreplSetupRequest]) (*connect.Response[v1.AdoptZreplSetupResponse], error)
 	// PreviewPlanChanges lists what activating or applying the plan's
 	// editing specification would change on each host.
 	PreviewPlanChanges(context.Context, *connect.Request[v1.PreviewPlanChangesRequest]) (*connect.Response[v1.PreviewPlanChangesResponse], error)
@@ -799,6 +811,18 @@ func NewPlanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(planServiceMethods.ByName("SuggestPlan")),
 			connect.WithClientOptions(opts...),
 		),
+		listZreplSetups: connect.NewClient[v1.ListZreplSetupsRequest, v1.ListZreplSetupsResponse](
+			httpClient,
+			baseURL+PlanServiceListZreplSetupsProcedure,
+			connect.WithSchema(planServiceMethods.ByName("ListZreplSetups")),
+			connect.WithClientOptions(opts...),
+		),
+		adoptZreplSetup: connect.NewClient[v1.AdoptZreplSetupRequest, v1.AdoptZreplSetupResponse](
+			httpClient,
+			baseURL+PlanServiceAdoptZreplSetupProcedure,
+			connect.WithSchema(planServiceMethods.ByName("AdoptZreplSetup")),
+			connect.WithClientOptions(opts...),
+		),
 		previewPlanChanges: connect.NewClient[v1.PreviewPlanChangesRequest, v1.PreviewPlanChangesResponse](
 			httpClient,
 			baseURL+PlanServicePreviewPlanChangesProcedure,
@@ -859,6 +883,8 @@ type planServiceClient struct {
 	deletePlan         *connect.Client[v1.DeletePlanRequest, v1.DeletePlanResponse]
 	validatePlan       *connect.Client[v1.ValidatePlanRequest, v1.ValidatePlanResponse]
 	suggestPlan        *connect.Client[v1.SuggestPlanRequest, v1.SuggestPlanResponse]
+	listZreplSetups    *connect.Client[v1.ListZreplSetupsRequest, v1.ListZreplSetupsResponse]
+	adoptZreplSetup    *connect.Client[v1.AdoptZreplSetupRequest, v1.AdoptZreplSetupResponse]
 	previewPlanChanges *connect.Client[v1.PreviewPlanChangesRequest, v1.PreviewPlanChangesResponse]
 	activatePlan       *connect.Client[v1.ActivatePlanRequest, v1.ActivatePlanResponse]
 	applyPlanChanges   *connect.Client[v1.ApplyPlanChangesRequest, v1.ApplyPlanChangesResponse]
@@ -902,6 +928,16 @@ func (c *planServiceClient) ValidatePlan(ctx context.Context, req *connect.Reque
 // SuggestPlan calls ezdr.portal.v1.PlanService.SuggestPlan.
 func (c *planServiceClient) SuggestPlan(ctx context.Context, req *connect.Request[v1.SuggestPlanRequest]) (*connect.Response[v1.SuggestPlanResponse], error) {
 	return c.suggestPlan.CallUnary(ctx, req)
+}
+
+// ListZreplSetups calls ezdr.portal.v1.PlanService.ListZreplSetups.
+func (c *planServiceClient) ListZreplSetups(ctx context.Context, req *connect.Request[v1.ListZreplSetupsRequest]) (*connect.Response[v1.ListZreplSetupsResponse], error) {
+	return c.listZreplSetups.CallUnary(ctx, req)
+}
+
+// AdoptZreplSetup calls ezdr.portal.v1.PlanService.AdoptZreplSetup.
+func (c *planServiceClient) AdoptZreplSetup(ctx context.Context, req *connect.Request[v1.AdoptZreplSetupRequest]) (*connect.Response[v1.AdoptZreplSetupResponse], error) {
+	return c.adoptZreplSetup.CallUnary(ctx, req)
 }
 
 // PreviewPlanChanges calls ezdr.portal.v1.PlanService.PreviewPlanChanges.
@@ -955,6 +991,12 @@ type PlanServiceHandler interface {
 	ValidatePlan(context.Context, *connect.Request[v1.ValidatePlanRequest]) (*connect.Response[v1.ValidatePlanResponse], error)
 	// SuggestPlan fills in missing mappings, startup order, and defaults.
 	SuggestPlan(context.Context, *connect.Request[v1.SuggestPlanRequest]) (*connect.Response[v1.SuggestPlanResponse], error)
+	// ListZreplSetups lists existing hand-written zrepl setups between a plan's
+	// hosts that the plan could adopt.
+	ListZreplSetups(context.Context, *connect.Request[v1.ListZreplSetupsRequest]) (*connect.Response[v1.ListZreplSetupsResponse], error)
+	// AdoptZreplSetup fills in a specification from an existing zrepl setup,
+	// without saving it.
+	AdoptZreplSetup(context.Context, *connect.Request[v1.AdoptZreplSetupRequest]) (*connect.Response[v1.AdoptZreplSetupResponse], error)
 	// PreviewPlanChanges lists what activating or applying the plan's
 	// editing specification would change on each host.
 	PreviewPlanChanges(context.Context, *connect.Request[v1.PreviewPlanChangesRequest]) (*connect.Response[v1.PreviewPlanChangesResponse], error)
@@ -1022,6 +1064,18 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(planServiceMethods.ByName("SuggestPlan")),
 		connect.WithHandlerOptions(opts...),
 	)
+	planServiceListZreplSetupsHandler := connect.NewUnaryHandler(
+		PlanServiceListZreplSetupsProcedure,
+		svc.ListZreplSetups,
+		connect.WithSchema(planServiceMethods.ByName("ListZreplSetups")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceAdoptZreplSetupHandler := connect.NewUnaryHandler(
+		PlanServiceAdoptZreplSetupProcedure,
+		svc.AdoptZreplSetup,
+		connect.WithSchema(planServiceMethods.ByName("AdoptZreplSetup")),
+		connect.WithHandlerOptions(opts...),
+	)
 	planServicePreviewPlanChangesHandler := connect.NewUnaryHandler(
 		PlanServicePreviewPlanChangesProcedure,
 		svc.PreviewPlanChanges,
@@ -1086,6 +1140,10 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 			planServiceValidatePlanHandler.ServeHTTP(w, r)
 		case PlanServiceSuggestPlanProcedure:
 			planServiceSuggestPlanHandler.ServeHTTP(w, r)
+		case PlanServiceListZreplSetupsProcedure:
+			planServiceListZreplSetupsHandler.ServeHTTP(w, r)
+		case PlanServiceAdoptZreplSetupProcedure:
+			planServiceAdoptZreplSetupHandler.ServeHTTP(w, r)
 		case PlanServicePreviewPlanChangesProcedure:
 			planServicePreviewPlanChangesHandler.ServeHTTP(w, r)
 		case PlanServiceActivatePlanProcedure:
@@ -1137,6 +1195,14 @@ func (UnimplementedPlanServiceHandler) ValidatePlan(context.Context, *connect.Re
 
 func (UnimplementedPlanServiceHandler) SuggestPlan(context.Context, *connect.Request[v1.SuggestPlanRequest]) (*connect.Response[v1.SuggestPlanResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.SuggestPlan is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) ListZreplSetups(context.Context, *connect.Request[v1.ListZreplSetupsRequest]) (*connect.Response[v1.ListZreplSetupsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.ListZreplSetups is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) AdoptZreplSetup(context.Context, *connect.Request[v1.AdoptZreplSetupRequest]) (*connect.Response[v1.AdoptZreplSetupResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.AdoptZreplSetup is not implemented"))
 }
 
 func (UnimplementedPlanServiceHandler) PreviewPlanChanges(context.Context, *connect.Request[v1.PreviewPlanChangesRequest]) (*connect.Response[v1.PreviewPlanChangesResponse], error) {
