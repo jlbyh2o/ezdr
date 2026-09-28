@@ -160,10 +160,17 @@ The test is then **running** until it ends.
 guests (with their disks on the test storage, which are the clones). If the
 DR host is offline, the test stays "ending" and cleanup runs when it's back.
 
-Cleanup only ever touches guests that have the `ezdr-test` tag, a VMID from
-this test, and disks on the test storage. The DR client refuses anything
-else, so a bug or a compromised portal can't use cleanup to remove other
-guests.
+Cleanup only ever touches guests that have the `ezdr-test` tag, the test's
+marker (`ezdr-test-id-<test>`) in their description, and disks on the test
+storage. The DR client refuses anything else, so a bug or a compromised
+portal can't use cleanup to remove other guests. A refused guest doesn't
+stop the others from being cleaned up; the problem is reported and cleanup
+is retried.
+
+The marker uses only characters Proxmox never escapes: when `qm set`
+rewrites a VM's configuration, Proxmox percent-encodes some characters in
+the description, such as `:` (found in the lab). Descriptions are also
+decoded before matching.
 
 ### 5.5 Verdict and history
 
