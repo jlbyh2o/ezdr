@@ -101,6 +101,7 @@ func TestFailbackPreflightProblems(t *testing.T) {
 			"rpool/subvol-101-disk-0 has no snapshot in common",
 			"rpool/subvol-102-disk-0 no longer exists on the primary",
 			"guest 101 has a disk added at the DR site (mp0)",
+			"guest 900 on the DR host isn't in the plan",
 		}},
 		{"changes", r.ConfigChanges, []string{
 			"guest 101: disk rootfs was resized at the DR site (8.0 GiB to 16.0 GiB)",
@@ -109,7 +110,7 @@ func TestFailbackPreflightProblems(t *testing.T) {
 			"guest 101: network device net1 was added",
 			"guest 102: network device net0 changed",
 		}},
-		{"warnings", r.Warnings, []string{"guest 900 on the DR host isn't in the plan"}},
+		{"warnings", r.Warnings, nil},
 	} {
 		all := strings.Join(c.got, "\n")
 		for _, w := range c.want {

@@ -39,9 +39,11 @@ Making the DR host the permanent primary (swapping roles) is out of scope.
   large blocks, embedded data; raw for encrypted datasets), so intermediate
   snapshots arrive too and zrepl's history stays consistent. The primary
   runs `zfs receive -F` into the original dataset and reports the result.
-- The primary only receives into the plan's datasets it was told about, and
-  only while a failback runs; the listener stops when the failback ends or
-  after a time limit.
+- The primary only receives into the plan's datasets it was told about,
+  starting from the snapshot the portal expects, and only during a copy
+  round: it listens for one round at a time, and stops listening when the
+  round ends or the DR host doesn't connect in time.
+- Failed-over plans keep their EZDR site tunnel, so the copy can use it.
 
 ## 3. Preflight
 
@@ -57,7 +59,8 @@ Before the failback starts, both hosts list the plan's datasets' snapshots
   its data would be lost;
 - other configuration changes made at the DR site (memory, cores, NICs).
   These are reported; the primary keeps its own configuration;
-- guests created on the DR host outside the plan (not failed back).
+- guests on the DR host outside the plan with a disk on the plan's storage.
+  This blocks the failback: the storage is removed.
 
 The operator confirms by typing the plan's name, and separately confirms
 discarding diverged data if there is any.
@@ -66,28 +69,30 @@ discarding diverged data if there is any.
 
 | Step | Guests run on | Undone on failure? |
 | --- | --- | --- |
-| 1. Start the primary's receiver | DR host | yes |
-| 2. Copy changes back in rounds: snapshot the replicas on the DR host (the plan's prefix), send the changes since the last round. Repeat until a round copies less than 256 MiB, at most 5 rounds. The first round rolls diverged primary datasets back. | DR host | yes |
-| 3. Shut down the guests on the DR host (reverse startup order, forced off after the shutdown timeout) | — | yes: they're started again |
-| 4. Take a final snapshot and send the last changes | — | yes: the DR guests are started again |
-| 5. Remove the DR host's guest registrations (configuration files only), remove the plan's `ezdr-` storages, and make the replicas read-only | — | no (retry) |
-| 6. Resume replication: the plan becomes active; the primary's source job and the DR host's pull job return | — | no (retry) |
-| 7. Unlock the primary's guests (restoring onboot) and start them in startup order with their delays; check them | primary | no (retry) |
-| 8. Wait for the operator to verify the guests, then switch DNS back to production values on confirmation | primary | — |
+| 1. Copy changes back in rounds: snapshot the replicas on the DR host (the plan's prefix), start the primary's receiver, send the changes since the last round. Repeat until a round copies less than 256 MiB, at most 5 rounds. The first round rolls diverged primary datasets back; later rounds roll back anything written since the previous one. | DR host | yes |
+| 2. Shut down the guests on the DR host (reverse startup order, forced off after the shutdown timeout) and lock them, as failover locks the primary's | — | yes: they're unlocked and started again |
+| 3. Take a final snapshot and send the last changes | — | yes: the DR guests are started again |
+| 4. Remove the DR host's guest registrations (configuration files only), remove the plan's `ezdr-` storages unless another guest uses one, roll the replicas back to the final snapshot, and make them read-only | — | no (retry) |
+| 5. Resume replication: the plan becomes active; the primary's source job and the DR host's pull job return | — | no (retry) |
+| 6. Unlock the primary's guests (restoring onboot) and start them in startup order with their delays; check them | primary | no (retry) |
+| 7. Wait for the operator to verify the guests, then switch DNS back to production values on confirmation | primary | — |
 
 - Before step 5, a failure leaves the plan failed over with the guests
   running on the DR host (restarted if they were stopped), and the failback
   can be run again. Data already copied to the primary is simply superseded
   by the next attempt.
 - From step 5 on, the failback is committed: failed steps are retried.
-- Plans can't be changed while failing back.
+- Plans can't be changed until the failback finishes (including while it
+  waits for confirmation or a retry); the plan shows as failing back.
 - Replication resumes incrementally: after the cutover the primary's
   datasets and the replicas both end at the final snapshot.
 
 ## 5. Security
 
-- The receiver is a fixed client action with an allowlist of datasets and a
-  pinned peer certificate, open only during a failback.
+- The receiver is a fixed client action with an allowlist of datasets and
+  starting snapshots and a pinned peer certificate, open only during a
+  copy round. The primary checks that the final snapshot it received has
+  the DR host's GUID.
 - Removing DR registrations checks that each guest is this plan's
   failed-over guest and is stopped, and deletes only its configuration file:
   never `qm destroy`, which would destroy the replicas.

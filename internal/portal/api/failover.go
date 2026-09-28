@@ -116,6 +116,9 @@ func (s FailoverService) StartFailover(ctx context.Context, req *connect.Request
 	if running, err := s.takeoverRunning(ctx, tp.row.ID); err != nil || running {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan's takeover is running"))
 	}
+	if running, err := s.failbackRunning(ctx, tp.row.ID); err != nil || running {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan's failback is running"))
+	}
 
 	id := strings.ToLower(store.NewID())
 	f := &portalv1.Failover{Id: id, PlanId: tp.row.ID, Planned: req.Msg.Planned, State: portalv1.FailoverState_FAILOVER_STATE_RUNNING,
@@ -201,12 +204,25 @@ func (s FailoverService) ConfirmFailover(ctx context.Context, req *connect.Reque
 
 // switchDNS switches the plan's records to their failover values.
 func (d *Deps) switchDNS(ctx context.Context, planID string) string {
-	return d.switchRecords(ctx, planID, true)
+	return d.switchRecords(ctx, planID, true, func(fn func([]*portalv1.DnsRecordSwitch)) {
+		_, _ = d.updateFailover(ctx, planID, func(_ *store.FailoverRow, f *portalv1.Failover) error {
+			fn(f.DnsRecords)
+			return nil
+		})
+	})
 }
 
 // RetryFailover resumes a failover whose step failed after replication
 // stopped.
 func (s FailoverService) RetryFailover(ctx context.Context, req *connect.Request[portalv1.RetryFailoverRequest]) (*connect.Response[portalv1.RetryFailoverResponse], error) {
+	// Retrying starts the guests on the DR host: only while the plan is
+	// still failed over, never after (or during) a failback.
+	if sp, err := s.Store.PlanByID(ctx, req.Msg.PlanId); err != nil || sp.State != store.PlanFailedOver {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan isn't failed over"))
+	}
+	if running, err := s.failbackRunning(ctx, req.Msg.PlanId); err != nil || running {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan's failback is running"))
+	}
 	f, err := s.updateFailover(ctx, req.Msg.PlanId, func(row *store.FailoverRow, f *portalv1.Failover) error {
 		if f.State != portalv1.FailoverState_FAILOVER_STATE_FAILED {
 			return connect.NewError(connect.CodeFailedPrecondition, errors.New("only a failed failover can be retried"))
@@ -405,7 +421,7 @@ func (d *Deps) failoverStep(ctx context.Context, planID string, step int, f *por
 
 	case foStepStart:
 		for i, g := range ordered {
-			if f.Guests[guestIndex(f, g.Vmid)].Status != "pending" {
+			if f.Guests[guestIndex(f.Guests, g.Vmid)].Status != "pending" {
 				continue
 			}
 			_, err := d.request(ctx, spec.DrHostId, 5*time.Minute, &clientv1.Action{Kind: &clientv1.Action_FailoverStartGuest{
@@ -414,7 +430,7 @@ func (d *Deps) failoverStep(ctx context.Context, planID string, step int, f *por
 				return "", ctx.Err()
 			}
 			_, _ = d.updateFailover(ctx, planID, func(_ *store.FailoverRow, f *portalv1.Failover) error {
-				fg := f.Guests[guestIndex(f, g.Vmid)]
+				fg := f.Guests[guestIndex(f.Guests, g.Vmid)]
 				if err != nil {
 					fg.Status, fg.Detail = "failed", "start: "+err.Error()
 				} else {
@@ -436,8 +452,8 @@ func (d *Deps) failoverStep(ctx context.Context, planID string, step int, f *por
 	return "", fmt.Errorf("unknown step %d", step)
 }
 
-func guestIndex(f *portalv1.Failover, vmid uint32) int {
-	return slices.IndexFunc(f.Guests, func(g *portalv1.TestRunGuest) bool { return g.Vmid == vmid })
+func guestIndex(guests []*portalv1.TestRunGuest, vmid uint32) int {
+	return slices.IndexFunc(guests, func(g *portalv1.TestRunGuest) bool { return g.Vmid == vmid })
 }
 
 // startupOrder returns the plan's guests in startup order.
@@ -541,28 +557,48 @@ func (d *Deps) finalSync(ctx context.Context, planID string, spec *planv1.PlanSp
 // checkFailoverGuests waits until each started guest runs (and its guest
 // agent answers, when enabled), or the check times out.
 func (d *Deps) checkFailoverGuests(ctx context.Context, planID string, spec *planv1.PlanSpec) (string, error) {
+	return d.checkGuests(ctx, spec.DrHostId,
+		func() ([]*portalv1.TestRunGuest, error) {
+			_, f, err := d.loadFailover(ctx, planID)
+			return f.GetGuests(), err
+		},
+		func(vmid uint32) *clientv1.Action {
+			return &clientv1.Action{Kind: &clientv1.Action_FailoverCheckGuest{
+				FailoverCheckGuest: &clientv1.FailoverCheckGuest{PlanId: planID, Vmid: vmid}}}
+		},
+		func(vmid uint32, fn func(*portalv1.TestRunGuest)) {
+			_, _ = d.updateFailover(ctx, planID, func(_ *store.FailoverRow, f *portalv1.Failover) error {
+				fn(f.Guests[guestIndex(f.Guests, vmid)])
+				return nil
+			})
+		})
+}
+
+// checkGuests waits until each "starting" guest runs (and its guest agent
+// answers, when enabled), or the check times out, and records each result.
+// guests lists the guests, check builds the check action for one, and
+// update changes one guest's record.
+func (d *Deps) checkGuests(ctx context.Context, hostID string, guests func() ([]*portalv1.TestRunGuest, error),
+	check func(vmid uint32) *clientv1.Action, update func(vmid uint32, fn func(*portalv1.TestRunGuest))) (string, error) {
 	deadline := time.Now().Add(guestCheckTimeout)
 	for {
-		_, f, err := d.loadFailover(ctx, planID)
+		gs, err := guests()
 		if err != nil {
 			return "", err
 		}
 		pending := 0
-		for _, fg := range f.Guests {
+		for _, fg := range gs {
 			if fg.Status != "starting" {
 				continue
 			}
-			ack, err := d.request(ctx, spec.DrHostId, time.Minute, &clientv1.Action{Kind: &clientv1.Action_FailoverCheckGuest{
-				FailoverCheckGuest: &clientv1.FailoverCheckGuest{PlanId: planID, Vmid: fg.Vmid}}})
+			ack, err := d.request(ctx, hostID, time.Minute, check(fg.Vmid))
 			c := ack.GetGuestCheck()
 			ok := err == nil && c.GetRunning() && (!c.GetAgentEnabled() || c.GetAgentOk())
 			if !ok && time.Now().Before(deadline) {
 				pending++
 				continue
 			}
-			vmid := fg.Vmid
-			_, _ = d.updateFailover(ctx, planID, func(_ *store.FailoverRow, f *portalv1.Failover) error {
-				g := f.Guests[guestIndex(f, vmid)]
+			update(fg.Vmid, func(g *portalv1.TestRunGuest) {
 				g.AgentEnabled, g.AgentOk = c.GetAgentEnabled(), c.GetAgentOk()
 				switch {
 				case ok:
@@ -574,7 +610,6 @@ func (d *Deps) checkFailoverGuests(ctx context.Context, planID string, spec *pla
 				default:
 					g.Status, g.Detail = "failed", "the QEMU guest agent didn't answer"
 				}
-				return nil
 			})
 		}
 		if pending == 0 {
@@ -584,17 +619,17 @@ func (d *Deps) checkFailoverGuests(ctx context.Context, planID string, spec *pla
 			return "", err
 		}
 	}
-	_, f, err := d.loadFailover(ctx, planID)
+	gs, err := guests()
 	if err != nil {
 		return "", err
 	}
 	running := 0
-	for _, g := range f.Guests {
+	for _, g := range gs {
 		if g.Status == "running" {
 			running++
 		}
 	}
-	return fmt.Sprintf("%d of %d guest(s) running", running, len(f.Guests)), nil
+	return fmt.Sprintf("%d of %d guest(s) running", running, len(gs)), nil
 }
 
 // abortFailover undoes a planned failover that failed before replication

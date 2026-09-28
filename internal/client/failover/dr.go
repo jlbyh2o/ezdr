@@ -352,6 +352,21 @@ func (r *Runner) CheckGuest(ctx context.Context, planID string, vmid uint32) (*c
 	if err := r.oursOnDR(planID, typ, vmid); err != nil {
 		return nil, err
 	}
+	return r.check(ctx, typ, conf, vmid)
+}
+
+// CheckPrimaryGuest is CheckGuest for a guest on the primary, after failing
+// back.
+func (r *Runner) CheckPrimaryGuest(ctx context.Context, vmid uint32) (*clientv1.TestGuestCheck, error) {
+	typ, conf, err := r.guest(vmid)
+	if err != nil {
+		return nil, fmt.Errorf("guest %d: %w", vmid, err)
+	}
+	return r.check(ctx, typ, conf, vmid)
+}
+
+func (r *Runner) check(ctx context.Context, typ, conf string, vmid uint32) (*clientv1.TestGuestCheck, error) {
+	var err error
 	c := &clientv1.TestGuestCheck{}
 	if c.Running, err = r.running(ctx, typ, vmid); err != nil {
 		return nil, err

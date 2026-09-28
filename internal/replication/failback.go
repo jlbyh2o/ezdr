@@ -100,7 +100,7 @@ func FailbackPreflight(spec *planv1.PlanSpec, primaryInv, drInv *inventoryv1.Inv
 		}
 		for _, d := range g.Disks {
 			if storagePrefix != "" && strings.HasPrefix(d.Storage, storagePrefix) {
-				warn("guest %d on the DR host isn't in the plan but has a disk on the plan's storage %s: it isn't failed back, and the failback removes that storage",
+				problem("guest %d on the DR host isn't in the plan but has a disk on the plan's storage %s; move or remove that disk first: the failback removes the storage",
 					g.Vmid, d.Storage)
 				break
 			}

@@ -41,6 +41,15 @@ type fakeHost struct {
 	// triggered; failReplicate fails that instead.
 	finalSnapshot string
 	failReplicate bool
+	// sendBytes are the sizes failback sends report, one per send (then
+	// 1 KiB); failSend fails that send (counting from 1) and failCleanup
+	// that many cleanups. written makes preflights report changes since
+	// the newest snapshot (divergence, on a primary).
+	sendBytes   []uint64
+	sends       int
+	failSend    int
+	failCleanup int
+	written     uint64
 	// peer is the other host: a DR host's replication brings the peer's
 	// latest snapshot.
 	peer *fakeHost
@@ -102,10 +111,13 @@ func (f *fakeHost) answer(a *clientv1.Action) bool {
 	switch k := a.Kind.(type) {
 	case *clientv1.Action_ZreplPreflight:
 		name = "preflight"
+		f.mu.Lock()
+		written := f.written
+		f.mu.Unlock()
 		ack.Preflight = &clientv1.ZreplPreflightResult{ZreplVersion: "v0.7.0", ZreplRunning: true}
 		for _, ds := range k.ZreplPreflight.Datasets {
 			ack.Preflight.Datasets = append(ack.Preflight.Datasets, &clientv1.DatasetSnapshots{Dataset: ds, Exists: true,
-				Snapshots: []*clientv1.SnapshotInfo{{Name: "@zrepl_1", Guid: 7, Createtxg: 1}}})
+				WrittenBytes: written, Snapshots: []*clientv1.SnapshotInfo{{Name: "@zrepl_1", Guid: 7, Createtxg: 1}}})
 		}
 	case *clientv1.Action_ZreplRemoveJobs:
 		name = "remove " + strings.Join(k.ZreplRemoveJobs.Jobs, ",")
@@ -164,6 +176,39 @@ func (f *fakeHost) answer(a *clientv1.Action) bool {
 		ack.GuestCheck = &clientv1.TestGuestCheck{Running: true}
 	case *clientv1.Action_FailoverUnlockGuests:
 		name = "unlock " + fmt.Sprint(k.FailoverUnlockGuests.Vmids)
+	case *clientv1.Action_FailbackReceive:
+		var parts []string
+		for _, t := range k.FailbackReceive.Datasets {
+			parts = append(parts, fmt.Sprintf("%s@%s rollback=%v", t.Dataset, t.FromSnapshot, t.Rollback))
+		}
+		name = "receive " + strings.Join(parts, ",")
+	case *clientv1.Action_FailbackSend:
+		name = "send"
+		f.mu.Lock()
+		f.sends++
+		n := uint64(1024)
+		if len(f.sendBytes) > 0 {
+			n, f.sendBytes = f.sendBytes[0], f.sendBytes[1:]
+		}
+		if f.sends == f.failSend {
+			ack.Succeeded, ack.Message = false, "zfs send failed"
+		}
+		f.mu.Unlock()
+		ack.Transfer = &clientv1.FailbackTransfer{}
+		for _, s := range k.FailbackSend.Datasets {
+			ack.Transfer.Datasets = append(ack.Transfer.Datasets, &clientv1.DatasetTransfer{Dataset: s.Dataset, Bytes: n})
+		}
+	case *clientv1.Action_FailbackCleanup:
+		name = "cleanup " + k.FailbackCleanup.Snapshot
+		f.mu.Lock()
+		if f.failCleanup > 0 {
+			f.failCleanup--
+			ack.Succeeded, ack.Message = false, "pvesm failed"
+		}
+		f.mu.Unlock()
+	case *clientv1.Action_FailbackCheckGuest:
+		name = "check primary"
+		ack.GuestCheck = &clientv1.TestGuestCheck{Running: true}
 	case *clientv1.Action_TestPrepare:
 		name = "test prepare " + k.TestPrepare.Snapshot
 		if f.failPrepare {

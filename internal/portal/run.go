@@ -115,6 +115,7 @@ func Run(ctx context.Context, cfg Config, ui fs.FS) error {
 	go d.ResumeTakeovers(ctx)
 	go d.RunTestSupervisor(ctx)
 	go d.ResumeFailovers(ctx)
+	go d.ResumeFailbacks(ctx)
 	go d.RunDNSChecker(ctx)
 
 	select {

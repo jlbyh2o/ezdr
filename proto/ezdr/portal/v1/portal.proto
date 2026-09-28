@@ -286,6 +286,15 @@ service FailoverService {
   // RunFailbackPreflight checks what failing a failed-over plan back would
   // do. See docs/design/failback.md.
   rpc RunFailbackPreflight(RunFailbackPreflightRequest) returns (RunFailbackPreflightResponse);
+  // StartFailback starts failing a failed-over plan back to its primary.
+  rpc StartFailback(StartFailbackRequest) returns (StartFailbackResponse);
+  // GetFailback returns the plan's latest failback, if any.
+  rpc GetFailback(GetFailbackRequest) returns (GetFailbackResponse);
+  // ConfirmFailback records that the operator verified the guests on the
+  // primary, and switches DNS back if asked.
+  rpc ConfirmFailback(ConfirmFailbackRequest) returns (ConfirmFailbackResponse);
+  // RetryFailback runs a failed step of a committed failback again.
+  rpc RetryFailback(RetryFailbackRequest) returns (RetryFailbackResponse);
 }
 
 message GetFailoverOptionsRequest {
@@ -414,6 +423,90 @@ message FailbackDataset {
   // snapshot.
   repeated string discarded_snapshots = 5;
   uint64 diverged_bytes = 6;
+}
+
+message StartFailbackRequest {
+  string plan_id = 1;
+  // The plan's name, typed by the operator to confirm.
+  string confirm_name = 2;
+  // Confirms discarding the primary's diverged data, when the preflight
+  // finds some.
+  bool discard_diverged = 3;
+}
+
+message StartFailbackResponse {
+  Failback failback = 1;
+}
+
+message GetFailbackRequest {
+  string plan_id = 1;
+}
+
+message GetFailbackResponse {
+  Failback failback = 1;
+}
+
+message ConfirmFailbackRequest {
+  string plan_id = 1;
+  bool switch_dns = 2;
+}
+
+message ConfirmFailbackResponse {
+  Failback failback = 1;
+}
+
+message RetryFailbackRequest {
+  string plan_id = 1;
+}
+
+message RetryFailbackResponse {
+  Failback failback = 1;
+}
+
+enum FailbackState {
+  FAILBACK_STATE_UNSPECIFIED = 0;
+  FAILBACK_STATE_RUNNING = 1;
+  // The guests run on the primary; waiting for the operator to verify them.
+  FAILBACK_STATE_AWAITING_CONFIRMATION = 2;
+  FAILBACK_STATE_COMPLETED = 3;
+  // A step before the DR host's cleanup failed; the guests run on the DR
+  // host again and the plan is still failed over.
+  FAILBACK_STATE_ABORTED = 4;
+  // A step from the DR host's cleanup on failed; it can be retried.
+  FAILBACK_STATE_FAILED = 5;
+}
+
+message Failback {
+  string id = 1;
+  string plan_id = 2;
+  FailbackState state = 3;
+  string started_by = 4;
+  google.protobuf.Timestamp started_at = 5;
+  google.protobuf.Timestamp completed_at = 6;
+  // The preflight the failback started from.
+  FailbackPreflight preflight = 7;
+  bool discard_diverged = 8;
+  repeated TakeoverStep steps = 9;
+  repeated FailbackRound rounds = 10;
+  // The newest snapshot each dataset on the primary received (dataset to
+  // snapshot name, without "@").
+  map<string, string> synced = 11;
+  // The snapshot of the round in progress, kept so a repeated round reuses
+  // it.
+  string pending_snapshot = 12;
+  repeated TestRunGuest guests = 13;
+  repeated DnsRecordSwitch dns_records = 14;
+  string error = 15;
+  repeated string notes = 16;
+}
+
+// FailbackRound is one copy of the DR host's changes to the primary.
+message FailbackRound {
+  string snapshot = 1;
+  uint64 bytes = 2;
+  google.protobuf.Timestamp completed_at = 3;
+  // The copy after the guests on the DR host stopped.
+  bool final = 4;
 }
 
 // DnsRecordSwitch is a DNS record a failover switches.
@@ -869,6 +962,8 @@ enum PlanState {
   PLAN_STATE_FAILING_OVER = 4;
   // The guests run on the DR host; replication is stopped.
   PLAN_STATE_FAILED_OVER = 5;
+  // A failback is running.
+  PLAN_STATE_FAILING_BACK = 6;
 }
 
 message Plan {

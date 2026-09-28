@@ -157,6 +157,9 @@ func (s PlanService) planMsg(ctx context.Context, p store.Plan) (*portalv1.Plan,
 	if running, err := s.failoverRunning(ctx, p.ID); err == nil && running {
 		msg.State = portalv1.PlanState_PLAN_STATE_FAILING_OVER
 	}
+	if running, err := s.failbackRunning(ctx, p.ID); err == nil && running {
+		msg.State = portalv1.PlanState_PLAN_STATE_FAILING_BACK
+	}
 	if p.AppliedSpec != nil {
 		if msg.AppliedSpec, err = decodeSpec(p.AppliedSpec); err != nil {
 			return nil, err
@@ -684,6 +687,11 @@ func (s PlanService) refuseIfFailedOver(ctx context.Context, id string) error {
 		return internalError(err)
 	} else if running {
 		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan's failover is running"))
+	}
+	if running, err := s.failbackRunning(ctx, id); err != nil {
+		return internalError(err)
+	} else if running {
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan's failback hasn't finished"))
 	}
 	return nil
 }

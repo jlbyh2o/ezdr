@@ -253,30 +253,33 @@ func (d *Deps) RunDNSChecker(ctx context.Context) {
 	}
 }
 
+// dnsUpdater applies fn to the DNS records of a failover or failback and
+// saves them.
+type dnsUpdater func(fn func(records []*portalv1.DnsRecordSwitch))
+
 // switchRecords sets each pending record of the plan's latest failover to
 // its failover (or production) value and reads it back. It returns a
 // summary.
-func (d *Deps) switchRecords(ctx context.Context, planID string, toFailover bool) string {
+func (d *Deps) switchRecords(ctx context.Context, planID string, toFailover bool, update dnsUpdater) string {
 	p, err := d.dnsProvider(ctx)
 	if err != nil || p == nil {
 		why := "no DNS provider is connected"
 		if err != nil {
 			why = err.Error()
 		}
-		_, _ = d.updateFailover(ctx, planID, func(_ *store.FailoverRow, f *portalv1.Failover) error {
-			for _, r := range f.DnsRecords {
+		update(func(records []*portalv1.DnsRecordSwitch) {
+			for _, r := range records {
 				if r.Status == "pending" || r.Status == "failed" {
 					r.Status, r.Detail = "failed", why
 				}
 			}
-			return nil
 		})
 		return "DNS not switched: " + why
 	}
 	zones, zerr := p.Zones(ctx)
 	switched, failed := 0, 0
-	_, _ = d.updateFailover(ctx, planID, func(_ *store.FailoverRow, f *portalv1.Failover) error {
-		for _, r := range f.DnsRecords {
+	update(func(records []*portalv1.DnsRecordSwitch) {
+		for _, r := range records {
 			if r.Status != "pending" && r.Status != "failed" {
 				continue
 			}
@@ -292,7 +295,6 @@ func (d *Deps) switchRecords(ctx context.Context, planID string, toFailover bool
 			r.Status, r.Detail = "switched", "now "+want
 			switched++
 		}
-		return nil
 	})
 	if _, err := d.checkPlanDNS(ctx, planID); err != nil {
 		slog.Warn("dns check after switch", "plan", planID, "err", err)

@@ -159,6 +159,18 @@ const (
 	// FailoverServiceRunFailbackPreflightProcedure is the fully-qualified name of the FailoverService's
 	// RunFailbackPreflight RPC.
 	FailoverServiceRunFailbackPreflightProcedure = "/ezdr.portal.v1.FailoverService/RunFailbackPreflight"
+	// FailoverServiceStartFailbackProcedure is the fully-qualified name of the FailoverService's
+	// StartFailback RPC.
+	FailoverServiceStartFailbackProcedure = "/ezdr.portal.v1.FailoverService/StartFailback"
+	// FailoverServiceGetFailbackProcedure is the fully-qualified name of the FailoverService's
+	// GetFailback RPC.
+	FailoverServiceGetFailbackProcedure = "/ezdr.portal.v1.FailoverService/GetFailback"
+	// FailoverServiceConfirmFailbackProcedure is the fully-qualified name of the FailoverService's
+	// ConfirmFailback RPC.
+	FailoverServiceConfirmFailbackProcedure = "/ezdr.portal.v1.FailoverService/ConfirmFailback"
+	// FailoverServiceRetryFailbackProcedure is the fully-qualified name of the FailoverService's
+	// RetryFailback RPC.
+	FailoverServiceRetryFailbackProcedure = "/ezdr.portal.v1.FailoverService/RetryFailback"
 	// DnsServiceGetDnsSettingsProcedure is the fully-qualified name of the DnsService's GetDnsSettings
 	// RPC.
 	DnsServiceGetDnsSettingsProcedure = "/ezdr.portal.v1.DnsService/GetDnsSettings"
@@ -1446,6 +1458,15 @@ type FailoverServiceClient interface {
 	// RunFailbackPreflight checks what failing a failed-over plan back would
 	// do. See docs/design/failback.md.
 	RunFailbackPreflight(context.Context, *connect.Request[v1.RunFailbackPreflightRequest]) (*connect.Response[v1.RunFailbackPreflightResponse], error)
+	// StartFailback starts failing a failed-over plan back to its primary.
+	StartFailback(context.Context, *connect.Request[v1.StartFailbackRequest]) (*connect.Response[v1.StartFailbackResponse], error)
+	// GetFailback returns the plan's latest failback, if any.
+	GetFailback(context.Context, *connect.Request[v1.GetFailbackRequest]) (*connect.Response[v1.GetFailbackResponse], error)
+	// ConfirmFailback records that the operator verified the guests on the
+	// primary, and switches DNS back if asked.
+	ConfirmFailback(context.Context, *connect.Request[v1.ConfirmFailbackRequest]) (*connect.Response[v1.ConfirmFailbackResponse], error)
+	// RetryFailback runs a failed step of a committed failback again.
+	RetryFailback(context.Context, *connect.Request[v1.RetryFailbackRequest]) (*connect.Response[v1.RetryFailbackResponse], error)
 }
 
 // NewFailoverServiceClient constructs a client for the ezdr.portal.v1.FailoverService service. By
@@ -1495,6 +1516,30 @@ func NewFailoverServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(failoverServiceMethods.ByName("RunFailbackPreflight")),
 			connect.WithClientOptions(opts...),
 		),
+		startFailback: connect.NewClient[v1.StartFailbackRequest, v1.StartFailbackResponse](
+			httpClient,
+			baseURL+FailoverServiceStartFailbackProcedure,
+			connect.WithSchema(failoverServiceMethods.ByName("StartFailback")),
+			connect.WithClientOptions(opts...),
+		),
+		getFailback: connect.NewClient[v1.GetFailbackRequest, v1.GetFailbackResponse](
+			httpClient,
+			baseURL+FailoverServiceGetFailbackProcedure,
+			connect.WithSchema(failoverServiceMethods.ByName("GetFailback")),
+			connect.WithClientOptions(opts...),
+		),
+		confirmFailback: connect.NewClient[v1.ConfirmFailbackRequest, v1.ConfirmFailbackResponse](
+			httpClient,
+			baseURL+FailoverServiceConfirmFailbackProcedure,
+			connect.WithSchema(failoverServiceMethods.ByName("ConfirmFailback")),
+			connect.WithClientOptions(opts...),
+		),
+		retryFailback: connect.NewClient[v1.RetryFailbackRequest, v1.RetryFailbackResponse](
+			httpClient,
+			baseURL+FailoverServiceRetryFailbackProcedure,
+			connect.WithSchema(failoverServiceMethods.ByName("RetryFailback")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -1506,6 +1551,10 @@ type failoverServiceClient struct {
 	confirmFailover      *connect.Client[v1.ConfirmFailoverRequest, v1.ConfirmFailoverResponse]
 	retryFailover        *connect.Client[v1.RetryFailoverRequest, v1.RetryFailoverResponse]
 	runFailbackPreflight *connect.Client[v1.RunFailbackPreflightRequest, v1.RunFailbackPreflightResponse]
+	startFailback        *connect.Client[v1.StartFailbackRequest, v1.StartFailbackResponse]
+	getFailback          *connect.Client[v1.GetFailbackRequest, v1.GetFailbackResponse]
+	confirmFailback      *connect.Client[v1.ConfirmFailbackRequest, v1.ConfirmFailbackResponse]
+	retryFailback        *connect.Client[v1.RetryFailbackRequest, v1.RetryFailbackResponse]
 }
 
 // GetFailoverOptions calls ezdr.portal.v1.FailoverService.GetFailoverOptions.
@@ -1538,6 +1587,26 @@ func (c *failoverServiceClient) RunFailbackPreflight(ctx context.Context, req *c
 	return c.runFailbackPreflight.CallUnary(ctx, req)
 }
 
+// StartFailback calls ezdr.portal.v1.FailoverService.StartFailback.
+func (c *failoverServiceClient) StartFailback(ctx context.Context, req *connect.Request[v1.StartFailbackRequest]) (*connect.Response[v1.StartFailbackResponse], error) {
+	return c.startFailback.CallUnary(ctx, req)
+}
+
+// GetFailback calls ezdr.portal.v1.FailoverService.GetFailback.
+func (c *failoverServiceClient) GetFailback(ctx context.Context, req *connect.Request[v1.GetFailbackRequest]) (*connect.Response[v1.GetFailbackResponse], error) {
+	return c.getFailback.CallUnary(ctx, req)
+}
+
+// ConfirmFailback calls ezdr.portal.v1.FailoverService.ConfirmFailback.
+func (c *failoverServiceClient) ConfirmFailback(ctx context.Context, req *connect.Request[v1.ConfirmFailbackRequest]) (*connect.Response[v1.ConfirmFailbackResponse], error) {
+	return c.confirmFailback.CallUnary(ctx, req)
+}
+
+// RetryFailback calls ezdr.portal.v1.FailoverService.RetryFailback.
+func (c *failoverServiceClient) RetryFailback(ctx context.Context, req *connect.Request[v1.RetryFailbackRequest]) (*connect.Response[v1.RetryFailbackResponse], error) {
+	return c.retryFailback.CallUnary(ctx, req)
+}
+
 // FailoverServiceHandler is an implementation of the ezdr.portal.v1.FailoverService service.
 type FailoverServiceHandler interface {
 	// GetFailoverOptions returns what a failover of the plan would involve.
@@ -1553,6 +1622,15 @@ type FailoverServiceHandler interface {
 	// RunFailbackPreflight checks what failing a failed-over plan back would
 	// do. See docs/design/failback.md.
 	RunFailbackPreflight(context.Context, *connect.Request[v1.RunFailbackPreflightRequest]) (*connect.Response[v1.RunFailbackPreflightResponse], error)
+	// StartFailback starts failing a failed-over plan back to its primary.
+	StartFailback(context.Context, *connect.Request[v1.StartFailbackRequest]) (*connect.Response[v1.StartFailbackResponse], error)
+	// GetFailback returns the plan's latest failback, if any.
+	GetFailback(context.Context, *connect.Request[v1.GetFailbackRequest]) (*connect.Response[v1.GetFailbackResponse], error)
+	// ConfirmFailback records that the operator verified the guests on the
+	// primary, and switches DNS back if asked.
+	ConfirmFailback(context.Context, *connect.Request[v1.ConfirmFailbackRequest]) (*connect.Response[v1.ConfirmFailbackResponse], error)
+	// RetryFailback runs a failed step of a committed failback again.
+	RetryFailback(context.Context, *connect.Request[v1.RetryFailbackRequest]) (*connect.Response[v1.RetryFailbackResponse], error)
 }
 
 // NewFailoverServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -1598,6 +1676,30 @@ func NewFailoverServiceHandler(svc FailoverServiceHandler, opts ...connect.Handl
 		connect.WithSchema(failoverServiceMethods.ByName("RunFailbackPreflight")),
 		connect.WithHandlerOptions(opts...),
 	)
+	failoverServiceStartFailbackHandler := connect.NewUnaryHandler(
+		FailoverServiceStartFailbackProcedure,
+		svc.StartFailback,
+		connect.WithSchema(failoverServiceMethods.ByName("StartFailback")),
+		connect.WithHandlerOptions(opts...),
+	)
+	failoverServiceGetFailbackHandler := connect.NewUnaryHandler(
+		FailoverServiceGetFailbackProcedure,
+		svc.GetFailback,
+		connect.WithSchema(failoverServiceMethods.ByName("GetFailback")),
+		connect.WithHandlerOptions(opts...),
+	)
+	failoverServiceConfirmFailbackHandler := connect.NewUnaryHandler(
+		FailoverServiceConfirmFailbackProcedure,
+		svc.ConfirmFailback,
+		connect.WithSchema(failoverServiceMethods.ByName("ConfirmFailback")),
+		connect.WithHandlerOptions(opts...),
+	)
+	failoverServiceRetryFailbackHandler := connect.NewUnaryHandler(
+		FailoverServiceRetryFailbackProcedure,
+		svc.RetryFailback,
+		connect.WithSchema(failoverServiceMethods.ByName("RetryFailback")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/ezdr.portal.v1.FailoverService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case FailoverServiceGetFailoverOptionsProcedure:
@@ -1612,6 +1714,14 @@ func NewFailoverServiceHandler(svc FailoverServiceHandler, opts ...connect.Handl
 			failoverServiceRetryFailoverHandler.ServeHTTP(w, r)
 		case FailoverServiceRunFailbackPreflightProcedure:
 			failoverServiceRunFailbackPreflightHandler.ServeHTTP(w, r)
+		case FailoverServiceStartFailbackProcedure:
+			failoverServiceStartFailbackHandler.ServeHTTP(w, r)
+		case FailoverServiceGetFailbackProcedure:
+			failoverServiceGetFailbackHandler.ServeHTTP(w, r)
+		case FailoverServiceConfirmFailbackProcedure:
+			failoverServiceConfirmFailbackHandler.ServeHTTP(w, r)
+		case FailoverServiceRetryFailbackProcedure:
+			failoverServiceRetryFailbackHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1643,6 +1753,22 @@ func (UnimplementedFailoverServiceHandler) RetryFailover(context.Context, *conne
 
 func (UnimplementedFailoverServiceHandler) RunFailbackPreflight(context.Context, *connect.Request[v1.RunFailbackPreflightRequest]) (*connect.Response[v1.RunFailbackPreflightResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.RunFailbackPreflight is not implemented"))
+}
+
+func (UnimplementedFailoverServiceHandler) StartFailback(context.Context, *connect.Request[v1.StartFailbackRequest]) (*connect.Response[v1.StartFailbackResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.StartFailback is not implemented"))
+}
+
+func (UnimplementedFailoverServiceHandler) GetFailback(context.Context, *connect.Request[v1.GetFailbackRequest]) (*connect.Response[v1.GetFailbackResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.GetFailback is not implemented"))
+}
+
+func (UnimplementedFailoverServiceHandler) ConfirmFailback(context.Context, *connect.Request[v1.ConfirmFailbackRequest]) (*connect.Response[v1.ConfirmFailbackResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.ConfirmFailback is not implemented"))
+}
+
+func (UnimplementedFailoverServiceHandler) RetryFailback(context.Context, *connect.Request[v1.RetryFailbackRequest]) (*connect.Response[v1.RetryFailbackResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.RetryFailback is not implemented"))
 }
 
 // DnsServiceClient is a client for the ezdr.portal.v1.DnsService service.

@@ -1,7 +1,9 @@
-import { CheckCircle2, Circle, CircleAlert, Loader2, MinusCircle, TriangleAlert, XCircle } from 'lucide-react'
+import { CheckCircle2, CircleAlert, Loader2, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import { DnsTable } from '@/components/dns-table'
 import { ErrorAlert } from '@/components/error-alert'
+import { StatusIcon } from '@/components/status-icon'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -9,7 +11,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
-  type DnsRecordSwitch,
   type Failover,
   FailoverState,
   type GetFailoverOptionsResponse,
@@ -19,15 +20,6 @@ import {
 import { errorMessage, failoverClient } from '@/lib/api'
 import { formatDateTime, formatRelative } from '@/lib/format'
 
-const icon: Record<string, React.ReactNode> = {
-  pending: <Circle className="size-4 text-muted-foreground" />,
-  running: <Loader2 className="size-4 animate-spin" />,
-  starting: <Loader2 className="size-4 animate-spin" />,
-  done: <CheckCircle2 className="size-4 text-emerald-700" />,
-  switched: <CheckCircle2 className="size-4 text-emerald-700" />,
-  failed: <XCircle className="size-4 text-destructive" />,
-  skipped: <MinusCircle className="size-4 text-muted-foreground" />,
-}
 
 // FailoverDialog starts a failover of the plan, or follows the running one.
 export function FailoverDialog({ plan, onClose }: { plan: Plan; onClose: () => void }) {
@@ -50,7 +42,8 @@ export function FailoverDialog({ plan, onClose }: { plan: Plan; onClose: () => v
           cur.failover &&
           (st === FailoverState.RUNNING || st === FailoverState.AWAITING_CONFIRMATION || st === FailoverState.FAILED ||
             plan.state === PlanState.FAILING_OVER ||
-            plan.state === PlanState.FAILED_OVER)
+            plan.state === PlanState.FAILED_OVER ||
+            plan.state === PlanState.FAILING_BACK)
         ) {
           if (active) setFailover(cur.failover)
         } else {
@@ -238,7 +231,7 @@ function Progress({ failover: f }: { failover: Failover }) {
       <ol className="grid gap-1">
         {f.steps.map((s, i) => (
           <li key={i} className="flex gap-2">
-            <span className="mt-0.5">{icon[s.status] ?? icon.pending}</span>
+            <span className="mt-0.5"><StatusIcon status={s.status} /></span>
             <span>
               {s.name}
               {s.detail && <span className="block text-xs text-muted-foreground break-words">{s.detail}</span>}
@@ -261,7 +254,7 @@ function Progress({ failover: f }: { failover: Failover }) {
               </TableCell>
               <TableCell className="text-xs">
                 <span className="flex items-center gap-1">
-                  {g.status === 'running' ? icon.done : (icon[g.status] ?? icon.pending)} {g.status}
+                  <StatusIcon status={g.status === 'running' ? 'done' : g.status} /> {g.status}
                 </span>
                 {g.detail && <div className="text-destructive">{g.detail}</div>}
               </TableCell>
@@ -281,35 +274,5 @@ function Progress({ failover: f }: { failover: Failover }) {
         </details>
       )}
     </div>
-  )
-}
-
-function DnsTable({ records }: { records: DnsRecordSwitch[] }) {
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>DNS record</TableHead>
-          <TableHead>Production</TableHead>
-          <TableHead>Failover</TableHead>
-          <TableHead>Status</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {records.map((r) => (
-          <TableRow key={`${r.name}/${r.type}`}>
-            <TableCell className="font-mono text-xs">
-              {r.name} {r.type}
-            </TableCell>
-            <TableCell className="font-mono text-xs">{r.productionValue}</TableCell>
-            <TableCell className="font-mono text-xs">{r.failoverValue}</TableCell>
-            <TableCell className="text-xs">
-              {r.status}
-              {r.detail && <div className="text-muted-foreground">{r.detail}</div>}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
   )
 }

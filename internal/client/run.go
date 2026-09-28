@@ -152,7 +152,7 @@ func handleAction(ctx context.Context, api clientv1connect.ClientServiceClient, 
 		go app.testAction(ctx, a)
 	case *clientv1.Action_FailoverStopGuests, *clientv1.Action_FailoverSnapshot, *clientv1.Action_FailoverReplicate,
 		*clientv1.Action_FailoverPrepare, *clientv1.Action_FailoverStartGuest, *clientv1.Action_FailoverCheckGuest,
-		*clientv1.Action_FailoverUnlockGuests:
+		*clientv1.Action_FailoverUnlockGuests, *clientv1.Action_FailbackCleanup, *clientv1.Action_FailbackCheckGuest:
 		go app.failoverAction(ctx, a)
 	case *clientv1.Action_FailbackReceive, *clientv1.Action_FailbackSend:
 		go app.failbackAction(ctx, a)

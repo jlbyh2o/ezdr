@@ -64,6 +64,8 @@ message Action {
     FailoverUnlockGuests failover_unlock_guests = 19;
     FailbackReceive failback_receive = 20;
     FailbackSend failback_send = 21;
+    FailbackCleanup failback_cleanup = 22;
+    FailbackCheckGuest failback_check_guest = 23;
   }
 }
 
@@ -120,6 +122,23 @@ message FailbackSource {
   string to_snapshot = 4;
   // Raw sends, for encrypted datasets.
   bool raw = 5;
+}
+
+// FailbackCleanup (DR host) removes the plan's failed-over guests after
+// failing back: it deletes their configuration files only (their disks are
+// the replicas), removes the plan's storages, rolls each replica back to
+// the snapshot, and makes it read-only again. The guests must be stopped.
+message FailbackCleanup {
+  string plan_id = 1;
+  repeated uint32 vmids = 2;
+  // The last snapshot copied to the primary, without "@".
+  string snapshot = 3;
+}
+
+// FailbackCheckGuest (primary) reports whether a guest runs and its guest
+// agent answers.
+message FailbackCheckGuest {
+  uint32 vmid = 1;
 }
 
 // FailbackTransfer is what a round copied.
