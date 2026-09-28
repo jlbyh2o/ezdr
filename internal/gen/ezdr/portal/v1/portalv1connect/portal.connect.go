@@ -35,6 +35,8 @@ const (
 	PlanServiceName = "ezdr.portal.v1.PlanService"
 	// FailoverServiceName is the fully-qualified name of the FailoverService service.
 	FailoverServiceName = "ezdr.portal.v1.FailoverService"
+	// DnsServiceName is the fully-qualified name of the DnsService service.
+	DnsServiceName = "ezdr.portal.v1.DnsService"
 	// TestFailoverServiceName is the fully-qualified name of the TestFailoverService service.
 	TestFailoverServiceName = "ezdr.portal.v1.TestFailoverService"
 	// AlertServiceName is the fully-qualified name of the AlertService service.
@@ -154,6 +156,20 @@ const (
 	// FailoverServiceRetryFailoverProcedure is the fully-qualified name of the FailoverService's
 	// RetryFailover RPC.
 	FailoverServiceRetryFailoverProcedure = "/ezdr.portal.v1.FailoverService/RetryFailover"
+	// DnsServiceGetDnsSettingsProcedure is the fully-qualified name of the DnsService's GetDnsSettings
+	// RPC.
+	DnsServiceGetDnsSettingsProcedure = "/ezdr.portal.v1.DnsService/GetDnsSettings"
+	// DnsServiceUpdateDnsSettingsProcedure is the fully-qualified name of the DnsService's
+	// UpdateDnsSettings RPC.
+	DnsServiceUpdateDnsSettingsProcedure = "/ezdr.portal.v1.DnsService/UpdateDnsSettings"
+	// DnsServiceTestDnsSettingsProcedure is the fully-qualified name of the DnsService's
+	// TestDnsSettings RPC.
+	DnsServiceTestDnsSettingsProcedure = "/ezdr.portal.v1.DnsService/TestDnsSettings"
+	// DnsServiceGetPlanDnsStatusProcedure is the fully-qualified name of the DnsService's
+	// GetPlanDnsStatus RPC.
+	DnsServiceGetPlanDnsStatusProcedure = "/ezdr.portal.v1.DnsService/GetPlanDnsStatus"
+	// DnsServiceCheckPlanDnsProcedure is the fully-qualified name of the DnsService's CheckPlanDns RPC.
+	DnsServiceCheckPlanDnsProcedure = "/ezdr.portal.v1.DnsService/CheckPlanDns"
 	// TestFailoverServiceGetTestOptionsProcedure is the fully-qualified name of the
 	// TestFailoverService's GetTestOptions RPC.
 	TestFailoverServiceGetTestOptionsProcedure = "/ezdr.portal.v1.TestFailoverService/GetTestOptions"
@@ -1594,6 +1610,186 @@ func (UnimplementedFailoverServiceHandler) ConfirmFailover(context.Context, *con
 
 func (UnimplementedFailoverServiceHandler) RetryFailover(context.Context, *connect.Request[v1.RetryFailoverRequest]) (*connect.Response[v1.RetryFailoverResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.RetryFailover is not implemented"))
+}
+
+// DnsServiceClient is a client for the ezdr.portal.v1.DnsService service.
+type DnsServiceClient interface {
+	GetDnsSettings(context.Context, *connect.Request[v1.GetDnsSettingsRequest]) (*connect.Response[v1.GetDnsSettingsResponse], error)
+	UpdateDnsSettings(context.Context, *connect.Request[v1.UpdateDnsSettingsRequest]) (*connect.Response[v1.UpdateDnsSettingsResponse], error)
+	// TestDnsSettings lists the zones the stored token can see.
+	TestDnsSettings(context.Context, *connect.Request[v1.TestDnsSettingsRequest]) (*connect.Response[v1.TestDnsSettingsResponse], error)
+	// GetPlanDnsStatus returns the plan's records as last checked.
+	GetPlanDnsStatus(context.Context, *connect.Request[v1.GetPlanDnsStatusRequest]) (*connect.Response[v1.GetPlanDnsStatusResponse], error)
+	// CheckPlanDns checks the plan's records now.
+	CheckPlanDns(context.Context, *connect.Request[v1.CheckPlanDnsRequest]) (*connect.Response[v1.CheckPlanDnsResponse], error)
+}
+
+// NewDnsServiceClient constructs a client for the ezdr.portal.v1.DnsService service. By default, it
+// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewDnsServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) DnsServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	dnsServiceMethods := v1.File_ezdr_portal_v1_portal_proto.Services().ByName("DnsService").Methods()
+	return &dnsServiceClient{
+		getDnsSettings: connect.NewClient[v1.GetDnsSettingsRequest, v1.GetDnsSettingsResponse](
+			httpClient,
+			baseURL+DnsServiceGetDnsSettingsProcedure,
+			connect.WithSchema(dnsServiceMethods.ByName("GetDnsSettings")),
+			connect.WithClientOptions(opts...),
+		),
+		updateDnsSettings: connect.NewClient[v1.UpdateDnsSettingsRequest, v1.UpdateDnsSettingsResponse](
+			httpClient,
+			baseURL+DnsServiceUpdateDnsSettingsProcedure,
+			connect.WithSchema(dnsServiceMethods.ByName("UpdateDnsSettings")),
+			connect.WithClientOptions(opts...),
+		),
+		testDnsSettings: connect.NewClient[v1.TestDnsSettingsRequest, v1.TestDnsSettingsResponse](
+			httpClient,
+			baseURL+DnsServiceTestDnsSettingsProcedure,
+			connect.WithSchema(dnsServiceMethods.ByName("TestDnsSettings")),
+			connect.WithClientOptions(opts...),
+		),
+		getPlanDnsStatus: connect.NewClient[v1.GetPlanDnsStatusRequest, v1.GetPlanDnsStatusResponse](
+			httpClient,
+			baseURL+DnsServiceGetPlanDnsStatusProcedure,
+			connect.WithSchema(dnsServiceMethods.ByName("GetPlanDnsStatus")),
+			connect.WithClientOptions(opts...),
+		),
+		checkPlanDns: connect.NewClient[v1.CheckPlanDnsRequest, v1.CheckPlanDnsResponse](
+			httpClient,
+			baseURL+DnsServiceCheckPlanDnsProcedure,
+			connect.WithSchema(dnsServiceMethods.ByName("CheckPlanDns")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// dnsServiceClient implements DnsServiceClient.
+type dnsServiceClient struct {
+	getDnsSettings    *connect.Client[v1.GetDnsSettingsRequest, v1.GetDnsSettingsResponse]
+	updateDnsSettings *connect.Client[v1.UpdateDnsSettingsRequest, v1.UpdateDnsSettingsResponse]
+	testDnsSettings   *connect.Client[v1.TestDnsSettingsRequest, v1.TestDnsSettingsResponse]
+	getPlanDnsStatus  *connect.Client[v1.GetPlanDnsStatusRequest, v1.GetPlanDnsStatusResponse]
+	checkPlanDns      *connect.Client[v1.CheckPlanDnsRequest, v1.CheckPlanDnsResponse]
+}
+
+// GetDnsSettings calls ezdr.portal.v1.DnsService.GetDnsSettings.
+func (c *dnsServiceClient) GetDnsSettings(ctx context.Context, req *connect.Request[v1.GetDnsSettingsRequest]) (*connect.Response[v1.GetDnsSettingsResponse], error) {
+	return c.getDnsSettings.CallUnary(ctx, req)
+}
+
+// UpdateDnsSettings calls ezdr.portal.v1.DnsService.UpdateDnsSettings.
+func (c *dnsServiceClient) UpdateDnsSettings(ctx context.Context, req *connect.Request[v1.UpdateDnsSettingsRequest]) (*connect.Response[v1.UpdateDnsSettingsResponse], error) {
+	return c.updateDnsSettings.CallUnary(ctx, req)
+}
+
+// TestDnsSettings calls ezdr.portal.v1.DnsService.TestDnsSettings.
+func (c *dnsServiceClient) TestDnsSettings(ctx context.Context, req *connect.Request[v1.TestDnsSettingsRequest]) (*connect.Response[v1.TestDnsSettingsResponse], error) {
+	return c.testDnsSettings.CallUnary(ctx, req)
+}
+
+// GetPlanDnsStatus calls ezdr.portal.v1.DnsService.GetPlanDnsStatus.
+func (c *dnsServiceClient) GetPlanDnsStatus(ctx context.Context, req *connect.Request[v1.GetPlanDnsStatusRequest]) (*connect.Response[v1.GetPlanDnsStatusResponse], error) {
+	return c.getPlanDnsStatus.CallUnary(ctx, req)
+}
+
+// CheckPlanDns calls ezdr.portal.v1.DnsService.CheckPlanDns.
+func (c *dnsServiceClient) CheckPlanDns(ctx context.Context, req *connect.Request[v1.CheckPlanDnsRequest]) (*connect.Response[v1.CheckPlanDnsResponse], error) {
+	return c.checkPlanDns.CallUnary(ctx, req)
+}
+
+// DnsServiceHandler is an implementation of the ezdr.portal.v1.DnsService service.
+type DnsServiceHandler interface {
+	GetDnsSettings(context.Context, *connect.Request[v1.GetDnsSettingsRequest]) (*connect.Response[v1.GetDnsSettingsResponse], error)
+	UpdateDnsSettings(context.Context, *connect.Request[v1.UpdateDnsSettingsRequest]) (*connect.Response[v1.UpdateDnsSettingsResponse], error)
+	// TestDnsSettings lists the zones the stored token can see.
+	TestDnsSettings(context.Context, *connect.Request[v1.TestDnsSettingsRequest]) (*connect.Response[v1.TestDnsSettingsResponse], error)
+	// GetPlanDnsStatus returns the plan's records as last checked.
+	GetPlanDnsStatus(context.Context, *connect.Request[v1.GetPlanDnsStatusRequest]) (*connect.Response[v1.GetPlanDnsStatusResponse], error)
+	// CheckPlanDns checks the plan's records now.
+	CheckPlanDns(context.Context, *connect.Request[v1.CheckPlanDnsRequest]) (*connect.Response[v1.CheckPlanDnsResponse], error)
+}
+
+// NewDnsServiceHandler builds an HTTP handler from the service implementation. It returns the path
+// on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewDnsServiceHandler(svc DnsServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	dnsServiceMethods := v1.File_ezdr_portal_v1_portal_proto.Services().ByName("DnsService").Methods()
+	dnsServiceGetDnsSettingsHandler := connect.NewUnaryHandler(
+		DnsServiceGetDnsSettingsProcedure,
+		svc.GetDnsSettings,
+		connect.WithSchema(dnsServiceMethods.ByName("GetDnsSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dnsServiceUpdateDnsSettingsHandler := connect.NewUnaryHandler(
+		DnsServiceUpdateDnsSettingsProcedure,
+		svc.UpdateDnsSettings,
+		connect.WithSchema(dnsServiceMethods.ByName("UpdateDnsSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dnsServiceTestDnsSettingsHandler := connect.NewUnaryHandler(
+		DnsServiceTestDnsSettingsProcedure,
+		svc.TestDnsSettings,
+		connect.WithSchema(dnsServiceMethods.ByName("TestDnsSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dnsServiceGetPlanDnsStatusHandler := connect.NewUnaryHandler(
+		DnsServiceGetPlanDnsStatusProcedure,
+		svc.GetPlanDnsStatus,
+		connect.WithSchema(dnsServiceMethods.ByName("GetPlanDnsStatus")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dnsServiceCheckPlanDnsHandler := connect.NewUnaryHandler(
+		DnsServiceCheckPlanDnsProcedure,
+		svc.CheckPlanDns,
+		connect.WithSchema(dnsServiceMethods.ByName("CheckPlanDns")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/ezdr.portal.v1.DnsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case DnsServiceGetDnsSettingsProcedure:
+			dnsServiceGetDnsSettingsHandler.ServeHTTP(w, r)
+		case DnsServiceUpdateDnsSettingsProcedure:
+			dnsServiceUpdateDnsSettingsHandler.ServeHTTP(w, r)
+		case DnsServiceTestDnsSettingsProcedure:
+			dnsServiceTestDnsSettingsHandler.ServeHTTP(w, r)
+		case DnsServiceGetPlanDnsStatusProcedure:
+			dnsServiceGetPlanDnsStatusHandler.ServeHTTP(w, r)
+		case DnsServiceCheckPlanDnsProcedure:
+			dnsServiceCheckPlanDnsHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedDnsServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedDnsServiceHandler struct{}
+
+func (UnimplementedDnsServiceHandler) GetDnsSettings(context.Context, *connect.Request[v1.GetDnsSettingsRequest]) (*connect.Response[v1.GetDnsSettingsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.DnsService.GetDnsSettings is not implemented"))
+}
+
+func (UnimplementedDnsServiceHandler) UpdateDnsSettings(context.Context, *connect.Request[v1.UpdateDnsSettingsRequest]) (*connect.Response[v1.UpdateDnsSettingsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.DnsService.UpdateDnsSettings is not implemented"))
+}
+
+func (UnimplementedDnsServiceHandler) TestDnsSettings(context.Context, *connect.Request[v1.TestDnsSettingsRequest]) (*connect.Response[v1.TestDnsSettingsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.DnsService.TestDnsSettings is not implemented"))
+}
+
+func (UnimplementedDnsServiceHandler) GetPlanDnsStatus(context.Context, *connect.Request[v1.GetPlanDnsStatusRequest]) (*connect.Response[v1.GetPlanDnsStatusResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.DnsService.GetPlanDnsStatus is not implemented"))
+}
+
+func (UnimplementedDnsServiceHandler) CheckPlanDns(context.Context, *connect.Request[v1.CheckPlanDnsRequest]) (*connect.Response[v1.CheckPlanDnsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.DnsService.CheckPlanDns is not implemented"))
 }
 
 // TestFailoverServiceClient is a client for the ezdr.portal.v1.TestFailoverService service.

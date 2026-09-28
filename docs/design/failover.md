@@ -127,9 +127,12 @@ Unlocking happens during failback.
   hosts. A test button lists the zones it can see.
 - Each record's zone is the longest zone name that the record's name ends
   with. Records are identified by name and type.
-- Validation warns when a protected record's zone isn't visible to the
-  token, or when a DNS-only record's TTL is above 300 seconds (proxied
-  records take effect almost immediately).
+- The plan page's DNS card shows each record as last checked, and warns
+  when a record's zone isn't visible to the token, when the record doesn't
+  exist, or when a DNS-only record's TTL is above 300 seconds (proxied
+  records take effect almost immediately). These come from the regular
+  checks (6.3) rather than validation, so validating a plan never waits on
+  Cloudflare.
 
 ### 6.2 Switching
 

@@ -25,6 +25,12 @@ func (s *Store) PutSecret(ctx context.Context, name string, value []byte) error 
 	return err
 }
 
+// DeleteSecret removes a secret, if it exists.
+func (s *Store) DeleteSecret(ctx context.Context, name string) error {
+	_, err := s.db.ExecContext(ctx, "DELETE FROM secrets WHERE name = ?", name)
+	return err
+}
+
 func isUniqueViolation(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "UNIQUE constraint failed")
 }

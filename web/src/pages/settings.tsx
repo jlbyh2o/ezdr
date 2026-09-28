@@ -14,7 +14,7 @@ import {
   SmtpSettingsSchema,
   WebhookSchema,
 } from '@/gen/ezdr/portal/v1/portal_pb'
-import { alertClient, errorMessage } from '@/lib/api'
+import { alertClient, dnsClient, errorMessage } from '@/lib/api'
 import { PageHeader } from '@/pages/layout'
 import { Field } from '@/pages/setup'
 
@@ -196,6 +196,98 @@ export function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+      <DnsSettingsCard />
     </>
+  )
+}
+
+// DnsSettingsCard connects the portal to Cloudflare for switching DNS
+// records at failover.
+function DnsSettingsCard() {
+  const [set, setSet] = useState<boolean>()
+  const [token, setToken] = useState('')
+  const [zones, setZones] = useState<string[]>()
+  const [error, setError] = useState<string>()
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    void dnsClient.getDnsSettings({}).then(
+      (r) => setSet(r.cloudflareTokenSet),
+      (e) => setError(errorMessage(e)),
+    )
+  }, [])
+
+  async function run(fn: () => Promise<void>) {
+    setBusy(true)
+    setError(undefined)
+    try {
+      await fn()
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>DNS (Cloudflare)</CardTitle>
+        <CardDescription>
+          Failover switches the plans' DNS records to their failover values, and the portal checks every 5 minutes that they match the
+          plans' state. Create an API token with the "Zone: DNS: Edit" permission for the zones your plans use. It's stored encrypted and
+          never sent to hosts.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-3">
+        <ErrorAlert message={error} />
+        <div className="grid items-center gap-2 sm:grid-cols-[1fr_auto_auto]">
+          <Input
+            aria-label="Cloudflare API token"
+            type="password"
+            autoComplete="new-password"
+            placeholder={set ? 'token set (leave empty to keep)' : 'Cloudflare API token'}
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+          />
+          <Button
+            disabled={busy || !token.trim()}
+            onClick={() =>
+              void run(async () => {
+                await dnsClient.updateDnsSettings({ cloudflareToken: token })
+                setToken('')
+                setSet(true)
+                setZones((await dnsClient.testDnsSettings({})).zones)
+              })
+            }
+          >
+            Save
+          </Button>
+          {set && (
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() =>
+                void run(async () => {
+                  await dnsClient.updateDnsSettings({ clear: true })
+                  setSet(false)
+                  setZones(undefined)
+                })
+              }
+            >
+              Remove
+            </Button>
+          )}
+        </div>
+        {set && (
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <Button variant="outline" size="sm" disabled={busy} onClick={() => void run(async () => setZones((await dnsClient.testDnsSettings({})).zones))}>
+              Test
+            </Button>
+            {zones && (zones.length > 0 ? <span>Zones the token can see: {zones.join(', ')}</span> : <span>The token can't see any zones.</span>)}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

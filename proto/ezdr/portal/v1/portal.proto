@@ -383,6 +383,81 @@ message DnsRecordSwitch {
   string detail = 7;
 }
 
+// DnsService connects the portal to a DNS provider (Cloudflare) and reports
+// the state of plans' DNS records. See docs/design/failover.md, section 6.
+service DnsService {
+  rpc GetDnsSettings(GetDnsSettingsRequest) returns (GetDnsSettingsResponse);
+  rpc UpdateDnsSettings(UpdateDnsSettingsRequest) returns (UpdateDnsSettingsResponse);
+  // TestDnsSettings lists the zones the stored token can see.
+  rpc TestDnsSettings(TestDnsSettingsRequest) returns (TestDnsSettingsResponse);
+  // GetPlanDnsStatus returns the plan's records as last checked.
+  rpc GetPlanDnsStatus(GetPlanDnsStatusRequest) returns (GetPlanDnsStatusResponse);
+  // CheckPlanDns checks the plan's records now.
+  rpc CheckPlanDns(CheckPlanDnsRequest) returns (CheckPlanDnsResponse);
+}
+
+message GetDnsSettingsRequest {}
+
+message GetDnsSettingsResponse {
+  bool cloudflare_token_set = 1;
+}
+
+message UpdateDnsSettingsRequest {
+  // A new Cloudflare API token; empty keeps the current one unless clear is
+  // set.
+  string cloudflare_token = 1;
+  bool clear = 2;
+}
+
+message UpdateDnsSettingsResponse {}
+
+message TestDnsSettingsRequest {}
+
+message TestDnsSettingsResponse {
+  repeated string zones = 1;
+}
+
+message GetPlanDnsStatusRequest {
+  string plan_id = 1;
+}
+
+message GetPlanDnsStatusResponse {
+  PlanDnsStatus status = 1;
+}
+
+message CheckPlanDnsRequest {
+  string plan_id = 1;
+}
+
+message CheckPlanDnsResponse {
+  PlanDnsStatus status = 1;
+}
+
+// PlanDnsStatus is a plan's DNS records as last read from the provider.
+message PlanDnsStatus {
+  google.protobuf.Timestamp checked_at = 1;
+  repeated DnsRecordStatus records = 2;
+  // Why the records couldn't be checked at all.
+  string error = 3;
+}
+
+message DnsRecordStatus {
+  uint32 vmid = 1;
+  string name = 2;
+  string type = 3;
+  // The value expected for the plan's state; empty when not checked (for
+  // example, the DNS switch was skipped during failover).
+  string expected = 4;
+  string current = 5;
+  uint32 ttl = 6;
+  bool proxied = 7;
+  string zone = 8;
+  // Problems, such as a mismatch (drift), a missing record, or a long TTL.
+  repeated string problems = 9;
+  // Whether the current value doesn't match the expected one.
+  bool drift = 10;
+}
+
 // TestFailoverService runs test failovers. See docs/design/test-failover.md.
 service TestFailoverService {
   // GetTestOptions asks the DR host which guests can be tested and from

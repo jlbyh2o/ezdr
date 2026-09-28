@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -306,6 +307,34 @@ func (e *AlertEngine) conditions(ctx context.Context, now time.Time) ([]conditio
 	for id := range e.failingSince {
 		if !failing[id] {
 			delete(e.failingSince, id)
+		}
+	}
+
+	// DNS drift, from the latest check of each plan's records.
+	for _, p := range plans {
+		if p.State == store.PlanDraft {
+			continue
+		}
+		b, err := e.Store.DNSCheck(ctx, p.ID)
+		if err != nil {
+			continue
+		}
+		st := &portalv1.PlanDnsStatus{}
+		if proto.Unmarshal(b, st) != nil {
+			continue
+		}
+		var lines []string
+		for _, r := range st.Records {
+			if r.Drift || slices.Contains(r.Problems, "the record doesn't exist in Cloudflare") {
+				lines = append(lines, fmt.Sprintf("%s %s: %s", r.Name, r.Type, strings.Join(r.Problems, "; ")))
+			}
+		}
+		if len(lines) > 0 {
+			out = append(out, condition{plan: p.Name, Alert: store.Alert{
+				Key: "dns:" + p.ID, Severity: "warning", PlanID: p.ID,
+				Title:   "DNS records don't match plan " + p.Name,
+				Message: strings.Join(lines, "\n"),
+			}})
 		}
 	}
 

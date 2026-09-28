@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/jlbyh2o/ezdr/internal/portal/auth"
+	"github.com/jlbyh2o/ezdr/internal/portal/dns"
 	"github.com/jlbyh2o/ezdr/internal/portal/store"
 )
 
@@ -41,6 +42,10 @@ type Deps struct {
 	ClientAPIURL      string
 
 	Setup *SetupCode
+
+	// NewDNSProvider makes the DNS provider from its token; tests replace it.
+	// Nil means Cloudflare.
+	NewDNSProvider func(token string) dns.Provider
 
 	challenges  *auth.Challenges
 	replayGuard *auth.ReplayGuard

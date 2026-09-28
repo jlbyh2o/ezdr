@@ -199,18 +199,9 @@ func (s FailoverService) ConfirmFailover(ctx context.Context, req *connect.Reque
 	return connect.NewResponse(&portalv1.ConfirmFailoverResponse{Failover: f}), nil
 }
 
-// switchDNS switches the plan's records to their failover values. Until
-// Cloudflare is connected (phase 6d), records are left for the operator.
+// switchDNS switches the plan's records to their failover values.
 func (d *Deps) switchDNS(ctx context.Context, planID string) string {
-	_, _ = d.updateFailover(ctx, planID, func(_ *store.FailoverRow, f *portalv1.Failover) error {
-		for _, r := range f.DnsRecords {
-			if r.Status == "pending" {
-				r.Status, r.Detail = "skipped", "no DNS provider is connected"
-			}
-		}
-		return nil
-	})
-	return "DNS not switched: no DNS provider is connected"
+	return d.switchRecords(ctx, planID, true)
 }
 
 // RetryFailover resumes a failover whose step failed after replication
