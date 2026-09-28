@@ -115,3 +115,28 @@ func (a *applier) failoverAction(ctx context.Context, act *clientv1.Action) {
 		slog.Warn("acknowledge action", "action", act.Id, "err", err)
 	}
 }
+
+// failbackAction runs one side of a failback round and acknowledges it.
+func (a *applier) failbackAction(ctx context.Context, act *clientv1.Action) {
+	ctx = context.WithoutCancel(ctx)
+	a.failbackMu.Lock()
+	defer a.failbackMu.Unlock()
+	ack := &clientv1.AckActionRequest{ActionId: act.Id}
+	var err error
+	switch k := act.Kind.(type) {
+	case *clientv1.Action_FailbackReceive:
+		ack.Transfer, err = a.failback.Receive(ctx, k.FailbackReceive)
+	case *clientv1.Action_FailbackSend:
+		ack.Transfer, err = a.failback.Send(ctx, k.FailbackSend)
+	}
+	ack.Succeeded = err == nil
+	if err != nil {
+		ack.Message = err.Error()
+		slog.Error("failback action failed", "action", act.Id, "err", err)
+	} else {
+		slog.Info("failback action completed", "action", act.Id)
+	}
+	if _, err := a.api.AckAction(ctx, connect.NewRequest(ack)); err != nil {
+		slog.Warn("acknowledge action", "action", act.Id, "err", err)
+	}
+}

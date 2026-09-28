@@ -345,4 +345,18 @@ func TestTunnelPlan(t *testing.T) {
 	if sj := pds.Zrepl.SourceJobs[0]; !sj.ListenFreebind || sj.ListenAddress != pHost.SiteAddress.String()+":8888" {
 		t.Errorf("source job = %v", sj)
 	}
+
+	// A failed-over plan keeps its tunnel (failback copies over it), but
+	// not its jobs.
+	sp, _ := d.Store.PlanByID(ctx, created.Msg.Plan.Id)
+	if err := d.Store.SetPlanState(ctx, sp.ID, store.PlanFailedOver, sp.AppliedSpec); err != nil {
+		t.Fatal(err)
+	}
+	pds, err = d.desiredState(ctx, primary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pds.SiteTunnel == nil || len(pds.Zrepl.GetSourceJobs()) != 0 {
+		t.Errorf("failed over: tunnel = %v, zrepl = %v", pds.SiteTunnel, pds.Zrepl)
+	}
 }

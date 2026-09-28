@@ -16,6 +16,7 @@ import (
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
+	"github.com/jlbyh2o/ezdr/internal/client/failback"
 	"github.com/jlbyh2o/ezdr/internal/client/failover"
 	"github.com/jlbyh2o/ezdr/internal/client/guests"
 	"github.com/jlbyh2o/ezdr/internal/client/testfailover"
@@ -51,13 +52,17 @@ type applier struct {
 	// reportVMIDs are the guests whose configurations the portal wants.
 	reportVMIDs []uint32
 	failover    *failover.Runner
+	// failbackMu serializes failback transfers, which can run for hours, so
+	// they never hold up failover actions.
+	failbackMu sync.Mutex
+	failback   *failback.Transfer
 	// guestEvents are lock enforcement events not yet reported.
 	guestEvents []string
 }
 
 func newApplier(api clientv1connect.ClientServiceClient, cert string, siteKey wgtypes.Key) *applier {
 	return &applier{api: api, zrepl: zrepl.NewApplier(), tests: testfailover.NewRunner(), failover: failover.NewRunner(),
-		cert: cert, siteKey: siteKey,
+		failback: failback.NewTransfer(), cert: cert, siteKey: siteKey,
 		wake: make(chan struct{}, 1)}
 }
 

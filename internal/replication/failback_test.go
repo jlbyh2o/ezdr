@@ -122,3 +122,15 @@ func TestFailbackPreflightProblems(t *testing.T) {
 		}
 	}
 }
+
+func TestFailbackAddresses(t *testing.T) {
+	p, hosts := fixture()
+	listen, connect, freebind, err := FailbackAddresses(p, hosts["p1"], hosts["d1"])
+	if err != nil || listen != ":8888" || connect != "192.0.2.12:8888" || freebind {
+		t.Errorf("addresses = %q, %q, %v, %v", listen, connect, freebind, err)
+	}
+	p.Spec.Network = nil
+	if _, _, _, err := FailbackAddresses(p, hosts["p1"], hosts["d1"]); err == nil {
+		t.Error("no error without a network")
+	}
+}

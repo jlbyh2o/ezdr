@@ -62,7 +62,76 @@ message Action {
     FailoverStartGuest failover_start_guest = 17;
     FailoverCheckGuest failover_check_guest = 18;
     FailoverUnlockGuests failover_unlock_guests = 19;
+    FailbackReceive failback_receive = 20;
+    FailbackSend failback_send = 21;
   }
+}
+
+// The Failback* actions copy a failed-over plan's changes from the DR host
+// back to the primary, one round at a time: the portal sends FailbackReceive
+// to the primary and FailbackSend to the DR host together. See
+// docs/design/failback.md, section 2.
+
+// FailbackReceive (primary) listens for the DR host for one round, receives
+// the listed datasets' changes, and stops listening.
+message FailbackReceive {
+  string plan_id = 1;
+  // Address to listen on, as host:port; the host may be empty for all
+  // addresses.
+  string listen_address = 2;
+  // Bind even before the address exists (for tunnel addresses).
+  bool listen_freebind = 3;
+  // The DR host: the only peer accepted.
+  Peer peer = 4;
+  // The only datasets received into.
+  repeated FailbackTarget datasets = 5;
+  // How long to wait for the DR host.
+  uint32 connect_timeout_seconds = 6;
+}
+
+message FailbackTarget {
+  string dataset = 1;
+  // The snapshot the changes start from (without "@"); the DR host must
+  // send from it.
+  string from_snapshot = 2;
+  // Roll the dataset back to from_snapshot first, destroying newer
+  // snapshots and changes since. Set once the operator confirmed discarding
+  // diverged data, and in rounds after the first.
+  bool rollback = 3;
+}
+
+// FailbackSend (DR host) connects to the primary and sends each replica's
+// changes between two snapshots.
+message FailbackSend {
+  string plan_id = 1;
+  // The primary's FailbackReceive address, as host:port.
+  string address = 2;
+  // The primary: the only peer accepted.
+  Peer peer = 3;
+  repeated FailbackSource datasets = 4;
+}
+
+message FailbackSource {
+  string replica = 1;
+  // The dataset on the primary.
+  string dataset = 2;
+  // Snapshot names, without "@".
+  string from_snapshot = 3;
+  string to_snapshot = 4;
+  // Raw sends, for encrypted datasets.
+  bool raw = 5;
+}
+
+// FailbackTransfer is what a round copied.
+message FailbackTransfer {
+  repeated DatasetTransfer datasets = 1;
+}
+
+message DatasetTransfer {
+  // The dataset on the primary.
+  string dataset = 1;
+  // Stream bytes sent or received.
+  uint64 bytes = 2;
 }
 
 // The Failover* actions fail a plan over. See docs/design/failover.md.
@@ -487,6 +556,8 @@ message AckActionRequest {
   repeated string output = 5;
   TestOptionsResult test_options = 6;
   TestGuestCheck guest_check = 7;
+  // Result of a FailbackReceive or FailbackSend action.
+  FailbackTransfer transfer = 8;
 }
 
 message AckActionResponse {}

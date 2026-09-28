@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file ezdr/client/v1/client.proto.
  */
 export const file_ezdr_client_v1_client: GenFile = /*@__PURE__*/
-  fileDesc("ChtlemRyL2NsaWVudC92MS9jbGllbnQucHJvdG8SDmV6ZHIuY2xpZW50LnYxIioKEFN1YnNjcmliZVJlcXVlc3QSFgoOY2xpZW50X3ZlcnNpb24YASABKAkirwEKEVN1YnNjcmliZVJlc3BvbnNlEi4KCWhlYXJ0YmVhdBgBIAEoCzIZLmV6ZHIuY2xpZW50LnYxLkhlYXJ0YmVhdEgAEjUKDWRlc2lyZWRfc3RhdGUYAiABKAsyHC5lemRyLmNsaWVudC52MS5EZXNpcmVkU3RhdGVIABIoCgZhY3Rpb24YAyABKAsyFi5lemRyLmNsaWVudC52MS5BY3Rpb25IAEIJCgdtZXNzYWdlIvcICgZBY3Rpb24SCgoCaWQYASABKAkSPQoRcmVmcmVzaF9pbnZlbnRvcnkYAiABKAsyIC5lemRyLmNsaWVudC52MS5SZWZyZXNoSW52ZW50b3J5SAASOQoPenJlcGxfcHJlZmxpZ2h0GAMgASgLMh4uZXpkci5jbGllbnQudjEuWnJlcGxQcmVmbGlnaHRIABI1Cg16cmVwbF91cGdyYWRlGAQgASgLMhwuZXpkci5jbGllbnQudjEuWnJlcGxVcGdyYWRlSAASPAoRenJlcGxfcmVtb3ZlX2pvYnMYBSABKAsyHy5lemRyLmNsaWVudC52MS5acmVwbFJlbW92ZUpvYnNIABJCChR6cmVwbF9yZXN0b3JlX2NvbmZpZxgGIAEoCzIiLmV6ZHIuY2xpZW50LnYxLlpyZXBsUmVzdG9yZUNvbmZpZ0gAEj4KEnpyZXBsX3JlbGVhc2Vfam9icxgHIAEoCzIgLmV6ZHIuY2xpZW50LnYxLlpyZXBsUmVsZWFzZUpvYnNIABIzCgx0ZXN0X29wdGlvbnMYCCABKAsyGy5lemRyLmNsaWVudC52MS5UZXN0T3B0aW9uc0gAEjMKDHRlc3RfcHJlcGFyZRgJIAEoCzIbLmV6ZHIuY2xpZW50LnYxLlRlc3RQcmVwYXJlSAASOgoQdGVzdF9zdGFydF9ndWVzdBgKIAEoCzIeLmV6ZHIuY2xpZW50LnYxLlRlc3RTdGFydEd1ZXN0SAASOgoQdGVzdF9jaGVja19ndWVzdBgLIAEoCzIeLmV6ZHIuY2xpZW50LnYxLlRlc3RDaGVja0d1ZXN0SAASMwoMdGVzdF9jbGVhbnVwGAwgASgLMhsuZXpkci5jbGllbnQudjEuVGVzdENsZWFudXBIABJCChRmYWlsb3Zlcl9zdG9wX2d1ZXN0cxgNIAEoCzIiLmV6ZHIuY2xpZW50LnYxLkZhaWxvdmVyU3RvcEd1ZXN0c0gAEj0KEWZhaWxvdmVyX3NuYXBzaG90GA4gASgLMiAuZXpkci5jbGllbnQudjEuRmFpbG92ZXJTbmFwc2hvdEgAEj8KEmZhaWxvdmVyX3JlcGxpY2F0ZRgPIAEoCzIhLmV6ZHIuY2xpZW50LnYxLkZhaWxvdmVyUmVwbGljYXRlSAASOwoQZmFpbG92ZXJfcHJlcGFyZRgQIAEoCzIfLmV6ZHIuY2xpZW50LnYxLkZhaWxvdmVyUHJlcGFyZUgAEkIKFGZhaWxvdmVyX3N0YXJ0X2d1ZXN0GBEgASgLMiIuZXpkci5jbGllbnQudjEuRmFpbG92ZXJTdGFydEd1ZXN0SAASQgoUZmFpbG92ZXJfY2hlY2tfZ3Vlc3QYEiABKAsyIi5lemRyLmNsaWVudC52MS5GYWlsb3ZlckNoZWNrR3Vlc3RIABJGChZmYWlsb3Zlcl91bmxvY2tfZ3Vlc3RzGBMgASgLMiQuZXpkci5jbGllbnQudjEuRmFpbG92ZXJVbmxvY2tHdWVzdHNIAEIGCgRraW5kIlYKEkZhaWxvdmVyU3RvcEd1ZXN0cxIPCgdwbGFuX2lkGAEgASgJEg0KBXZtaWRzGAIgAygNEiAKGHNodXRkb3duX3RpbWVvdXRfc2Vjb25kcxgDIAEoDSI2ChBGYWlsb3ZlclNuYXBzaG90EhAKCGRhdGFzZXRzGAEgAygJEhAKCHNuYXBzaG90GAIgASgJIiYKEUZhaWxvdmVyUmVwbGljYXRlEhEKCXB1bGxfam9icxgBIAMoCSIxCg9GYWlsb3ZlclByZXBhcmUSDwoHcGxhbl9pZBgBIAEoCRINCgV2bWlkcxgCIAMoDSIzChJGYWlsb3ZlclN0YXJ0R3Vlc3QSDwoHcGxhbl9pZBgBIAEoCRIMCgR2bWlkGAIgASgNIjQKFEZhaWxvdmVyVW5sb2NrR3Vlc3RzEg0KBXZtaWRzGAEgAygNEg0KBXN0YXJ0GAIgASgIIjMKEkZhaWxvdmVyQ2hlY2tHdWVzdBIPCgdwbGFuX2lkGAEgASgJEgwKBHZtaWQYAiABKA0iOAoLVGVzdE9wdGlvbnMSEAoIcmVwbGljYXMYASADKAkSFwoPc25hcHNob3RfcHJlZml4GAIgASgJImcKEVRlc3RPcHRpb25zUmVzdWx0EjIKCHJlcGxpY2FzGAEgAygLMiAuZXpkci5jbGllbnQudjEuUmVwbGljYVNuYXBzaG90cxIeChZtZW1vcnlfYXZhaWxhYmxlX2J5dGVzGAIgASgEImQKEFJlcGxpY2FTbmFwc2hvdHMSDwoHcmVwbGljYRgBIAEoCRIOCgZleGlzdHMYAiABKAgSLwoJc25hcHNob3RzGAMgAygLMhwuZXpkci5jbGllbnQudjEuVGVzdFNuYXBzaG90IkwKDFRlc3RTbmFwc2hvdBIMCgRuYW1lGAEgASgJEi4KCmNyZWF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wImMKCVRlc3RHdWVzdBIMCgR2bWlkGAEgASgNEhEKCXRlc3Rfdm1pZBgCIAEoDRIMCgR0eXBlGAMgASgJEicKBWRpc2tzGAQgAygLMhguZXpkci5jbGllbnQudjEuVGVzdERpc2siOgoIVGVzdERpc2sSDgoGdm9sdW1lGAEgASgJEg8KB3JlcGxpY2EYAiABKAkSDQoFY2xvbmUYAyABKAkijwEKC1Rlc3RQcmVwYXJlEg8KB3BsYW5faWQYASABKAkSEQoJcGxhbl9uYW1lGAIgASgJEg8KB3Rlc3RfaWQYAyABKAkSEAoIc25hcHNob3QYBCABKAkSDgoGYnJpZGdlGAUgASgJEikKBmd1ZXN0cxgGIAMoCzIZLmV6ZHIuY2xpZW50LnYxLlRlc3RHdWVzdCJCCg5UZXN0U3RhcnRHdWVzdBIPCgd0ZXN0X2lkGAEgASgJEhEKCXRlc3Rfdm1pZBgCIAEoDRIMCgR0eXBlGAMgASgJIkIKDlRlc3RDaGVja0d1ZXN0Eg8KB3Rlc3RfaWQYASABKAkSEQoJdGVzdF92bWlkGAIgASgNEgwKBHR5cGUYAyABKAkiSgoOVGVzdEd1ZXN0Q2hlY2sSDwoHcnVubmluZxgBIAEoCBIVCg1hZ2VudF9lbmFibGVkGAIgASgIEhAKCGFnZW50X29rGAMgASgIIkkKC1Rlc3RDbGVhbnVwEg8KB3Rlc3RfaWQYASABKAkSKQoGZ3Vlc3RzGAIgAygLMhkuZXpkci5jbGllbnQudjEuVGVzdEd1ZXN0IjcKDlpyZXBsUHJlZmxpZ2h0EhAKCGRhdGFzZXRzGAEgAygJEhMKC3JlbGVhc2Vfam9iGAIgASgJIpEBChRacmVwbFByZWZsaWdodFJlc3VsdBIVCg16cmVwbF92ZXJzaW9uGAEgASgJEhUKDXpyZXBsX3J1bm5pbmcYAiABKAgSMgoIZGF0YXNldHMYAyADKAsyIC5lemRyLmNsaWVudC52MS5EYXRhc2V0U25hcHNob3RzEhcKD3JlbGVhc2VfcHJldmlldxgEIAMoCSKVAQoQRGF0YXNldFNuYXBzaG90cxIPCgdkYXRhc2V0GAEgASgJEg4KBmV4aXN0cxgCIAEoCBIYChByZWZlcmVuY2VkX2J5dGVzGAMgASgEEi8KCXNuYXBzaG90cxgEIAMoCzIcLmV6ZHIuY2xpZW50LnYxLlNuYXBzaG90SW5mbxIVCg13cml0dGVuX2J5dGVzGAUgASgEIlQKDFNuYXBzaG90SW5mbxIMCgRuYW1lGAEgASgJEgwKBGd1aWQYAiABKAQSEQoJY3JlYXRldHhnGAMgASgEEhUKDXdyaXR0ZW5fYnl0ZXMYBCABKAQiDgoMWnJlcGxVcGdyYWRlIi8KD1pyZXBsUmVtb3ZlSm9icxIMCgRqb2JzGAEgAygJEg4KBmJhY2t1cBgCIAEoCSIkChJacmVwbFJlc3RvcmVDb25maWcSDgoGYmFja3VwGAEgASgJIiAKEFpyZXBsUmVsZWFzZUpvYnMSDAoEam9icxgBIAMoCSISChBSZWZyZXNoSW52ZW50b3J5IgsKCUhlYXJ0YmVhdCLaAgoMRGVzaXJlZFN0YXRlEhIKCmdlbmVyYXRpb24YASABKAQSJAoFenJlcGwYAiABKAsyFS5lemRyLmNsaWVudC52MS5acmVwbBIvCgtzaXRlX3R1bm5lbBgDIAEoCzIaLmV6ZHIuY2xpZW50LnYxLlNpdGVUdW5uZWwSHAoUcmVwb3J0X2d1ZXN0X2NvbmZpZ3MYBCADKA0SPAoScGxhbl9ndWVzdF9jb25maWdzGAUgAygLMiAuZXpkci5jbGllbnQudjEuUGxhbkd1ZXN0Q29uZmlncxIzCg1wbGFuX3JlY292ZXJ5GAYgAygLMhwuZXpkci5jbGllbnQudjEuUGxhblJlY292ZXJ5EjMKDWxvY2tlZF9ndWVzdHMYByADKAsyHC5lemRyLmNsaWVudC52MS5Mb2NrZWRHdWVzdHMSGQoRZmFpbGVkX292ZXJfcGxhbnMYCCADKAkisAIKDFBsYW5SZWNvdmVyeRIPCgdwbGFuX2lkGAEgASgJEhEKCXBsYW5fbmFtZRgCIAEoCRIYChBwcmltYXJ5X2hvc3RuYW1lGAMgASgJEhcKD3NuYXBzaG90X3ByZWZpeBgEIAEoCRIxCghzdG9yYWdlcxgFIAMoCzIfLmV6ZHIuY2xpZW50LnYxLlJlY292ZXJ5U3RvcmFnZRIvCgdicmlkZ2VzGAYgAygLMh4uZXpkci5jbGllbnQudjEuUmVjb3ZlcnlCcmlkZ2USLQoGZ3Vlc3RzGAcgAygLMh0uZXpkci5jbGllbnQudjEuUmVjb3ZlcnlHdWVzdBI2CgtkbnNfcmVjb3JkcxgIIAMoCzIhLmV6ZHIuY2xpZW50LnYxLlJlY292ZXJ5RG5zUmVjb3JkIm4KD1JlY292ZXJ5U3RvcmFnZRIWCg5zb3VyY2Vfc3RvcmFnZRgBIAEoCRIWCg5zb3VyY2VfZGF0YXNldBgCIAEoCRIXCg9yZWNlaXZlX2RhdGFzZXQYAyABKAkSEgoKc3RvcmFnZV9pZBgEIAEoCSI+Cg5SZWNvdmVyeUJyaWRnZRIVCg1zb3VyY2VfYnJpZGdlGAEgASgJEhUKDXRhcmdldF9icmlkZ2UYAiABKAkiUwoNUmVjb3ZlcnlHdWVzdBIMCgR2bWlkGAEgASgNEhUKDXN0YXJ0dXBfb3JkZXIYAiABKAUSHQoVc3RhcnR1cF9kZWxheV9zZWNvbmRzGAMgASgNIlUKEVJlY292ZXJ5RG5zUmVjb3JkEgwKBHZtaWQYASABKA0SDAoEbmFtZRgCIAEoCRIMCgR0eXBlGAMgASgJEhYKDmZhaWxvdmVyX3ZhbHVlGAQgASgJIlAKDExvY2tlZEd1ZXN0cxIPCgdwbGFuX2lkGAEgASgJEg0KBXZtaWRzGAIgAygNEiAKGHNodXRkb3duX3RpbWVvdXRfc2Vjb25kcxgDIAEoDSJ9ChBQbGFuR3Vlc3RDb25maWdzEg8KB3BsYW5faWQYASABKAkSEQoJcGxhbl9uYW1lGAIgASgJEhgKEHByaW1hcnlfaG9zdG5hbWUYAyABKAkSKwoGZ3Vlc3RzGAQgAygLMhsuZXpkci5jbGllbnQudjEuR3Vlc3RDb25maWciaQoLR3Vlc3RDb25maWcSDAoEdm1pZBgBIAEoDRIMCgR0eXBlGAIgASgJEg4KBmNvbmZpZxgDIAEoCRIuCgpjaGFuZ2VkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJrCgpTaXRlVHVubmVsEg8KB2FkZHJlc3MYASABKAkSDgoGcHJlZml4GAIgASgJEhMKC2xpc3Rlbl9wb3J0GAMgASgNEicKBXBlZXJzGAQgAygLMhguZXpkci5jbGllbnQudjEuU2l0ZVBlZXIiZwoIU2l0ZVBlZXISEgoKcHVibGljX2tleRgBIAEoDBIPCgdhZGRyZXNzGAIgASgJEhAKCGVuZHBvaW50GAMgASgJEiQKHHBlcnNpc3RlbnRfa2VlcGFsaXZlX3NlY29uZHMYBCABKA0iYwoFWnJlcGwSLgoLc291cmNlX2pvYnMYASADKAsyGS5lemRyLmNsaWVudC52MS5Tb3VyY2VKb2ISKgoJcHVsbF9qb2JzGAIgAygLMhcuZXpkci5jbGllbnQudjEuUHVsbEpvYiItCgRQZWVyEgwKBG5hbWUYASABKAkSFwoPY2VydGlmaWNhdGVfcGVtGAIgASgJIsYBCglTb3VyY2VKb2ISDAoEbmFtZRgBIAEoCRIQCghkYXRhc2V0cxgCIAMoCRIXCg9zbmFwc2hvdF9wcmVmaXgYAyABKAkSGAoQaW50ZXJ2YWxfc2Vjb25kcxgEIAEoDRIWCg5saXN0ZW5fYWRkcmVzcxgFIAEoCRIiCgRwZWVyGAYgASgLMhQuZXpkci5jbGllbnQudjEuUGVlchIRCgllbmNyeXB0ZWQYByABKAgSFwoPbGlzdGVuX2ZyZWViaW5kGAggASgIIocCCgdQdWxsSm9iEgwKBG5hbWUYASABKAkSDwoHYWRkcmVzcxgCIAEoCRIiCgRwZWVyGAMgASgLMhQuZXpkci5jbGllbnQudjEuUGVlchIXCg9yZWNlaXZlX2RhdGFzZXQYBCABKAkSGAoQaW50ZXJ2YWxfc2Vjb25kcxgFIAEoDRIXCg9zbmFwc2hvdF9wcmVmaXgYBiABKAkSOAoRcHJpbWFyeV9yZXRlbnRpb24YByADKAsyHS5lemRyLmNsaWVudC52MS5SZXRlbnRpb25UaWVyEjMKDGRyX3JldGVudGlvbhgIIAMoCzIdLmV6ZHIuY2xpZW50LnYxLlJldGVudGlvblRpZXIiSAoNUmV0ZW50aW9uVGllchINCgVjb3VudBgBIAEoDRIWCg5wZXJpb2Rfc2Vjb25kcxgCIAEoDRIQCghrZWVwX2FsbBgDIAEoCCL4AQoTUmVwb3J0U3RhdHVzUmVxdWVzdBIWCg5jbGllbnRfdmVyc2lvbhgBIAEoCRIaChJhcHBsaWVkX2dlbmVyYXRpb24YAiABKAQSEwoLYXBwbHlfZXJyb3IYAyABKAkSGQoRenJlcGxfY2VydGlmaWNhdGUYBCABKAkSFQoNenJlcGxfdmVyc2lvbhgFIAEoCRIXCg9zaXRlX3B1YmxpY19rZXkYBiABKAwSFAoMZ3Vlc3RfZXZlbnRzGAcgAygJEjcKC2JyZWFrX2dsYXNzGAggAygLMiIuZXpkci5jbGllbnQudjEuQnJlYWtHbGFzc0ZhaWxvdmVyImwKEkJyZWFrR2xhc3NGYWlsb3ZlchIPCgdwbGFuX2lkGAEgASgJEgwKBHVzZXIYAiABKAkSJgoCYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg8KB3N0YXJ0ZWQYBCADKA0iFgoUUmVwb3J0U3RhdHVzUmVzcG9uc2UiSQoWUmVwb3J0SW52ZW50b3J5UmVxdWVzdBIvCglpbnZlbnRvcnkYASABKAsyHC5lemRyLmludmVudG9yeS52MS5JbnZlbnRvcnkiGQoXUmVwb3J0SW52ZW50b3J5UmVzcG9uc2UigAIKEEFja0FjdGlvblJlcXVlc3QSEQoJYWN0aW9uX2lkGAEgASgJEhEKCXN1Y2NlZWRlZBgCIAEoCBIPCgdtZXNzYWdlGAMgASgJEjcKCXByZWZsaWdodBgEIAEoCzIkLmV6ZHIuY2xpZW50LnYxLlpyZXBsUHJlZmxpZ2h0UmVzdWx0Eg4KBm91dHB1dBgFIAMoCRI3Cgx0ZXN0X29wdGlvbnMYBiABKAsyIS5lemRyLmNsaWVudC52MS5UZXN0T3B0aW9uc1Jlc3VsdBIzCgtndWVzdF9jaGVjaxgHIAEoCzIeLmV6ZHIuY2xpZW50LnYxLlRlc3RHdWVzdENoZWNrIhMKEUFja0FjdGlvblJlc3BvbnNlIoQBChhSZXBvcnRSZXBsaWNhdGlvblJlcXVlc3QSMAoMY29sbGVjdGVkX2F0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBInCgRqb2JzGAIgAygLMhkuZXpkci5jbGllbnQudjEuSm9iU3RhdHVzEg0KBWVycm9yGAMgASgJIhsKGVJlcG9ydFJlcGxpY2F0aW9uUmVzcG9uc2UiSAoZUmVwb3J0R3Vlc3RDb25maWdzUmVxdWVzdBIrCgZndWVzdHMYASADKAsyGy5lemRyLmNsaWVudC52MS5HdWVzdENvbmZpZyIcChpSZXBvcnRHdWVzdENvbmZpZ3NSZXNwb25zZSLoAQoJSm9iU3RhdHVzEgwKBG5hbWUYASABKAkSDAoEdHlwZRgCIAEoCRINCgVzdGF0ZRgDIAEoCRI2ChJhdHRlbXB0X3N0YXJ0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjcKE2F0dGVtcHRfZmluaXNoZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg4KBmVycm9ycxgGIAMoCRIvCghkYXRhc2V0cxgHIAMoCzIdLmV6ZHIuY2xpZW50LnYxLkRhdGFzZXRTdGF0dXMi1AEKDURhdGFzZXRTdGF0dXMSDwoHZGF0YXNldBgBIAEoCRIXCg9sYXRlc3Rfc25hcHNob3QYAiABKAkSNgoSbGF0ZXN0X3NuYXBzaG90X2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBINCgVzdGF0ZRgEIAEoCRINCgVlcnJvchgFIAEoCRIWCg5ieXRlc19leHBlY3RlZBgGIAEoBBIYChBieXRlc19yZXBsaWNhdGVkGAcgASgEEhEKCWZ1bGxfc2VuZBgIIAEoCDLLBAoNQ2xpZW50U2VydmljZRJSCglTdWJzY3JpYmUSIC5lemRyLmNsaWVudC52MS5TdWJzY3JpYmVSZXF1ZXN0GiEuZXpkci5jbGllbnQudjEuU3Vic2NyaWJlUmVzcG9uc2UwARJZCgxSZXBvcnRTdGF0dXMSIy5lemRyLmNsaWVudC52MS5SZXBvcnRTdGF0dXNSZXF1ZXN0GiQuZXpkci5jbGllbnQudjEuUmVwb3J0U3RhdHVzUmVzcG9uc2USYgoPUmVwb3J0SW52ZW50b3J5EiYuZXpkci5jbGllbnQudjEuUmVwb3J0SW52ZW50b3J5UmVxdWVzdBonLmV6ZHIuY2xpZW50LnYxLlJlcG9ydEludmVudG9yeVJlc3BvbnNlElAKCUFja0FjdGlvbhIgLmV6ZHIuY2xpZW50LnYxLkFja0FjdGlvblJlcXVlc3QaIS5lemRyLmNsaWVudC52MS5BY2tBY3Rpb25SZXNwb25zZRJoChFSZXBvcnRSZXBsaWNhdGlvbhIoLmV6ZHIuY2xpZW50LnYxLlJlcG9ydFJlcGxpY2F0aW9uUmVxdWVzdBopLmV6ZHIuY2xpZW50LnYxLlJlcG9ydFJlcGxpY2F0aW9uUmVzcG9uc2USawoSUmVwb3J0R3Vlc3RDb25maWdzEikuZXpkci5jbGllbnQudjEuUmVwb3J0R3Vlc3RDb25maWdzUmVxdWVzdBoqLmV6ZHIuY2xpZW50LnYxLlJlcG9ydEd1ZXN0Q29uZmlnc1Jlc3BvbnNlQrkBChJjb20uZXpkci5jbGllbnQudjFCC0NsaWVudFByb3RvUAFaPGdpdGh1Yi5jb20vamxieWgyby9lemRyL2ludGVybmFsL2dlbi9lemRyL2NsaWVudC92MTtjbGllbnR2MaICA0VDWKoCDkV6ZHIuQ2xpZW50LlYxygIORXpkclxDbGllbnRcVjHiAhpFemRyXENsaWVudFxWMVxHUEJNZXRhZGF0YeoCEEV6ZHI6OkNsaWVudDo6VjFiBnByb3RvMw", [file_ezdr_inventory_v1_inventory, file_google_protobuf_timestamp]);
+  fileDesc("ChtlemRyL2NsaWVudC92MS9jbGllbnQucHJvdG8SDmV6ZHIuY2xpZW50LnYxIioKEFN1YnNjcmliZVJlcXVlc3QSFgoOY2xpZW50X3ZlcnNpb24YASABKAkirwEKEVN1YnNjcmliZVJlc3BvbnNlEi4KCWhlYXJ0YmVhdBgBIAEoCzIZLmV6ZHIuY2xpZW50LnYxLkhlYXJ0YmVhdEgAEjUKDWRlc2lyZWRfc3RhdGUYAiABKAsyHC5lemRyLmNsaWVudC52MS5EZXNpcmVkU3RhdGVIABIoCgZhY3Rpb24YAyABKAsyFi5lemRyLmNsaWVudC52MS5BY3Rpb25IAEIJCgdtZXNzYWdlIusJCgZBY3Rpb24SCgoCaWQYASABKAkSPQoRcmVmcmVzaF9pbnZlbnRvcnkYAiABKAsyIC5lemRyLmNsaWVudC52MS5SZWZyZXNoSW52ZW50b3J5SAASOQoPenJlcGxfcHJlZmxpZ2h0GAMgASgLMh4uZXpkci5jbGllbnQudjEuWnJlcGxQcmVmbGlnaHRIABI1Cg16cmVwbF91cGdyYWRlGAQgASgLMhwuZXpkci5jbGllbnQudjEuWnJlcGxVcGdyYWRlSAASPAoRenJlcGxfcmVtb3ZlX2pvYnMYBSABKAsyHy5lemRyLmNsaWVudC52MS5acmVwbFJlbW92ZUpvYnNIABJCChR6cmVwbF9yZXN0b3JlX2NvbmZpZxgGIAEoCzIiLmV6ZHIuY2xpZW50LnYxLlpyZXBsUmVzdG9yZUNvbmZpZ0gAEj4KEnpyZXBsX3JlbGVhc2Vfam9icxgHIAEoCzIgLmV6ZHIuY2xpZW50LnYxLlpyZXBsUmVsZWFzZUpvYnNIABIzCgx0ZXN0X29wdGlvbnMYCCABKAsyGy5lemRyLmNsaWVudC52MS5UZXN0T3B0aW9uc0gAEjMKDHRlc3RfcHJlcGFyZRgJIAEoCzIbLmV6ZHIuY2xpZW50LnYxLlRlc3RQcmVwYXJlSAASOgoQdGVzdF9zdGFydF9ndWVzdBgKIAEoCzIeLmV6ZHIuY2xpZW50LnYxLlRlc3RTdGFydEd1ZXN0SAASOgoQdGVzdF9jaGVja19ndWVzdBgLIAEoCzIeLmV6ZHIuY2xpZW50LnYxLlRlc3RDaGVja0d1ZXN0SAASMwoMdGVzdF9jbGVhbnVwGAwgASgLMhsuZXpkci5jbGllbnQudjEuVGVzdENsZWFudXBIABJCChRmYWlsb3Zlcl9zdG9wX2d1ZXN0cxgNIAEoCzIiLmV6ZHIuY2xpZW50LnYxLkZhaWxvdmVyU3RvcEd1ZXN0c0gAEj0KEWZhaWxvdmVyX3NuYXBzaG90GA4gASgLMiAuZXpkci5jbGllbnQudjEuRmFpbG92ZXJTbmFwc2hvdEgAEj8KEmZhaWxvdmVyX3JlcGxpY2F0ZRgPIAEoCzIhLmV6ZHIuY2xpZW50LnYxLkZhaWxvdmVyUmVwbGljYXRlSAASOwoQZmFpbG92ZXJfcHJlcGFyZRgQIAEoCzIfLmV6ZHIuY2xpZW50LnYxLkZhaWxvdmVyUHJlcGFyZUgAEkIKFGZhaWxvdmVyX3N0YXJ0X2d1ZXN0GBEgASgLMiIuZXpkci5jbGllbnQudjEuRmFpbG92ZXJTdGFydEd1ZXN0SAASQgoUZmFpbG92ZXJfY2hlY2tfZ3Vlc3QYEiABKAsyIi5lemRyLmNsaWVudC52MS5GYWlsb3ZlckNoZWNrR3Vlc3RIABJGChZmYWlsb3Zlcl91bmxvY2tfZ3Vlc3RzGBMgASgLMiQuZXpkci5jbGllbnQudjEuRmFpbG92ZXJVbmxvY2tHdWVzdHNIABI7ChBmYWlsYmFja19yZWNlaXZlGBQgASgLMh8uZXpkci5jbGllbnQudjEuRmFpbGJhY2tSZWNlaXZlSAASNQoNZmFpbGJhY2tfc2VuZBgVIAEoCzIcLmV6ZHIuY2xpZW50LnYxLkZhaWxiYWNrU2VuZEgAQgYKBGtpbmQiygEKD0ZhaWxiYWNrUmVjZWl2ZRIPCgdwbGFuX2lkGAEgASgJEhYKDmxpc3Rlbl9hZGRyZXNzGAIgASgJEhcKD2xpc3Rlbl9mcmVlYmluZBgDIAEoCBIiCgRwZWVyGAQgASgLMhQuZXpkci5jbGllbnQudjEuUGVlchIwCghkYXRhc2V0cxgFIAMoCzIeLmV6ZHIuY2xpZW50LnYxLkZhaWxiYWNrVGFyZ2V0Eh8KF2Nvbm5lY3RfdGltZW91dF9zZWNvbmRzGAYgASgNIkoKDkZhaWxiYWNrVGFyZ2V0Eg8KB2RhdGFzZXQYASABKAkSFQoNZnJvbV9zbmFwc2hvdBgCIAEoCRIQCghyb2xsYmFjaxgDIAEoCCKGAQoMRmFpbGJhY2tTZW5kEg8KB3BsYW5faWQYASABKAkSDwoHYWRkcmVzcxgCIAEoCRIiCgRwZWVyGAMgASgLMhQuZXpkci5jbGllbnQudjEuUGVlchIwCghkYXRhc2V0cxgEIAMoCzIeLmV6ZHIuY2xpZW50LnYxLkZhaWxiYWNrU291cmNlImsKDkZhaWxiYWNrU291cmNlEg8KB3JlcGxpY2EYASABKAkSDwoHZGF0YXNldBgCIAEoCRIVCg1mcm9tX3NuYXBzaG90GAMgASgJEhMKC3RvX3NuYXBzaG90GAQgASgJEgsKA3JhdxgFIAEoCCJFChBGYWlsYmFja1RyYW5zZmVyEjEKCGRhdGFzZXRzGAEgAygLMh8uZXpkci5jbGllbnQudjEuRGF0YXNldFRyYW5zZmVyIjEKD0RhdGFzZXRUcmFuc2ZlchIPCgdkYXRhc2V0GAEgASgJEg0KBWJ5dGVzGAIgASgEIlYKEkZhaWxvdmVyU3RvcEd1ZXN0cxIPCgdwbGFuX2lkGAEgASgJEg0KBXZtaWRzGAIgAygNEiAKGHNodXRkb3duX3RpbWVvdXRfc2Vjb25kcxgDIAEoDSI2ChBGYWlsb3ZlclNuYXBzaG90EhAKCGRhdGFzZXRzGAEgAygJEhAKCHNuYXBzaG90GAIgASgJIiYKEUZhaWxvdmVyUmVwbGljYXRlEhEKCXB1bGxfam9icxgBIAMoCSIxCg9GYWlsb3ZlclByZXBhcmUSDwoHcGxhbl9pZBgBIAEoCRINCgV2bWlkcxgCIAMoDSIzChJGYWlsb3ZlclN0YXJ0R3Vlc3QSDwoHcGxhbl9pZBgBIAEoCRIMCgR2bWlkGAIgASgNIjQKFEZhaWxvdmVyVW5sb2NrR3Vlc3RzEg0KBXZtaWRzGAEgAygNEg0KBXN0YXJ0GAIgASgIIjMKEkZhaWxvdmVyQ2hlY2tHdWVzdBIPCgdwbGFuX2lkGAEgASgJEgwKBHZtaWQYAiABKA0iOAoLVGVzdE9wdGlvbnMSEAoIcmVwbGljYXMYASADKAkSFwoPc25hcHNob3RfcHJlZml4GAIgASgJImcKEVRlc3RPcHRpb25zUmVzdWx0EjIKCHJlcGxpY2FzGAEgAygLMiAuZXpkci5jbGllbnQudjEuUmVwbGljYVNuYXBzaG90cxIeChZtZW1vcnlfYXZhaWxhYmxlX2J5dGVzGAIgASgEImQKEFJlcGxpY2FTbmFwc2hvdHMSDwoHcmVwbGljYRgBIAEoCRIOCgZleGlzdHMYAiABKAgSLwoJc25hcHNob3RzGAMgAygLMhwuZXpkci5jbGllbnQudjEuVGVzdFNuYXBzaG90IkwKDFRlc3RTbmFwc2hvdBIMCgRuYW1lGAEgASgJEi4KCmNyZWF0ZWRfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wImMKCVRlc3RHdWVzdBIMCgR2bWlkGAEgASgNEhEKCXRlc3Rfdm1pZBgCIAEoDRIMCgR0eXBlGAMgASgJEicKBWRpc2tzGAQgAygLMhguZXpkci5jbGllbnQudjEuVGVzdERpc2siOgoIVGVzdERpc2sSDgoGdm9sdW1lGAEgASgJEg8KB3JlcGxpY2EYAiABKAkSDQoFY2xvbmUYAyABKAkijwEKC1Rlc3RQcmVwYXJlEg8KB3BsYW5faWQYASABKAkSEQoJcGxhbl9uYW1lGAIgASgJEg8KB3Rlc3RfaWQYAyABKAkSEAoIc25hcHNob3QYBCABKAkSDgoGYnJpZGdlGAUgASgJEikKBmd1ZXN0cxgGIAMoCzIZLmV6ZHIuY2xpZW50LnYxLlRlc3RHdWVzdCJCCg5UZXN0U3RhcnRHdWVzdBIPCgd0ZXN0X2lkGAEgASgJEhEKCXRlc3Rfdm1pZBgCIAEoDRIMCgR0eXBlGAMgASgJIkIKDlRlc3RDaGVja0d1ZXN0Eg8KB3Rlc3RfaWQYASABKAkSEQoJdGVzdF92bWlkGAIgASgNEgwKBHR5cGUYAyABKAkiSgoOVGVzdEd1ZXN0Q2hlY2sSDwoHcnVubmluZxgBIAEoCBIVCg1hZ2VudF9lbmFibGVkGAIgASgIEhAKCGFnZW50X29rGAMgASgIIkkKC1Rlc3RDbGVhbnVwEg8KB3Rlc3RfaWQYASABKAkSKQoGZ3Vlc3RzGAIgAygLMhkuZXpkci5jbGllbnQudjEuVGVzdEd1ZXN0IjcKDlpyZXBsUHJlZmxpZ2h0EhAKCGRhdGFzZXRzGAEgAygJEhMKC3JlbGVhc2Vfam9iGAIgASgJIpEBChRacmVwbFByZWZsaWdodFJlc3VsdBIVCg16cmVwbF92ZXJzaW9uGAEgASgJEhUKDXpyZXBsX3J1bm5pbmcYAiABKAgSMgoIZGF0YXNldHMYAyADKAsyIC5lemRyLmNsaWVudC52MS5EYXRhc2V0U25hcHNob3RzEhcKD3JlbGVhc2VfcHJldmlldxgEIAMoCSKVAQoQRGF0YXNldFNuYXBzaG90cxIPCgdkYXRhc2V0GAEgASgJEg4KBmV4aXN0cxgCIAEoCBIYChByZWZlcmVuY2VkX2J5dGVzGAMgASgEEi8KCXNuYXBzaG90cxgEIAMoCzIcLmV6ZHIuY2xpZW50LnYxLlNuYXBzaG90SW5mbxIVCg13cml0dGVuX2J5dGVzGAUgASgEIlQKDFNuYXBzaG90SW5mbxIMCgRuYW1lGAEgASgJEgwKBGd1aWQYAiABKAQSEQoJY3JlYXRldHhnGAMgASgEEhUKDXdyaXR0ZW5fYnl0ZXMYBCABKAQiDgoMWnJlcGxVcGdyYWRlIi8KD1pyZXBsUmVtb3ZlSm9icxIMCgRqb2JzGAEgAygJEg4KBmJhY2t1cBgCIAEoCSIkChJacmVwbFJlc3RvcmVDb25maWcSDgoGYmFja3VwGAEgASgJIiAKEFpyZXBsUmVsZWFzZUpvYnMSDAoEam9icxgBIAMoCSISChBSZWZyZXNoSW52ZW50b3J5IgsKCUhlYXJ0YmVhdCLaAgoMRGVzaXJlZFN0YXRlEhIKCmdlbmVyYXRpb24YASABKAQSJAoFenJlcGwYAiABKAsyFS5lemRyLmNsaWVudC52MS5acmVwbBIvCgtzaXRlX3R1bm5lbBgDIAEoCzIaLmV6ZHIuY2xpZW50LnYxLlNpdGVUdW5uZWwSHAoUcmVwb3J0X2d1ZXN0X2NvbmZpZ3MYBCADKA0SPAoScGxhbl9ndWVzdF9jb25maWdzGAUgAygLMiAuZXpkci5jbGllbnQudjEuUGxhbkd1ZXN0Q29uZmlncxIzCg1wbGFuX3JlY292ZXJ5GAYgAygLMhwuZXpkci5jbGllbnQudjEuUGxhblJlY292ZXJ5EjMKDWxvY2tlZF9ndWVzdHMYByADKAsyHC5lemRyLmNsaWVudC52MS5Mb2NrZWRHdWVzdHMSGQoRZmFpbGVkX292ZXJfcGxhbnMYCCADKAkisAIKDFBsYW5SZWNvdmVyeRIPCgdwbGFuX2lkGAEgASgJEhEKCXBsYW5fbmFtZRgCIAEoCRIYChBwcmltYXJ5X2hvc3RuYW1lGAMgASgJEhcKD3NuYXBzaG90X3ByZWZpeBgEIAEoCRIxCghzdG9yYWdlcxgFIAMoCzIfLmV6ZHIuY2xpZW50LnYxLlJlY292ZXJ5U3RvcmFnZRIvCgdicmlkZ2VzGAYgAygLMh4uZXpkci5jbGllbnQudjEuUmVjb3ZlcnlCcmlkZ2USLQoGZ3Vlc3RzGAcgAygLMh0uZXpkci5jbGllbnQudjEuUmVjb3ZlcnlHdWVzdBI2CgtkbnNfcmVjb3JkcxgIIAMoCzIhLmV6ZHIuY2xpZW50LnYxLlJlY292ZXJ5RG5zUmVjb3JkIm4KD1JlY292ZXJ5U3RvcmFnZRIWCg5zb3VyY2Vfc3RvcmFnZRgBIAEoCRIWCg5zb3VyY2VfZGF0YXNldBgCIAEoCRIXCg9yZWNlaXZlX2RhdGFzZXQYAyABKAkSEgoKc3RvcmFnZV9pZBgEIAEoCSI+Cg5SZWNvdmVyeUJyaWRnZRIVCg1zb3VyY2VfYnJpZGdlGAEgASgJEhUKDXRhcmdldF9icmlkZ2UYAiABKAkiUwoNUmVjb3ZlcnlHdWVzdBIMCgR2bWlkGAEgASgNEhUKDXN0YXJ0dXBfb3JkZXIYAiABKAUSHQoVc3RhcnR1cF9kZWxheV9zZWNvbmRzGAMgASgNIlUKEVJlY292ZXJ5RG5zUmVjb3JkEgwKBHZtaWQYASABKA0SDAoEbmFtZRgCIAEoCRIMCgR0eXBlGAMgASgJEhYKDmZhaWxvdmVyX3ZhbHVlGAQgASgJIlAKDExvY2tlZEd1ZXN0cxIPCgdwbGFuX2lkGAEgASgJEg0KBXZtaWRzGAIgAygNEiAKGHNodXRkb3duX3RpbWVvdXRfc2Vjb25kcxgDIAEoDSJ9ChBQbGFuR3Vlc3RDb25maWdzEg8KB3BsYW5faWQYASABKAkSEQoJcGxhbl9uYW1lGAIgASgJEhgKEHByaW1hcnlfaG9zdG5hbWUYAyABKAkSKwoGZ3Vlc3RzGAQgAygLMhsuZXpkci5jbGllbnQudjEuR3Vlc3RDb25maWciaQoLR3Vlc3RDb25maWcSDAoEdm1pZBgBIAEoDRIMCgR0eXBlGAIgASgJEg4KBmNvbmZpZxgDIAEoCRIuCgpjaGFuZ2VkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJrCgpTaXRlVHVubmVsEg8KB2FkZHJlc3MYASABKAkSDgoGcHJlZml4GAIgASgJEhMKC2xpc3Rlbl9wb3J0GAMgASgNEicKBXBlZXJzGAQgAygLMhguZXpkci5jbGllbnQudjEuU2l0ZVBlZXIiZwoIU2l0ZVBlZXISEgoKcHVibGljX2tleRgBIAEoDBIPCgdhZGRyZXNzGAIgASgJEhAKCGVuZHBvaW50GAMgASgJEiQKHHBlcnNpc3RlbnRfa2VlcGFsaXZlX3NlY29uZHMYBCABKA0iYwoFWnJlcGwSLgoLc291cmNlX2pvYnMYASADKAsyGS5lemRyLmNsaWVudC52MS5Tb3VyY2VKb2ISKgoJcHVsbF9qb2JzGAIgAygLMhcuZXpkci5jbGllbnQudjEuUHVsbEpvYiItCgRQZWVyEgwKBG5hbWUYASABKAkSFwoPY2VydGlmaWNhdGVfcGVtGAIgASgJIsYBCglTb3VyY2VKb2ISDAoEbmFtZRgBIAEoCRIQCghkYXRhc2V0cxgCIAMoCRIXCg9zbmFwc2hvdF9wcmVmaXgYAyABKAkSGAoQaW50ZXJ2YWxfc2Vjb25kcxgEIAEoDRIWCg5saXN0ZW5fYWRkcmVzcxgFIAEoCRIiCgRwZWVyGAYgASgLMhQuZXpkci5jbGllbnQudjEuUGVlchIRCgllbmNyeXB0ZWQYByABKAgSFwoPbGlzdGVuX2ZyZWViaW5kGAggASgIIocCCgdQdWxsSm9iEgwKBG5hbWUYASABKAkSDwoHYWRkcmVzcxgCIAEoCRIiCgRwZWVyGAMgASgLMhQuZXpkci5jbGllbnQudjEuUGVlchIXCg9yZWNlaXZlX2RhdGFzZXQYBCABKAkSGAoQaW50ZXJ2YWxfc2Vjb25kcxgFIAEoDRIXCg9zbmFwc2hvdF9wcmVmaXgYBiABKAkSOAoRcHJpbWFyeV9yZXRlbnRpb24YByADKAsyHS5lemRyLmNsaWVudC52MS5SZXRlbnRpb25UaWVyEjMKDGRyX3JldGVudGlvbhgIIAMoCzIdLmV6ZHIuY2xpZW50LnYxLlJldGVudGlvblRpZXIiSAoNUmV0ZW50aW9uVGllchINCgVjb3VudBgBIAEoDRIWCg5wZXJpb2Rfc2Vjb25kcxgCIAEoDRIQCghrZWVwX2FsbBgDIAEoCCL4AQoTUmVwb3J0U3RhdHVzUmVxdWVzdBIWCg5jbGllbnRfdmVyc2lvbhgBIAEoCRIaChJhcHBsaWVkX2dlbmVyYXRpb24YAiABKAQSEwoLYXBwbHlfZXJyb3IYAyABKAkSGQoRenJlcGxfY2VydGlmaWNhdGUYBCABKAkSFQoNenJlcGxfdmVyc2lvbhgFIAEoCRIXCg9zaXRlX3B1YmxpY19rZXkYBiABKAwSFAoMZ3Vlc3RfZXZlbnRzGAcgAygJEjcKC2JyZWFrX2dsYXNzGAggAygLMiIuZXpkci5jbGllbnQudjEuQnJlYWtHbGFzc0ZhaWxvdmVyImwKEkJyZWFrR2xhc3NGYWlsb3ZlchIPCgdwbGFuX2lkGAEgASgJEgwKBHVzZXIYAiABKAkSJgoCYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg8KB3N0YXJ0ZWQYBCADKA0iFgoUUmVwb3J0U3RhdHVzUmVzcG9uc2UiSQoWUmVwb3J0SW52ZW50b3J5UmVxdWVzdBIvCglpbnZlbnRvcnkYASABKAsyHC5lemRyLmludmVudG9yeS52MS5JbnZlbnRvcnkiGQoXUmVwb3J0SW52ZW50b3J5UmVzcG9uc2UitAIKEEFja0FjdGlvblJlcXVlc3QSEQoJYWN0aW9uX2lkGAEgASgJEhEKCXN1Y2NlZWRlZBgCIAEoCBIPCgdtZXNzYWdlGAMgASgJEjcKCXByZWZsaWdodBgEIAEoCzIkLmV6ZHIuY2xpZW50LnYxLlpyZXBsUHJlZmxpZ2h0UmVzdWx0Eg4KBm91dHB1dBgFIAMoCRI3Cgx0ZXN0X29wdGlvbnMYBiABKAsyIS5lemRyLmNsaWVudC52MS5UZXN0T3B0aW9uc1Jlc3VsdBIzCgtndWVzdF9jaGVjaxgHIAEoCzIeLmV6ZHIuY2xpZW50LnYxLlRlc3RHdWVzdENoZWNrEjIKCHRyYW5zZmVyGAggASgLMiAuZXpkci5jbGllbnQudjEuRmFpbGJhY2tUcmFuc2ZlciITChFBY2tBY3Rpb25SZXNwb25zZSKEAQoYUmVwb3J0UmVwbGljYXRpb25SZXF1ZXN0EjAKDGNvbGxlY3RlZF9hdBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASJwoEam9icxgCIAMoCzIZLmV6ZHIuY2xpZW50LnYxLkpvYlN0YXR1cxINCgVlcnJvchgDIAEoCSIbChlSZXBvcnRSZXBsaWNhdGlvblJlc3BvbnNlIkgKGVJlcG9ydEd1ZXN0Q29uZmlnc1JlcXVlc3QSKwoGZ3Vlc3RzGAEgAygLMhsuZXpkci5jbGllbnQudjEuR3Vlc3RDb25maWciHAoaUmVwb3J0R3Vlc3RDb25maWdzUmVzcG9uc2Ui6AEKCUpvYlN0YXR1cxIMCgRuYW1lGAEgASgJEgwKBHR5cGUYAiABKAkSDQoFc3RhdGUYAyABKAkSNgoSYXR0ZW1wdF9zdGFydGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI3ChNhdHRlbXB0X2ZpbmlzaGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZlcnJvcnMYBiADKAkSLwoIZGF0YXNldHMYByADKAsyHS5lemRyLmNsaWVudC52MS5EYXRhc2V0U3RhdHVzItQBCg1EYXRhc2V0U3RhdHVzEg8KB2RhdGFzZXQYASABKAkSFwoPbGF0ZXN0X3NuYXBzaG90GAIgASgJEjYKEmxhdGVzdF9zbmFwc2hvdF9hdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDQoFc3RhdGUYBCABKAkSDQoFZXJyb3IYBSABKAkSFgoOYnl0ZXNfZXhwZWN0ZWQYBiABKAQSGAoQYnl0ZXNfcmVwbGljYXRlZBgHIAEoBBIRCglmdWxsX3NlbmQYCCABKAgyywQKDUNsaWVudFNlcnZpY2USUgoJU3Vic2NyaWJlEiAuZXpkci5jbGllbnQudjEuU3Vic2NyaWJlUmVxdWVzdBohLmV6ZHIuY2xpZW50LnYxLlN1YnNjcmliZVJlc3BvbnNlMAESWQoMUmVwb3J0U3RhdHVzEiMuZXpkci5jbGllbnQudjEuUmVwb3J0U3RhdHVzUmVxdWVzdBokLmV6ZHIuY2xpZW50LnYxLlJlcG9ydFN0YXR1c1Jlc3BvbnNlEmIKD1JlcG9ydEludmVudG9yeRImLmV6ZHIuY2xpZW50LnYxLlJlcG9ydEludmVudG9yeVJlcXVlc3QaJy5lemRyLmNsaWVudC52MS5SZXBvcnRJbnZlbnRvcnlSZXNwb25zZRJQCglBY2tBY3Rpb24SIC5lemRyLmNsaWVudC52MS5BY2tBY3Rpb25SZXF1ZXN0GiEuZXpkci5jbGllbnQudjEuQWNrQWN0aW9uUmVzcG9uc2USaAoRUmVwb3J0UmVwbGljYXRpb24SKC5lemRyLmNsaWVudC52MS5SZXBvcnRSZXBsaWNhdGlvblJlcXVlc3QaKS5lemRyLmNsaWVudC52MS5SZXBvcnRSZXBsaWNhdGlvblJlc3BvbnNlEmsKElJlcG9ydEd1ZXN0Q29uZmlncxIpLmV6ZHIuY2xpZW50LnYxLlJlcG9ydEd1ZXN0Q29uZmlnc1JlcXVlc3QaKi5lemRyLmNsaWVudC52MS5SZXBvcnRHdWVzdENvbmZpZ3NSZXNwb25zZUK5AQoSY29tLmV6ZHIuY2xpZW50LnYxQgtDbGllbnRQcm90b1ABWjxnaXRodWIuY29tL2psYnloMm8vZXpkci9pbnRlcm5hbC9nZW4vZXpkci9jbGllbnQvdjE7Y2xpZW50djGiAgNFQ1iqAg5FemRyLkNsaWVudC5WMcoCDkV6ZHJcQ2xpZW50XFYx4gIaRXpkclxDbGllbnRcVjFcR1BCTWV0YWRhdGHqAhBFemRyOjpDbGllbnQ6OlYxYgZwcm90bzM", [file_ezdr_inventory_v1_inventory, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message ezdr.client.v1.SubscribeRequest
@@ -190,6 +190,18 @@ export type Action = Message<"ezdr.client.v1.Action"> & {
      */
     value: FailoverUnlockGuests;
     case: "failoverUnlockGuests";
+  } | {
+    /**
+     * @generated from field: ezdr.client.v1.FailbackReceive failback_receive = 20;
+     */
+    value: FailbackReceive;
+    case: "failbackReceive";
+  } | {
+    /**
+     * @generated from field: ezdr.client.v1.FailbackSend failback_send = 21;
+     */
+    value: FailbackSend;
+    case: "failbackSend";
   } | { case: undefined; value?: undefined };
 };
 
@@ -199,6 +211,223 @@ export type Action = Message<"ezdr.client.v1.Action"> & {
  */
 export const ActionSchema: GenMessage<Action> = /*@__PURE__*/
   messageDesc(file_ezdr_client_v1_client, 2);
+
+/**
+ * FailbackReceive (primary) listens for the DR host for one round, receives
+ * the listed datasets' changes, and stops listening.
+ *
+ * @generated from message ezdr.client.v1.FailbackReceive
+ */
+export type FailbackReceive = Message<"ezdr.client.v1.FailbackReceive"> & {
+  /**
+   * @generated from field: string plan_id = 1;
+   */
+  planId: string;
+
+  /**
+   * Address to listen on, as host:port; the host may be empty for all
+   * addresses.
+   *
+   * @generated from field: string listen_address = 2;
+   */
+  listenAddress: string;
+
+  /**
+   * Bind even before the address exists (for tunnel addresses).
+   *
+   * @generated from field: bool listen_freebind = 3;
+   */
+  listenFreebind: boolean;
+
+  /**
+   * The DR host: the only peer accepted.
+   *
+   * @generated from field: ezdr.client.v1.Peer peer = 4;
+   */
+  peer?: Peer | undefined;
+
+  /**
+   * The only datasets received into.
+   *
+   * @generated from field: repeated ezdr.client.v1.FailbackTarget datasets = 5;
+   */
+  datasets: FailbackTarget[];
+
+  /**
+   * How long to wait for the DR host.
+   *
+   * @generated from field: uint32 connect_timeout_seconds = 6;
+   */
+  connectTimeoutSeconds: number;
+};
+
+/**
+ * Describes the message ezdr.client.v1.FailbackReceive.
+ * Use `create(FailbackReceiveSchema)` to create a new message.
+ */
+export const FailbackReceiveSchema: GenMessage<FailbackReceive> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 3);
+
+/**
+ * @generated from message ezdr.client.v1.FailbackTarget
+ */
+export type FailbackTarget = Message<"ezdr.client.v1.FailbackTarget"> & {
+  /**
+   * @generated from field: string dataset = 1;
+   */
+  dataset: string;
+
+  /**
+   * The snapshot the changes start from (without "@"); the DR host must
+   * send from it.
+   *
+   * @generated from field: string from_snapshot = 2;
+   */
+  fromSnapshot: string;
+
+  /**
+   * Roll the dataset back to from_snapshot first, destroying newer
+   * snapshots and changes since. Set once the operator confirmed discarding
+   * diverged data, and in rounds after the first.
+   *
+   * @generated from field: bool rollback = 3;
+   */
+  rollback: boolean;
+};
+
+/**
+ * Describes the message ezdr.client.v1.FailbackTarget.
+ * Use `create(FailbackTargetSchema)` to create a new message.
+ */
+export const FailbackTargetSchema: GenMessage<FailbackTarget> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 4);
+
+/**
+ * FailbackSend (DR host) connects to the primary and sends each replica's
+ * changes between two snapshots.
+ *
+ * @generated from message ezdr.client.v1.FailbackSend
+ */
+export type FailbackSend = Message<"ezdr.client.v1.FailbackSend"> & {
+  /**
+   * @generated from field: string plan_id = 1;
+   */
+  planId: string;
+
+  /**
+   * The primary's FailbackReceive address, as host:port.
+   *
+   * @generated from field: string address = 2;
+   */
+  address: string;
+
+  /**
+   * The primary: the only peer accepted.
+   *
+   * @generated from field: ezdr.client.v1.Peer peer = 3;
+   */
+  peer?: Peer | undefined;
+
+  /**
+   * @generated from field: repeated ezdr.client.v1.FailbackSource datasets = 4;
+   */
+  datasets: FailbackSource[];
+};
+
+/**
+ * Describes the message ezdr.client.v1.FailbackSend.
+ * Use `create(FailbackSendSchema)` to create a new message.
+ */
+export const FailbackSendSchema: GenMessage<FailbackSend> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 5);
+
+/**
+ * @generated from message ezdr.client.v1.FailbackSource
+ */
+export type FailbackSource = Message<"ezdr.client.v1.FailbackSource"> & {
+  /**
+   * @generated from field: string replica = 1;
+   */
+  replica: string;
+
+  /**
+   * The dataset on the primary.
+   *
+   * @generated from field: string dataset = 2;
+   */
+  dataset: string;
+
+  /**
+   * Snapshot names, without "@".
+   *
+   * @generated from field: string from_snapshot = 3;
+   */
+  fromSnapshot: string;
+
+  /**
+   * @generated from field: string to_snapshot = 4;
+   */
+  toSnapshot: string;
+
+  /**
+   * Raw sends, for encrypted datasets.
+   *
+   * @generated from field: bool raw = 5;
+   */
+  raw: boolean;
+};
+
+/**
+ * Describes the message ezdr.client.v1.FailbackSource.
+ * Use `create(FailbackSourceSchema)` to create a new message.
+ */
+export const FailbackSourceSchema: GenMessage<FailbackSource> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 6);
+
+/**
+ * FailbackTransfer is what a round copied.
+ *
+ * @generated from message ezdr.client.v1.FailbackTransfer
+ */
+export type FailbackTransfer = Message<"ezdr.client.v1.FailbackTransfer"> & {
+  /**
+   * @generated from field: repeated ezdr.client.v1.DatasetTransfer datasets = 1;
+   */
+  datasets: DatasetTransfer[];
+};
+
+/**
+ * Describes the message ezdr.client.v1.FailbackTransfer.
+ * Use `create(FailbackTransferSchema)` to create a new message.
+ */
+export const FailbackTransferSchema: GenMessage<FailbackTransfer> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 7);
+
+/**
+ * @generated from message ezdr.client.v1.DatasetTransfer
+ */
+export type DatasetTransfer = Message<"ezdr.client.v1.DatasetTransfer"> & {
+  /**
+   * The dataset on the primary.
+   *
+   * @generated from field: string dataset = 1;
+   */
+  dataset: string;
+
+  /**
+   * Stream bytes sent or received.
+   *
+   * @generated from field: uint64 bytes = 2;
+   */
+  bytes: bigint;
+};
+
+/**
+ * Describes the message ezdr.client.v1.DatasetTransfer.
+ * Use `create(DatasetTransferSchema)` to create a new message.
+ */
+export const DatasetTransferSchema: GenMessage<DatasetTransfer> = /*@__PURE__*/
+  messageDesc(file_ezdr_client_v1_client, 8);
 
 /**
  * FailoverStopGuests (primary) shuts the guests down in the given order,
@@ -228,7 +457,7 @@ export type FailoverStopGuests = Message<"ezdr.client.v1.FailoverStopGuests"> & 
  * Use `create(FailoverStopGuestsSchema)` to create a new message.
  */
 export const FailoverStopGuestsSchema: GenMessage<FailoverStopGuests> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 3);
+  messageDesc(file_ezdr_client_v1_client, 9);
 
 /**
  * FailoverSnapshot (primary) takes the final snapshot of each dataset.
@@ -254,7 +483,7 @@ export type FailoverSnapshot = Message<"ezdr.client.v1.FailoverSnapshot"> & {
  * Use `create(FailoverSnapshotSchema)` to create a new message.
  */
 export const FailoverSnapshotSchema: GenMessage<FailoverSnapshot> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 4);
+  messageDesc(file_ezdr_client_v1_client, 10);
 
 /**
  * FailoverReplicate (DR host) starts the given pull jobs now.
@@ -273,7 +502,7 @@ export type FailoverReplicate = Message<"ezdr.client.v1.FailoverReplicate"> & {
  * Use `create(FailoverReplicateSchema)` to create a new message.
  */
 export const FailoverReplicateSchema: GenMessage<FailoverReplicate> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 5);
+  messageDesc(file_ezdr_client_v1_client, 11);
 
 /**
  * FailoverPrepare (DR host) makes the plan's replicas writable, adds the
@@ -299,7 +528,7 @@ export type FailoverPrepare = Message<"ezdr.client.v1.FailoverPrepare"> & {
  * Use `create(FailoverPrepareSchema)` to create a new message.
  */
 export const FailoverPrepareSchema: GenMessage<FailoverPrepare> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 6);
+  messageDesc(file_ezdr_client_v1_client, 12);
 
 /**
  * @generated from message ezdr.client.v1.FailoverStartGuest
@@ -321,7 +550,7 @@ export type FailoverStartGuest = Message<"ezdr.client.v1.FailoverStartGuest"> & 
  * Use `create(FailoverStartGuestSchema)` to create a new message.
  */
 export const FailoverStartGuestSchema: GenMessage<FailoverStartGuest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 7);
+  messageDesc(file_ezdr_client_v1_client, 13);
 
 /**
  * FailoverUnlockGuests (primary) removes EZDR's failover lock from the
@@ -347,7 +576,7 @@ export type FailoverUnlockGuests = Message<"ezdr.client.v1.FailoverUnlockGuests"
  * Use `create(FailoverUnlockGuestsSchema)` to create a new message.
  */
 export const FailoverUnlockGuestsSchema: GenMessage<FailoverUnlockGuests> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 8);
+  messageDesc(file_ezdr_client_v1_client, 14);
 
 /**
  * @generated from message ezdr.client.v1.FailoverCheckGuest
@@ -369,7 +598,7 @@ export type FailoverCheckGuest = Message<"ezdr.client.v1.FailoverCheckGuest"> & 
  * Use `create(FailoverCheckGuestSchema)` to create a new message.
  */
 export const FailoverCheckGuestSchema: GenMessage<FailoverCheckGuest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 9);
+  messageDesc(file_ezdr_client_v1_client, 15);
 
 /**
  * TestOptions lists each replica's snapshots (for choosing a point in time)
@@ -396,7 +625,7 @@ export type TestOptions = Message<"ezdr.client.v1.TestOptions"> & {
  * Use `create(TestOptionsSchema)` to create a new message.
  */
 export const TestOptionsSchema: GenMessage<TestOptions> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 10);
+  messageDesc(file_ezdr_client_v1_client, 16);
 
 /**
  * @generated from message ezdr.client.v1.TestOptionsResult
@@ -418,7 +647,7 @@ export type TestOptionsResult = Message<"ezdr.client.v1.TestOptionsResult"> & {
  * Use `create(TestOptionsResultSchema)` to create a new message.
  */
 export const TestOptionsResultSchema: GenMessage<TestOptionsResult> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 11);
+  messageDesc(file_ezdr_client_v1_client, 17);
 
 /**
  * @generated from message ezdr.client.v1.ReplicaSnapshots
@@ -449,7 +678,7 @@ export type ReplicaSnapshots = Message<"ezdr.client.v1.ReplicaSnapshots"> & {
  * Use `create(ReplicaSnapshotsSchema)` to create a new message.
  */
 export const ReplicaSnapshotsSchema: GenMessage<ReplicaSnapshots> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 12);
+  messageDesc(file_ezdr_client_v1_client, 18);
 
 /**
  * @generated from message ezdr.client.v1.TestSnapshot
@@ -471,7 +700,7 @@ export type TestSnapshot = Message<"ezdr.client.v1.TestSnapshot"> & {
  * Use `create(TestSnapshotSchema)` to create a new message.
  */
 export const TestSnapshotSchema: GenMessage<TestSnapshot> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 13);
+  messageDesc(file_ezdr_client_v1_client, 19);
 
 /**
  * TestGuest is one guest of a test failover.
@@ -507,7 +736,7 @@ export type TestGuest = Message<"ezdr.client.v1.TestGuest"> & {
  * Use `create(TestGuestSchema)` to create a new message.
  */
 export const TestGuestSchema: GenMessage<TestGuest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 14);
+  messageDesc(file_ezdr_client_v1_client, 20);
 
 /**
  * @generated from message ezdr.client.v1.TestDisk
@@ -542,7 +771,7 @@ export type TestDisk = Message<"ezdr.client.v1.TestDisk"> & {
  * Use `create(TestDiskSchema)` to create a new message.
  */
 export const TestDiskSchema: GenMessage<TestDisk> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 15);
+  messageDesc(file_ezdr_client_v1_client, 21);
 
 /**
  * TestPrepare creates the test storage, clones the guests' disks from the
@@ -587,7 +816,7 @@ export type TestPrepare = Message<"ezdr.client.v1.TestPrepare"> & {
  * Use `create(TestPrepareSchema)` to create a new message.
  */
 export const TestPrepareSchema: GenMessage<TestPrepare> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 16);
+  messageDesc(file_ezdr_client_v1_client, 22);
 
 /**
  * @generated from message ezdr.client.v1.TestStartGuest
@@ -614,7 +843,7 @@ export type TestStartGuest = Message<"ezdr.client.v1.TestStartGuest"> & {
  * Use `create(TestStartGuestSchema)` to create a new message.
  */
 export const TestStartGuestSchema: GenMessage<TestStartGuest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 17);
+  messageDesc(file_ezdr_client_v1_client, 23);
 
 /**
  * @generated from message ezdr.client.v1.TestCheckGuest
@@ -641,7 +870,7 @@ export type TestCheckGuest = Message<"ezdr.client.v1.TestCheckGuest"> & {
  * Use `create(TestCheckGuestSchema)` to create a new message.
  */
 export const TestCheckGuestSchema: GenMessage<TestCheckGuest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 18);
+  messageDesc(file_ezdr_client_v1_client, 24);
 
 /**
  * @generated from message ezdr.client.v1.TestGuestCheck
@@ -671,7 +900,7 @@ export type TestGuestCheck = Message<"ezdr.client.v1.TestGuestCheck"> & {
  * Use `create(TestGuestCheckSchema)` to create a new message.
  */
 export const TestGuestCheckSchema: GenMessage<TestGuestCheck> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 19);
+  messageDesc(file_ezdr_client_v1_client, 25);
 
 /**
  * TestCleanup stops and destroys a test's guests and clones. Repeating it
@@ -696,7 +925,7 @@ export type TestCleanup = Message<"ezdr.client.v1.TestCleanup"> & {
  * Use `create(TestCleanupSchema)` to create a new message.
  */
 export const TestCleanupSchema: GenMessage<TestCleanup> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 20);
+  messageDesc(file_ezdr_client_v1_client, 26);
 
 /**
  * ZreplPreflight lists datasets' snapshots and bookmarks, and previews
@@ -723,7 +952,7 @@ export type ZreplPreflight = Message<"ezdr.client.v1.ZreplPreflight"> & {
  * Use `create(ZreplPreflightSchema)` to create a new message.
  */
 export const ZreplPreflightSchema: GenMessage<ZreplPreflight> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 21);
+  messageDesc(file_ezdr_client_v1_client, 27);
 
 /**
  * @generated from message ezdr.client.v1.ZreplPreflightResult
@@ -758,7 +987,7 @@ export type ZreplPreflightResult = Message<"ezdr.client.v1.ZreplPreflightResult"
  * Use `create(ZreplPreflightResultSchema)` to create a new message.
  */
 export const ZreplPreflightResultSchema: GenMessage<ZreplPreflightResult> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 22);
+  messageDesc(file_ezdr_client_v1_client, 28);
 
 /**
  * @generated from message ezdr.client.v1.DatasetSnapshots
@@ -799,7 +1028,7 @@ export type DatasetSnapshots = Message<"ezdr.client.v1.DatasetSnapshots"> & {
  * Use `create(DatasetSnapshotsSchema)` to create a new message.
  */
 export const DatasetSnapshotsSchema: GenMessage<DatasetSnapshots> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 23);
+  messageDesc(file_ezdr_client_v1_client, 29);
 
 /**
  * @generated from message ezdr.client.v1.SnapshotInfo
@@ -834,7 +1063,7 @@ export type SnapshotInfo = Message<"ezdr.client.v1.SnapshotInfo"> & {
  * Use `create(SnapshotInfoSchema)` to create a new message.
  */
 export const SnapshotInfoSchema: GenMessage<SnapshotInfo> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 24);
+  messageDesc(file_ezdr_client_v1_client, 30);
 
 /**
  * ZreplUpgrade installs the supported zrepl version (0.7) if an older one is
@@ -850,7 +1079,7 @@ export type ZreplUpgrade = Message<"ezdr.client.v1.ZreplUpgrade"> & {
  * Use `create(ZreplUpgradeSchema)` to create a new message.
  */
 export const ZreplUpgradeSchema: GenMessage<ZreplUpgrade> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 25);
+  messageDesc(file_ezdr_client_v1_client, 31);
 
 /**
  * ZreplRemoveJobs removes hand-written jobs from the main zrepl
@@ -877,7 +1106,7 @@ export type ZreplRemoveJobs = Message<"ezdr.client.v1.ZreplRemoveJobs"> & {
  * Use `create(ZreplRemoveJobsSchema)` to create a new message.
  */
 export const ZreplRemoveJobsSchema: GenMessage<ZreplRemoveJobs> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 26);
+  messageDesc(file_ezdr_client_v1_client, 32);
 
 /**
  * ZreplRestoreConfig restores the main zrepl configuration from a backup made
@@ -897,7 +1126,7 @@ export type ZreplRestoreConfig = Message<"ezdr.client.v1.ZreplRestoreConfig"> & 
  * Use `create(ZreplRestoreConfigSchema)` to create a new message.
  */
 export const ZreplRestoreConfigSchema: GenMessage<ZreplRestoreConfig> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 27);
+  messageDesc(file_ezdr_client_v1_client, 33);
 
 /**
  * ZreplReleaseJobs releases the zrepl holds and bookmarks of removed jobs.
@@ -916,7 +1145,7 @@ export type ZreplReleaseJobs = Message<"ezdr.client.v1.ZreplReleaseJobs"> & {
  * Use `create(ZreplReleaseJobsSchema)` to create a new message.
  */
 export const ZreplReleaseJobsSchema: GenMessage<ZreplReleaseJobs> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 28);
+  messageDesc(file_ezdr_client_v1_client, 34);
 
 /**
  * RefreshInventory asks the host to collect and report inventory now.
@@ -931,7 +1160,7 @@ export type RefreshInventory = Message<"ezdr.client.v1.RefreshInventory"> & {
  * Use `create(RefreshInventorySchema)` to create a new message.
  */
 export const RefreshInventorySchema: GenMessage<RefreshInventory> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 29);
+  messageDesc(file_ezdr_client_v1_client, 35);
 
 /**
  * @generated from message ezdr.client.v1.Heartbeat
@@ -944,7 +1173,7 @@ export type Heartbeat = Message<"ezdr.client.v1.Heartbeat"> & {
  * Use `create(HeartbeatSchema)` to create a new message.
  */
 export const HeartbeatSchema: GenMessage<Heartbeat> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 30);
+  messageDesc(file_ezdr_client_v1_client, 36);
 
 /**
  * DesiredState is the full configuration the host should have.
@@ -1016,7 +1245,7 @@ export type DesiredState = Message<"ezdr.client.v1.DesiredState"> & {
  * Use `create(DesiredStateSchema)` to create a new message.
  */
 export const DesiredStateSchema: GenMessage<DesiredState> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 31);
+  messageDesc(file_ezdr_client_v1_client, 37);
 
 /**
  * PlanRecovery is what the DR host keeps about a plan for failover. See
@@ -1071,7 +1300,7 @@ export type PlanRecovery = Message<"ezdr.client.v1.PlanRecovery"> & {
  * Use `create(PlanRecoverySchema)` to create a new message.
  */
 export const PlanRecoverySchema: GenMessage<PlanRecovery> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 32);
+  messageDesc(file_ezdr_client_v1_client, 38);
 
 /**
  * RecoveryStorage maps a source storage to where its replicas are: the
@@ -1108,7 +1337,7 @@ export type RecoveryStorage = Message<"ezdr.client.v1.RecoveryStorage"> & {
  * Use `create(RecoveryStorageSchema)` to create a new message.
  */
 export const RecoveryStorageSchema: GenMessage<RecoveryStorage> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 33);
+  messageDesc(file_ezdr_client_v1_client, 39);
 
 /**
  * @generated from message ezdr.client.v1.RecoveryBridge
@@ -1130,7 +1359,7 @@ export type RecoveryBridge = Message<"ezdr.client.v1.RecoveryBridge"> & {
  * Use `create(RecoveryBridgeSchema)` to create a new message.
  */
 export const RecoveryBridgeSchema: GenMessage<RecoveryBridge> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 34);
+  messageDesc(file_ezdr_client_v1_client, 40);
 
 /**
  * @generated from message ezdr.client.v1.RecoveryGuest
@@ -1157,7 +1386,7 @@ export type RecoveryGuest = Message<"ezdr.client.v1.RecoveryGuest"> & {
  * Use `create(RecoveryGuestSchema)` to create a new message.
  */
 export const RecoveryGuestSchema: GenMessage<RecoveryGuest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 35);
+  messageDesc(file_ezdr_client_v1_client, 41);
 
 /**
  * @generated from message ezdr.client.v1.RecoveryDnsRecord
@@ -1191,7 +1420,7 @@ export type RecoveryDnsRecord = Message<"ezdr.client.v1.RecoveryDnsRecord"> & {
  * Use `create(RecoveryDnsRecordSchema)` to create a new message.
  */
 export const RecoveryDnsRecordSchema: GenMessage<RecoveryDnsRecord> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 36);
+  messageDesc(file_ezdr_client_v1_client, 42);
 
 /**
  * LockedGuests are one failed-over plan's guests on its primary.
@@ -1222,7 +1451,7 @@ export type LockedGuests = Message<"ezdr.client.v1.LockedGuests"> & {
  * Use `create(LockedGuestsSchema)` to create a new message.
  */
 export const LockedGuestsSchema: GenMessage<LockedGuests> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 37);
+  messageDesc(file_ezdr_client_v1_client, 43);
 
 /**
  * PlanGuestConfigs are one plan's guest configurations, as stored on the DR
@@ -1257,7 +1486,7 @@ export type PlanGuestConfigs = Message<"ezdr.client.v1.PlanGuestConfigs"> & {
  * Use `create(PlanGuestConfigsSchema)` to create a new message.
  */
 export const PlanGuestConfigsSchema: GenMessage<PlanGuestConfigs> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 38);
+  messageDesc(file_ezdr_client_v1_client, 44);
 
 /**
  * GuestConfig is a guest's current Proxmox configuration file (without
@@ -1296,7 +1525,7 @@ export type GuestConfig = Message<"ezdr.client.v1.GuestConfig"> & {
  * Use `create(GuestConfigSchema)` to create a new message.
  */
 export const GuestConfigSchema: GenMessage<GuestConfig> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 39);
+  messageDesc(file_ezdr_client_v1_client, 45);
 
 /**
  * SiteTunnel is the host's replication tunnel interface (ezdr1). Each
@@ -1338,7 +1567,7 @@ export type SiteTunnel = Message<"ezdr.client.v1.SiteTunnel"> & {
  * Use `create(SiteTunnelSchema)` to create a new message.
  */
 export const SiteTunnelSchema: GenMessage<SiteTunnel> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 40);
+  messageDesc(file_ezdr_client_v1_client, 46);
 
 /**
  * @generated from message ezdr.client.v1.SitePeer
@@ -1377,7 +1606,7 @@ export type SitePeer = Message<"ezdr.client.v1.SitePeer"> & {
  * Use `create(SitePeerSchema)` to create a new message.
  */
 export const SitePeerSchema: GenMessage<SitePeer> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 41);
+  messageDesc(file_ezdr_client_v1_client, 47);
 
 /**
  * Zrepl describes the zrepl jobs EZDR manages on the host. The client renders
@@ -1403,7 +1632,7 @@ export type Zrepl = Message<"ezdr.client.v1.Zrepl"> & {
  * Use `create(ZreplSchema)` to create a new message.
  */
 export const ZreplSchema: GenMessage<Zrepl> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 42);
+  messageDesc(file_ezdr_client_v1_client, 48);
 
 /**
  * Peer identifies the other end of a zrepl connection by its exact
@@ -1430,7 +1659,7 @@ export type Peer = Message<"ezdr.client.v1.Peer"> & {
  * Use `create(PeerSchema)` to create a new message.
  */
 export const PeerSchema: GenMessage<Peer> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 43);
+  messageDesc(file_ezdr_client_v1_client, 49);
 
 /**
  * @generated from message ezdr.client.v1.SourceJob
@@ -1493,7 +1722,7 @@ export type SourceJob = Message<"ezdr.client.v1.SourceJob"> & {
  * Use `create(SourceJobSchema)` to create a new message.
  */
 export const SourceJobSchema: GenMessage<SourceJob> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 44);
+  messageDesc(file_ezdr_client_v1_client, 50);
 
 /**
  * @generated from message ezdr.client.v1.PullJob
@@ -1549,7 +1778,7 @@ export type PullJob = Message<"ezdr.client.v1.PullJob"> & {
  * Use `create(PullJobSchema)` to create a new message.
  */
 export const PullJobSchema: GenMessage<PullJob> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 45);
+  messageDesc(file_ezdr_client_v1_client, 51);
 
 /**
  * @generated from message ezdr.client.v1.RetentionTier
@@ -1576,7 +1805,7 @@ export type RetentionTier = Message<"ezdr.client.v1.RetentionTier"> & {
  * Use `create(RetentionTierSchema)` to create a new message.
  */
 export const RetentionTierSchema: GenMessage<RetentionTier> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 46);
+  messageDesc(file_ezdr_client_v1_client, 52);
 
 /**
  * @generated from message ezdr.client.v1.ReportStatusRequest
@@ -1644,7 +1873,7 @@ export type ReportStatusRequest = Message<"ezdr.client.v1.ReportStatusRequest"> 
  * Use `create(ReportStatusRequestSchema)` to create a new message.
  */
 export const ReportStatusRequestSchema: GenMessage<ReportStatusRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 47);
+  messageDesc(file_ezdr_client_v1_client, 53);
 
 /**
  * @generated from message ezdr.client.v1.BreakGlassFailover
@@ -1678,7 +1907,7 @@ export type BreakGlassFailover = Message<"ezdr.client.v1.BreakGlassFailover"> & 
  * Use `create(BreakGlassFailoverSchema)` to create a new message.
  */
 export const BreakGlassFailoverSchema: GenMessage<BreakGlassFailover> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 48);
+  messageDesc(file_ezdr_client_v1_client, 54);
 
 /**
  * @generated from message ezdr.client.v1.ReportStatusResponse
@@ -1691,7 +1920,7 @@ export type ReportStatusResponse = Message<"ezdr.client.v1.ReportStatusResponse"
  * Use `create(ReportStatusResponseSchema)` to create a new message.
  */
 export const ReportStatusResponseSchema: GenMessage<ReportStatusResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 49);
+  messageDesc(file_ezdr_client_v1_client, 55);
 
 /**
  * @generated from message ezdr.client.v1.ReportInventoryRequest
@@ -1708,7 +1937,7 @@ export type ReportInventoryRequest = Message<"ezdr.client.v1.ReportInventoryRequ
  * Use `create(ReportInventoryRequestSchema)` to create a new message.
  */
 export const ReportInventoryRequestSchema: GenMessage<ReportInventoryRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 50);
+  messageDesc(file_ezdr_client_v1_client, 56);
 
 /**
  * @generated from message ezdr.client.v1.ReportInventoryResponse
@@ -1721,7 +1950,7 @@ export type ReportInventoryResponse = Message<"ezdr.client.v1.ReportInventoryRes
  * Use `create(ReportInventoryResponseSchema)` to create a new message.
  */
 export const ReportInventoryResponseSchema: GenMessage<ReportInventoryResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 51);
+  messageDesc(file_ezdr_client_v1_client, 57);
 
 /**
  * @generated from message ezdr.client.v1.AckActionRequest
@@ -1765,6 +1994,13 @@ export type AckActionRequest = Message<"ezdr.client.v1.AckActionRequest"> & {
    * @generated from field: ezdr.client.v1.TestGuestCheck guest_check = 7;
    */
   guestCheck?: TestGuestCheck | undefined;
+
+  /**
+   * Result of a FailbackReceive or FailbackSend action.
+   *
+   * @generated from field: ezdr.client.v1.FailbackTransfer transfer = 8;
+   */
+  transfer?: FailbackTransfer | undefined;
 };
 
 /**
@@ -1772,7 +2008,7 @@ export type AckActionRequest = Message<"ezdr.client.v1.AckActionRequest"> & {
  * Use `create(AckActionRequestSchema)` to create a new message.
  */
 export const AckActionRequestSchema: GenMessage<AckActionRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 52);
+  messageDesc(file_ezdr_client_v1_client, 58);
 
 /**
  * @generated from message ezdr.client.v1.AckActionResponse
@@ -1785,7 +2021,7 @@ export type AckActionResponse = Message<"ezdr.client.v1.AckActionResponse"> & {
  * Use `create(AckActionResponseSchema)` to create a new message.
  */
 export const AckActionResponseSchema: GenMessage<AckActionResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 53);
+  messageDesc(file_ezdr_client_v1_client, 59);
 
 /**
  * @generated from message ezdr.client.v1.ReportReplicationRequest
@@ -1814,7 +2050,7 @@ export type ReportReplicationRequest = Message<"ezdr.client.v1.ReportReplication
  * Use `create(ReportReplicationRequestSchema)` to create a new message.
  */
 export const ReportReplicationRequestSchema: GenMessage<ReportReplicationRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 54);
+  messageDesc(file_ezdr_client_v1_client, 60);
 
 /**
  * @generated from message ezdr.client.v1.ReportReplicationResponse
@@ -1827,7 +2063,7 @@ export type ReportReplicationResponse = Message<"ezdr.client.v1.ReportReplicatio
  * Use `create(ReportReplicationResponseSchema)` to create a new message.
  */
 export const ReportReplicationResponseSchema: GenMessage<ReportReplicationResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 55);
+  messageDesc(file_ezdr_client_v1_client, 61);
 
 /**
  * @generated from message ezdr.client.v1.ReportGuestConfigsRequest
@@ -1844,7 +2080,7 @@ export type ReportGuestConfigsRequest = Message<"ezdr.client.v1.ReportGuestConfi
  * Use `create(ReportGuestConfigsRequestSchema)` to create a new message.
  */
 export const ReportGuestConfigsRequestSchema: GenMessage<ReportGuestConfigsRequest> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 56);
+  messageDesc(file_ezdr_client_v1_client, 62);
 
 /**
  * @generated from message ezdr.client.v1.ReportGuestConfigsResponse
@@ -1857,7 +2093,7 @@ export type ReportGuestConfigsResponse = Message<"ezdr.client.v1.ReportGuestConf
  * Use `create(ReportGuestConfigsResponseSchema)` to create a new message.
  */
 export const ReportGuestConfigsResponseSchema: GenMessage<ReportGuestConfigsResponse> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 57);
+  messageDesc(file_ezdr_client_v1_client, 63);
 
 /**
  * JobStatus is one of EZDR's zrepl jobs, from `zrepl status`.
@@ -1914,7 +2150,7 @@ export type JobStatus = Message<"ezdr.client.v1.JobStatus"> & {
  * Use `create(JobStatusSchema)` to create a new message.
  */
 export const JobStatusSchema: GenMessage<JobStatus> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 58);
+  messageDesc(file_ezdr_client_v1_client, 64);
 
 /**
  * @generated from message ezdr.client.v1.DatasetStatus
@@ -1975,7 +2211,7 @@ export type DatasetStatus = Message<"ezdr.client.v1.DatasetStatus"> & {
  * Use `create(DatasetStatusSchema)` to create a new message.
  */
 export const DatasetStatusSchema: GenMessage<DatasetStatus> = /*@__PURE__*/
-  messageDesc(file_ezdr_client_v1_client, 59);
+  messageDesc(file_ezdr_client_v1_client, 65);
 
 /**
  * ClientService is served only on the portal's tunnel listener. The portal

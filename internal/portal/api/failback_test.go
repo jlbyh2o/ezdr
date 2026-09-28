@@ -3,6 +3,7 @@ package api
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 
@@ -21,6 +22,13 @@ func TestFailbackPreflight(t *testing.T) {
 	sp, _ := d.Store.PlanByID(ctx, planID)
 	if err := d.Store.SetPlanState(ctx, planID, store.PlanFailedOver, sp.AppliedSpec); err != nil {
 		t.Fatal(err)
+	}
+	// The fake hosts connect in the background.
+	for deadline := time.Now().Add(5 * time.Second); !d.Hub.Online("pve1") || !d.Hub.Online("dr1"); {
+		if time.Now().After(deadline) {
+			t.Fatal("the fake hosts didn't connect")
+		}
+		time.Sleep(5 * time.Millisecond)
 	}
 	res, err := svc.RunFailbackPreflight(ctx, req)
 	if err != nil {

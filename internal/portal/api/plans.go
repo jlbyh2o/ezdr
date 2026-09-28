@@ -506,11 +506,11 @@ func (s PlanService) PreviewPlanChanges(ctx context.Context, req *connect.Reques
 		if err != nil {
 			continue
 		}
-		bs, _, err := s.desiredConfig(ctx, id, before)
+		bs, _, err := s.desiredConfig(ctx, id, before, nil)
 		if err != nil {
 			return nil, internalError(err)
 		}
-		as, problems, err := s.desiredConfig(ctx, id, after)
+		as, problems, err := s.desiredConfig(ctx, id, after, nil)
 		if err != nil {
 			return nil, internalError(err)
 		}

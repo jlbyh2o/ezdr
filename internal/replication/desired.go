@@ -3,6 +3,7 @@
 package replication
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -73,30 +74,9 @@ func Jobs(p Plan, primary, dr *Host) (sources []*clientv1.SourceJob, pulls []*cl
 	if len(problems) > 0 {
 		return nil, nil, problems
 	}
-	// Where the primary's source jobs listen, and where the DR host connects.
-	var listenHost, connectHost string
-	freebind := false
-	switch n := p.Spec.GetNetwork().GetPath().(type) {
-	case *planv1.ReplicationNetwork_Existing:
-		connectHost = n.Existing.PrimaryAddress
-		// A specific listen address may not be up when zrepl starts (for
-		// example, a VPN address), so it's bound with freebind.
-		listenHost = n.Existing.ListenAddress
-		freebind = listenHost != ""
-	case *planv1.ReplicationNetwork_Tunnel:
-		for _, h := range []*Host{primary, dr} {
-			if !h.SiteAddress.IsValid() || len(h.SitePublicKey) != 32 {
-				problems = append(problems, fmt.Sprintf("plan %q: waiting for %s's tunnel key", p.Name, h.Hostname))
-			}
-		}
-		if len(problems) > 0 {
-			return nil, nil, problems
-		}
-		// Listen only on the primary's tunnel address. freebind lets zrepl
-		// bind before the tunnel interface is up.
-		listenHost, connectHost, freebind = primary.SiteAddress.String(), primary.SiteAddress.String(), true
-	default:
-		return nil, nil, []string{fmt.Sprintf("plan %q: no replication network", p.Name)}
+	listenHost, connectHost, freebind, problems := endpoints(p, primary, dr)
+	if len(problems) > 0 {
+		return nil, nil, problems
 	}
 
 	for _, g := range plan.JobGroups(p.Spec, primary.Inventory) {
@@ -117,6 +97,46 @@ func Jobs(p Plan, primary, dr *Host) (sources []*clientv1.SourceJob, pulls []*cl
 		})
 	}
 	return sources, pulls, nil
+}
+
+// endpoints returns where the primary's source jobs listen (with freebind
+// if the address may not be up yet) and where the DR host connects.
+func endpoints(p Plan, primary, dr *Host) (listenHost, connectHost string, freebind bool, problems []string) {
+	switch n := p.Spec.GetNetwork().GetPath().(type) {
+	case *planv1.ReplicationNetwork_Existing:
+		connectHost = n.Existing.PrimaryAddress
+		// A specific listen address may not be up when zrepl starts (for
+		// example, a VPN address), so it's bound with freebind.
+		listenHost = n.Existing.ListenAddress
+		freebind = listenHost != ""
+	case *planv1.ReplicationNetwork_Tunnel:
+		for _, h := range []*Host{primary, dr} {
+			if !h.SiteAddress.IsValid() || len(h.SitePublicKey) != 32 {
+				problems = append(problems, fmt.Sprintf("plan %q: waiting for %s's tunnel key", p.Name, h.Hostname))
+			}
+		}
+		if len(problems) > 0 {
+			return "", "", false, problems
+		}
+		// Listen only on the primary's tunnel address. freebind lets zrepl
+		// bind before the tunnel interface is up.
+		listenHost, connectHost, freebind = primary.SiteAddress.String(), primary.SiteAddress.String(), true
+	default:
+		return "", "", false, []string{fmt.Sprintf("plan %q: no replication network", p.Name)}
+	}
+	return listenHost, connectHost, freebind, nil
+}
+
+// FailbackAddresses returns where the primary listens for a failback's
+// transfer (the plan's first zrepl port, free while the plan is failed
+// over) and where the DR host connects.
+func FailbackAddresses(p Plan, primary, dr *Host) (listen, connect string, freebind bool, err error) {
+	listenHost, connectHost, freebind, problems := endpoints(p, primary, dr)
+	if len(problems) > 0 {
+		return "", "", false, errors.New(strings.Join(problems, "; "))
+	}
+	port := strconv.FormatUint(uint64(plan.BasePort(p.Spec)), 10)
+	return net.JoinHostPort(listenHost, port), net.JoinHostPort(connectHost, port), freebind, nil
 }
 
 // TunnelKeepalive is the keepalive the connecting side of a site tunnel

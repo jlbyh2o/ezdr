@@ -26,6 +26,12 @@ import (
 // with their applied specifications. override, if set, replaces or adds one
 // plan (used to preview changes).
 func (d *Deps) activePlans(ctx context.Context, override *replication.Plan) ([]replication.Plan, error) {
+	return d.plansIn(ctx, store.PlanActive, override)
+}
+
+// plansIn returns the plans in a state, with their applied specifications.
+// override is as for activePlans.
+func (d *Deps) plansIn(ctx context.Context, state string, override *replication.Plan) ([]replication.Plan, error) {
 	plans, err := d.Store.ListPlans(ctx)
 	if err != nil {
 		return nil, err
@@ -35,7 +41,7 @@ func (d *Deps) activePlans(ctx context.Context, override *replication.Plan) ([]r
 		if override != nil && p.ID == override.ID {
 			continue
 		}
-		if p.State != store.PlanActive || p.AppliedSpec == nil {
+		if p.State != state || p.AppliedSpec == nil {
 			continue
 		}
 		spec := &planv1.PlanSpec{}
@@ -89,14 +95,15 @@ func (d *Deps) replicationHosts(ctx context.Context, plans []replication.Plan) (
 }
 
 // desiredConfig computes a host's zrepl jobs and site tunnel for the given
-// plans.
-func (d *Deps) desiredConfig(ctx context.Context, hostID string, plans []replication.Plan) (*clientv1.DesiredState, []string, error) {
-	hosts, err := d.replicationHosts(ctx, plans)
+// plans. tunnelOnly plans keep their site tunnel but have no jobs.
+func (d *Deps) desiredConfig(ctx context.Context, hostID string, plans, tunnelOnly []replication.Plan) (*clientv1.DesiredState, []string, error) {
+	all := append(slices.Clip(plans), tunnelOnly...)
+	hosts, err := d.replicationHosts(ctx, all)
 	if err != nil {
 		return nil, nil, err
 	}
 	z, problems := replication.Desired(hostID, plans, hosts)
-	tunnel, tp := replication.SiteTunnel(hostID, plans, hosts, d.SiteTunnelPrefix)
+	tunnel, tp := replication.SiteTunnel(hostID, all, hosts, d.SiteTunnelPrefix)
 	return &clientv1.DesiredState{Zrepl: z, SiteTunnel: tunnel}, append(problems, tp...), nil
 }
 
@@ -111,7 +118,13 @@ func (d *Deps) desiredState(ctx context.Context, hostID string) (*clientv1.Desir
 	if err != nil {
 		return nil, err
 	}
-	ds, problems, err := d.desiredConfig(ctx, hostID, append(plans, taking...))
+	// Failed-over plans keep their site tunnel: failing back copies the
+	// changes over it.
+	failedOver, err := d.plansIn(ctx, store.PlanFailedOver, nil)
+	if err != nil {
+		return nil, err
+	}
+	ds, problems, err := d.desiredConfig(ctx, hostID, append(plans, taking...), failedOver)
 	if err != nil {
 		return nil, err
 	}
