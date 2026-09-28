@@ -26,45 +26,65 @@ type fakeHost struct {
 	// fullSend makes the DR host report a full send, which fails the
 	// takeover's check.
 	fullSend bool
+	// dropOnce names an action (as recorded in actions) that makes the host
+	// disconnect without acknowledging it, the first time only.
+	dropOnce string
+	// failRestore fails this many restore actions; failRelease fails
+	// releases.
+	failRestore int
+	failRelease bool
 
 	mu      sync.Mutex
 	actions []string
 	pulls   []string
+	stopped chan struct{}
 }
 
+// run serves the host until ctx is done; wait returns once it has stopped.
 func (f *fakeHost) run(ctx context.Context, t *testing.T) {
-	_, outbox, release := f.d.Hub.connect(ctx, f.id)
+	f.stopped = make(chan struct{})
 	go func() {
-		defer release()
+		defer close(f.stopped)
 		tick := time.NewTicker(5 * time.Millisecond)
 		defer tick.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case msg := <-outbox:
-				if ds := msg.GetDesiredState(); ds != nil {
-					f.mu.Lock()
-					f.pulls = nil
-					for _, j := range ds.GetZrepl().GetPullJobs() {
-						f.pulls = append(f.pulls, j.Name)
-					}
-					f.mu.Unlock()
-					if err := f.d.Store.SetHostApplied(ctx, f.id, ds.Generation, ""); err != nil {
-						t.Error(err)
-					}
-				}
-				if a := msg.GetAction(); a != nil {
-					f.answer(a)
-				}
-			case <-tick.C:
-				f.report(ctx, t)
-			}
+		for ctx.Err() == nil {
+			_, outbox, release := f.d.Hub.connect(ctx, f.id)
+			f.serve(ctx, t, outbox, tick.C)
+			release()
 		}
 	}()
 }
 
-func (f *fakeHost) answer(a *clientv1.Action) {
+// serve handles one connection until ctx is done or the host drops it.
+func (f *fakeHost) serve(ctx context.Context, t *testing.T, outbox <-chan *clientv1.SubscribeResponse, tick <-chan time.Time) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case msg := <-outbox:
+			if ds := msg.GetDesiredState(); ds != nil {
+				f.mu.Lock()
+				f.pulls = nil
+				for _, j := range ds.GetZrepl().GetPullJobs() {
+					f.pulls = append(f.pulls, j.Name)
+				}
+				f.mu.Unlock()
+				if err := f.d.Store.SetHostApplied(ctx, f.id, ds.Generation, ""); err != nil && ctx.Err() == nil {
+					t.Error(err)
+				}
+			}
+			if a := msg.GetAction(); a != nil && !f.answer(a) {
+				return // dropped: reconnect
+			}
+		case <-tick:
+			f.report(ctx, t)
+		}
+	}
+}
+
+// answer acknowledges an action; it returns false if the host drops the
+// connection instead.
+func (f *fakeHost) answer(a *clientv1.Action) bool {
 	ack := &clientv1.AckActionRequest{ActionId: a.Id, Succeeded: true}
 	var name string
 	switch k := a.Kind.(type) {
@@ -79,16 +99,33 @@ func (f *fakeHost) answer(a *clientv1.Action) {
 		name = "remove " + strings.Join(k.ZreplRemoveJobs.Jobs, ",")
 	case *clientv1.Action_ZreplRestoreConfig:
 		name = "restore"
+		f.mu.Lock()
+		if f.failRestore > 0 {
+			f.failRestore--
+			ack.Succeeded, ack.Message = false, "restore failed"
+		}
+		f.mu.Unlock()
 	case *clientv1.Action_ZreplReleaseJobs:
 		name = "release " + strings.Join(k.ZreplReleaseJobs.Jobs, ",")
 		ack.Output = []string{"destroy hold"}
+		if f.failRelease {
+			ack.Succeeded, ack.Message = false, "release failed"
+		}
 	default:
 		name = "other"
 	}
 	f.mu.Lock()
 	f.actions = append(f.actions, name)
+	drop := f.dropOnce != "" && f.dropOnce == name
+	if drop {
+		f.dropOnce = ""
+	}
 	f.mu.Unlock()
+	if drop {
+		return false
+	}
 	f.d.Hub.deliver(f.id, ack)
+	return true
 }
 
 func (f *fakeHost) report(ctx context.Context, t *testing.T) {
@@ -103,10 +140,12 @@ func (f *fakeHost) report(ctx context.Context, t *testing.T) {
 			Datasets: []*clientv1.DatasetStatus{{Dataset: "rpool/subvol-101-disk-0", State: "done", FullSend: f.fullSend}}})
 	}
 	b, _ := proto.Marshal(st)
-	if err := f.d.Store.PutReplicationStatus(ctx, f.id, b); err != nil {
+	if err := f.d.Store.PutReplicationStatus(ctx, f.id, b); err != nil && ctx.Err() == nil {
 		t.Error(err)
 	}
 }
+
+func (f *fakeHost) wait() { <-f.stopped }
 
 func (f *fakeHost) did() []string {
 	f.mu.Lock()
@@ -163,10 +202,14 @@ func takeoverFixture(t *testing.T) (*Deps, context.Context, string, *fakeHost, *
 	}
 
 	hctx, cancel := context.WithCancel(ctx)
-	t.Cleanup(cancel)
 	p, h := &fakeHost{d: d, id: primary}, &fakeHost{d: d, id: dr}
 	p.run(hctx, t)
 	h.run(hctx, t)
+	t.Cleanup(func() {
+		cancel()
+		p.wait()
+		h.wait()
+	})
 	return d, ctx, created.Msg.Plan.Id, p, h
 }
 
@@ -209,7 +252,7 @@ func runTakeoverTest(ctx context.Context, t *testing.T, d *Deps, id string) *por
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got.Msg.Takeover.State != portalv1.TakeoverState_TAKEOVER_STATE_RUNNING {
+		if _, busy := runningTakeovers.Load(id); !busy && got.Msg.Takeover.State != portalv1.TakeoverState_TAKEOVER_STATE_RUNNING {
 			return got.Msg.Takeover
 		}
 		time.Sleep(10 * time.Millisecond)
@@ -270,5 +313,74 @@ func TestTakeoverRollsBack(t *testing.T) {
 		if ds, _ := d.desiredState(ctx, h); len(ds.GetZrepl().GetPullJobs())+len(ds.GetZrepl().GetSourceJobs()) != 0 {
 			t.Errorf("host %s still has the plan's jobs: %v", h, ds)
 		}
+	}
+}
+
+func TestTakeoverResendsAfterDisconnect(t *testing.T) {
+	d, ctx, id, primary, dr := takeoverFixture(t)
+	// The DR host loses its connection while removing the old job, so its
+	// acknowledgement never arrives; the portal sends the action again.
+	dr.dropOnce = "remove old_pull"
+	tk := runTakeoverTest(ctx, t, d, id)
+	if tk.State != portalv1.TakeoverState_TAKEOVER_STATE_COMPLETED {
+		t.Fatalf("takeover = %v", tk)
+	}
+	if got := strings.Join(dr.did(), "|"); got != "preflight|remove old_pull|remove old_pull|release old_pull" {
+		t.Errorf("DR actions = %s", got)
+	}
+	_ = primary
+}
+
+func TestTakeoverRollbackRetry(t *testing.T) {
+	d, ctx, id, primary, dr := takeoverFixture(t)
+	dr.fullSend = true
+	primary.failRestore = 1
+	tk := runTakeoverTest(ctx, t, d, id)
+	if tk.State != portalv1.TakeoverState_TAKEOVER_STATE_FAILED || !tk.RollingBack ||
+		!strings.Contains(tk.Steps[len(tk.Steps)-1].Detail, "restore failed") {
+		t.Fatalf("takeover = %v", tk)
+	}
+	svc := PlanService{Deps: d}
+	// Nothing to retry for the preflight or a new start meanwhile.
+	if _, err := svc.StartTakeover(ctx, connect.NewRequest(&portalv1.StartTakeoverRequest{Id: id})); err == nil {
+		t.Error("started a new takeover while the last one's rollback failed")
+	}
+	if _, err := svc.RetryTakeoverRollback(ctx, connect.NewRequest(&portalv1.RetryTakeoverRollbackRequest{Id: id})); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) {
+		got, _ := svc.GetTakeover(ctx, connect.NewRequest(&portalv1.GetTakeoverRequest{Id: id}))
+		if _, busy := runningTakeovers.Load(id); !busy {
+			if tk = got.Msg.Takeover; tk.State != portalv1.TakeoverState_TAKEOVER_STATE_RUNNING {
+				break
+			}
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if tk.State != portalv1.TakeoverState_TAKEOVER_STATE_ROLLED_BACK || !strings.Contains(tk.Error, "sent in full") {
+		t.Fatalf("after retry: %v", tk)
+	}
+	if got := strings.Join(primary.did(), "|"); got != "preflight|remove old_source|restore|restore" {
+		t.Errorf("primary actions = %s", got)
+	}
+	// Only a failed rollback can be retried.
+	if _, err := svc.RetryTakeoverRollback(ctx, connect.NewRequest(&portalv1.RetryTakeoverRollbackRequest{Id: id})); err == nil {
+		t.Error("retried a finished rollback")
+	}
+}
+
+func TestTakeoverReleaseFailure(t *testing.T) {
+	d, ctx, id, primary, _ := takeoverFixture(t)
+	primary.failRelease = true
+	tk := runTakeoverTest(ctx, t, d, id)
+	// Replication already runs under EZDR, so the takeover completes with a
+	// note instead of rolling back.
+	if tk.State != portalv1.TakeoverState_TAKEOVER_STATE_COMPLETED || !strings.Contains(tk.Error, "release-all --job") {
+		t.Fatalf("takeover = %v", tk)
+	}
+	sp, _, _ := PlanService{Deps: d}.loadPlan(ctx, id)
+	if sp.State != store.PlanActive {
+		t.Errorf("plan state = %s", sp.State)
 	}
 }

@@ -249,6 +249,9 @@ service PlanService {
   // problems. It returns once the takeover has started; GetTakeover shows its
   // progress. On success the plan becomes active.
   rpc StartTakeover(StartTakeoverRequest) returns (StartTakeoverResponse);
+  // RetryTakeoverRollback runs the rollback of a failed takeover again, for
+  // example once an offline host is back.
+  rpc RetryTakeoverRollback(RetryTakeoverRollbackRequest) returns (RetryTakeoverRollbackResponse);
   // PreviewPlanChanges lists what activating or applying the plan's
   // editing specification would change on each host.
   rpc PreviewPlanChanges(PreviewPlanChangesRequest) returns (PreviewPlanChangesResponse);
@@ -623,6 +626,14 @@ message StartTakeoverResponse {
   Takeover takeover = 1;
 }
 
+message RetryTakeoverRollbackRequest {
+  string id = 1;
+}
+
+message RetryTakeoverRollbackResponse {
+  Takeover takeover = 1;
+}
+
 message GetTakeoverRequest {
   string id = 1;
 }
@@ -652,6 +663,9 @@ message Takeover {
   repeated TakeoverStep steps = 3;
   string error = 4;
   google.protobuf.Timestamp updated_at = 5;
+  // Set once a step failed and the rollback started; a running takeover
+  // that is rolling back resumes the rollback, not the steps.
+  bool rolling_back = 6;
 }
 
 // TakeoverPreflight is what taking over would do, from both hosts' current

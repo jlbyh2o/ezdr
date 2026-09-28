@@ -229,6 +229,35 @@ func (s PlanService) StartTakeover(ctx context.Context, req *connect.Request[por
 	return connect.NewResponse(&portalv1.StartTakeoverResponse{Takeover: t}), nil
 }
 
+// RetryTakeoverRollback runs a failed takeover's rollback again.
+func (s PlanService) RetryTakeoverRollback(ctx context.Context, req *connect.Request[portalv1.RetryTakeoverRollbackRequest]) (*connect.Response[portalv1.RetryTakeoverRollbackResponse], error) {
+	sp, _, err := s.loadPlan(ctx, req.Msg.Id)
+	if err != nil {
+		return nil, err
+	}
+	row, err := s.Store.TakeoverByPlan(ctx, sp.ID)
+	if errors.Is(err, store.ErrNotFound) {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan has no takeover"))
+	}
+	if err != nil {
+		return nil, internalError(err)
+	}
+	t := &portalv1.Takeover{}
+	if err := proto.Unmarshal(row.Data, t); err != nil {
+		return nil, internalError(err)
+	}
+	if t.State != portalv1.TakeoverState_TAKEOVER_STATE_FAILED || !t.RollingBack || sp.State != store.PlanDraft {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("only a takeover whose rollback failed can be rolled back again"))
+	}
+	t.State = portalv1.TakeoverState_TAKEOVER_STATE_RUNNING
+	if err := s.saveTakeover(ctx, row, t); err != nil {
+		return nil, internalError(err)
+	}
+	s.audit(ctx, currentUser(ctx).Username, "plan.takeover_rollback_retry", "plan:"+sp.ID, fmt.Sprintf("plan %q", sp.Name))
+	go s.runTakeover(context.WithoutCancel(ctx), sp.ID)
+	return connect.NewResponse(&portalv1.RetryTakeoverRollbackResponse{Takeover: t}), nil
+}
+
 // ResumeTakeovers restarts takeovers that were running when the portal
 // stopped.
 func (d *Deps) ResumeTakeovers(ctx context.Context) {
@@ -286,6 +315,11 @@ func (d *Deps) runTakeover(ctx context.Context, planID string) {
 			return
 		}
 		if t.State != portalv1.TakeoverState_TAKEOVER_STATE_RUNNING {
+			return
+		}
+		if t.RollingBack {
+			// Interrupted (or retried) rollback.
+			d.rollbackTakeover(ctx, row, sp, spec, t, nil)
 			return
 		}
 		if row.NextStep >= stepCount {
@@ -402,7 +436,7 @@ func (d *Deps) request(ctx context.Context, hostID string, timeout time.Duration
 		case errors.Is(err, ErrHostOffline):
 			select {
 			case <-ctx.Done():
-				return nil, fmt.Errorf("the host stayed offline")
+				return nil, errors.New("the host stayed offline")
 			case <-time.After(takeoverPoll):
 				continue
 			}
@@ -529,11 +563,20 @@ func (d *Deps) checkFirstReplication(ctx context.Context, drID string, pulls, wa
 }
 
 // rollbackTakeover removes the plan's jobs from both hosts and restores their
-// original main configurations.
+// original main configurations. cause is the failure that started it, or nil
+// when an interrupted or failed rollback runs again. Every part is safe to
+// repeat.
 func (d *Deps) rollbackTakeover(ctx context.Context, row store.Takeover, sp store.Plan, spec *planv1.PlanSpec, t *portalv1.Takeover, cause error) {
-	t.Error = cause.Error()
+	if cause != nil {
+		t.Error = cause.Error()
+	}
+	t.State, t.RollingBack = portalv1.TakeoverState_TAKEOVER_STATE_RUNNING, true
 	step := &portalv1.TakeoverStep{Name: "Restore the old setup on both hosts", Status: "running", UpdatedAt: timestamppb.Now()}
-	t.Steps = append(t.Steps, step)
+	if n := len(t.Steps); n > stepCount && t.Steps[n-1].Status == "running" {
+		step = t.Steps[n-1] // resume the interrupted attempt
+	} else {
+		t.Steps = append(t.Steps, step)
+	}
 	row.PrimaryJobs, row.DRJobs = false, false
 	var errs []string
 	if err := d.saveTakeover(ctx, row, t); err != nil {
@@ -548,6 +591,9 @@ func (d *Deps) rollbackTakeover(ctx context.Context, row store.Takeover, sp stor
 			ZreplRestoreConfig: &clientv1.ZreplRestoreConfig{Backup: row.Backup}}}); err != nil {
 			errs = append(errs, fmt.Sprintf("%s: restoring zrepl.yml: %v", h.name, err))
 		}
+	}
+	if ctx.Err() != nil {
+		return // the portal is stopping; the rollback resumes when it starts again
 	}
 	step.UpdatedAt = timestamppb.Now()
 	if len(errs) == 0 {

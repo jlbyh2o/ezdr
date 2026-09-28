@@ -45,8 +45,11 @@ const SupportedVersion = "0.7.*"
 // aptInstall installs zrepl in the supported series, keeping a modified
 // zrepl.yml (a dpkg conffile) rather than stopping at dpkg's prompt, and
 // holds the package: until zrepl 1.0 the repository publishes breaking
-// releases immediately, so EZDR upgrades deliberately.
+// releases immediately, so EZDR upgrades deliberately. It first finishes any
+// interrupted dpkg run, such as an earlier attempt cut short when the client
+// restarted.
 var aptInstall = [][]string{
+	{"dpkg", "--force-confdef", "--force-confold", "--configure", "-a"},
 	{"apt-get", "update", "-qq"},
 	{"apt-get", "install", "-y", "-qq", "--allow-downgrades", "--allow-change-held-packages",
 		"-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "zrepl=" + SupportedVersion},
@@ -68,23 +71,30 @@ func (a *Applier) Install(ctx context.Context) error {
 }
 
 // Upgrade installs the supported zrepl series if an older release is
-// installed, and makes sure zrepl runs afterwards. It returns the version
-// now installed.
+// installed, and restarts zrepl so the new daemon runs. It returns the
+// version now installed. Repeating it is safe, including after an attempt
+// cut short midway (an interrupted dpkg run is finished first, and zrepl is
+// held and restarted even if the new release is already on disk).
 func (a *Applier) Upgrade(ctx context.Context) (string, error) {
-	v := a.Version(ctx)
-	if v == "" {
+	if a.Version(ctx) == "" {
 		return "", errors.New("zrepl isn't installed")
 	}
-	if Supported(v) {
-		return v, nil
+	if _, err := a.Run(ctx, aptInstall[0][0], aptInstall[0][1:]...); err != nil {
+		return "", fmt.Errorf("finish an interrupted package installation: %w", err)
 	}
-	if err := a.Install(ctx); err != nil {
-		return "", err
+	if !Supported(a.Version(ctx)) {
+		if err := a.Install(ctx); err != nil {
+			return "", err
+		}
+	}
+	if _, err := a.Run(ctx, "apt-mark", "hold", "zrepl"); err != nil {
+		return "", fmt.Errorf("hold zrepl: %w", err)
 	}
 	if _, err := a.Run(ctx, "systemctl", "restart", "zrepl"); err != nil {
 		return "", fmt.Errorf("restart zrepl: %w", err)
 	}
-	if v = a.Version(ctx); !Supported(v) {
+	v := a.Version(ctx)
+	if !Supported(v) {
 		return v, fmt.Errorf("zrepl %s is installed after the upgrade, not 0.7", v)
 	}
 	return v, nil

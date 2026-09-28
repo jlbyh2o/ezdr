@@ -25,6 +25,8 @@ type pendingAction struct {
 
 type hubConn struct {
 	cancel context.CancelFunc
+	// done is closed when the stream ends.
+	done <-chan struct{}
 	// send queues messages for the stream; Subscribe writes them out.
 	send chan *clientv1.SubscribeResponse
 }
@@ -39,7 +41,7 @@ func NewHub() *Hub {
 // the stream. release must be called when the stream ends.
 func (h *Hub) connect(ctx context.Context, hostID string) (context.Context, <-chan *clientv1.SubscribeResponse, func()) {
 	ctx, cancel := context.WithCancel(ctx)
-	c := &hubConn{cancel: cancel, send: make(chan *clientv1.SubscribeResponse, 16)}
+	c := &hubConn{cancel: cancel, done: ctx.Done(), send: make(chan *clientv1.SubscribeResponse, 16)}
 	h.mu.Lock()
 	if h.conns[hostID] == nil {
 		h.conns[hostID] = make(map[*hubConn]struct{})
@@ -76,19 +78,26 @@ func (h *Hub) Disconnect(hostID string) {
 // Send queues msg on one of hostID's open streams. It reports false if the
 // host has no open stream or its queue is full.
 func (h *Hub) Send(hostID string, msg *clientv1.SubscribeResponse) bool {
+	return h.send(hostID, msg) != nil
+}
+
+// send queues msg like Send and returns the stream it was queued on.
+func (h *Hub) send(hostID string, msg *clientv1.SubscribeResponse) *hubConn {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	for c := range h.conns[hostID] {
 		select {
 		case c.send <- msg:
-			return true
+			return c
 		default:
 		}
 	}
-	return false
+	return nil
 }
 
-// ErrHostOffline is returned when an action can't be sent to a host.
+// ErrHostOffline is returned when an action can't be sent to a host, or the
+// stream it was sent on ended before the host acknowledged it (the
+// acknowledgement may be lost, so callers may resend idempotent actions).
 var ErrHostOffline = errors.New("the host isn't connected")
 
 // Request sends an action to hostID and waits for its acknowledgement, until
@@ -104,12 +113,15 @@ func (h *Hub) Request(ctx context.Context, hostID string, a *clientv1.Action) (*
 		delete(h.waiting, a.Id)
 		h.mu.Unlock()
 	}()
-	if !h.Send(hostID, &clientv1.SubscribeResponse{Message: &clientv1.SubscribeResponse_Action{Action: a}}) {
+	c := h.send(hostID, &clientv1.SubscribeResponse{Message: &clientv1.SubscribeResponse_Action{Action: a}})
+	if c == nil {
 		return nil, ErrHostOffline
 	}
 	select {
 	case ack := <-p.ack:
 		return ack, nil
+	case <-c.done:
+		return nil, ErrHostOffline
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}

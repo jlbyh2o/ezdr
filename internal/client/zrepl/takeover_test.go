@@ -160,3 +160,22 @@ func TestPreflight(t *testing.T) {
 		t.Error("accepted an invalid job name")
 	}
 }
+
+// An upgrade repeated after an interrupted attempt (0.7 already unpacked)
+// still finishes dpkg's work, holds the package, and restarts zrepl.
+func TestUpgradeRepeat(t *testing.T) {
+	f := &fakeRunner{}
+	a := &Applier{Paths: testPaths(t), Run: f.run}
+	v, err := a.Upgrade(context.Background())
+	if err != nil || v != "v0.7.0" {
+		t.Fatalf("Upgrade = %q, %v", v, err)
+	}
+	for _, want := range []string{"dpkg --force-confdef --force-confold --configure -a", "apt-mark hold zrepl", "systemctl restart zrepl"} {
+		if !f.did(want) {
+			t.Errorf("missing %q in %v", want, f.calls)
+		}
+	}
+	if f.did("apt-get install") {
+		t.Error("reinstalled an already supported zrepl")
+	}
+}

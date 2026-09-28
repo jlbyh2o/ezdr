@@ -29,8 +29,10 @@ export function TakeoverDialog({ plan, onClose }: { plan: Plan; onClose: () => v
     void (async () => {
       try {
         if (run === 0) {
+          // Show a running takeover, or one whose rollback failed.
           const current = await planClient.getTakeover({ id: plan.id })
-          if (current.takeover?.state === TakeoverState.RUNNING) {
+          const st = current.takeover?.state
+          if (st === TakeoverState.RUNNING || (st === TakeoverState.FAILED && current.takeover?.rollingBack)) {
             if (active) setProgress(current.takeover)
             return
           }
@@ -69,6 +71,19 @@ export function TakeoverDialog({ plan, onClose }: { plan: Plan; onClose: () => v
     }
   }
 
+  async function retryRollback() {
+    setStarting(true)
+    setStartError(undefined)
+    try {
+      const r = await planClient.retryTakeoverRollback({ id: plan.id })
+      setProgress(r.takeover)
+    } catch (err) {
+      setStartError(errorMessage(err))
+    } finally {
+      setStarting(false)
+    }
+  }
+
   const checking = !progress && result?.run !== run
   const takeover = result?.takeover
   const error = checking ? undefined : result?.error
@@ -84,7 +99,10 @@ export function TakeoverDialog({ plan, onClose }: { plan: Plan; onClose: () => v
           </DialogDescription>
         </DialogHeader>
         {progress ? (
-          <ProgressView takeover={progress} />
+          <>
+            <ProgressView takeover={progress} />
+            <ErrorAlert message={startError} />
+          </>
         ) : (
           <>
             <ErrorAlert message={error} />
@@ -107,9 +125,16 @@ export function TakeoverDialog({ plan, onClose }: { plan: Plan; onClose: () => v
         )}
         <DialogFooter>
           {progress ? (
-            <Button variant="outline" onClick={onClose}>
-              {running ? 'Close (the takeover continues)' : 'Close'}
-            </Button>
+            <>
+              {progress.state === TakeoverState.FAILED && progress.rollingBack && (
+                <Button onClick={() => void retryRollback()} disabled={starting}>
+                  Roll back again
+                </Button>
+              )}
+              <Button variant="outline" onClick={onClose}>
+                {running ? 'Close (the takeover continues)' : 'Close'}
+              </Button>
+            </>
           ) : (
             <>
               <Button variant="outline" onClick={() => setRun((n) => n + 1)} disabled={checking || starting}>
@@ -157,12 +182,13 @@ function ProgressView({ takeover: t }: { takeover: Takeover }) {
           <AlertTitle>The takeover failed and couldn't be fully undone</AlertTitle>
           <AlertDescription>
             {t.error}. See the steps below. Each host's original configuration is kept as /etc/zrepl/zrepl.yml.ezdr-takeover-*.
+            {t.rollingBack && ' Once the hosts are reachable, roll back again.'}
           </AlertDescription>
         </Alert>
       )}
       <ol className="grid gap-2">
-        {t.steps.map((s) => (
-          <li key={s.name} className="flex gap-2">
+        {t.steps.map((s, i) => (
+          <li key={i} className="flex gap-2">
             <span className="mt-0.5">{stepIcon[s.status] ?? stepIcon.pending}</span>
             <div>
               <div className={s.status === 'skipped' ? 'text-muted-foreground' : ''}>{s.name}</div>
