@@ -63,8 +63,8 @@ message Action {
 // guests of the given test: tagged ezdr-test, marked with the test's ID, and
 // with every disk on a test storage.
 
-// TestOptions lists the snapshots all the given replicas have (for choosing
-// a point in time) and the host's available memory.
+// TestOptions lists each replica's snapshots (for choosing a point in time)
+// and the host's available memory.
 message TestOptions {
   repeated string replicas = 1;
   // Only snapshots with this prefix are listed.
@@ -72,9 +72,16 @@ message TestOptions {
 }
 
 message TestOptionsResult {
-  // Newest first.
-  repeated TestSnapshot snapshots = 1;
+  repeated ReplicaSnapshots replicas = 1;
   uint64 memory_available_bytes = 2;
+}
+
+message ReplicaSnapshots {
+  string replica = 1;
+  // Whether the replica exists yet.
+  bool exists = 2;
+  // Newest first.
+  repeated TestSnapshot snapshots = 3;
 }
 
 message TestSnapshot {

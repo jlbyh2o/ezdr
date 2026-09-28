@@ -42,6 +42,7 @@ import {
 import { type GetHostInventoryResponse, type Host, type Plan, PlanState, type ZreplSetup } from '@/gen/ezdr/portal/v1/portal_pb'
 import { HostStatusPanel, PlanActions, StateBadge } from '@/pages/plan-actions'
 import { PlanStatusCard } from '@/pages/plan-status'
+import { TestFailoverCard } from '@/pages/test-failover'
 import { errorMessage, hostClient, planClient } from '@/lib/api'
 import { drPresets, grid, primaryPresets, splitPeriod, units } from '@/lib/retention'
 import { PageHeader } from '@/pages/layout'
@@ -215,6 +216,7 @@ export function PlanEditorPage() {
       <div className="grid items-start gap-4 lg:grid-cols-[1fr_320px]">
         <div className="grid gap-4">
           {plan && <PlanStatusCard plan={plan} />}
+          {plan && <TestFailoverCard plan={plan} />}
           <GeneralCard spec={spec} hosts={hosts} update={update} updateAndSuggest={updateAndSuggest} />
           {primaryInv && drInv && (!plan || plan.state === PlanState.DRAFT) && (
             <TakeoverCard

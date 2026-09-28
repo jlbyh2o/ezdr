@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -33,6 +34,8 @@ type fakeHost struct {
 	// releases.
 	failRestore int
 	failRelease bool
+	// failPrepare fails test preparation.
+	failPrepare bool
 
 	mu      sync.Mutex
 	actions []string
@@ -111,6 +114,27 @@ func (f *fakeHost) answer(a *clientv1.Action) bool {
 		if f.failRelease {
 			ack.Succeeded, ack.Message = false, "release failed"
 		}
+	case *clientv1.Action_TestOptions:
+		name = "test options"
+		ack.TestOptions = &clientv1.TestOptionsResult{MemoryAvailableBytes: 1 << 30}
+		for _, r := range k.TestOptions.Replicas {
+			ack.TestOptions.Replicas = append(ack.TestOptions.Replicas, &clientv1.ReplicaSnapshots{Replica: r, Exists: true,
+				Snapshots: []*clientv1.TestSnapshot{{Name: "zrepl_2", CreatedAt: timestamppb.Now()}, {Name: "zrepl_1", CreatedAt: timestamppb.New(time.Unix(1, 0))}}})
+		}
+	case *clientv1.Action_TestPrepare:
+		name = "test prepare " + k.TestPrepare.Snapshot
+		if f.failPrepare {
+			ack.Succeeded, ack.Message = false, "clone failed"
+		}
+		ack.Output = []string{"guest 101: removed dev0"}
+	case *clientv1.Action_TestStartGuest:
+		name = "test start " + strconv.FormatUint(uint64(k.TestStartGuest.TestVmid), 10)
+	case *clientv1.Action_TestCheckGuest:
+		name = "test check"
+		ack.GuestCheck = &clientv1.TestGuestCheck{Running: true}
+	case *clientv1.Action_TestCleanup:
+		name = "test cleanup"
+		ack.Output = []string{"destroyed test guest", "destroyed clone"}
 	default:
 		name = "other"
 	}

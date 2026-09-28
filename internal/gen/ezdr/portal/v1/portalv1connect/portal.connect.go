@@ -33,6 +33,8 @@ const (
 	AuditServiceName = "ezdr.portal.v1.AuditService"
 	// PlanServiceName is the fully-qualified name of the PlanService service.
 	PlanServiceName = "ezdr.portal.v1.PlanService"
+	// TestFailoverServiceName is the fully-qualified name of the TestFailoverService service.
+	TestFailoverServiceName = "ezdr.portal.v1.TestFailoverService"
 	// AlertServiceName is the fully-qualified name of the AlertService service.
 	AlertServiceName = "ezdr.portal.v1.AlertService"
 )
@@ -135,6 +137,27 @@ const (
 	// PlanServiceGetPlanStatusProcedure is the fully-qualified name of the PlanService's GetPlanStatus
 	// RPC.
 	PlanServiceGetPlanStatusProcedure = "/ezdr.portal.v1.PlanService/GetPlanStatus"
+	// TestFailoverServiceGetTestOptionsProcedure is the fully-qualified name of the
+	// TestFailoverService's GetTestOptions RPC.
+	TestFailoverServiceGetTestOptionsProcedure = "/ezdr.portal.v1.TestFailoverService/GetTestOptions"
+	// TestFailoverServiceStartTestProcedure is the fully-qualified name of the TestFailoverService's
+	// StartTest RPC.
+	TestFailoverServiceStartTestProcedure = "/ezdr.portal.v1.TestFailoverService/StartTest"
+	// TestFailoverServiceGetTestProcedure is the fully-qualified name of the TestFailoverService's
+	// GetTest RPC.
+	TestFailoverServiceGetTestProcedure = "/ezdr.portal.v1.TestFailoverService/GetTest"
+	// TestFailoverServiceListTestsProcedure is the fully-qualified name of the TestFailoverService's
+	// ListTests RPC.
+	TestFailoverServiceListTestsProcedure = "/ezdr.portal.v1.TestFailoverService/ListTests"
+	// TestFailoverServiceExtendTestProcedure is the fully-qualified name of the TestFailoverService's
+	// ExtendTest RPC.
+	TestFailoverServiceExtendTestProcedure = "/ezdr.portal.v1.TestFailoverService/ExtendTest"
+	// TestFailoverServiceEndTestProcedure is the fully-qualified name of the TestFailoverService's
+	// EndTest RPC.
+	TestFailoverServiceEndTestProcedure = "/ezdr.portal.v1.TestFailoverService/EndTest"
+	// TestFailoverServiceSetTestVerdictProcedure is the fully-qualified name of the
+	// TestFailoverService's SetTestVerdict RPC.
+	TestFailoverServiceSetTestVerdictProcedure = "/ezdr.portal.v1.TestFailoverService/SetTestVerdict"
 	// AlertServiceGetAlertSettingsProcedure is the fully-qualified name of the AlertService's
 	// GetAlertSettings RPC.
 	AlertServiceGetAlertSettingsProcedure = "/ezdr.portal.v1.AlertService/GetAlertSettings"
@@ -1370,6 +1393,243 @@ func (UnimplementedPlanServiceHandler) DeactivatePlan(context.Context, *connect.
 
 func (UnimplementedPlanServiceHandler) GetPlanStatus(context.Context, *connect.Request[v1.GetPlanStatusRequest]) (*connect.Response[v1.GetPlanStatusResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.GetPlanStatus is not implemented"))
+}
+
+// TestFailoverServiceClient is a client for the ezdr.portal.v1.TestFailoverService service.
+type TestFailoverServiceClient interface {
+	// GetTestOptions asks the DR host which guests can be tested and from
+	// which points in time.
+	GetTestOptions(context.Context, *connect.Request[v1.GetTestOptionsRequest]) (*connect.Response[v1.GetTestOptionsResponse], error)
+	StartTest(context.Context, *connect.Request[v1.StartTestRequest]) (*connect.Response[v1.StartTestResponse], error)
+	GetTest(context.Context, *connect.Request[v1.GetTestRequest]) (*connect.Response[v1.GetTestResponse], error)
+	// ListTests returns a plan's tests, newest first.
+	ListTests(context.Context, *connect.Request[v1.ListTestsRequest]) (*connect.Response[v1.ListTestsResponse], error)
+	// ExtendTest adds the plan's time limit to a running test's deadline.
+	ExtendTest(context.Context, *connect.Request[v1.ExtendTestRequest]) (*connect.Response[v1.ExtendTestResponse], error)
+	// EndTest stops and removes the test guests.
+	EndTest(context.Context, *connect.Request[v1.EndTestRequest]) (*connect.Response[v1.EndTestResponse], error)
+	SetTestVerdict(context.Context, *connect.Request[v1.SetTestVerdictRequest]) (*connect.Response[v1.SetTestVerdictResponse], error)
+}
+
+// NewTestFailoverServiceClient constructs a client for the ezdr.portal.v1.TestFailoverService
+// service. By default, it uses the Connect protocol with the binary Protobuf Codec, asks for
+// gzipped responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply
+// the connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewTestFailoverServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) TestFailoverServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	testFailoverServiceMethods := v1.File_ezdr_portal_v1_portal_proto.Services().ByName("TestFailoverService").Methods()
+	return &testFailoverServiceClient{
+		getTestOptions: connect.NewClient[v1.GetTestOptionsRequest, v1.GetTestOptionsResponse](
+			httpClient,
+			baseURL+TestFailoverServiceGetTestOptionsProcedure,
+			connect.WithSchema(testFailoverServiceMethods.ByName("GetTestOptions")),
+			connect.WithClientOptions(opts...),
+		),
+		startTest: connect.NewClient[v1.StartTestRequest, v1.StartTestResponse](
+			httpClient,
+			baseURL+TestFailoverServiceStartTestProcedure,
+			connect.WithSchema(testFailoverServiceMethods.ByName("StartTest")),
+			connect.WithClientOptions(opts...),
+		),
+		getTest: connect.NewClient[v1.GetTestRequest, v1.GetTestResponse](
+			httpClient,
+			baseURL+TestFailoverServiceGetTestProcedure,
+			connect.WithSchema(testFailoverServiceMethods.ByName("GetTest")),
+			connect.WithClientOptions(opts...),
+		),
+		listTests: connect.NewClient[v1.ListTestsRequest, v1.ListTestsResponse](
+			httpClient,
+			baseURL+TestFailoverServiceListTestsProcedure,
+			connect.WithSchema(testFailoverServiceMethods.ByName("ListTests")),
+			connect.WithClientOptions(opts...),
+		),
+		extendTest: connect.NewClient[v1.ExtendTestRequest, v1.ExtendTestResponse](
+			httpClient,
+			baseURL+TestFailoverServiceExtendTestProcedure,
+			connect.WithSchema(testFailoverServiceMethods.ByName("ExtendTest")),
+			connect.WithClientOptions(opts...),
+		),
+		endTest: connect.NewClient[v1.EndTestRequest, v1.EndTestResponse](
+			httpClient,
+			baseURL+TestFailoverServiceEndTestProcedure,
+			connect.WithSchema(testFailoverServiceMethods.ByName("EndTest")),
+			connect.WithClientOptions(opts...),
+		),
+		setTestVerdict: connect.NewClient[v1.SetTestVerdictRequest, v1.SetTestVerdictResponse](
+			httpClient,
+			baseURL+TestFailoverServiceSetTestVerdictProcedure,
+			connect.WithSchema(testFailoverServiceMethods.ByName("SetTestVerdict")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// testFailoverServiceClient implements TestFailoverServiceClient.
+type testFailoverServiceClient struct {
+	getTestOptions *connect.Client[v1.GetTestOptionsRequest, v1.GetTestOptionsResponse]
+	startTest      *connect.Client[v1.StartTestRequest, v1.StartTestResponse]
+	getTest        *connect.Client[v1.GetTestRequest, v1.GetTestResponse]
+	listTests      *connect.Client[v1.ListTestsRequest, v1.ListTestsResponse]
+	extendTest     *connect.Client[v1.ExtendTestRequest, v1.ExtendTestResponse]
+	endTest        *connect.Client[v1.EndTestRequest, v1.EndTestResponse]
+	setTestVerdict *connect.Client[v1.SetTestVerdictRequest, v1.SetTestVerdictResponse]
+}
+
+// GetTestOptions calls ezdr.portal.v1.TestFailoverService.GetTestOptions.
+func (c *testFailoverServiceClient) GetTestOptions(ctx context.Context, req *connect.Request[v1.GetTestOptionsRequest]) (*connect.Response[v1.GetTestOptionsResponse], error) {
+	return c.getTestOptions.CallUnary(ctx, req)
+}
+
+// StartTest calls ezdr.portal.v1.TestFailoverService.StartTest.
+func (c *testFailoverServiceClient) StartTest(ctx context.Context, req *connect.Request[v1.StartTestRequest]) (*connect.Response[v1.StartTestResponse], error) {
+	return c.startTest.CallUnary(ctx, req)
+}
+
+// GetTest calls ezdr.portal.v1.TestFailoverService.GetTest.
+func (c *testFailoverServiceClient) GetTest(ctx context.Context, req *connect.Request[v1.GetTestRequest]) (*connect.Response[v1.GetTestResponse], error) {
+	return c.getTest.CallUnary(ctx, req)
+}
+
+// ListTests calls ezdr.portal.v1.TestFailoverService.ListTests.
+func (c *testFailoverServiceClient) ListTests(ctx context.Context, req *connect.Request[v1.ListTestsRequest]) (*connect.Response[v1.ListTestsResponse], error) {
+	return c.listTests.CallUnary(ctx, req)
+}
+
+// ExtendTest calls ezdr.portal.v1.TestFailoverService.ExtendTest.
+func (c *testFailoverServiceClient) ExtendTest(ctx context.Context, req *connect.Request[v1.ExtendTestRequest]) (*connect.Response[v1.ExtendTestResponse], error) {
+	return c.extendTest.CallUnary(ctx, req)
+}
+
+// EndTest calls ezdr.portal.v1.TestFailoverService.EndTest.
+func (c *testFailoverServiceClient) EndTest(ctx context.Context, req *connect.Request[v1.EndTestRequest]) (*connect.Response[v1.EndTestResponse], error) {
+	return c.endTest.CallUnary(ctx, req)
+}
+
+// SetTestVerdict calls ezdr.portal.v1.TestFailoverService.SetTestVerdict.
+func (c *testFailoverServiceClient) SetTestVerdict(ctx context.Context, req *connect.Request[v1.SetTestVerdictRequest]) (*connect.Response[v1.SetTestVerdictResponse], error) {
+	return c.setTestVerdict.CallUnary(ctx, req)
+}
+
+// TestFailoverServiceHandler is an implementation of the ezdr.portal.v1.TestFailoverService
+// service.
+type TestFailoverServiceHandler interface {
+	// GetTestOptions asks the DR host which guests can be tested and from
+	// which points in time.
+	GetTestOptions(context.Context, *connect.Request[v1.GetTestOptionsRequest]) (*connect.Response[v1.GetTestOptionsResponse], error)
+	StartTest(context.Context, *connect.Request[v1.StartTestRequest]) (*connect.Response[v1.StartTestResponse], error)
+	GetTest(context.Context, *connect.Request[v1.GetTestRequest]) (*connect.Response[v1.GetTestResponse], error)
+	// ListTests returns a plan's tests, newest first.
+	ListTests(context.Context, *connect.Request[v1.ListTestsRequest]) (*connect.Response[v1.ListTestsResponse], error)
+	// ExtendTest adds the plan's time limit to a running test's deadline.
+	ExtendTest(context.Context, *connect.Request[v1.ExtendTestRequest]) (*connect.Response[v1.ExtendTestResponse], error)
+	// EndTest stops and removes the test guests.
+	EndTest(context.Context, *connect.Request[v1.EndTestRequest]) (*connect.Response[v1.EndTestResponse], error)
+	SetTestVerdict(context.Context, *connect.Request[v1.SetTestVerdictRequest]) (*connect.Response[v1.SetTestVerdictResponse], error)
+}
+
+// NewTestFailoverServiceHandler builds an HTTP handler from the service implementation. It returns
+// the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewTestFailoverServiceHandler(svc TestFailoverServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	testFailoverServiceMethods := v1.File_ezdr_portal_v1_portal_proto.Services().ByName("TestFailoverService").Methods()
+	testFailoverServiceGetTestOptionsHandler := connect.NewUnaryHandler(
+		TestFailoverServiceGetTestOptionsProcedure,
+		svc.GetTestOptions,
+		connect.WithSchema(testFailoverServiceMethods.ByName("GetTestOptions")),
+		connect.WithHandlerOptions(opts...),
+	)
+	testFailoverServiceStartTestHandler := connect.NewUnaryHandler(
+		TestFailoverServiceStartTestProcedure,
+		svc.StartTest,
+		connect.WithSchema(testFailoverServiceMethods.ByName("StartTest")),
+		connect.WithHandlerOptions(opts...),
+	)
+	testFailoverServiceGetTestHandler := connect.NewUnaryHandler(
+		TestFailoverServiceGetTestProcedure,
+		svc.GetTest,
+		connect.WithSchema(testFailoverServiceMethods.ByName("GetTest")),
+		connect.WithHandlerOptions(opts...),
+	)
+	testFailoverServiceListTestsHandler := connect.NewUnaryHandler(
+		TestFailoverServiceListTestsProcedure,
+		svc.ListTests,
+		connect.WithSchema(testFailoverServiceMethods.ByName("ListTests")),
+		connect.WithHandlerOptions(opts...),
+	)
+	testFailoverServiceExtendTestHandler := connect.NewUnaryHandler(
+		TestFailoverServiceExtendTestProcedure,
+		svc.ExtendTest,
+		connect.WithSchema(testFailoverServiceMethods.ByName("ExtendTest")),
+		connect.WithHandlerOptions(opts...),
+	)
+	testFailoverServiceEndTestHandler := connect.NewUnaryHandler(
+		TestFailoverServiceEndTestProcedure,
+		svc.EndTest,
+		connect.WithSchema(testFailoverServiceMethods.ByName("EndTest")),
+		connect.WithHandlerOptions(opts...),
+	)
+	testFailoverServiceSetTestVerdictHandler := connect.NewUnaryHandler(
+		TestFailoverServiceSetTestVerdictProcedure,
+		svc.SetTestVerdict,
+		connect.WithSchema(testFailoverServiceMethods.ByName("SetTestVerdict")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/ezdr.portal.v1.TestFailoverService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case TestFailoverServiceGetTestOptionsProcedure:
+			testFailoverServiceGetTestOptionsHandler.ServeHTTP(w, r)
+		case TestFailoverServiceStartTestProcedure:
+			testFailoverServiceStartTestHandler.ServeHTTP(w, r)
+		case TestFailoverServiceGetTestProcedure:
+			testFailoverServiceGetTestHandler.ServeHTTP(w, r)
+		case TestFailoverServiceListTestsProcedure:
+			testFailoverServiceListTestsHandler.ServeHTTP(w, r)
+		case TestFailoverServiceExtendTestProcedure:
+			testFailoverServiceExtendTestHandler.ServeHTTP(w, r)
+		case TestFailoverServiceEndTestProcedure:
+			testFailoverServiceEndTestHandler.ServeHTTP(w, r)
+		case TestFailoverServiceSetTestVerdictProcedure:
+			testFailoverServiceSetTestVerdictHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedTestFailoverServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedTestFailoverServiceHandler struct{}
+
+func (UnimplementedTestFailoverServiceHandler) GetTestOptions(context.Context, *connect.Request[v1.GetTestOptionsRequest]) (*connect.Response[v1.GetTestOptionsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.TestFailoverService.GetTestOptions is not implemented"))
+}
+
+func (UnimplementedTestFailoverServiceHandler) StartTest(context.Context, *connect.Request[v1.StartTestRequest]) (*connect.Response[v1.StartTestResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.TestFailoverService.StartTest is not implemented"))
+}
+
+func (UnimplementedTestFailoverServiceHandler) GetTest(context.Context, *connect.Request[v1.GetTestRequest]) (*connect.Response[v1.GetTestResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.TestFailoverService.GetTest is not implemented"))
+}
+
+func (UnimplementedTestFailoverServiceHandler) ListTests(context.Context, *connect.Request[v1.ListTestsRequest]) (*connect.Response[v1.ListTestsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.TestFailoverService.ListTests is not implemented"))
+}
+
+func (UnimplementedTestFailoverServiceHandler) ExtendTest(context.Context, *connect.Request[v1.ExtendTestRequest]) (*connect.Response[v1.ExtendTestResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.TestFailoverService.ExtendTest is not implemented"))
+}
+
+func (UnimplementedTestFailoverServiceHandler) EndTest(context.Context, *connect.Request[v1.EndTestRequest]) (*connect.Response[v1.EndTestResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.TestFailoverService.EndTest is not implemented"))
+}
+
+func (UnimplementedTestFailoverServiceHandler) SetTestVerdict(context.Context, *connect.Request[v1.SetTestVerdictRequest]) (*connect.Response[v1.SetTestVerdictResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.TestFailoverService.SetTestVerdict is not implemented"))
 }
 
 // AlertServiceClient is a client for the ezdr.portal.v1.AlertService service.

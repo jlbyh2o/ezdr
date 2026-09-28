@@ -270,6 +270,160 @@ service PlanService {
   rpc GetPlanStatus(GetPlanStatusRequest) returns (GetPlanStatusResponse);
 }
 
+// TestFailoverService runs test failovers. See docs/design/test-failover.md.
+service TestFailoverService {
+  // GetTestOptions asks the DR host which guests can be tested and from
+  // which points in time.
+  rpc GetTestOptions(GetTestOptionsRequest) returns (GetTestOptionsResponse);
+  rpc StartTest(StartTestRequest) returns (StartTestResponse);
+  rpc GetTest(GetTestRequest) returns (GetTestResponse);
+  // ListTests returns a plan's tests, newest first.
+  rpc ListTests(ListTestsRequest) returns (ListTestsResponse);
+  // ExtendTest adds the plan's time limit to a running test's deadline.
+  rpc ExtendTest(ExtendTestRequest) returns (ExtendTestResponse);
+  // EndTest stops and removes the test guests.
+  rpc EndTest(EndTestRequest) returns (EndTestResponse);
+  rpc SetTestVerdict(SetTestVerdictRequest) returns (SetTestVerdictResponse);
+}
+
+message GetTestOptionsRequest {
+  string plan_id = 1;
+}
+
+message GetTestOptionsResponse {
+  repeated TestGuestOption guests = 1;
+  // Points in time every testable guest has, newest first.
+  repeated TestPointInTime points_in_time = 2;
+  uint64 memory_available_bytes = 3;
+}
+
+message TestGuestOption {
+  uint32 vmid = 1;
+  uint32 test_vmid = 2;
+  string name = 3;
+  string type = 4;
+  uint64 memory_bytes = 5;
+  int32 startup_order = 6;
+  // Why the guest can't be tested now; empty if it can.
+  string problem = 7;
+  // When the DR host's copy of its configuration last changed.
+  google.protobuf.Timestamp config_changed_at = 8;
+}
+
+message TestPointInTime {
+  string snapshot = 1;
+  google.protobuf.Timestamp created_at = 2;
+}
+
+message StartTestRequest {
+  string plan_id = 1;
+  repeated uint32 vmids = 2;
+  string snapshot = 3;
+}
+
+message StartTestResponse {
+  TestRun test = 1;
+}
+
+message GetTestRequest {
+  string id = 1;
+}
+
+message GetTestResponse {
+  TestRun test = 1;
+}
+
+message ListTestsRequest {
+  string plan_id = 1;
+}
+
+message ListTestsResponse {
+  repeated TestRun tests = 1;
+}
+
+message ExtendTestRequest {
+  string id = 1;
+}
+
+message ExtendTestResponse {
+  TestRun test = 1;
+}
+
+message EndTestRequest {
+  string id = 1;
+}
+
+message EndTestResponse {
+  TestRun test = 1;
+}
+
+message SetTestVerdictRequest {
+  string id = 1;
+  TestVerdict verdict = 2;
+  string notes = 3;
+}
+
+message SetTestVerdictResponse {
+  TestRun test = 1;
+}
+
+enum TestState {
+  TEST_STATE_UNSPECIFIED = 0;
+  // Cloning, registering, and starting the guests.
+  TEST_STATE_STARTING = 1;
+  TEST_STATE_RUNNING = 2;
+  // Removing the test guests and clones.
+  TEST_STATE_ENDING = 3;
+  TEST_STATE_ENDED = 4;
+  // Setting up failed; the test was cleaned up.
+  TEST_STATE_FAILED = 5;
+}
+
+enum TestVerdict {
+  TEST_VERDICT_UNSPECIFIED = 0;
+  TEST_VERDICT_PASSED = 1;
+  TEST_VERDICT_FAILED = 2;
+}
+
+// TestRun is one test failover of a plan.
+message TestRun {
+  string id = 1;
+  string plan_id = 2;
+  string plan_name = 3;
+  TestState state = 4;
+  string snapshot = 5;
+  google.protobuf.Timestamp snapshot_at = 6;
+  string started_by = 7;
+  google.protobuf.Timestamp started_at = 8;
+  // When the test ends by itself.
+  google.protobuf.Timestamp deadline = 9;
+  google.protobuf.Timestamp ended_at = 10;
+  // Who ended it, or "time limit".
+  string ended_by = 11;
+  repeated TestRunGuest guests = 12;
+  repeated TakeoverStep steps = 13;
+  // Why setting up or cleaning up failed.
+  string error = 14;
+  // Settings removed from guests' configurations, such as passthrough.
+  repeated string notes = 15;
+  TestVerdict verdict = 16;
+  string verdict_notes = 17;
+  string verdict_by = 18;
+  google.protobuf.Timestamp verdict_at = 19;
+}
+
+message TestRunGuest {
+  uint32 vmid = 1;
+  uint32 test_vmid = 2;
+  string name = 3;
+  string type = 4;
+  // "pending", "starting", "running", or "failed".
+  string status = 5;
+  bool agent_enabled = 6;
+  bool agent_ok = 7;
+  string detail = 8;
+}
+
 enum HealthState {
   HEALTH_STATE_UNSPECIFIED = 0;
   // Not active, so no health.

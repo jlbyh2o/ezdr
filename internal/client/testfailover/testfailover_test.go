@@ -42,6 +42,8 @@ func (f *fakeHost) run(_ context.Context, name string, args ...string) ([]byte, 
 		f.clones[last] = args[1]
 	case strings.HasPrefix(call, "zfs destroy "):
 		delete(f.clones, last)
+	case strings.HasPrefix(call, "zfs list -Hp -t snapshot"):
+		return nil, errors.New("exit status 1: dataset does not exist")
 	case strings.HasPrefix(call, "zfs list -H -o name "):
 		return nil, errors.New("dataset does not exist")
 	case len(args) == 2 && args[0] == "status":
@@ -109,11 +111,13 @@ func setup(t *testing.T) (*Runner, *fakeHost, *clientv1.TestPrepare) {
 
 func TestOptions(t *testing.T) {
 	r, _, _ := setup(t)
-	res, err := r.Options(context.Background(), []string{"tank/rep/rpool/vm-201-disk-0", "tank/rep/rpool/subvol-101-disk-0"}, "zrepl_")
+	res, err := r.Options(context.Background(), []string{"tank/rep/rpool/vm-201-disk-0", "tank/rep/rpool/subvol-999-disk-0"}, "zrepl_")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(res.Snapshots) != 1 || res.Snapshots[0].Name != "zrepl_2" || res.MemoryAvailableBytes != 4000000<<10 {
+	vm := res.Replicas[0]
+	if len(res.Replicas) != 2 || !vm.Exists || len(vm.Snapshots) != 2 || vm.Snapshots[0].Name != "zrepl_2" ||
+		res.Replicas[1].Exists || res.MemoryAvailableBytes != 4000000<<10 {
 		t.Errorf("options = %v", res)
 	}
 }
@@ -135,7 +139,7 @@ func TestPrepareStartCheckCleanup(t *testing.T) {
 		}
 	}
 	vm, _ := os.ReadFile(r.configPath("qemu", 10201))
-	for _, want := range []string{"#Test failover of guest 201 from plan Main. EZDR test ID: t1", "name: test-app",
+	for _, want := range []string{"#Test failover of guest 201 from plan Main (ezdr-test-id-t1)", "name: test-app",
 		"scsi0: ezdr-test-tank:vm-10201-disk-0,size=4G", "bridge=vmbr99", "tags: ezdr-test"} {
 		if !strings.Contains(string(vm), want) {
 			t.Errorf("VM config lacks %q:\n%s", want, vm)
@@ -155,6 +159,12 @@ func TestPrepareStartCheckCleanup(t *testing.T) {
 		t.Errorf("repeat changed things: %v", f.calls)
 	}
 
+	// Proxmox percent-encodes some characters when it rewrites a VM's
+	// description (as qm set does); the guest must still be recognized.
+	encoded := strings.Replace(string(vm), "plan Main (", "plan Main%3A (", 1)
+	if err := os.WriteFile(r.configPath("qemu", 10201), []byte(encoded), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	if err := r.StartGuest(ctx, "t1", "qemu", 10201); err != nil {
 		t.Fatal(err)
 	}
@@ -189,12 +199,15 @@ func TestRefusesOtherGuests(t *testing.T) {
 	if _, err := r.Prepare(ctx, p); err == nil || !strings.Contains(err.Error(), "already in use") {
 		t.Errorf("prepare over a real guest: %v", err)
 	}
-	if _, err := r.Cleanup(ctx, &clientv1.TestCleanup{TestId: "t1", Guests: p.Guests[:1]}); err == nil {
-		t.Error("cleanup accepted a guest that isn't a test guest")
+	// The refused guest doesn't stop the container's cleanup.
+	f.clones["tank/ezdr-test/subvol-10101-disk-0"] = "tank/rep/rpool/subvol-101-disk-0@zrepl_2"
+	done, err := r.Cleanup(ctx, &clientv1.TestCleanup{TestId: "t1", Guests: p.Guests})
+	if err == nil || len(done) != 1 || !strings.Contains(done[0], "subvol-10101-disk-0") {
+		t.Errorf("cleanup with a refused guest: %v, %v", done, err)
 	}
 	// Even a guest carrying the test's marker and tag is refused if a disk
 	// is outside the test storage.
-	if err := os.WriteFile(r.configPath("qemu", 10201), []byte("#EZDR test ID: t1\ntags: ezdr-test\nscsi0: tank:vm-10201-disk-0\n"), 0o600); err != nil {
+	if err := os.WriteFile(r.configPath("qemu", 10201), []byte("#ezdr-test-id-t1\ntags: ezdr-test\nscsi0: tank:vm-10201-disk-0\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := r.Cleanup(ctx, &clientv1.TestCleanup{TestId: "t1", Guests: p.Guests[:1]}); err == nil || !strings.Contains(err.Error(), "outside the test storage") {
@@ -204,6 +217,7 @@ func TestRefusesOtherGuests(t *testing.T) {
 		t.Errorf("touched a guest that isn't ours: %v", f.calls)
 	}
 	// A dataset at a clone's name that isn't a clone of the replica is kept.
+	f.calls = nil
 	f.clones["tank/ezdr-test/subvol-10101-disk-0"] = "tank/other@x"
 	if _, err := r.Cleanup(ctx, &clientv1.TestCleanup{TestId: "t1", Guests: p.Guests[1:]}); err == nil {
 		t.Error("destroyed a dataset that isn't the test's clone")

@@ -323,6 +323,11 @@ func (s PlanService) DeletePlan(ctx context.Context, req *connect.Request[portal
 	} else if running {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan can't be deleted while its takeover runs"))
 	}
+	if runs, err := s.Store.TestRunsByPlan(ctx, sp.ID, 1); err != nil {
+		return nil, internalError(err)
+	} else if len(runs) > 0 && runs[0].Active {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("end the plan's test failover before deleting it"))
+	}
 	if err := s.Store.DeletePlan(ctx, sp.ID); err != nil {
 		return nil, internalError(err)
 	}

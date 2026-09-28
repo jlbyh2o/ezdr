@@ -8,6 +8,7 @@ import {
   HostService,
   PlanService,
   SetupService,
+  TestFailoverService,
   TokenService,
 } from '@/gen/ezdr/portal/v1/portal_pb'
 
@@ -21,6 +22,7 @@ export const tokenClient = createClient(TokenService, transport)
 export const auditClient = createClient(AuditService, transport)
 export const planClient = createClient(PlanService, transport)
 export const alertClient = createClient(AlertService, transport)
+export const testClient = createClient(TestFailoverService, transport)
 
 export function errorMessage(err: unknown): string {
   if (err instanceof ConnectError) {

@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -91,23 +92,29 @@ func poolOf(dataset string) string {
 	return p
 }
 
-// marker identifies a test's guests in their description.
-func marker(testID string) string { return "EZDR test ID: " + testID }
+// marker identifies a test's guests in their description. It uses only
+// characters Proxmox never escapes: it percent-encodes some (such as ":")
+// when it rewrites a VM's description.
+func marker(testID string) string { return "ezdr-test-id-" + testID }
 
-// Options lists the snapshots every replica has, newest first, and the
-// host's available memory.
+// Options lists each replica's snapshots with the prefix, newest first, and
+// the host's available memory.
 func (r *Runner) Options(ctx context.Context, replicas []string, prefix string) (*clientv1.TestOptionsResult, error) {
-	res := &clientv1.TestOptionsResult{}
-	var common map[string]int64
+	res := &clientv1.TestOptionsResult{MemoryAvailableBytes: r.memAvailable()}
 	for _, rep := range replicas {
 		if !datasetPattern.MatchString(rep) {
 			return nil, fmt.Errorf("invalid dataset %q", rep)
 		}
+		rs := &clientv1.ReplicaSnapshots{Replica: rep}
+		res.Replicas = append(res.Replicas, rs)
 		out, err := r.Run(ctx, "zfs", "list", "-Hp", "-t", "snapshot", "-o", "name,creation", "-d", "1", rep)
 		if err != nil {
+			if strings.Contains(err.Error(), "does not exist") {
+				continue
+			}
 			return nil, err
 		}
-		have := map[string]int64{}
+		rs.Exists = true
 		for line := range strings.SplitSeq(strings.TrimSpace(string(out)), "\n") {
 			name, created, ok := strings.Cut(line, "\t")
 			_, snap, isSnap := strings.Cut(name, "@")
@@ -115,25 +122,12 @@ func (r *Runner) Options(ctx context.Context, replicas []string, prefix string) 
 				continue
 			}
 			at, _ := strconv.ParseInt(created, 10, 64)
-			have[snap] = at
+			rs.Snapshots = append(rs.Snapshots, &clientv1.TestSnapshot{Name: snap, CreatedAt: timestamppb.New(time.Unix(at, 0))})
 		}
-		if common == nil {
-			common = have
-			continue
-		}
-		for s := range common {
-			if _, ok := have[s]; !ok {
-				delete(common, s)
-			}
-		}
+		slices.SortFunc(rs.Snapshots, func(a, b *clientv1.TestSnapshot) int {
+			return b.CreatedAt.AsTime().Compare(a.CreatedAt.AsTime())
+		})
 	}
-	for s, at := range common {
-		res.Snapshots = append(res.Snapshots, &clientv1.TestSnapshot{Name: s, CreatedAt: timestamppb.New(time.Unix(at, 0))})
-	}
-	slices.SortFunc(res.Snapshots, func(a, b *clientv1.TestSnapshot) int {
-		return b.CreatedAt.AsTime().Compare(a.CreatedAt.AsTime())
-	})
-	res.MemoryAvailableBytes = r.memAvailable()
 	return res, nil
 }
 
@@ -252,7 +246,7 @@ func (r *Runner) prepareGuest(ctx context.Context, p *clientv1.TestPrepare, g *c
 	}
 	res, err := guestconfig.Rewrite(st.Config, guestconfig.Mapping{
 		Type: g.Type, Volumes: volumes, Bridge: p.Bridge, Storages: storages, Name: name, Tag: Tag,
-		Note:    fmt.Sprintf("Test failover of guest %d from plan %s. %s", g.Vmid, oneLine(p.PlanName), marker(p.TestId)),
+		Note:    fmt.Sprintf("Test failover of guest %d from plan %s (%s)", g.Vmid, oneLine(p.PlanName), marker(p.TestId)),
 		VMGenID: newUUID(),
 	})
 	if err != nil {
@@ -356,7 +350,7 @@ func (r *Runner) ours(testID, typ string, vmid uint32) error {
 		return err
 	}
 	conf := string(b)
-	if !strings.Contains(conf, marker(testID)) {
+	if !strings.Contains(description(conf), marker(testID)) {
 		return fmt.Errorf("guest %d isn't part of test %s", vmid, testID)
 	}
 	if !slices.Contains(strings.Split(configValue(conf, "tags"), ";"), Tag) {
@@ -437,52 +431,64 @@ func (r *Runner) running(ctx context.Context, typ string, vmid uint32) (bool, er
 }
 
 // Cleanup stops and destroys the test's guests and their clones. Guests and
-// clones that are already gone are skipped.
+// clones that are already gone are skipped. A guest that can't be removed
+// (or is refused) doesn't stop the others; all problems are returned.
 func (r *Runner) Cleanup(ctx context.Context, c *clientv1.TestCleanup) ([]string, error) {
 	if !testIDPattern.MatchString(c.TestId) {
 		return nil, errors.New("invalid test")
 	}
 	var done []string
+	var errs []error
 	for _, g := range c.Guests {
-		if err := checkGuest(g); err != nil {
+		d, err := r.cleanupGuest(ctx, c.TestId, g)
+		done = append(done, d...)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return done, errors.Join(errs...)
+}
+
+func (r *Runner) cleanupGuest(ctx context.Context, testID string, g *clientv1.TestGuest) ([]string, error) {
+	if err := checkGuest(g); err != nil {
+		return nil, err
+	}
+	var done []string
+	id := strconv.FormatUint(uint64(g.TestVmid), 10)
+	switch err := r.ours(testID, g.Type, g.TestVmid); {
+	case errors.Is(err, errGone):
+	case err != nil:
+		return nil, err
+	default:
+		if running, _ := r.running(ctx, g.Type, g.TestVmid); running {
+			if _, err := r.Run(ctx, tool(g.Type), "stop", id); err != nil {
+				return nil, err
+			}
+		}
+		args := []string{"destroy", id, "--purge", "1"}
+		if g.Type == "qemu" {
+			args = append(args, "--destroy-unreferenced-disks", "1")
+		}
+		if _, err := r.Run(ctx, tool(g.Type), args...); err != nil {
+			return nil, err
+		}
+		done = append(done, "destroyed test guest "+id)
+	}
+	// Clones the guest's destruction didn't remove (for example, if
+	// registration failed halfway).
+	for _, d := range g.Disks {
+		target := testDataset(poolOf(d.Replica)) + "/" + d.Clone
+		out, err := r.Run(ctx, "zfs", "get", "-H", "-o", "value", "origin", target)
+		if err != nil {
+			continue // gone
+		}
+		if !strings.HasPrefix(strings.TrimSpace(string(out)), d.Replica+"@") {
+			return done, fmt.Errorf("%s isn't a clone of %s; not destroying it", target, d.Replica)
+		}
+		if _, err := r.Run(ctx, "zfs", "destroy", target); err != nil {
 			return done, err
 		}
-		id := strconv.FormatUint(uint64(g.TestVmid), 10)
-		switch err := r.ours(c.TestId, g.Type, g.TestVmid); {
-		case errors.Is(err, errGone):
-		case err != nil:
-			return done, err
-		default:
-			if running, _ := r.running(ctx, g.Type, g.TestVmid); running {
-				if _, err := r.Run(ctx, tool(g.Type), "stop", id); err != nil {
-					return done, err
-				}
-			}
-			args := []string{"destroy", id, "--purge", "1"}
-			if g.Type == "qemu" {
-				args = append(args, "--destroy-unreferenced-disks", "1")
-			}
-			if _, err := r.Run(ctx, tool(g.Type), args...); err != nil {
-				return done, err
-			}
-			done = append(done, "destroyed test guest "+id)
-		}
-		// Clones the guest's destruction didn't remove (for example, if
-		// registration failed halfway).
-		for _, d := range g.Disks {
-			target := testDataset(poolOf(d.Replica)) + "/" + d.Clone
-			out, err := r.Run(ctx, "zfs", "get", "-H", "-o", "value", "origin", target)
-			if err != nil {
-				continue // gone
-			}
-			if !strings.HasPrefix(strings.TrimSpace(string(out)), d.Replica+"@") {
-				return done, fmt.Errorf("%s isn't a clone of %s; not destroying it", target, d.Replica)
-			}
-			if _, err := r.Run(ctx, "zfs", "destroy", target); err != nil {
-				return done, err
-			}
-			done = append(done, "destroyed clone "+target)
-		}
+		done = append(done, "destroyed clone "+target)
 	}
 	return done, nil
 }
@@ -502,6 +508,24 @@ func configValue(conf, key string) string {
 		}
 	}
 	return ""
+}
+
+// description returns a configuration's description (its leading comment
+// lines), decoded: Proxmox percent-encodes some characters in VM
+// descriptions.
+func description(conf string) string {
+	var lines []string
+	for line := range strings.SplitSeq(conf, "\n") {
+		d, ok := strings.CutPrefix(line, "#")
+		if !ok {
+			break
+		}
+		if u, err := url.PathUnescape(d); err == nil {
+			d = u
+		}
+		lines = append(lines, d)
+	}
+	return strings.Join(lines, "\n")
 }
 
 func oneLine(s string) string { return strings.Join(strings.Fields(s), " ") }

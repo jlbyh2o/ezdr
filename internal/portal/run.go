@@ -113,6 +113,7 @@ func Run(ctx context.Context, cfg Config, ui fs.FS) error {
 	go cleanupSessions(ctx, st)
 	go api.NewAlertEngine(d).Run(ctx)
 	go d.ResumeTakeovers(ctx)
+	go d.RunTestSupervisor(ctx)
 
 	select {
 	case err := <-errc:
