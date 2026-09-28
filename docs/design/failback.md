@@ -1,6 +1,6 @@
 # Design: Failback
 
-> **Status:** Draft for phase 7. Covers returning a failed-over plan's guests
+> **Status:** Approved for phase 7. Covers returning a failed-over plan's guests
 > to the original primary: copying the DR host's changes back, a short
 > cutover, and resuming normal replication. See [Failover](failover.md) and
 > [Replication](replication.md).
