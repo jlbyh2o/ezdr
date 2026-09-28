@@ -27,6 +27,10 @@ message PlanSpec {
   // Set when the plan takes over an existing hand-written zrepl setup:
   // activating it replaces these jobs instead of starting from scratch.
   ZreplTakeover takeover = 15;
+  // Test failover guests use their VMID plus this offset. Zero means 10000.
+  uint32 test_vmid_offset = 16;
+  // A test failover ends automatically after this long. Zero means 8 hours.
+  uint32 test_time_limit_seconds = 17;
 }
 
 // ZreplTakeover names the existing zrepl jobs a plan replaces. See

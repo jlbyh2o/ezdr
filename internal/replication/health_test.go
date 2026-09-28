@@ -82,3 +82,22 @@ func TestHealth(t *testing.T) {
 		t.Errorf("custom threshold = %v", h)
 	}
 }
+
+func TestTestClonePruningError(t *testing.T) {
+	clone := func(snap, clone string) string {
+		return "(@" + snap + ": zfs exited with error: exit status 1\nstderr:\ncannot destroy 'tank/replicated/rpool/subvol-102-disk-0@" + snap +
+			"': snapshot has dependent clones\nuse '-R' to destroy the following datasets:\n" + clone + "\n)"
+	}
+	test := "pruning rpool/subvol-102-disk-0 on the DR host: destroys failed: " + clone("zrepl_1", "tank/ezdr-test/subvol-10102-disk-0") + ", " +
+		clone("zrepl_2", "tank/ezdr-test/subvol-10102-disk-0")
+	if !TestClonePruningError(test) {
+		t.Error("clones on the test storage weren't recognized")
+	}
+	other := "pruning rpool/subvol-102-disk-0 on the DR host: destroys failed: " + clone("zrepl_1", "tank/mine/copy")
+	mixed := test + ", (@zrepl_3: zfs exited with error: exit status 1\nstderr:\ncannot destroy 'x@zrepl_3': dataset is busy\n)"
+	for name, msg := range map[string]string{"other clone": other, "other failure": mixed, "not pruning": "connection: refused"} {
+		if TestClonePruningError(msg) {
+			t.Errorf("%s: ignored", name)
+		}
+	}
+}

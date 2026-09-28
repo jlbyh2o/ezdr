@@ -87,3 +87,29 @@ func Span(tiers []*planv1.RetentionTier) uint64 {
 	}
 	return total
 }
+
+// Test failover defaults (docs/design/test-failover.md, section 6).
+const (
+	DefaultTestVMIDOffset = 10000
+	DefaultTestTimeLimit  = 8 * hour
+	MinTestTimeLimit      = 15 * 60
+	MaxTestTimeLimit      = 7 * day
+	maxVMID               = 999999999
+	TestTag               = "ezdr-test"
+)
+
+// TestVMIDOffset returns the plan's test VMID offset.
+func TestVMIDOffset(spec *planv1.PlanSpec) uint32 {
+	if o := spec.GetTestVmidOffset(); o > 0 {
+		return o
+	}
+	return DefaultTestVMIDOffset
+}
+
+// TestTimeLimitSeconds returns how long a test failover may run.
+func TestTimeLimitSeconds(spec *planv1.PlanSpec) uint32 {
+	if l := spec.GetTestTimeLimitSeconds(); l > 0 {
+		return l
+	}
+	return DefaultTestTimeLimit
+}

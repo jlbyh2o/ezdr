@@ -199,9 +199,13 @@ type PlanSpec struct {
 	RpoAlertSeconds uint32 `protobuf:"varint,14,opt,name=rpo_alert_seconds,json=rpoAlertSeconds,proto3" json:"rpo_alert_seconds,omitempty"`
 	// Set when the plan takes over an existing hand-written zrepl setup:
 	// activating it replaces these jobs instead of starting from scratch.
-	Takeover      *ZreplTakeover `protobuf:"bytes,15,opt,name=takeover,proto3" json:"takeover,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Takeover *ZreplTakeover `protobuf:"bytes,15,opt,name=takeover,proto3" json:"takeover,omitempty"`
+	// Test failover guests use their VMID plus this offset. Zero means 10000.
+	TestVmidOffset uint32 `protobuf:"varint,16,opt,name=test_vmid_offset,json=testVmidOffset,proto3" json:"test_vmid_offset,omitempty"`
+	// A test failover ends automatically after this long. Zero means 8 hours.
+	TestTimeLimitSeconds uint32 `protobuf:"varint,17,opt,name=test_time_limit_seconds,json=testTimeLimitSeconds,proto3" json:"test_time_limit_seconds,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *PlanSpec) Reset() {
@@ -337,6 +341,20 @@ func (x *PlanSpec) GetTakeover() *ZreplTakeover {
 		return x.Takeover
 	}
 	return nil
+}
+
+func (x *PlanSpec) GetTestVmidOffset() uint32 {
+	if x != nil {
+		return x.TestVmidOffset
+	}
+	return 0
+}
+
+func (x *PlanSpec) GetTestTimeLimitSeconds() uint32 {
+	if x != nil {
+		return x.TestTimeLimitSeconds
+	}
+	return 0
 }
 
 // ZreplTakeover names the existing zrepl jobs a plan replaces. See
@@ -1001,7 +1019,7 @@ var File_ezdr_plan_v1_plan_proto protoreflect.FileDescriptor
 
 const file_ezdr_plan_v1_plan_proto_rawDesc = "" +
 	"\n" +
-	"\x17ezdr/plan/v1/plan.proto\x12\fezdr.plan.v1\"\xe9\x05\n" +
+	"\x17ezdr/plan/v1/plan.proto\x12\fezdr.plan.v1\"\xca\x06\n" +
 	"\bPlanSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12&\n" +
@@ -1020,7 +1038,9 @@ const file_ezdr_plan_v1_plan_proto_rawDesc = "" +
 	"\x0fsnapshot_prefix\x18\f \x01(\tR\x0esnapshotPrefix\x12:\n" +
 	"\anetwork\x18\r \x01(\v2 .ezdr.plan.v1.ReplicationNetworkR\anetwork\x12*\n" +
 	"\x11rpo_alert_seconds\x18\x0e \x01(\rR\x0frpoAlertSeconds\x127\n" +
-	"\btakeover\x18\x0f \x01(\v2\x1b.ezdr.plan.v1.ZreplTakeoverR\btakeover\"I\n" +
+	"\btakeover\x18\x0f \x01(\v2\x1b.ezdr.plan.v1.ZreplTakeoverR\btakeover\x12(\n" +
+	"\x10test_vmid_offset\x18\x10 \x01(\rR\x0etestVmidOffset\x125\n" +
+	"\x17test_time_limit_seconds\x18\x11 \x01(\rR\x14testTimeLimitSeconds\"I\n" +
 	"\rZreplTakeover\x12\x1d\n" +
 	"\n" +
 	"source_job\x18\x01 \x01(\tR\tsourceJob\x12\x19\n" +

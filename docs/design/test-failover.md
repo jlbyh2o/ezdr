@@ -1,6 +1,6 @@
 # Design: Test failover
 
-> **Status:** Draft for phase 5. Covers keeping protected guests'
+> **Status:** Approved for phase 5. Covers keeping protected guests'
 > configuration on the DR host, and test failovers: starting copies of
 > protected guests on the DR host from replicated snapshots, on an isolated
 > network, without interrupting replication. See [Architecture](../architecture.md),

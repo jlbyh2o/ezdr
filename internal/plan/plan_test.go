@@ -247,8 +247,14 @@ func TestNetworkValidation(t *testing.T) {
 		"bad listen": {func(s *planv1.PlanSpec, _ *Context) {
 			s.GetNetwork().GetExisting().ListenAddress = "primary.example.com"
 		}, "listen address must be an IP"},
-		"low port":    {func(s *planv1.PlanSpec, _ *Context) { s.GetNetwork().GetExisting().Port = 80 }, "between 1024 and 65535"},
-		"port in use": {func(_ *planv1.PlanSpec, c *Context) { c.UsedPorts = map[uint32]string{8888: "Other"} }, `already used by plan "Other"`},
+		"test ID used": {func(_ *planv1.PlanSpec, c *Context) {
+			c.DR.Inventory.Guests = []*inventoryv1.Guest{{Vmid: 10101, Name: "other"}}
+		}, "test failover ID 10101 is already used"},
+		"test ID protected": {func(s *planv1.PlanSpec, _ *Context) { s.TestVmidOffset = 100 }, "another protected guest's ID"},
+		"test ID too large": {func(s *planv1.PlanSpec, _ *Context) { s.TestVmidOffset = 999999990 }, "too large"},
+		"test time limit":   {func(s *planv1.PlanSpec, _ *Context) { s.TestTimeLimitSeconds = 60 }, "between 15 minutes and 7 days"},
+		"low port":          {func(s *planv1.PlanSpec, _ *Context) { s.GetNetwork().GetExisting().Port = 80 }, "between 1024 and 65535"},
+		"port in use":       {func(_ *planv1.PlanSpec, c *Context) { c.UsedPorts = map[uint32]string{8888: "Other"} }, `already used by plan "Other"`},
 		"tunnel listener": {func(s *planv1.PlanSpec, _ *Context) {
 			s.Network = &planv1.ReplicationNetwork{Path: &planv1.ReplicationNetwork_Tunnel{Tunnel: &planv1.EzdrTunnel{
 				Endpoint: "dr.example.com:51821", ListenPort: 51821}}}
@@ -318,5 +324,13 @@ func TestValidTunnel(t *testing.T) {
 	c.OtherTunnels = []OtherTunnel{{Plan: "Other", PrimaryHostID: "p", DRHostID: "d", Tunnel: s.GetNetwork().GetTunnel()}}
 	if errs := messages(Validate(s, c), planv1.Severity_SEVERITY_ERROR); errs != "" {
 		t.Errorf("unexpected errors:\n%s", errs)
+	}
+}
+
+func TestRunningTestGuestsDontConflict(t *testing.T) {
+	c := ctxFor(primaryInv(), drInv())
+	c.DR.Inventory.Guests = []*inventoryv1.Guest{{Vmid: 10101, Name: "web", Tags: []string{"web", TestTag}}}
+	if errs := messages(Validate(validSpec(), c), planv1.Severity_SEVERITY_ERROR); errs != "" {
+		t.Errorf("a running test's guest counted as a conflict:\n%s", errs)
 	}
 }

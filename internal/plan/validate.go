@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/netip"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -104,6 +105,7 @@ func Validate(spec *planv1.PlanSpec, ctx Context) []*planv1.Issue {
 	validateNetwork(spec, usedBridges, dr, guests, &is)
 	validateReplicationNetwork(spec, primary, ctx, &is)
 	validateTakeover(spec, primary, dr, &is)
+	validateTestSettings(spec, dr, &is)
 
 	var unprotected []string
 	for _, g := range primary.Guests {
@@ -455,6 +457,33 @@ func validateTunnel(spec *planv1.PlanSpec, t *planv1.EzdrTunnel, ctx Context, is
 			is.errorf(0, "plan %q uses a tunnel between the same hosts with different settings; plans between two hosts share one tunnel", o.Plan)
 		case oLis == lis && o.Tunnel.ListenPort != t.ListenPort:
 			is.errorf(0, "the listening host already accepts tunnels on port %d for plan %q; use the same port", o.Tunnel.ListenPort, o.Plan)
+		}
+	}
+}
+
+// validateTestSettings checks that test failover VMIDs are valid and free.
+// Guests tagged as test guests don't count: they belong to a running test.
+func validateTestSettings(spec *planv1.PlanSpec, dr *inventoryv1.Inventory, is *issues) {
+	if l := spec.GetTestTimeLimitSeconds(); l != 0 && (l < MinTestTimeLimit || l > MaxTestTimeLimit) {
+		is.errorf(0, "the test failover time limit must be between 15 minutes and 7 days")
+	}
+	offset := uint64(TestVMIDOffset(spec))
+	drGuests := guestsByID(dr)
+	protected := map[uint64]bool{}
+	for _, pg := range spec.Guests {
+		protected[uint64(pg.Vmid)] = true
+	}
+	for _, pg := range spec.Guests {
+		id := uint64(pg.Vmid) + offset
+		switch {
+		case id > maxVMID:
+			is.errorf(pg.Vmid, "guest %d's test failover ID %d is too large; lower the test ID offset", pg.Vmid, id)
+		case protected[id]:
+			is.errorf(pg.Vmid, "guest %d's test failover ID %d is another protected guest's ID; change the test ID offset", pg.Vmid, id)
+		default:
+			if g := drGuests[uint32(id)]; g != nil && !slices.Contains(g.Tags, TestTag) { //nolint:gosec // checked against maxVMID
+				is.errorf(pg.Vmid, "guest %d's test failover ID %d is already used on the DR host by %q; change the test ID offset", pg.Vmid, id, g.Name)
+			}
 		}
 	}
 }

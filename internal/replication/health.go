@@ -81,7 +81,11 @@ func Health(in HealthInput) (*portalv1.PlanHealth, []*portalv1.DatasetHealth, []
 		js := byJob[name]
 		status := map[string]*clientv1.DatasetStatus{}
 		if js != nil {
-			errs = append(errs, js.Errors...)
+			for _, e := range js.Errors {
+				if !TestClonePruningError(e) {
+					errs = append(errs, e)
+				}
+			}
 			for _, d := range js.Datasets {
 				status[d.Dataset] = d
 			}
@@ -145,4 +149,38 @@ func Health(in HealthInput) (*portalv1.PlanHealth, []*portalv1.DatasetHealth, []
 		h.Message += "; " + strings.Join(notes, "; ")
 	}
 	return h, datasets, errs
+}
+
+// TestCloneDir is the dataset, on each DR pool, that holds test failover
+// clones (docs/design/test-failover.md, section 4).
+const TestCloneDir = "ezdr-test"
+
+// TestClonePruningError reports whether a pruning error only says that
+// snapshots couldn't be destroyed because test failover clones depend on
+// them. zrepl prunes them once the test ends, so it isn't a problem.
+func TestClonePruningError(msg string) bool {
+	if !strings.HasPrefix(msg, "pruning ") {
+		return false
+	}
+	failures := strings.Count(msg, "cannot destroy")
+	if failures == 0 || failures != strings.Count(msg, "snapshot has dependent clones") {
+		return false
+	}
+	clones := false
+	listing := false
+	for line := range strings.SplitSeq(msg, "\n") {
+		line = strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(line, "use '-R' to destroy the following datasets:"):
+			listing = true
+		case listing && (line == "" || strings.HasPrefix(line, ")")):
+			listing = false
+		case listing:
+			if !strings.Contains(line, "/"+TestCloneDir+"/") {
+				return false
+			}
+			clones = true
+		}
+	}
+	return clones
 }

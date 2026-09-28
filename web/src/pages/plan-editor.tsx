@@ -1079,7 +1079,7 @@ function DnsCard({ spec, inv, update }: { spec: PlanSpec; inv: Inventory; update
 
 function AdvancedCard({ spec, update }: { spec: PlanSpec; update: Update }) {
   return (
-    <Section title="Advanced" description="Snapshots this plan creates and prunes carry this prefix. To take over an existing zrepl setup, use Adopt instead of changing it by hand.">
+    <Section title="Advanced">
       <Field id="prefix" label="Snapshot prefix">
         <Input
           id="prefix"
@@ -1088,6 +1088,40 @@ function AdvancedCard({ spec, update }: { spec: PlanSpec; update: Update }) {
           onChange={(e) => update((s) => (s.snapshotPrefix = e.target.value))}
         />
       </Field>
+      <p className="-mt-2 text-xs text-muted-foreground">
+        Snapshots this plan creates and prunes carry this prefix. To take over an existing zrepl setup, use Adopt instead of changing it by
+        hand.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field id="test-offset" label="Test failover ID offset">
+          <Input
+            id="test-offset"
+            type="number"
+            min={1}
+            className="w-48"
+            placeholder="10000"
+            value={spec.testVmidOffset || ''}
+            onChange={(e) => update((s) => (s.testVmidOffset = Math.max(0, Math.round(Number(e.target.value)))))}
+          />
+        </Field>
+        <Field id="test-limit" label="Test failover time limit (hours)">
+          <Input
+            id="test-limit"
+            type="number"
+            min={0.25}
+            max={168}
+            step={0.25}
+            className="w-48"
+            placeholder="8"
+            value={spec.testTimeLimitSeconds ? spec.testTimeLimitSeconds / 3600 : ''}
+            onChange={(e) => update((s) => (s.testTimeLimitSeconds = Math.max(0, Math.round(Number(e.target.value) * 3600))))}
+          />
+        </Field>
+      </div>
+      <p className="-mt-2 text-xs text-muted-foreground">
+        Test guests use their ID plus the offset (guest 201 becomes {201 + (spec.testVmidOffset || 10000)}). A test ends by itself after the
+        time limit.
+      </p>
     </Section>
   )
 }
