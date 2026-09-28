@@ -464,6 +464,9 @@ func validateTunnel(spec *planv1.PlanSpec, t *planv1.EzdrTunnel, ctx Context, is
 // validateTestSettings checks that test failover VMIDs are valid and free.
 // Guests tagged as test guests don't count: they belong to a running test.
 func validateTestSettings(spec *planv1.PlanSpec, dr *inventoryv1.Inventory, is *issues) {
+	if t := spec.GetShutdownTimeoutSeconds(); t != 0 && (t < 10 || t > 3600) {
+		is.errorf(0, "the failover shutdown timeout must be between 10 seconds and 1 hour")
+	}
 	if l := spec.GetTestTimeLimitSeconds(); l != 0 && (l < MinTestTimeLimit || l > MaxTestTimeLimit) {
 		is.errorf(0, "the test failover time limit must be between 15 minutes and 7 days")
 	}

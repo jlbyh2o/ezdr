@@ -18,8 +18,14 @@ type Mapping struct {
 	// configuration (such as "local-zfs:vm-201-disk-0") to its volume ID on
 	// the DR host.
 	Volumes map[string]string
-	// Bridge replaces every NIC's bridge.
+	// Bridge replaces every NIC's bridge, unless Bridges is set.
 	Bridge string
+	// Bridges maps each source bridge to its DR bridge (failover). A NIC on
+	// a bridge that isn't mapped is an error.
+	Bridges map[string]string
+	// KeepOnboot keeps the guest's onboot setting (failover); otherwise it's
+	// turned off (tests).
+	KeepOnboot bool
 	// Storages are the DR host's storage IDs; media on others is removed.
 	Storages []string
 	// Name, when set, replaces a VM's name. A container's hostname is kept:
@@ -85,6 +91,7 @@ func Rewrite(conf string, m Mapping) (Result, error) {
 				res.Removed = append(res.Removed, key+": "+value)
 			}
 			continue
+		case key == "onboot" && m.KeepOnboot:
 		case key == "onboot", key == "vmgenid" && m.Type == "qemu":
 			continue // set below
 		case key == "name" && m.Type == "qemu" && m.Name != "":
@@ -92,7 +99,14 @@ func Rewrite(conf string, m Mapping) (Result, error) {
 		case key == "tags":
 			value = addTag(value, m.Tag)
 		case nicKey.MatchString(key):
-			value = setOption(value, "bridge", m.Bridge)
+			bridge := m.Bridge
+			if m.Bridges != nil {
+				src := option(value, "bridge")
+				if bridge = m.Bridges[src]; bridge == "" {
+					return Result{}, fmt.Errorf("%s: bridge %q isn't mapped to a DR bridge", key, src)
+				}
+			}
+			value = setOption(value, "bridge", bridge)
 		case (m.Type == "qemu" && vmDiskKey.MatchString(key)) || (m.Type == "lxc" && ctDiskKey.MatchString(key)):
 			v, drop, err := rewriteDisk(key, value, m, &res)
 			if err != nil {
@@ -112,7 +126,9 @@ func Rewrite(conf string, m Mapping) (Result, error) {
 			return Result{}, fmt.Errorf("volume %s isn't in the configuration", vol)
 		}
 	}
-	out = append(out, "onboot: 0")
+	if !m.KeepOnboot {
+		out = append(out, "onboot: 0")
+	}
 	if m.Type == "qemu" {
 		out = append(out, "vmgenid: "+m.VMGenID)
 	}
@@ -171,6 +187,16 @@ func optsSuffix(opts string) string {
 		return ""
 	}
 	return "," + opts
+}
+
+// option returns key's value in a comma-separated option list.
+func option(list, key string) string {
+	for p := range strings.SplitSeq(list, ",") {
+		if k, v, ok := strings.Cut(p, "="); ok && k == key {
+			return v
+		}
+	}
+	return ""
 }
 
 // setOption sets key=value in a comma-separated option list.

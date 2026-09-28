@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
 	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
 )
 
@@ -88,10 +90,28 @@ type Meta struct {
 	ChangedAt       time.Time `json:"changed_at"`
 }
 
-// Store makes the DR host's stored configurations match plans: it writes
-// each plan's guests and removes plans and guests that are no longer listed.
-func Store(p Paths, plans []*clientv1.PlanGuestConfigs) error {
+// Store makes the DR host's stored configurations and recovery information
+// match its desired state: it writes each plan's guests and recovery
+// information, and removes plans and guests that are no longer listed.
+func Store(p Paths, plans []*clientv1.PlanGuestConfigs, recovery []*clientv1.PlanRecovery) error {
 	keep := map[string]bool{}
+	for _, r := range recovery {
+		if !planIDPattern.MatchString(r.PlanId) {
+			return fmt.Errorf("invalid plan ID %q", r.PlanId)
+		}
+		keep[r.PlanId] = true
+		dir := filepath.Join(p.Plans, r.PlanId)
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			return err
+		}
+		b, err := protojson.MarshalOptions{Indent: "  "}.Marshal(r)
+		if err != nil {
+			return err
+		}
+		if err := writeIfChanged(filepath.Join(dir, "plan.json"), b); err != nil {
+			return err
+		}
+	}
 	for _, pl := range plans {
 		if !planIDPattern.MatchString(pl.PlanId) {
 			return fmt.Errorf("invalid plan ID %q", pl.PlanId)
@@ -147,6 +167,37 @@ func Store(p Paths, plans []*clientv1.PlanGuestConfigs) error {
 		}
 	}
 	return nil
+}
+
+// LoadRecovery returns the recovery information of every plan the DR host
+// keeps.
+func LoadRecovery(p Paths) ([]*clientv1.PlanRecovery, error) {
+	entries, err := os.ReadDir(p.Plans)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var out []*clientv1.PlanRecovery
+	for _, e := range entries {
+		if !e.IsDir() || !planIDPattern.MatchString(e.Name()) {
+			continue
+		}
+		b, err := os.ReadFile(filepath.Join(p.Plans, e.Name(), "plan.json")) //nolint:gosec // our own directory
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		r := &clientv1.PlanRecovery{}
+		if err := protojson.Unmarshal(b, r); err != nil {
+			return nil, fmt.Errorf("plan %s: %w", e.Name(), err)
+		}
+		out = append(out, r)
+	}
+	return out, nil
 }
 
 // Stored is a guest configuration kept on the DR host.

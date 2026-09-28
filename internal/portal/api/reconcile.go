@@ -7,13 +7,17 @@ import (
 	"errors"
 	"log/slog"
 	"maps"
+	"regexp"
 	"slices"
+	"strings"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
+	inventoryv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/inventory/v1"
 	planv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/plan/v1"
+	"github.com/jlbyh2o/ezdr/internal/plan"
 	"github.com/jlbyh2o/ezdr/internal/portal/store"
 	"github.com/jlbyh2o/ezdr/internal/replication"
 )
@@ -114,9 +118,11 @@ func (d *Deps) desiredState(ctx context.Context, hostID string) (*clientv1.Desir
 	for _, p := range problems {
 		slog.Warn("desired state incomplete", "host", hostID, "problem", p)
 	}
-	if ds.ReportGuestConfigs, ds.PlanGuestConfigs, err = d.guestConfigState(ctx, hostID); err != nil {
+	st, err := d.planHostState(ctx, hostID)
+	if err != nil {
 		return nil, err
 	}
+	ds.ReportGuestConfigs, ds.PlanGuestConfigs, ds.PlanRecovery, ds.LockedGuests = st.report, st.configs, st.recovery, st.locked
 	b, err := proto.MarshalOptions{Deterministic: true}.Marshal(ds)
 	if err != nil {
 		return nil, err
@@ -167,27 +173,40 @@ func (d *Deps) relatedHosts(ctx context.Context, hostID string) []string {
 	return ids
 }
 
-// guestConfigState returns, for active and paused plans, the VMIDs whose
-// configurations hostID should report (as primary) and the configurations
-// it should keep (as DR host).
-func (d *Deps) guestConfigState(ctx context.Context, hostID string) ([]uint32, []*clientv1.PlanGuestConfigs, error) {
+// planHostState is what a host's desired state carries about its plans,
+// beyond zrepl jobs.
+type planHostState struct {
+	report   []uint32
+	configs  []*clientv1.PlanGuestConfigs
+	recovery []*clientv1.PlanRecovery
+	locked   []*clientv1.LockedGuests
+}
+
+func (d *Deps) planHostState(ctx context.Context, hostID string) (planHostState, error) {
+	var st planHostState
 	plans, err := d.Store.ListPlans(ctx)
 	if err != nil {
-		return nil, nil, err
+		return st, err
 	}
 	report := map[uint32]bool{}
-	var keep []*clientv1.PlanGuestConfigs
 	for _, p := range plans {
-		if (p.State != store.PlanActive && p.State != store.PlanPaused) || p.AppliedSpec == nil {
+		if (p.State != store.PlanActive && p.State != store.PlanPaused && p.State != store.PlanFailedOver) || p.AppliedSpec == nil {
 			continue
 		}
 		spec := &planv1.PlanSpec{}
 		if err := proto.Unmarshal(p.AppliedSpec, spec); err != nil {
-			return nil, nil, err
+			return st, err
 		}
 		if spec.PrimaryHostId == hostID {
+			vmids := make([]uint32, 0, len(spec.Guests))
 			for _, g := range spec.Guests {
 				report[g.Vmid] = true
+				vmids = append(vmids, g.Vmid)
+			}
+			if p.State == store.PlanFailedOver {
+				slices.Sort(vmids)
+				st.locked = append(st.locked, &clientv1.LockedGuests{PlanId: p.ID, Vmids: vmids,
+					ShutdownTimeoutSeconds: plan.ShutdownTimeoutSeconds(spec)})
 			}
 		}
 		if spec.DrHostId != hostID {
@@ -195,11 +214,11 @@ func (d *Deps) guestConfigState(ctx context.Context, hostID string) ([]uint32, [
 		}
 		primary, err := d.Store.HostByID(ctx, spec.PrimaryHostId)
 		if err != nil {
-			return nil, nil, err
+			return st, err
 		}
 		configs, err := d.Store.GuestConfigs(ctx, spec.PrimaryHostId)
 		if err != nil {
-			return nil, nil, err
+			return st, err
 		}
 		pc := &clientv1.PlanGuestConfigs{PlanId: p.ID, PlanName: p.Name, PrimaryHostname: primary.Hostname}
 		for _, g := range spec.Guests {
@@ -209,8 +228,55 @@ func (d *Deps) guestConfigState(ctx context.Context, hostID string) ([]uint32, [
 			}
 		}
 		slices.SortFunc(pc.Guests, func(a, b *clientv1.GuestConfig) int { return cmp.Compare(a.Vmid, b.Vmid) })
-		keep = append(keep, pc)
+		st.configs = append(st.configs, pc)
+
+		var primaryInv *inventoryv1.Inventory
+		if ph, err := (PlanService{Deps: d}).loadHost(ctx, spec.PrimaryHostId); err == nil && ph != nil {
+			primaryInv = ph.Inventory
+		}
+		st.recovery = append(st.recovery, Recovery(p.ID, p.Name, primary.Hostname, spec, primaryInv))
 	}
-	vmids := slices.Sorted(maps.Keys(report))
-	return vmids, keep, nil
+	st.report = slices.Sorted(maps.Keys(report))
+	return st, nil
+}
+
+// Recovery builds the recovery information the DR host keeps for a plan.
+func Recovery(planID, planName, primaryHostname string, spec *planv1.PlanSpec, primary *inventoryv1.Inventory) *clientv1.PlanRecovery {
+	r := &clientv1.PlanRecovery{PlanId: planID, PlanName: planName, PrimaryHostname: primaryHostname,
+		SnapshotPrefix: spec.SnapshotPrefix}
+	pools := map[string]string{}
+	for _, s := range primary.GetStorages() {
+		pools[s.Id] = s.ZfsPool
+	}
+	for _, m := range spec.StorageMappings {
+		if pools[m.SourceStorage] == "" {
+			continue // the primary's inventory doesn't know it (yet)
+		}
+		r.Storages = append(r.Storages, &clientv1.RecoveryStorage{SourceStorage: m.SourceStorage, SourceDataset: pools[m.SourceStorage],
+			ReceiveDataset: m.ReceiveDataset, StorageId: RecoveryStorageID(planID, m.SourceStorage)})
+	}
+	for _, m := range spec.NetworkMappings {
+		r.Bridges = append(r.Bridges, &clientv1.RecoveryBridge{SourceBridge: m.SourceBridge, TargetBridge: m.TargetBridge})
+	}
+	for _, g := range spec.Guests {
+		r.Guests = append(r.Guests, &clientv1.RecoveryGuest{Vmid: g.Vmid, StartupOrder: g.StartupOrder,
+			StartupDelaySeconds: g.StartupDelaySeconds})
+		for _, rec := range g.DnsRecords {
+			r.DnsRecords = append(r.DnsRecords, &clientv1.RecoveryDnsRecord{Vmid: g.Vmid, Name: rec.Name,
+				Type: strings.TrimPrefix(rec.Type.String(), "DNS_RECORD_TYPE_"), FailoverValue: rec.FailoverValue})
+		}
+	}
+	return r
+}
+
+var storageIDInvalid = regexp.MustCompile(`[^a-z0-9-]+`)
+
+// RecoveryStorageID names the Proxmox storage a failover adds over a source
+// storage's replicas, such as "ezdr-ksii25bd-local-zfs".
+func RecoveryStorageID(planID, sourceStorage string) string {
+	short := planID
+	if len(short) > 8 {
+		short = short[:8]
+	}
+	return "ezdr-" + short + "-" + strings.Trim(storageIDInvalid.ReplaceAllString(strings.ToLower(sourceStorage), "-"), "-")
 }

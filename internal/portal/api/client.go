@@ -112,6 +112,13 @@ func (s ClientService) ReportStatus(ctx context.Context, req *connect.Request[cl
 	if m.ApplyError != "" {
 		slog.Warn("host failed to apply configuration", "host", h.Hostname, "generation", m.AppliedGeneration, "err", m.ApplyError)
 	}
+	for _, e := range m.GuestEvents {
+		// The host enforced a failed-over plan's lock (split-brain
+		// prevention).
+		if len(e) <= 200 {
+			s.audit(ctx, "host:"+h.Hostname, "plan.guest_locked", "host:"+h.ID, e)
+		}
+	}
 	if len(m.SitePublicKey) == 32 {
 		changed, err := s.Store.SetSitePublicKey(ctx, h.ID, m.SitePublicKey)
 		if err != nil {

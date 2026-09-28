@@ -632,6 +632,10 @@ enum PlanState {
   PLAN_STATE_DRAFT = 1;
   PLAN_STATE_ACTIVE = 2;
   PLAN_STATE_PAUSED = 3;
+  // A failover is running.
+  PLAN_STATE_FAILING_OVER = 4;
+  // The guests run on the DR host; replication is stopped.
+  PLAN_STATE_FAILED_OVER = 5;
 }
 
 message Plan {

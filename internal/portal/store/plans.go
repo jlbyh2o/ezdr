@@ -16,6 +16,9 @@ const (
 	PlanDraft  = "draft"
 	PlanActive = "active"
 	PlanPaused = "paused"
+	// PlanFailedOver: the guests run on the DR host (see
+	// docs/design/failover.md).
+	PlanFailedOver = "failed_over"
 )
 
 // Plan is a stored DR plan.

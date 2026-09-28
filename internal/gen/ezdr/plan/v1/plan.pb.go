@@ -204,8 +204,11 @@ type PlanSpec struct {
 	TestVmidOffset uint32 `protobuf:"varint,16,opt,name=test_vmid_offset,json=testVmidOffset,proto3" json:"test_vmid_offset,omitempty"`
 	// A test failover ends automatically after this long. Zero means 8 hours.
 	TestTimeLimitSeconds uint32 `protobuf:"varint,17,opt,name=test_time_limit_seconds,json=testTimeLimitSeconds,proto3" json:"test_time_limit_seconds,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// In a planned failover, guests that don't shut down within this long are
+	// forced off. Zero means 5 minutes.
+	ShutdownTimeoutSeconds uint32 `protobuf:"varint,18,opt,name=shutdown_timeout_seconds,json=shutdownTimeoutSeconds,proto3" json:"shutdown_timeout_seconds,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *PlanSpec) Reset() {
@@ -353,6 +356,13 @@ func (x *PlanSpec) GetTestVmidOffset() uint32 {
 func (x *PlanSpec) GetTestTimeLimitSeconds() uint32 {
 	if x != nil {
 		return x.TestTimeLimitSeconds
+	}
+	return 0
+}
+
+func (x *PlanSpec) GetShutdownTimeoutSeconds() uint32 {
+	if x != nil {
+		return x.ShutdownTimeoutSeconds
 	}
 	return 0
 }
@@ -1019,7 +1029,7 @@ var File_ezdr_plan_v1_plan_proto protoreflect.FileDescriptor
 
 const file_ezdr_plan_v1_plan_proto_rawDesc = "" +
 	"\n" +
-	"\x17ezdr/plan/v1/plan.proto\x12\fezdr.plan.v1\"\xca\x06\n" +
+	"\x17ezdr/plan/v1/plan.proto\x12\fezdr.plan.v1\"\x84\a\n" +
 	"\bPlanSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12&\n" +
@@ -1040,7 +1050,8 @@ const file_ezdr_plan_v1_plan_proto_rawDesc = "" +
 	"\x11rpo_alert_seconds\x18\x0e \x01(\rR\x0frpoAlertSeconds\x127\n" +
 	"\btakeover\x18\x0f \x01(\v2\x1b.ezdr.plan.v1.ZreplTakeoverR\btakeover\x12(\n" +
 	"\x10test_vmid_offset\x18\x10 \x01(\rR\x0etestVmidOffset\x125\n" +
-	"\x17test_time_limit_seconds\x18\x11 \x01(\rR\x14testTimeLimitSeconds\"I\n" +
+	"\x17test_time_limit_seconds\x18\x11 \x01(\rR\x14testTimeLimitSeconds\x128\n" +
+	"\x18shutdown_timeout_seconds\x18\x12 \x01(\rR\x16shutdownTimeoutSeconds\"I\n" +
 	"\rZreplTakeover\x12\x1d\n" +
 	"\n" +
 	"source_job\x18\x01 \x01(\tR\tsourceJob\x12\x19\n" +

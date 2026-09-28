@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"context"
+	"errors"
 	"log/slog"
 	"sync"
 	"time"
@@ -12,6 +13,7 @@ import (
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
+	"github.com/jlbyh2o/ezdr/internal/client/failover"
 	"github.com/jlbyh2o/ezdr/internal/client/guests"
 	"github.com/jlbyh2o/ezdr/internal/client/testfailover"
 	"github.com/jlbyh2o/ezdr/internal/client/zrepl"
@@ -43,10 +45,14 @@ type applier struct {
 	current *clientv1.Zrepl
 	// reportVMIDs are the guests whose configurations the portal wants.
 	reportVMIDs []uint32
+	failover    *failover.Runner
+	// guestEvents are lock enforcement events not yet reported.
+	guestEvents []string
 }
 
 func newApplier(api clientv1connect.ClientServiceClient, cert string, siteKey wgtypes.Key) *applier {
-	return &applier{api: api, zrepl: zrepl.NewApplier(), tests: testfailover.NewRunner(), cert: cert, siteKey: siteKey,
+	return &applier{api: api, zrepl: zrepl.NewApplier(), tests: testfailover.NewRunner(), failover: failover.NewRunner(),
+		cert: cert, siteKey: siteKey,
 		wake: make(chan struct{}, 1)}
 }
 
@@ -91,7 +97,10 @@ func (a *applier) run(ctx context.Context) {
 			a.zreplMu.Unlock()
 		}
 		if err == nil {
-			err = guests.Store(guests.DefaultPaths, ds.GetPlanGuestConfigs())
+			err = guests.Store(guests.DefaultPaths, ds.GetPlanGuestConfigs(), ds.GetPlanRecovery())
+		}
+		if err == nil {
+			err = a.enforceLocks(ctx, ds.GetLockedGuests())
 		}
 		if err != nil {
 			if ctx.Err() != nil {
@@ -121,12 +130,18 @@ func (a *applier) report(ctx context.Context) {
 	pub := a.siteKey.PublicKey()
 	req := &clientv1.ReportStatusRequest{
 		ClientVersion: version.Version, AppliedGeneration: a.lastGen, ApplyError: a.lastError,
-		ZreplCertificate: a.cert, SitePublicKey: pub[:],
+		ZreplCertificate: a.cert, SitePublicKey: pub[:], GuestEvents: a.guestEvents,
 	}
 	a.mu.Unlock()
 	req.ZreplVersion = a.zrepl.Version(ctx)
-	if _, err := a.api.ReportStatus(ctx, connect.NewRequest(req)); err != nil && ctx.Err() == nil {
-		slog.Warn("report status", "err", err)
+	if _, err := a.api.ReportStatus(ctx, connect.NewRequest(req)); err != nil {
+		if ctx.Err() == nil {
+			slog.Warn("report status", "err", err)
+		}
+	} else if len(req.GuestEvents) > 0 {
+		a.mu.Lock()
+		a.guestEvents = a.guestEvents[len(req.GuestEvents):]
+		a.mu.Unlock()
 	}
 }
 
@@ -196,4 +211,24 @@ func (a *applier) guestConfigLoop(ctx context.Context) {
 		case <-ticker.C:
 		}
 	}
+}
+
+// enforceLocks keeps failed-over plans' guests stopped and locked on the
+// primary (split-brain prevention), remembering what it did for the next
+// status report.
+func (a *applier) enforceLocks(ctx context.Context, locked []*clientv1.LockedGuests) error {
+	var errs []error
+	for _, l := range locked {
+		events, err := a.failover.StopAndLock(ctx, l.Vmids, l.ShutdownTimeoutSeconds)
+		for _, e := range events {
+			slog.Warn("failed-over guest", "plan", l.PlanId, "event", e)
+		}
+		a.mu.Lock()
+		a.guestEvents = append(a.guestEvents, events...)
+		a.mu.Unlock()
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
 }

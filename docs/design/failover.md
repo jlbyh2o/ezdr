@@ -1,6 +1,6 @@
 # Design: Failover
 
-> **Status:** Draft for phase 6. Covers failing a plan over to its DR host
+> **Status:** Approved for phase 6. Covers failing a plan over to its DR host
 > (planned and unplanned), preventing split-brain, switching public DNS
 > records through Cloudflare, detecting DNS drift, and break-glass failover
 > from the DR host's command line when the portal is down. Failback is

@@ -113,3 +113,15 @@ func TestTimeLimitSeconds(spec *planv1.PlanSpec) uint32 {
 	}
 	return DefaultTestTimeLimit
 }
+
+// DefaultShutdownTimeout is how long a planned failover waits for a guest to
+// shut down before forcing it off.
+const DefaultShutdownTimeout = 5 * 60
+
+// ShutdownTimeoutSeconds returns the plan's shutdown timeout.
+func ShutdownTimeoutSeconds(spec *planv1.PlanSpec) uint32 {
+	if t := spec.GetShutdownTimeoutSeconds(); t > 0 {
+		return t
+	}
+	return DefaultShutdownTimeout
+}

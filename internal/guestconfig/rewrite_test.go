@@ -113,3 +113,30 @@ func TestRewriteErrors(t *testing.T) {
 		t.Error("accepted an unreadable line")
 	}
 }
+
+func TestRewriteForFailover(t *testing.T) {
+	conf := "name: app\nnet0: virtio=BC:24:11:48:39:FB,bridge=vmbr1,tag=20\nnet1: virtio=BC:24:11:48:39:FC,bridge=vmbr5\n" +
+		"onboot: 1\nscsi0: local-zfs:vm-201-disk-0,size=4G\n"
+	m := Mapping{
+		Type: "qemu", Volumes: map[string]string{"local-zfs:vm-201-disk-0": "ezdr-plan-local-zfs:vm-201-disk-0"},
+		Bridges: map[string]string{"vmbr1": "vmbr2", "vmbr5": "vmbr6"}, KeepOnboot: true, Tag: "ezdr-failover",
+		VMGenID: "0a1e5c64-6f21-44fe-b69b-7fcbd91fd01d",
+	}
+	res, err := Rewrite(conf, m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"name: app\n", "bridge=vmbr2,tag=20", "bridge=vmbr6", "onboot: 1\n", "tags: ezdr-failover",
+		"scsi0: ezdr-plan-local-zfs:vm-201-disk-0,size=4G"} {
+		if !strings.Contains(res.Config, want) {
+			t.Errorf("missing %q in:\n%s", want, res.Config)
+		}
+	}
+	if strings.Count(res.Config, "onboot") != 1 {
+		t.Errorf("onboot duplicated:\n%s", res.Config)
+	}
+	delete(m.Bridges, "vmbr5")
+	if _, err := Rewrite(conf, m); err == nil || !strings.Contains(err.Error(), `bridge "vmbr5" isn't mapped`) {
+		t.Errorf("unmapped bridge: %v", err)
+	}
+}

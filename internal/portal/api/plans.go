@@ -135,9 +135,10 @@ func checkSpec(spec *planv1.PlanSpec) error {
 }
 
 var planStates = map[string]portalv1.PlanState{
-	store.PlanDraft:  portalv1.PlanState_PLAN_STATE_DRAFT,
-	store.PlanActive: portalv1.PlanState_PLAN_STATE_ACTIVE,
-	store.PlanPaused: portalv1.PlanState_PLAN_STATE_PAUSED,
+	store.PlanDraft:      portalv1.PlanState_PLAN_STATE_DRAFT,
+	store.PlanActive:     portalv1.PlanState_PLAN_STATE_ACTIVE,
+	store.PlanPaused:     portalv1.PlanState_PLAN_STATE_PAUSED,
+	store.PlanFailedOver: portalv1.PlanState_PLAN_STATE_FAILED_OVER,
 }
 
 func decodeSpec(b []byte) (*planv1.PlanSpec, error) {

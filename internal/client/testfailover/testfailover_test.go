@@ -95,7 +95,7 @@ func setup(t *testing.T) (*Runner, *fakeHost, *clientv1.TestPrepare) {
 		{Vmid: 201, Type: "qemu", ChangedAt: at, Config: "agent: 1\nide2: local-zfs:vm-201-cloudinit,media=cdrom\nname: app\n" +
 			"net0: virtio=BC:24:11:48:39:FB,bridge=vmbr1,tag=20\nscsi0: local-zfs:vm-201-disk-0,size=4G\n"},
 		{Vmid: 101, Type: "lxc", ChangedAt: at, Config: "hostname: web\nnet0: name=eth0,bridge=vmbr1,type=veth\nrootfs: local-zfs:subvol-101-disk-0,size=4G\n"},
-	}}}); err != nil {
+	}}}, nil); err != nil {
 		t.Fatal(err)
 	}
 	f := &fakeHost{clones: map[string]string{}, running: map[string]bool{}, agentOK: true}

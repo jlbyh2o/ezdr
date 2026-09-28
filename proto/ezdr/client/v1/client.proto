@@ -223,6 +223,63 @@ message DesiredState {
   // DR host: the configuration of each active or paused plan's guests, to
   // keep for test failover and failover.
   repeated PlanGuestConfigs plan_guest_configs = 5;
+  // DR host: what each plan needs to fail over, including without the
+  // portal (break-glass).
+  repeated PlanRecovery plan_recovery = 6;
+  // Primary: guests of failed-over plans, which must stay stopped and
+  // locked (split-brain prevention).
+  repeated LockedGuests locked_guests = 7;
+}
+
+// PlanRecovery is what the DR host keeps about a plan for failover. See
+// docs/design/failover.md.
+message PlanRecovery {
+  string plan_id = 1;
+  string plan_name = 2;
+  string primary_hostname = 3;
+  string snapshot_prefix = 4;
+  repeated RecoveryStorage storages = 5;
+  repeated RecoveryBridge bridges = 6;
+  repeated RecoveryGuest guests = 7;
+  repeated RecoveryDnsRecord dns_records = 8;
+}
+
+// RecoveryStorage maps a source storage to where its replicas are: the
+// replicas of the source storage's dataset are under
+// <receive_dataset>/<source_dataset>, and failover adds the Proxmox storage
+// storage_id over that dataset.
+message RecoveryStorage {
+  string source_storage = 1;
+  string source_dataset = 2;
+  string receive_dataset = 3;
+  string storage_id = 4;
+}
+
+message RecoveryBridge {
+  string source_bridge = 1;
+  string target_bridge = 2;
+}
+
+message RecoveryGuest {
+  uint32 vmid = 1;
+  int32 startup_order = 2;
+  uint32 startup_delay_seconds = 3;
+}
+
+message RecoveryDnsRecord {
+  uint32 vmid = 1;
+  string name = 2;
+  // "A", "AAAA", "CNAME", or "TXT".
+  string type = 3;
+  string failover_value = 4;
+}
+
+// LockedGuests are one failed-over plan's guests on its primary.
+message LockedGuests {
+  string plan_id = 1;
+  repeated uint32 vmids = 2;
+  // Running guests are shut down, then forced off after this long.
+  uint32 shutdown_timeout_seconds = 3;
 }
 
 // PlanGuestConfigs are one plan's guest configurations, as stored on the DR
@@ -333,6 +390,9 @@ message ReportStatusRequest {
   string zrepl_version = 5;
   // The host's site tunnel WireGuard public key (32 bytes).
   bytes site_public_key = 6;
+  // What the host did to keep failed-over guests stopped and locked since
+  // its last report, such as "stopped guest 201".
+  repeated string guest_events = 7;
 }
 
 message ReportStatusResponse {}

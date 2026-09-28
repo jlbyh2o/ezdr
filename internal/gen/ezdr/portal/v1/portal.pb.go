@@ -311,6 +311,10 @@ const (
 	PlanState_PLAN_STATE_DRAFT       PlanState = 1
 	PlanState_PLAN_STATE_ACTIVE      PlanState = 2
 	PlanState_PLAN_STATE_PAUSED      PlanState = 3
+	// A failover is running.
+	PlanState_PLAN_STATE_FAILING_OVER PlanState = 4
+	// The guests run on the DR host; replication is stopped.
+	PlanState_PLAN_STATE_FAILED_OVER PlanState = 5
 )
 
 // Enum value maps for PlanState.
@@ -320,12 +324,16 @@ var (
 		1: "PLAN_STATE_DRAFT",
 		2: "PLAN_STATE_ACTIVE",
 		3: "PLAN_STATE_PAUSED",
+		4: "PLAN_STATE_FAILING_OVER",
+		5: "PLAN_STATE_FAILED_OVER",
 	}
 	PlanState_value = map[string]int32{
-		"PLAN_STATE_UNSPECIFIED": 0,
-		"PLAN_STATE_DRAFT":       1,
-		"PLAN_STATE_ACTIVE":      2,
-		"PLAN_STATE_PAUSED":      3,
+		"PLAN_STATE_UNSPECIFIED":  0,
+		"PLAN_STATE_DRAFT":        1,
+		"PLAN_STATE_ACTIVE":       2,
+		"PLAN_STATE_PAUSED":       3,
+		"PLAN_STATE_FAILING_OVER": 4,
+		"PLAN_STATE_FAILED_OVER":  5,
 	}
 )
 
@@ -7383,12 +7391,14 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\rAlertSeverity\x12\x1e\n" +
 	"\x1aALERT_SEVERITY_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16ALERT_SEVERITY_WARNING\x10\x01\x12\x1b\n" +
-	"\x17ALERT_SEVERITY_CRITICAL\x10\x02*k\n" +
+	"\x17ALERT_SEVERITY_CRITICAL\x10\x02*\xa4\x01\n" +
 	"\tPlanState\x12\x1a\n" +
 	"\x16PLAN_STATE_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10PLAN_STATE_DRAFT\x10\x01\x12\x15\n" +
 	"\x11PLAN_STATE_ACTIVE\x10\x02\x12\x15\n" +
-	"\x11PLAN_STATE_PAUSED\x10\x03*\xda\x01\n" +
+	"\x11PLAN_STATE_PAUSED\x10\x03\x12\x1b\n" +
+	"\x17PLAN_STATE_FAILING_OVER\x10\x04\x12\x1a\n" +
+	"\x16PLAN_STATE_FAILED_OVER\x10\x05*\xda\x01\n" +
 	"\rTakeoverState\x12\x1e\n" +
 	"\x1aTAKEOVER_STATE_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14TAKEOVER_STATE_READY\x10\x01\x12\x1a\n" +

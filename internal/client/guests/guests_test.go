@@ -51,7 +51,7 @@ func TestStoreAndLoad(t *testing.T) {
 		{Vmid: 201, Type: "qemu", Config: "name: app\n", ChangedAt: at},
 		{Vmid: 101, Type: "lxc", Config: "hostname: web\n", ChangedAt: at},
 	}}}
-	if err := Store(p, plans); err != nil {
+	if err := Store(p, plans, nil); err != nil {
 		t.Fatal(err)
 	}
 	got, err := Load(p, "abc")
@@ -64,11 +64,11 @@ func TestStoreAndLoad(t *testing.T) {
 	}
 
 	// A guest leaves the plan, and another plan disappears entirely.
-	if err := Store(p, []*clientv1.PlanGuestConfigs{{PlanId: "other"}}); err != nil {
+	if err := Store(p, []*clientv1.PlanGuestConfigs{{PlanId: "other"}}, nil); err != nil {
 		t.Fatal(err)
 	}
 	plans[0].Guests = plans[0].Guests[:1]
-	if err := Store(p, plans); err != nil {
+	if err := Store(p, plans, nil); err != nil {
 		t.Fatal(err)
 	}
 	if got, _ := Load(p, "abc"); len(got) != 1 {
@@ -77,7 +77,27 @@ func TestStoreAndLoad(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(p.Plans, "other")); !os.IsNotExist(err) {
 		t.Error("a plan that's no longer listed was kept")
 	}
-	if err := Store(p, []*clientv1.PlanGuestConfigs{{PlanId: "../x"}}); err == nil {
+	if err := Store(p, []*clientv1.PlanGuestConfigs{{PlanId: "../x"}}, nil); err == nil {
 		t.Error("accepted an invalid plan ID")
+	}
+}
+
+func TestRecovery(t *testing.T) {
+	p := testPaths(t)
+	r := &clientv1.PlanRecovery{PlanId: "abc", PlanName: "Main", Storages: []*clientv1.RecoveryStorage{
+		{SourceStorage: "local-zfs", SourceDataset: "rpool/data", ReceiveDataset: "tank/ezdr/pve1", StorageId: "ezdr-abc-local-zfs"}}}
+	if err := Store(p, nil, []*clientv1.PlanRecovery{r}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := LoadRecovery(p)
+	if err != nil || len(got) != 1 || got[0].PlanName != "Main" || got[0].Storages[0].StorageId != "ezdr-abc-local-zfs" {
+		t.Errorf("LoadRecovery = %v, %v", got, err)
+	}
+	// A plan that's no longer listed loses its recovery information too.
+	if err := Store(p, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := LoadRecovery(p); len(got) != 0 {
+		t.Errorf("recovery kept: %v", got)
 	}
 }

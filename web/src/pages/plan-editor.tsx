@@ -1120,6 +1120,21 @@ function AdvancedCard({ spec, update }: { spec: PlanSpec; update: Update }) {
           />
         </Field>
       </div>
+      <Field id="shutdown-timeout" label="Failover shutdown timeout (seconds)">
+        <Input
+          id="shutdown-timeout"
+          type="number"
+          min={10}
+          max={3600}
+          className="w-48"
+          placeholder="300"
+          value={spec.shutdownTimeoutSeconds || ''}
+          onChange={(e) => update((s) => (s.shutdownTimeoutSeconds = Math.max(0, Math.round(Number(e.target.value)))))}
+        />
+      </Field>
+      <p className="-mt-2 text-xs text-muted-foreground">
+        In a planned failover, guests on the primary that haven't shut down after this long are forced off.
+      </p>
       <p className="-mt-2 text-xs text-muted-foreground">
         Test guests use their ID plus the offset (guest 201 becomes {201 + (spec.testVmidOffset || 10000)}). A test ends by itself after the
         time limit.

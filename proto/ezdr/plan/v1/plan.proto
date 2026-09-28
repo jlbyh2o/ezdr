@@ -31,6 +31,9 @@ message PlanSpec {
   uint32 test_vmid_offset = 16;
   // A test failover ends automatically after this long. Zero means 8 hours.
   uint32 test_time_limit_seconds = 17;
+  // In a planned failover, guests that don't shut down within this long are
+  // forced off. Zero means 5 minutes.
+  uint32 shutdown_timeout_seconds = 18;
 }
 
 // ZreplTakeover names the existing zrepl jobs a plan replaces. See

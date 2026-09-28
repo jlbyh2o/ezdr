@@ -34,6 +34,8 @@ const stateLabel: Record<PlanState, string> = {
   [PlanState.DRAFT]: 'Draft',
   [PlanState.ACTIVE]: 'Active',
   [PlanState.PAUSED]: 'Paused',
+  [PlanState.FAILING_OVER]: 'Failing over',
+  [PlanState.FAILED_OVER]: 'Failed over',
 }
 
 export function StateBadge({ state, pending }: { state: PlanState; pending?: boolean }) {
