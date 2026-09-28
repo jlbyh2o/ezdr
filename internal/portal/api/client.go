@@ -112,6 +112,11 @@ func (s ClientService) ReportStatus(ctx context.Context, req *connect.Request[cl
 	if m.ApplyError != "" {
 		slog.Warn("host failed to apply configuration", "host", h.Hostname, "generation", m.AppliedGeneration, "err", m.ApplyError)
 	}
+	for _, bg := range m.BreakGlass {
+		if err := s.recordBreakGlass(ctx, h, bg); err != nil {
+			slog.Error("record break-glass failover", "host", h.Hostname, "plan", bg.PlanId, "err", err)
+		}
+	}
 	for _, e := range m.GuestEvents {
 		// The host enforced a failed-over plan's lock (split-brain
 		// prevention).

@@ -23,6 +23,8 @@ Commands:
   enroll <token>   Join this host to an EZDR portal
   status           Show enrollment and connection status
   unenroll         Remove EZDR from this host
+  failover --plan <name>
+                   Break-glass failover on the DR host when the portal is down
   run              Run the client service (used by systemd)
   version          Print version information
   help             Show this help
@@ -49,6 +51,8 @@ func main() {
 		err = unenroll(ctx, args)
 	case "run":
 		err = client.Run(ctx)
+	case "failover":
+		err = failoverCmd(ctx, args)
 	case "version":
 		fmt.Println("ezdr", version.String())
 	case "help", "-h", "--help":
@@ -112,4 +116,26 @@ func reorder(args []string) []string {
 		}
 	}
 	return append(flags, rest...)
+}
+
+func failoverCmd(ctx context.Context, args []string) error {
+	fs := flag.NewFlagSet("failover", flag.ContinueOnError)
+	plan := fs.String("plan", "", "the plan to fail over (name or ID)")
+	fs.Usage = func() {
+		fmt.Fprintln(fs.Output(), "Usage: ezdr failover --plan <name>")
+		fmt.Fprintln(fs.Output(), "\nBreak-glass failover: starts the plan's guests on this DR host from their")
+		fmt.Fprintln(fs.Output(), "replicas without the portal. Use the portal instead whenever it's reachable.")
+		fs.PrintDefaults()
+	}
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *plan == "" {
+		fs.Usage()
+		return flag.ErrHelp
+	}
+	if os.Geteuid() != 0 {
+		return errors.New("run it as root")
+	}
+	return client.BreakGlassFailover(ctx, os.Stdin, os.Stdout, *plan)
 }

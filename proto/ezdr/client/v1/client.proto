@@ -284,6 +284,9 @@ message DesiredState {
   // Primary: guests of failed-over plans, which must stay stopped and
   // locked (split-brain prevention).
   repeated LockedGuests locked_guests = 7;
+  // DR host: plans the portal knows are failed over. A break-glass marker
+  // for one of them is removed: the portal has recorded the failover.
+  repeated string failed_over_plans = 8;
 }
 
 // PlanRecovery is what the DR host keeps about a plan for failover. See
@@ -448,6 +451,17 @@ message ReportStatusRequest {
   // What the host did to keep failed-over guests stopped and locked since
   // its last report, such as "stopped guest 201".
   repeated string guest_events = 7;
+  // Break-glass failovers run on this host that the portal hasn't
+  // acknowledged yet.
+  repeated BreakGlassFailover break_glass = 8;
+}
+
+message BreakGlassFailover {
+  string plan_id = 1;
+  // Who ran it (the local user).
+  string user = 2;
+  google.protobuf.Timestamp at = 3;
+  repeated uint32 started = 4;
 }
 
 message ReportStatusResponse {}

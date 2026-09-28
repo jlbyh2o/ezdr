@@ -5,11 +5,14 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
@@ -93,9 +96,10 @@ func (a *applier) run(ctx context.Context) {
 		errText := ""
 		// The tunnel comes first: zrepl's jobs may use its addresses.
 		err := ApplySiteTunnel(ds.GetSiteTunnel(), a.siteKey)
+		z := a.withoutBreakGlass(ds)
 		if err == nil {
 			a.zreplMu.Lock()
-			err = a.zrepl.Apply(ctx, ds.GetZrepl())
+			err = a.zrepl.Apply(ctx, z)
 			a.zreplMu.Unlock()
 		}
 		if err == nil {
@@ -118,7 +122,7 @@ func (a *applier) run(ctx context.Context) {
 		a.lastGen, a.lastError = ds.Generation, errText
 		a.reportVMIDs = ds.GetReportGuestConfigs()
 		if errText == "" {
-			a.current = ds.GetZrepl()
+			a.current = z
 		}
 		a.mu.Unlock()
 		a.report(ctx)
@@ -136,6 +140,12 @@ func (a *applier) report(ctx context.Context) {
 	}
 	a.mu.Unlock()
 	req.ZreplVersion = a.zrepl.Version(ctx)
+	if markers, err := a.failover.Markers(); err == nil {
+		for _, m := range markers {
+			req.BreakGlass = append(req.BreakGlass, &clientv1.BreakGlassFailover{PlanId: m.PlanID, User: m.User,
+				At: timestamppb.New(m.At), Started: m.Started})
+		}
+	}
 	if _, err := a.api.ReportStatus(ctx, connect.NewRequest(req)); err != nil {
 		if ctx.Err() == nil {
 			slog.Warn("report status", "err", err)
@@ -233,4 +243,39 @@ func (a *applier) enforceLocks(ctx context.Context, locked []*clientv1.LockedGue
 		}
 	}
 	return errors.Join(errs...)
+}
+
+// withoutBreakGlass returns the desired zrepl configuration without the jobs
+// of plans failed over on this host's command line (break-glass), which the
+// portal may not know about yet. Markers of failovers the portal has
+// recorded are removed.
+func (a *applier) withoutBreakGlass(ds *clientv1.DesiredState) *clientv1.Zrepl {
+	z := ds.GetZrepl()
+	markers, err := a.failover.Markers()
+	if err != nil {
+		slog.Warn("read break-glass markers", "err", err)
+		return z
+	}
+	var prefixes []string
+	for _, m := range markers {
+		if slices.Contains(ds.GetFailedOverPlans(), m.PlanID) {
+			if err := a.failover.RemoveMarker(m.PlanID); err != nil {
+				slog.Warn("remove break-glass marker", "plan", m.PlanID, "err", err)
+			} else {
+				slog.Info("the portal recorded the break-glass failover", "plan", m.PlanName)
+			}
+			continue
+		}
+		prefixes = append(prefixes, failover.JobPrefix(m.PlanID))
+	}
+	if len(prefixes) == 0 || z == nil {
+		return z
+	}
+	skip := func(name string) bool {
+		return slices.ContainsFunc(prefixes, func(p string) bool { return strings.HasPrefix(name, p) })
+	}
+	out := proto.CloneOf(z)
+	out.SourceJobs = slices.DeleteFunc(out.SourceJobs, func(j *clientv1.SourceJob) bool { return skip(j.Name) })
+	out.PullJobs = slices.DeleteFunc(out.PullJobs, func(j *clientv1.PullJob) bool { return skip(j.Name) })
+	return out
 }

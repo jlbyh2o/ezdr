@@ -626,3 +626,61 @@ func (d *Deps) abortFailover(ctx context.Context, planID string, step int, cause
 	})
 	d.audit(ctx, "system", "plan.failover_aborted", "plan:"+planID, cause.Error()+"; "+detail)
 }
+
+// recordBreakGlass records a failover run on a DR host's command line: the
+// plan becomes failed over (which locks the primary's guests and stops
+// replication), with a failover entry and an audit record.
+func (d *Deps) recordBreakGlass(ctx context.Context, h store.Host, bg *clientv1.BreakGlassFailover) error {
+	sp, err := d.Store.PlanByID(ctx, bg.PlanId)
+	if errors.Is(err, store.ErrNotFound) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if sp.DRHostID != h.ID || sp.AppliedSpec == nil {
+		return fmt.Errorf("host %s isn't the plan's DR host", h.Hostname)
+	}
+	if sp.State != store.PlanFailedOver {
+		spec, err := decodeSpec(sp.AppliedSpec)
+		if err != nil {
+			return err
+		}
+		f := &portalv1.Failover{Id: strings.ToLower(store.NewID()), PlanId: sp.ID, State: portalv1.FailoverState_FAILOVER_STATE_COMPLETED,
+			StartedBy: bg.User + "@" + h.Hostname, StartedAt: bg.At, CompletedAt: timestamppb.Now(), BreakGlass: true,
+			DnsRecords: dnsRecords(spec)}
+		for _, r := range f.DnsRecords {
+			r.Status, r.Detail = "skipped", "switch by hand (break-glass failover)"
+		}
+		for _, g := range startupOrder(spec) {
+			status := "failed"
+			if slices.Contains(bg.Started, g.Vmid) {
+				status = "running"
+			}
+			f.Guests = append(f.Guests, &portalv1.TestRunGuest{Vmid: g.Vmid, TestVmid: g.Vmid, Status: status})
+		}
+		for _, name := range foStepNames {
+			f.Steps = append(f.Steps, &portalv1.TakeoverStep{Name: name, Status: "skipped", Detail: "run on the DR host's command line"})
+		}
+		data, _ := proto.Marshal(f)
+		if err := d.Store.CreateFailover(ctx, store.FailoverRow{ID: f.Id, PlanID: sp.ID, Data: data, NextStep: foStepCount,
+			StartedAt: bg.At.AsTime()}); err != nil && !errors.Is(err, store.ErrFailoverActive) {
+			return err
+		}
+		if err := d.Store.SetPlanState(ctx, sp.ID, store.PlanFailedOver, sp.AppliedSpec); err != nil {
+			return err
+		}
+		d.audit(ctx, bg.User+"@"+h.Hostname, "plan.failover_break_glass", "plan:"+sp.ID,
+			fmt.Sprintf("break-glass failover of plan %q on %s at %s; %d guest(s) started",
+				sp.Name, h.Hostname, bg.At.AsTime().UTC().Format(time.RFC3339), len(bg.Started)))
+	}
+	// The DR host's desired state now lists the plan as failed over, so it
+	// removes its marker; the primary's locks its guests.
+	d.reconcile(context.WithoutCancel(ctx), sp.PrimaryHostID, sp.DRHostID)
+	go func() {
+		if _, err := d.checkPlanDNS(context.WithoutCancel(ctx), sp.ID); err != nil {
+			slog.Warn("dns check after break-glass failover", "plan", sp.ID, "err", err)
+		}
+	}()
+	return nil
+}

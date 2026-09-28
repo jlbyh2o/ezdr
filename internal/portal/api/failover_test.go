@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
+	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
 	portalv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/portal/v1"
 	"github.com/jlbyh2o/ezdr/internal/portal/store"
 )
@@ -125,5 +127,31 @@ func TestUnplannedFailover(t *testing.T) {
 	// its desired state.
 	if got := primary.did(); len(got) != 0 {
 		t.Errorf("primary actions = %v", got)
+	}
+}
+
+func TestBreakGlassReport(t *testing.T) {
+	d, ctx, planID, _, _ := failoverFixture(t)
+	hctx := context.WithValue(ctx, hostKey{}, store.Host{ID: "dr1", Hostname: "dr1"})
+	if _, err := (ClientService{Deps: d}).ReportStatus(hctx, connect.NewRequest(&clientv1.ReportStatusRequest{
+		BreakGlass: []*clientv1.BreakGlassFailover{{PlanId: planID, User: "root", At: timestamppb.Now(), Started: []uint32{101}}},
+	})); err != nil {
+		t.Fatal(err)
+	}
+	sp, _ := d.Store.PlanByID(ctx, planID)
+	if sp.State != store.PlanFailedOver {
+		t.Fatalf("plan state = %s", sp.State)
+	}
+	_, f, err := d.loadFailover(ctx, planID)
+	if err != nil || !f.BreakGlass || f.StartedBy != "root@dr1" || f.Guests[0].Status != "running" {
+		t.Errorf("failover = %v, %v", f, err)
+	}
+	if ds, _ := d.desiredState(ctx, "dr1"); len(ds.FailedOverPlans) != 1 || ds.FailedOverPlans[0] != planID {
+		t.Errorf("DR failed-over plans = %v", ds.FailedOverPlans)
+	}
+	// A report from a host that isn't the plan's DR host is ignored.
+	other := context.WithValue(ctx, hostKey{}, store.Host{ID: "pve1", Hostname: "pve1"})
+	if err := d.recordBreakGlass(other, store.Host{ID: "pve1", Hostname: "pve1"}, &clientv1.BreakGlassFailover{PlanId: planID}); err == nil {
+		t.Error("accepted a break-glass report from the primary")
 	}
 }

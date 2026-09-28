@@ -123,6 +123,7 @@ func (d *Deps) desiredState(ctx context.Context, hostID string) (*clientv1.Desir
 		return nil, err
 	}
 	ds.ReportGuestConfigs, ds.PlanGuestConfigs, ds.PlanRecovery, ds.LockedGuests = st.report, st.configs, st.recovery, st.locked
+	ds.FailedOverPlans = st.failedOver
 	b, err := proto.MarshalOptions{Deterministic: true}.Marshal(ds)
 	if err != nil {
 		return nil, err
@@ -176,10 +177,11 @@ func (d *Deps) relatedHosts(ctx context.Context, hostID string) []string {
 // planHostState is what a host's desired state carries about its plans,
 // beyond zrepl jobs.
 type planHostState struct {
-	report   []uint32
-	configs  []*clientv1.PlanGuestConfigs
-	recovery []*clientv1.PlanRecovery
-	locked   []*clientv1.LockedGuests
+	report     []uint32
+	configs    []*clientv1.PlanGuestConfigs
+	recovery   []*clientv1.PlanRecovery
+	locked     []*clientv1.LockedGuests
+	failedOver []string
 }
 
 func (d *Deps) planHostState(ctx context.Context, hostID string) (planHostState, error) {
@@ -211,6 +213,9 @@ func (d *Deps) planHostState(ctx context.Context, hostID string) (planHostState,
 		}
 		if spec.DrHostId != hostID {
 			continue
+		}
+		if p.State == store.PlanFailedOver {
+			st.failedOver = append(st.failedOver, p.ID)
 		}
 		primary, err := d.Store.HostByID(ctx, spec.PrimaryHostId)
 		if err != nil {

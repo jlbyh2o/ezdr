@@ -159,3 +159,35 @@ func TestPrepareReusesCloudInitReplica(t *testing.T) {
 		t.Errorf("calls:\n%s", calls)
 	}
 }
+
+func TestBreakGlassMarkersAndJobs(t *testing.T) {
+	ctx := context.Background()
+	r, f := drRunner(t)
+	jobs := filepath.Join(t.TempDir(), "ezdr.yml")
+	write(t, jobs, "jobs:\n- name: ezdr_plan1_local-zfs_pull\n  type: pull\n- name: ezdr_other12_local-zfs_pull\n  type: pull\n")
+	n, err := r.RemovePlanJobs(ctx, jobs, "plan1")
+	if err != nil || n != 1 {
+		t.Fatalf("removed %d, %v", n, err)
+	}
+	b, _ := os.ReadFile(jobs) //nolint:gosec // test file
+	if strings.Contains(string(b), "ezdr_plan1_") || !strings.Contains(string(b), "ezdr_other12_") {
+		t.Errorf("jobs file:\n%s", b)
+	}
+	if !strings.Contains(strings.Join(f.calls, "\n"), "systemctl restart zrepl") {
+		t.Error("zrepl not restarted")
+	}
+
+	if err := r.WriteMarker(Marker{PlanID: "plan1", PlanName: "Main", User: "root", Started: []uint32{201}}); err != nil {
+		t.Fatal(err)
+	}
+	ms, err := r.Markers()
+	if err != nil || len(ms) != 1 || ms[0].Started[0] != 201 {
+		t.Fatalf("markers = %v, %v", ms, err)
+	}
+	if err := r.RemoveMarker("plan1"); err != nil {
+		t.Fatal(err)
+	}
+	if ms, _ := r.Markers(); len(ms) != 0 {
+		t.Errorf("marker kept: %v", ms)
+	}
+}
