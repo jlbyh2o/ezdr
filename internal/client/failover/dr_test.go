@@ -75,7 +75,7 @@ func TestPrepareOnDR(t *testing.T) {
 		"pvesm add zfspool ezdr-plan1-local-zfs --pool tank/ezdr/pve1/rpool/data --content images,rootdir --sparse 1 --nodes dr1",
 		"zfs set readonly=off tank/ezdr/pve1/rpool/data/vm-201-disk-0",
 		"zfs set refquota=4G tank/ezdr/pve1/rpool/data/subvol-101-disk-0",
-		"qm set 201 --ide2 ezdr-plan1-local-zfs:cloudinit",
+		"qm set 201 --ide2 ezdr-plan1-local-zfs:cloudinit", // no replica of the drive: a fresh one
 	} {
 		found := false
 		for _, c := range f.calls {
@@ -93,8 +93,10 @@ func TestPrepareOnDR(t *testing.T) {
 		}
 	}
 
-	// Repeating skips the registered guests.
+	// Repeating skips the registered guests (qm set added the cloud-init
+	// drive, which the fake doesn't do).
 	write(t, filepath.Join(r.PVE, ".vmlist"), `{"ids":{"201":{},"101":{}}}`)
+	write(t, r.configPath("qemu", 201), string(vm)+"ide2: ezdr-plan1-local-zfs:vm-201-cloudinit,media=cdrom\n")
 	f.calls = nil
 	if _, err := r.Prepare(ctx, "plan1", []uint32{201, 101}); err != nil {
 		t.Fatal(err)
@@ -136,5 +138,24 @@ func TestSnapshotAndReplicate(t *testing.T) {
 	}
 	if err := r.Replicate(context.Background(), []string{"not-ezdr; rm"}); err == nil {
 		t.Error("accepted an invalid job")
+	}
+}
+
+// A replica of the cloud-init drive (for example, from an earlier
+// hand-written setup) is reused, including by a retry after an attempt that
+// stopped before the drive.
+func TestPrepareReusesCloudInitReplica(t *testing.T) {
+	ctx := context.Background()
+	r, f := drRunner(t)
+	f.datasets["tank/ezdr/pve1/rpool/data/vm-201-cloudinit"] = true
+	write(t, filepath.Join(r.PVE, ".vmlist"), `{"ids":{"201":{}}}`)
+	write(t, r.configPath("qemu", 201), "#ezdr-failover-plan1\nname: app\ntags: ezdr-failover\nscsi0: ezdr-plan1-local-zfs:vm-201-disk-0\n")
+	if _, err := r.Prepare(ctx, "plan1", []uint32{201}); err != nil {
+		t.Fatal(err)
+	}
+	calls := strings.Join(f.calls, "\n")
+	if !strings.Contains(calls, "zfs set readonly=off tank/ezdr/pve1/rpool/data/vm-201-cloudinit") ||
+		!strings.Contains(calls, "qm set 201 --ide2 ezdr-plan1-local-zfs:vm-201-cloudinit,media=cdrom") {
+		t.Errorf("calls:\n%s", calls)
 	}
 }

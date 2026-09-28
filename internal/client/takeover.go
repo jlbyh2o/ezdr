@@ -101,6 +101,8 @@ func (a *applier) failoverAction(ctx context.Context, act *clientv1.Action) {
 		err = a.failover.StartGuest(ctx, k.FailoverStartGuest.PlanId, k.FailoverStartGuest.Vmid)
 	case *clientv1.Action_FailoverCheckGuest:
 		ack.GuestCheck, err = a.failover.CheckGuest(ctx, k.FailoverCheckGuest.PlanId, k.FailoverCheckGuest.Vmid)
+	case *clientv1.Action_FailoverUnlockGuests:
+		ack.Output, err = a.failover.Unlock(ctx, k.FailoverUnlockGuests.Vmids, k.FailoverUnlockGuests.Start)
 	}
 	ack.Succeeded = err == nil
 	if err != nil {

@@ -1,4 +1,4 @@
-import { CheckCircle2, CircleAlert, Loader2, Pause, Play, Power, Rocket } from 'lucide-react'
+import { CheckCircle2, CircleAlert, Loader2, Pause, Play, Power, Rocket, ShieldAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { ErrorAlert } from '@/components/error-alert'
@@ -27,6 +27,7 @@ import {
 import { Severity } from '@/gen/ezdr/plan/v1/plan_pb'
 import { type Plan, PlanState, type PreviewPlanChangesResponse } from '@/gen/ezdr/portal/v1/portal_pb'
 import { errorMessage, planClient } from '@/lib/api'
+import { FailoverDialog } from '@/pages/failover'
 import { TakeoverDialog } from '@/pages/takeover'
 
 const stateLabel: Record<PlanState, string> = {
@@ -175,7 +176,8 @@ function ConfirmButton({
 
 // PlanActions shows the lifecycle actions for the plan's state.
 export function PlanActions({ plan, onChanged, dirty }: { plan: Plan; onChanged: (p: Plan) => void; dirty: boolean }) {
-  const [dialog, setDialog] = useState<'activate' | 'apply' | 'takeover'>()
+  const [dialog, setDialog] = useState<'activate' | 'apply' | 'takeover' | 'failover'>()
+  const failedOver = plan.state === PlanState.FAILING_OVER || plan.state === PlanState.FAILED_OVER
   const adopted = !!plan.spec?.takeover
   const [error, setError] = useState<string>()
 
@@ -197,7 +199,12 @@ export function PlanActions({ plan, onChanged, dirty }: { plan: Plan; onChanged:
             <Rocket /> {adopted ? 'Take over' : 'Activate'}
           </Button>
         )}
-        {plan.state !== PlanState.DRAFT && plan.pendingChanges && (
+        {(plan.state === PlanState.ACTIVE || plan.state === PlanState.PAUSED || failedOver) && (
+          <Button variant={failedOver ? 'default' : 'destructive'} onClick={() => setDialog('failover')}>
+            <ShieldAlert /> {failedOver ? 'Failover status' : 'Fail over'}
+          </Button>
+        )}
+        {plan.state !== PlanState.DRAFT && !failedOver && plan.pendingChanges && (
           <>
             <Button onClick={() => setDialog('apply')} disabled={dirty} title={dirty ? 'Save first' : undefined}>
               Apply changes
@@ -221,7 +228,7 @@ export function PlanActions({ plan, onChanged, dirty }: { plan: Plan; onChanged:
             <Play /> Resume
           </Button>
         )}
-        {plan.state !== PlanState.DRAFT && (
+        {plan.state !== PlanState.DRAFT && !failedOver && (
           <ConfirmButton
             label="Deactivate"
             icon={<Power />}
@@ -244,6 +251,15 @@ export function PlanActions({ plan, onChanged, dirty }: { plan: Plan; onChanged:
           if (r.plan) onChanged(r.plan)
         }}
       />
+      {dialog === 'failover' && (
+        <FailoverDialog
+          plan={plan}
+          onClose={() => {
+            setDialog(undefined)
+            void act(() => planClient.getPlan({ id: plan.id }))
+          }}
+        />
+      )}
       {dialog === 'takeover' && (
         <TakeoverDialog
           plan={plan}

@@ -5,6 +5,7 @@ import {
   AlertService,
   AuditService,
   AuthService,
+  FailoverService,
   HostService,
   PlanService,
   SetupService,
@@ -23,6 +24,7 @@ export const auditClient = createClient(AuditService, transport)
 export const planClient = createClient(PlanService, transport)
 export const alertClient = createClient(AlertService, transport)
 export const testClient = createClient(TestFailoverService, transport)
+export const failoverClient = createClient(FailoverService, transport)
 
 export function errorMessage(err: unknown): string {
   if (err instanceof ConnectError) {

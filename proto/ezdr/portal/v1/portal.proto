@@ -270,6 +270,119 @@ service PlanService {
   rpc GetPlanStatus(GetPlanStatusRequest) returns (GetPlanStatusResponse);
 }
 
+// FailoverService fails plans over to their DR hosts. See
+// docs/design/failover.md.
+service FailoverService {
+  // GetFailoverOptions returns what a failover of the plan would involve.
+  rpc GetFailoverOptions(GetFailoverOptionsRequest) returns (GetFailoverOptionsResponse);
+  rpc StartFailover(StartFailoverRequest) returns (StartFailoverResponse);
+  // GetFailover returns the plan's latest failover, if any.
+  rpc GetFailover(GetFailoverRequest) returns (GetFailoverResponse);
+  // ConfirmFailover records that the operator verified the guests on the DR
+  // host, and switches DNS if asked.
+  rpc ConfirmFailover(ConfirmFailoverRequest) returns (ConfirmFailoverResponse);
+  // RetryFailover runs a failed step of a committed failover again.
+  rpc RetryFailover(RetryFailoverRequest) returns (RetryFailoverResponse);
+}
+
+message GetFailoverOptionsRequest {
+  string plan_id = 1;
+}
+
+message GetFailoverOptionsResponse {
+  bool primary_online = 1;
+  bool dr_online = 2;
+  // A planned failover needs an active plan and a reachable primary.
+  bool planned_possible = 3;
+  // The newest snapshot the DR host has for every guest: what an unplanned
+  // failover starts from.
+  google.protobuf.Timestamp newest_snapshot_at = 4;
+  repeated TestGuestOption guests = 5;
+  repeated DnsRecordSwitch dns_records = 6;
+  // Why the plan can't fail over now; empty if it can.
+  string problem = 7;
+}
+
+message StartFailoverRequest {
+  string plan_id = 1;
+  bool planned = 2;
+  // The plan's name, typed by the operator to confirm.
+  string confirm_name = 3;
+}
+
+message StartFailoverResponse {
+  Failover failover = 1;
+}
+
+message GetFailoverRequest {
+  string plan_id = 1;
+}
+
+message GetFailoverResponse {
+  Failover failover = 1;
+}
+
+message ConfirmFailoverRequest {
+  string plan_id = 1;
+  bool switch_dns = 2;
+}
+
+message ConfirmFailoverResponse {
+  Failover failover = 1;
+}
+
+message RetryFailoverRequest {
+  string plan_id = 1;
+}
+
+message RetryFailoverResponse {
+  Failover failover = 1;
+}
+
+enum FailoverState {
+  FAILOVER_STATE_UNSPECIFIED = 0;
+  FAILOVER_STATE_RUNNING = 1;
+  // The guests run on the DR host; waiting for the operator to verify them.
+  FAILOVER_STATE_AWAITING_CONFIRMATION = 2;
+  FAILOVER_STATE_COMPLETED = 3;
+  // A planned failover failed before replication stopped; the primary's
+  // guests were started again and the plan is unchanged.
+  FAILOVER_STATE_ABORTED = 4;
+  // A step after replication stopped failed; it can be retried.
+  FAILOVER_STATE_FAILED = 5;
+}
+
+message Failover {
+  string id = 1;
+  string plan_id = 2;
+  bool planned = 3;
+  FailoverState state = 4;
+  string started_by = 5;
+  google.protobuf.Timestamp started_at = 6;
+  google.protobuf.Timestamp completed_at = 7;
+  // The final snapshot (planned failovers).
+  string snapshot = 8;
+  repeated TakeoverStep steps = 9;
+  repeated TestRunGuest guests = 10;
+  repeated DnsRecordSwitch dns_records = 11;
+  string error = 12;
+  repeated string notes = 13;
+  // Set for failovers run on the DR host's command line (break-glass).
+  bool break_glass = 14;
+}
+
+// DnsRecordSwitch is a DNS record a failover switches.
+message DnsRecordSwitch {
+  uint32 vmid = 1;
+  string name = 2;
+  string type = 3;
+  string production_value = 4;
+  string failover_value = 5;
+  // "pending", "switched", "failed", or "skipped".
+  string status = 6;
+  string detail = 7;
+}
+
 // TestFailoverService runs test failovers. See docs/design/test-failover.md.
 service TestFailoverService {
   // GetTestOptions asks the DR host which guests can be tested and from

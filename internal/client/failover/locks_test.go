@@ -39,7 +39,7 @@ func testRunner(t *testing.T) (*Runner, *fake) {
 
 func write(t *testing.T, path, data string) {
 	t.Helper()
-	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(data), 0o600); err != nil { //nolint:gosec // test file
 		t.Fatal(err)
 	}
 }
@@ -58,7 +58,7 @@ func TestStopAndLock(t *testing.T) {
 	want := []string{
 		"qm status 201",
 		"qm shutdown 201 --timeout 300 --forceStop 1 --skiplock 1",
-		"qm set 201 --onboot 0 --tags web;ezdr-failed-over --skiplock 1",
+		"qm set 201 --onboot 0 --tags web;ezdr-failed-over;ezdr-onboot --skiplock 1",
 		"qm set 201 --lock migrate --skiplock 1",
 		"pct status 101",
 		"pct set 101 --onboot 0 --tags ezdr-failed-over",
@@ -68,6 +68,27 @@ func TestStopAndLock(t *testing.T) {
 		t.Errorf("calls:\n%s\nwant:\n%s", strings.Join(f.calls, "\n"), strings.Join(want, "\n"))
 	}
 	if strings.Join(events, "|") != "stopped guest 201|locked guest 201|locked guest 101" {
+		t.Errorf("events = %v", events)
+	}
+}
+
+func TestUnlock(t *testing.T) {
+	r, f := testRunner(t)
+	write(t, r.configPath("qemu", 201), "lock: migrate\nname: app\nonboot: 0\ntags: web;ezdr-failed-over;ezdr-onboot\n")
+	write(t, r.configPath("lxc", 101), "hostname: web\nlock: migrate\ntags: ezdr-failed-over\n")
+	write(t, r.configPath("lxc", 102), "hostname: db\nlock: backup\n")
+	events, err := r.Unlock(context.Background(), []uint32{201, 101, 102}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"qm unlock 201", "qm set 201 --onboot 1 --tags web --skiplock 1", "qm status 201", "qm start 201",
+		"pct unlock 101", "pct set 101 --onboot 0 --delete tags", "pct status 101", "pct start 101",
+	}
+	if strings.Join(f.calls, "\n") != strings.Join(want, "\n") {
+		t.Errorf("calls:\n%s\nwant:\n%s", strings.Join(f.calls, "\n"), strings.Join(want, "\n"))
+	}
+	if len(events) != 4 {
 		t.Errorf("events = %v", events)
 	}
 }

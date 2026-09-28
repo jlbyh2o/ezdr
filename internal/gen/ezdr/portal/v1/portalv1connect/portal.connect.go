@@ -33,6 +33,8 @@ const (
 	AuditServiceName = "ezdr.portal.v1.AuditService"
 	// PlanServiceName is the fully-qualified name of the PlanService service.
 	PlanServiceName = "ezdr.portal.v1.PlanService"
+	// FailoverServiceName is the fully-qualified name of the FailoverService service.
+	FailoverServiceName = "ezdr.portal.v1.FailoverService"
 	// TestFailoverServiceName is the fully-qualified name of the TestFailoverService service.
 	TestFailoverServiceName = "ezdr.portal.v1.TestFailoverService"
 	// AlertServiceName is the fully-qualified name of the AlertService service.
@@ -137,6 +139,21 @@ const (
 	// PlanServiceGetPlanStatusProcedure is the fully-qualified name of the PlanService's GetPlanStatus
 	// RPC.
 	PlanServiceGetPlanStatusProcedure = "/ezdr.portal.v1.PlanService/GetPlanStatus"
+	// FailoverServiceGetFailoverOptionsProcedure is the fully-qualified name of the FailoverService's
+	// GetFailoverOptions RPC.
+	FailoverServiceGetFailoverOptionsProcedure = "/ezdr.portal.v1.FailoverService/GetFailoverOptions"
+	// FailoverServiceStartFailoverProcedure is the fully-qualified name of the FailoverService's
+	// StartFailover RPC.
+	FailoverServiceStartFailoverProcedure = "/ezdr.portal.v1.FailoverService/StartFailover"
+	// FailoverServiceGetFailoverProcedure is the fully-qualified name of the FailoverService's
+	// GetFailover RPC.
+	FailoverServiceGetFailoverProcedure = "/ezdr.portal.v1.FailoverService/GetFailover"
+	// FailoverServiceConfirmFailoverProcedure is the fully-qualified name of the FailoverService's
+	// ConfirmFailover RPC.
+	FailoverServiceConfirmFailoverProcedure = "/ezdr.portal.v1.FailoverService/ConfirmFailover"
+	// FailoverServiceRetryFailoverProcedure is the fully-qualified name of the FailoverService's
+	// RetryFailover RPC.
+	FailoverServiceRetryFailoverProcedure = "/ezdr.portal.v1.FailoverService/RetryFailover"
 	// TestFailoverServiceGetTestOptionsProcedure is the fully-qualified name of the
 	// TestFailoverService's GetTestOptions RPC.
 	TestFailoverServiceGetTestOptionsProcedure = "/ezdr.portal.v1.TestFailoverService/GetTestOptions"
@@ -1393,6 +1410,190 @@ func (UnimplementedPlanServiceHandler) DeactivatePlan(context.Context, *connect.
 
 func (UnimplementedPlanServiceHandler) GetPlanStatus(context.Context, *connect.Request[v1.GetPlanStatusRequest]) (*connect.Response[v1.GetPlanStatusResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.GetPlanStatus is not implemented"))
+}
+
+// FailoverServiceClient is a client for the ezdr.portal.v1.FailoverService service.
+type FailoverServiceClient interface {
+	// GetFailoverOptions returns what a failover of the plan would involve.
+	GetFailoverOptions(context.Context, *connect.Request[v1.GetFailoverOptionsRequest]) (*connect.Response[v1.GetFailoverOptionsResponse], error)
+	StartFailover(context.Context, *connect.Request[v1.StartFailoverRequest]) (*connect.Response[v1.StartFailoverResponse], error)
+	// GetFailover returns the plan's latest failover, if any.
+	GetFailover(context.Context, *connect.Request[v1.GetFailoverRequest]) (*connect.Response[v1.GetFailoverResponse], error)
+	// ConfirmFailover records that the operator verified the guests on the DR
+	// host, and switches DNS if asked.
+	ConfirmFailover(context.Context, *connect.Request[v1.ConfirmFailoverRequest]) (*connect.Response[v1.ConfirmFailoverResponse], error)
+	// RetryFailover runs a failed step of a committed failover again.
+	RetryFailover(context.Context, *connect.Request[v1.RetryFailoverRequest]) (*connect.Response[v1.RetryFailoverResponse], error)
+}
+
+// NewFailoverServiceClient constructs a client for the ezdr.portal.v1.FailoverService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewFailoverServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) FailoverServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	failoverServiceMethods := v1.File_ezdr_portal_v1_portal_proto.Services().ByName("FailoverService").Methods()
+	return &failoverServiceClient{
+		getFailoverOptions: connect.NewClient[v1.GetFailoverOptionsRequest, v1.GetFailoverOptionsResponse](
+			httpClient,
+			baseURL+FailoverServiceGetFailoverOptionsProcedure,
+			connect.WithSchema(failoverServiceMethods.ByName("GetFailoverOptions")),
+			connect.WithClientOptions(opts...),
+		),
+		startFailover: connect.NewClient[v1.StartFailoverRequest, v1.StartFailoverResponse](
+			httpClient,
+			baseURL+FailoverServiceStartFailoverProcedure,
+			connect.WithSchema(failoverServiceMethods.ByName("StartFailover")),
+			connect.WithClientOptions(opts...),
+		),
+		getFailover: connect.NewClient[v1.GetFailoverRequest, v1.GetFailoverResponse](
+			httpClient,
+			baseURL+FailoverServiceGetFailoverProcedure,
+			connect.WithSchema(failoverServiceMethods.ByName("GetFailover")),
+			connect.WithClientOptions(opts...),
+		),
+		confirmFailover: connect.NewClient[v1.ConfirmFailoverRequest, v1.ConfirmFailoverResponse](
+			httpClient,
+			baseURL+FailoverServiceConfirmFailoverProcedure,
+			connect.WithSchema(failoverServiceMethods.ByName("ConfirmFailover")),
+			connect.WithClientOptions(opts...),
+		),
+		retryFailover: connect.NewClient[v1.RetryFailoverRequest, v1.RetryFailoverResponse](
+			httpClient,
+			baseURL+FailoverServiceRetryFailoverProcedure,
+			connect.WithSchema(failoverServiceMethods.ByName("RetryFailover")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// failoverServiceClient implements FailoverServiceClient.
+type failoverServiceClient struct {
+	getFailoverOptions *connect.Client[v1.GetFailoverOptionsRequest, v1.GetFailoverOptionsResponse]
+	startFailover      *connect.Client[v1.StartFailoverRequest, v1.StartFailoverResponse]
+	getFailover        *connect.Client[v1.GetFailoverRequest, v1.GetFailoverResponse]
+	confirmFailover    *connect.Client[v1.ConfirmFailoverRequest, v1.ConfirmFailoverResponse]
+	retryFailover      *connect.Client[v1.RetryFailoverRequest, v1.RetryFailoverResponse]
+}
+
+// GetFailoverOptions calls ezdr.portal.v1.FailoverService.GetFailoverOptions.
+func (c *failoverServiceClient) GetFailoverOptions(ctx context.Context, req *connect.Request[v1.GetFailoverOptionsRequest]) (*connect.Response[v1.GetFailoverOptionsResponse], error) {
+	return c.getFailoverOptions.CallUnary(ctx, req)
+}
+
+// StartFailover calls ezdr.portal.v1.FailoverService.StartFailover.
+func (c *failoverServiceClient) StartFailover(ctx context.Context, req *connect.Request[v1.StartFailoverRequest]) (*connect.Response[v1.StartFailoverResponse], error) {
+	return c.startFailover.CallUnary(ctx, req)
+}
+
+// GetFailover calls ezdr.portal.v1.FailoverService.GetFailover.
+func (c *failoverServiceClient) GetFailover(ctx context.Context, req *connect.Request[v1.GetFailoverRequest]) (*connect.Response[v1.GetFailoverResponse], error) {
+	return c.getFailover.CallUnary(ctx, req)
+}
+
+// ConfirmFailover calls ezdr.portal.v1.FailoverService.ConfirmFailover.
+func (c *failoverServiceClient) ConfirmFailover(ctx context.Context, req *connect.Request[v1.ConfirmFailoverRequest]) (*connect.Response[v1.ConfirmFailoverResponse], error) {
+	return c.confirmFailover.CallUnary(ctx, req)
+}
+
+// RetryFailover calls ezdr.portal.v1.FailoverService.RetryFailover.
+func (c *failoverServiceClient) RetryFailover(ctx context.Context, req *connect.Request[v1.RetryFailoverRequest]) (*connect.Response[v1.RetryFailoverResponse], error) {
+	return c.retryFailover.CallUnary(ctx, req)
+}
+
+// FailoverServiceHandler is an implementation of the ezdr.portal.v1.FailoverService service.
+type FailoverServiceHandler interface {
+	// GetFailoverOptions returns what a failover of the plan would involve.
+	GetFailoverOptions(context.Context, *connect.Request[v1.GetFailoverOptionsRequest]) (*connect.Response[v1.GetFailoverOptionsResponse], error)
+	StartFailover(context.Context, *connect.Request[v1.StartFailoverRequest]) (*connect.Response[v1.StartFailoverResponse], error)
+	// GetFailover returns the plan's latest failover, if any.
+	GetFailover(context.Context, *connect.Request[v1.GetFailoverRequest]) (*connect.Response[v1.GetFailoverResponse], error)
+	// ConfirmFailover records that the operator verified the guests on the DR
+	// host, and switches DNS if asked.
+	ConfirmFailover(context.Context, *connect.Request[v1.ConfirmFailoverRequest]) (*connect.Response[v1.ConfirmFailoverResponse], error)
+	// RetryFailover runs a failed step of a committed failover again.
+	RetryFailover(context.Context, *connect.Request[v1.RetryFailoverRequest]) (*connect.Response[v1.RetryFailoverResponse], error)
+}
+
+// NewFailoverServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewFailoverServiceHandler(svc FailoverServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	failoverServiceMethods := v1.File_ezdr_portal_v1_portal_proto.Services().ByName("FailoverService").Methods()
+	failoverServiceGetFailoverOptionsHandler := connect.NewUnaryHandler(
+		FailoverServiceGetFailoverOptionsProcedure,
+		svc.GetFailoverOptions,
+		connect.WithSchema(failoverServiceMethods.ByName("GetFailoverOptions")),
+		connect.WithHandlerOptions(opts...),
+	)
+	failoverServiceStartFailoverHandler := connect.NewUnaryHandler(
+		FailoverServiceStartFailoverProcedure,
+		svc.StartFailover,
+		connect.WithSchema(failoverServiceMethods.ByName("StartFailover")),
+		connect.WithHandlerOptions(opts...),
+	)
+	failoverServiceGetFailoverHandler := connect.NewUnaryHandler(
+		FailoverServiceGetFailoverProcedure,
+		svc.GetFailover,
+		connect.WithSchema(failoverServiceMethods.ByName("GetFailover")),
+		connect.WithHandlerOptions(opts...),
+	)
+	failoverServiceConfirmFailoverHandler := connect.NewUnaryHandler(
+		FailoverServiceConfirmFailoverProcedure,
+		svc.ConfirmFailover,
+		connect.WithSchema(failoverServiceMethods.ByName("ConfirmFailover")),
+		connect.WithHandlerOptions(opts...),
+	)
+	failoverServiceRetryFailoverHandler := connect.NewUnaryHandler(
+		FailoverServiceRetryFailoverProcedure,
+		svc.RetryFailover,
+		connect.WithSchema(failoverServiceMethods.ByName("RetryFailover")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/ezdr.portal.v1.FailoverService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case FailoverServiceGetFailoverOptionsProcedure:
+			failoverServiceGetFailoverOptionsHandler.ServeHTTP(w, r)
+		case FailoverServiceStartFailoverProcedure:
+			failoverServiceStartFailoverHandler.ServeHTTP(w, r)
+		case FailoverServiceGetFailoverProcedure:
+			failoverServiceGetFailoverHandler.ServeHTTP(w, r)
+		case FailoverServiceConfirmFailoverProcedure:
+			failoverServiceConfirmFailoverHandler.ServeHTTP(w, r)
+		case FailoverServiceRetryFailoverProcedure:
+			failoverServiceRetryFailoverHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedFailoverServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedFailoverServiceHandler struct{}
+
+func (UnimplementedFailoverServiceHandler) GetFailoverOptions(context.Context, *connect.Request[v1.GetFailoverOptionsRequest]) (*connect.Response[v1.GetFailoverOptionsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.GetFailoverOptions is not implemented"))
+}
+
+func (UnimplementedFailoverServiceHandler) StartFailover(context.Context, *connect.Request[v1.StartFailoverRequest]) (*connect.Response[v1.StartFailoverResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.StartFailover is not implemented"))
+}
+
+func (UnimplementedFailoverServiceHandler) GetFailover(context.Context, *connect.Request[v1.GetFailoverRequest]) (*connect.Response[v1.GetFailoverResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.GetFailover is not implemented"))
+}
+
+func (UnimplementedFailoverServiceHandler) ConfirmFailover(context.Context, *connect.Request[v1.ConfirmFailoverRequest]) (*connect.Response[v1.ConfirmFailoverResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.ConfirmFailover is not implemented"))
+}
+
+func (UnimplementedFailoverServiceHandler) RetryFailover(context.Context, *connect.Request[v1.RetryFailoverRequest]) (*connect.Response[v1.RetryFailoverResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.RetryFailover is not implemented"))
 }
 
 // TestFailoverServiceClient is a client for the ezdr.portal.v1.TestFailoverService service.

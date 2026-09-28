@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"sync"
@@ -36,11 +37,19 @@ type fakeHost struct {
 	failRelease bool
 	// failPrepare fails test preparation.
 	failPrepare bool
+	// finalSnapshot is reported as replicated once replication is
+	// triggered; failReplicate fails that instead.
+	finalSnapshot string
+	failReplicate bool
+	// peer is the other host: a DR host's replication brings the peer's
+	// latest snapshot.
+	peer *fakeHost
 
-	mu      sync.Mutex
-	actions []string
-	pulls   []string
-	stopped chan struct{}
+	mu              sync.Mutex
+	pendingSnapshot string
+	actions         []string
+	pulls           []string
+	stopped         chan struct{}
 }
 
 // run serves the host until ctx is done; wait returns once it has stopped.
@@ -117,10 +126,44 @@ func (f *fakeHost) answer(a *clientv1.Action) bool {
 	case *clientv1.Action_TestOptions:
 		name = "test options"
 		ack.TestOptions = &clientv1.TestOptionsResult{MemoryAvailableBytes: 1 << 30}
+		f.mu.Lock()
+		final := f.finalSnapshot
+		f.mu.Unlock()
 		for _, r := range k.TestOptions.Replicas {
-			ack.TestOptions.Replicas = append(ack.TestOptions.Replicas, &clientv1.ReplicaSnapshots{Replica: r, Exists: true,
-				Snapshots: []*clientv1.TestSnapshot{{Name: "zrepl_2", CreatedAt: timestamppb.Now()}, {Name: "zrepl_1", CreatedAt: timestamppb.New(time.Unix(1, 0))}}})
+			snaps := []*clientv1.TestSnapshot{{Name: "zrepl_2", CreatedAt: timestamppb.Now()}, {Name: "zrepl_1", CreatedAt: timestamppb.New(time.Unix(1, 0))}}
+			if final != "" {
+				snaps = append([]*clientv1.TestSnapshot{{Name: final, CreatedAt: timestamppb.Now()}}, snaps...)
+			}
+			ack.TestOptions.Replicas = append(ack.TestOptions.Replicas, &clientv1.ReplicaSnapshots{Replica: r, Exists: true, Snapshots: snaps})
 		}
+	case *clientv1.Action_FailoverStopGuests:
+		name = "stop " + fmt.Sprint(k.FailoverStopGuests.Vmids)
+	case *clientv1.Action_FailoverSnapshot:
+		name = "snapshot"
+		f.mu.Lock()
+		f.pendingSnapshot = k.FailoverSnapshot.Snapshot
+		f.mu.Unlock()
+	case *clientv1.Action_FailoverReplicate:
+		name = "replicate"
+		if f.failReplicate {
+			ack.Succeeded, ack.Message = false, "zrepl isn't running"
+		} else if f.peer != nil {
+			f.peer.mu.Lock()
+			snap := f.peer.pendingSnapshot
+			f.peer.mu.Unlock()
+			f.mu.Lock()
+			f.finalSnapshot = snap
+			f.mu.Unlock()
+		}
+	case *clientv1.Action_FailoverPrepare:
+		name = "prepare " + fmt.Sprint(k.FailoverPrepare.Vmids)
+	case *clientv1.Action_FailoverStartGuest:
+		name = "start " + strconv.FormatUint(uint64(k.FailoverStartGuest.Vmid), 10)
+	case *clientv1.Action_FailoverCheckGuest:
+		name = "check"
+		ack.GuestCheck = &clientv1.TestGuestCheck{Running: true}
+	case *clientv1.Action_FailoverUnlockGuests:
+		name = "unlock " + fmt.Sprint(k.FailoverUnlockGuests.Vmids)
 	case *clientv1.Action_TestPrepare:
 		name = "test prepare " + k.TestPrepare.Snapshot
 		if f.failPrepare {

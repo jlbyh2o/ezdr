@@ -132,7 +132,12 @@ func (r *Runner) Prepare(ctx context.Context, planID string, vmids []uint32) ([]
 			if err := r.oursOnDR(planID, st.Type, vmid); err != nil {
 				return notes, fmt.Errorf("guest %d: ID in use: %w", vmid, err)
 			}
-			continue // registered by an earlier attempt
+			// Registered by an earlier attempt, which may have stopped
+			// before the cloud-init drive.
+			if err := r.ensureCloudInit(ctx, vmid, st.Config, storages); err != nil {
+				return notes, fmt.Errorf("guest %d: %w", vmid, err)
+			}
+			continue
 		}
 		volumes := map[string]string{}
 		for _, d := range guestconfig.Disks(st.Type, st.Config) {
@@ -160,21 +165,75 @@ func (r *Runner) Prepare(ctx context.Context, planID string, vmids []uint32) ([]
 		if err := os.WriteFile(r.configPath(st.Type, vmid), []byte(res.Config), 0o640); err != nil { //nolint:gosec // Proxmox's cluster file system
 			return notes, err
 		}
-		if res.CloudInit != "" && len(volumes) > 0 {
-			var store string
-			for _, v := range volumes {
-				store, _, _ = strings.Cut(v, ":")
-				break
-			}
-			if _, err := r.Run(ctx, "qm", "set", strconv.FormatUint(uint64(vmid), 10), "--"+res.CloudInit, store+":cloudinit"); err != nil {
-				return notes, fmt.Errorf("guest %d: create the cloud-init drive: %w", vmid, err)
-			}
+		if err := r.ensureCloudInit(ctx, vmid, st.Config, storages); err != nil {
+			return notes, fmt.Errorf("guest %d: %w", vmid, err)
 		}
 		for _, rm := range res.Removed {
 			notes = append(notes, fmt.Sprintf("guest %d: removed %s", vmid, rm))
 		}
 	}
 	return notes, nil
+}
+
+// ensureCloudInit gives a registered VM the cloud-init drive its original
+// configuration has. If a replica of that drive exists (for example,
+// replicated by an earlier hand-written setup), it's reused: Proxmox
+// regenerates a cloud-init drive's contents when the VM starts. Otherwise a
+// fresh drive is created.
+func (r *Runner) ensureCloudInit(ctx context.Context, vmid uint32, original string, storages map[string]*clientv1.RecoveryStorage) error {
+	key, vol := cloudInitDrive(original)
+	if key == "" {
+		return nil
+	}
+	b, err := os.ReadFile(r.configPath("qemu", vmid))
+	if err != nil {
+		return err
+	}
+	if value(string(b), key) != "" {
+		return nil // already there
+	}
+	source, volname, _ := strings.Cut(vol, ":")
+	s := storages[source]
+	if s == nil {
+		for _, other := range storages {
+			s = other // any of the plan's storages can hold a new drive
+			break
+		}
+	}
+	if s == nil {
+		return errors.New("no storage for the cloud-init drive")
+	}
+	id := strconv.FormatUint(uint64(vmid), 10)
+	name := volname[strings.LastIndex(volname, "/")+1:]
+	ds := s.ReceiveDataset + "/" + s.SourceDataset + "/" + name
+	if storages[source] != nil {
+		if _, err := r.Run(ctx, "zfs", "list", "-H", "-o", "name", ds); err == nil {
+			if _, err := r.Run(ctx, "zfs", "set", "readonly=off", ds); err != nil {
+				return err
+			}
+			if _, err := r.Run(ctx, "qm", "set", id, "--"+key, s.StorageId+":"+name+",media=cdrom"); err != nil {
+				return fmt.Errorf("attach the cloud-init drive: %w", err)
+			}
+			return nil
+		}
+	}
+	if _, err := r.Run(ctx, "qm", "set", id, "--"+key, s.StorageId+":cloudinit"); err != nil {
+		return fmt.Errorf("create the cloud-init drive: %w", err)
+	}
+	return nil
+}
+
+// cloudInitDrive returns the key and volume of a VM configuration's
+// cloud-init drive, if it has one.
+func cloudInitDrive(conf string) (string, string) {
+	for line := range strings.SplitSeq(conf, "\n") {
+		key, v, ok := strings.Cut(line, ":")
+		vol, opts, _ := strings.Cut(strings.TrimSpace(v), ",")
+		if ok && strings.Contains(vol, "cloudinit") && strings.Contains(opts, "media=cdrom") {
+			return strings.TrimSpace(key), vol
+		}
+	}
+	return "", ""
 }
 
 // prepareReplica makes a replica usable as a guest's disk.

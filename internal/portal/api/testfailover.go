@@ -240,6 +240,11 @@ func (s TestFailoverService) StartTest(ctx context.Context, req *connect.Request
 	if err != nil {
 		return nil, err
 	}
+	if running, err := s.failoverRunning(ctx, tp.row.ID); err != nil {
+		return nil, internalError(err)
+	} else if running {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan's failover is running"))
+	}
 	if tp.spec.TestBridge == "" {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan has no test failover bridge"))
 	}

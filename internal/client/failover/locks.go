@@ -19,8 +19,12 @@ import (
 	"github.com/jlbyh2o/ezdr/internal/client/guests"
 )
 
-// LockTag marks guests on the primary that were failed over.
-const LockTag = "ezdr-failed-over"
+// LockTag marks guests on the primary that were failed over, and OnbootTag
+// those whose onboot setting unlocking restores.
+const (
+	LockTag   = "ezdr-failed-over"
+	OnbootTag = "ezdr-onboot"
+)
 
 // Runner performs failover steps. Tests replace its fields.
 type Runner struct {
@@ -169,6 +173,10 @@ func (r *Runner) stopAndLock(ctx context.Context, vmid, timeoutSeconds uint32) (
 	if !slices.Contains(t, LockTag) {
 		t = append(t, LockTag)
 	}
+	// Remember onboot, so unlocking can restore it.
+	if value(conf, "onboot") == "1" && !slices.Contains(t, OnbootTag) {
+		t = append(t, OnbootTag)
+	}
 	set := []string{"set", id, "--onboot", "0", "--tags", strings.Join(t, ";")}
 	if typ == "qemu" {
 		set = append(set, "--skiplock", "1")
@@ -184,4 +192,60 @@ func (r *Runner) stopAndLock(ctx context.Context, vmid, timeoutSeconds uint32) (
 		return events, err
 	}
 	return append(events, fmt.Sprintf("locked guest %d", vmid)), nil
+}
+
+// Unlock reverses StopAndLock for the guests, in the given order: it removes
+// EZDR's lock and tags and restores onboot, and starts them if start is set.
+// Guests EZDR didn't lock are left alone.
+func (r *Runner) Unlock(ctx context.Context, vmids []uint32, start bool) ([]string, error) {
+	var events []string
+	var errs []error
+	for _, vmid := range vmids {
+		typ, conf, err := r.guest(vmid)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		id := strconv.FormatUint(uint64(vmid), 10)
+		if Locked(conf) {
+			t := slices.DeleteFunc(tags(conf), func(s string) bool { return s == LockTag || s == OnbootTag })
+			onboot := "0"
+			if slices.Contains(tags(conf), OnbootTag) {
+				onboot = "1"
+			}
+			set := []string{"set", id, "--onboot", onboot}
+			if len(t) > 0 {
+				set = append(set, "--tags", strings.Join(t, ";"))
+			} else {
+				set = append(set, "--delete", "tags")
+			}
+			if typ == "qemu" {
+				set = append(set, "--skiplock", "1")
+			}
+			if _, err := r.Run(ctx, tool(typ), "unlock", id); err != nil {
+				errs = append(errs, err)
+				continue
+			}
+			if _, err := r.Run(ctx, tool(typ), set...); err != nil {
+				errs = append(errs, err)
+				continue
+			}
+			events = append(events, fmt.Sprintf("unlocked guest %d", vmid))
+		} else if slices.Contains(tags(conf), LockTag) || value(conf, "lock") != "" {
+			continue // someone else's lock: leave it
+		}
+		if start {
+			if running, _ := r.running(ctx, typ, vmid); !running {
+				if _, err := r.Run(ctx, tool(typ), "start", id); err != nil {
+					errs = append(errs, err)
+					continue
+				}
+				events = append(events, fmt.Sprintf("started guest %d", vmid))
+			}
+		}
+	}
+	return events, errors.Join(errs...)
 }

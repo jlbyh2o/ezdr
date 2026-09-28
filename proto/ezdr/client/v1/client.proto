@@ -61,6 +61,7 @@ message Action {
     FailoverPrepare failover_prepare = 16;
     FailoverStartGuest failover_start_guest = 17;
     FailoverCheckGuest failover_check_guest = 18;
+    FailoverUnlockGuests failover_unlock_guests = 19;
   }
 }
 
@@ -97,6 +98,14 @@ message FailoverPrepare {
 message FailoverStartGuest {
   string plan_id = 1;
   uint32 vmid = 2;
+}
+
+// FailoverUnlockGuests (primary) removes EZDR's failover lock from the
+// guests, restoring onboot, and starts them in the given order if start is
+// set.
+message FailoverUnlockGuests {
+  repeated uint32 vmids = 1;
+  bool start = 2;
 }
 
 message FailoverCheckGuest {

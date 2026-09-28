@@ -114,6 +114,7 @@ func Run(ctx context.Context, cfg Config, ui fs.FS) error {
 	go api.NewAlertEngine(d).Run(ctx)
 	go d.ResumeTakeovers(ctx)
 	go d.RunTestSupervisor(ctx)
+	go d.ResumeFailovers(ctx)
 
 	select {
 	case err := <-errc:

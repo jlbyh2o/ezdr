@@ -154,6 +154,9 @@ func (s PlanService) planMsg(ctx context.Context, p store.Plan) (*portalv1.Plan,
 	}
 	msg := &portalv1.Plan{Id: p.ID, Spec: spec, CreatedBy: p.CreatedBy,
 		CreatedAt: ts(p.CreatedAt), UpdatedAt: ts(p.UpdatedAt), State: planStates[p.State]}
+	if running, err := s.failoverRunning(ctx, p.ID); err == nil && running {
+		msg.State = portalv1.PlanState_PLAN_STATE_FAILING_OVER
+	}
 	if p.AppliedSpec != nil {
 		if msg.AppliedSpec, err = decodeSpec(p.AppliedSpec); err != nil {
 			return nil, err
@@ -186,6 +189,9 @@ func (s PlanService) save(ctx context.Context, id string, spec *planv1.PlanSpec)
 			return nil, nil, internalError(err)
 		} else if running {
 			return nil, nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan can't change while its takeover runs"))
+		}
+		if err := s.refuseIfFailedOver(ctx, id); err != nil {
+			return nil, nil, err
 		}
 	}
 	data, err := proto.Marshal(spec)
@@ -561,6 +567,9 @@ func (s PlanService) ApplyPlanChanges(ctx context.Context, req *connect.Request[
 	if sp.State == store.PlanDraft {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("activate the plan instead"))
 	}
+	if err := s.refuseIfFailedOver(ctx, sp.ID); err != nil {
+		return nil, err
+	}
 	if spec.Takeover != nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("an existing zrepl setup can only be adopted by a draft plan"))
 	}
@@ -603,6 +612,9 @@ func (s PlanService) PausePlan(ctx context.Context, req *connect.Request[portalv
 	}
 	if sp.State != store.PlanActive {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("only active plans can be paused"))
+	}
+	if err := s.refuseIfFailedOver(ctx, sp.ID); err != nil {
+		return nil, err
 	}
 	applied, err := decodeSpec(sp.AppliedSpec)
 	if err != nil {
@@ -648,9 +660,30 @@ func (s PlanService) DeactivatePlan(ctx context.Context, req *connect.Request[po
 	if sp.State == store.PlanDraft {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan is already a draft"))
 	}
+	if err := s.refuseIfFailedOver(ctx, sp.ID); err != nil {
+		return nil, err
+	}
 	p, err := s.transition(ctx, sp, store.PlanDraft, nil, "plan.deactivate")
 	if err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&portalv1.DeactivatePlanResponse{Plan: p}), nil
+}
+
+// refuseIfFailedOver refuses changes to a plan that's failing over or failed
+// over: its guests run on the DR host, and failback is the way back.
+func (s PlanService) refuseIfFailedOver(ctx context.Context, id string) error {
+	sp, err := s.Store.PlanByID(ctx, id)
+	if err != nil {
+		return nil //nolint:nilerr // callers report missing plans themselves
+	}
+	if sp.State == store.PlanFailedOver {
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan is failed over; fail it back first"))
+	}
+	if running, err := s.failoverRunning(ctx, id); err != nil {
+		return internalError(err)
+	} else if running {
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan's failover is running"))
+	}
+	return nil
 }
