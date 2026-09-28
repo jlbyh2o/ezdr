@@ -34,13 +34,15 @@ type applier struct {
 	// zreplMu serializes changes to zrepl's configuration: applying desired
 	// state and takeover actions.
 	zreplMu sync.Mutex
-	// testMu serializes test failover actions.
-	testMu    sync.Mutex
-	tests     *testfailover.Runner
-	pending   *clientv1.DesiredState
-	wake      chan struct{}
-	lastGen   uint64
-	lastError string
+	// testMu serializes test failover actions, and failoverMu failover
+	// actions.
+	testMu     sync.Mutex
+	failoverMu sync.Mutex
+	tests      *testfailover.Runner
+	pending    *clientv1.DesiredState
+	wake       chan struct{}
+	lastGen    uint64
+	lastError  string
 	// current is the zrepl configuration last applied successfully.
 	current *clientv1.Zrepl
 	// reportVMIDs are the guests whose configurations the portal wants.

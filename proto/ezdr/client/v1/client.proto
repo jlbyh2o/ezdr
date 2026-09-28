@@ -55,7 +55,53 @@ message Action {
     TestStartGuest test_start_guest = 10;
     TestCheckGuest test_check_guest = 11;
     TestCleanup test_cleanup = 12;
+    FailoverStopGuests failover_stop_guests = 13;
+    FailoverSnapshot failover_snapshot = 14;
+    FailoverReplicate failover_replicate = 15;
+    FailoverPrepare failover_prepare = 16;
+    FailoverStartGuest failover_start_guest = 17;
+    FailoverCheckGuest failover_check_guest = 18;
   }
+}
+
+// The Failover* actions fail a plan over. See docs/design/failover.md.
+
+// FailoverStopGuests (primary) shuts the guests down in the given order,
+// forcing them off after the timeout, and locks them.
+message FailoverStopGuests {
+  string plan_id = 1;
+  repeated uint32 vmids = 2;
+  uint32 shutdown_timeout_seconds = 3;
+}
+
+// FailoverSnapshot (primary) takes the final snapshot of each dataset.
+message FailoverSnapshot {
+  repeated string datasets = 1;
+  // The snapshot name, with the plan's prefix.
+  string snapshot = 2;
+}
+
+// FailoverReplicate (DR host) starts the given pull jobs now.
+message FailoverReplicate {
+  repeated string pull_jobs = 1;
+}
+
+// FailoverPrepare (DR host) makes the plan's replicas writable, adds the
+// plan's Proxmox storages, and registers the guests from the stored
+// configurations and recovery information. Repeating it is safe.
+message FailoverPrepare {
+  string plan_id = 1;
+  repeated uint32 vmids = 2;
+}
+
+message FailoverStartGuest {
+  string plan_id = 1;
+  uint32 vmid = 2;
+}
+
+message FailoverCheckGuest {
+  string plan_id = 1;
+  uint32 vmid = 2;
 }
 
 // The Test* actions run test failovers on the DR host. See

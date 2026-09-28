@@ -140,3 +140,14 @@ func TestRewriteForFailover(t *testing.T) {
 		t.Errorf("unmapped bridge: %v", err)
 	}
 }
+
+func TestDisks(t *testing.T) {
+	got := Disks("qemu", vmConf)
+	if len(got) != 2 || got[0].Volume != "local-zfs:vm-201-disk-0" || got[0].Size != "4G" || got[1].Key != "efidisk0" {
+		t.Errorf("VM disks = %v", got)
+	}
+	ct := Disks("lxc", "rootfs: local-zfs:subvol-101-disk-0,size=4G\nmp0: /srv,mp=/data\nmp1: local-zfs:subvol-101-disk-1,mp=/x,size=8G\n")
+	if len(ct) != 2 || ct[1].Volume != "local-zfs:subvol-101-disk-1" || ct[1].Size != "8G" {
+		t.Errorf("container volumes = %v", ct)
+	}
+}

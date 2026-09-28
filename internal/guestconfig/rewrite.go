@@ -222,3 +222,35 @@ func addTag(tags, tag string) string {
 	}
 	return strings.Join(list, ";")
 }
+
+// Disk is one of a configuration's disk volumes.
+type Disk struct {
+	Key string
+	// Volume is the volume ID, such as "local-zfs:vm-201-disk-0".
+	Volume string
+	// Size is the size option, such as "4G" (empty if not set).
+	Size string
+}
+
+// Disks lists a configuration's disks and container volumes that are on a
+// storage: not media, cloud-init drives, or host paths.
+func Disks(typ, conf string) []Disk {
+	var out []Disk
+	for line := range strings.SplitSeq(conf, "\n") {
+		key, value, ok := strings.Cut(line, ":")
+		if !ok || strings.HasPrefix(line, "#") {
+			continue
+		}
+		key, value = strings.TrimSpace(key), strings.TrimSpace(value)
+		isDisk := (typ == "qemu" && vmDiskKey.MatchString(key)) || (typ == "lxc" && ctDiskKey.MatchString(key))
+		if !isDisk {
+			continue
+		}
+		vol, opts, _ := strings.Cut(value, ",")
+		if !strings.Contains(vol, ":") || strings.HasPrefix(vol, "/") || strings.Contains(","+opts+",", ",media=cdrom,") {
+			continue
+		}
+		out = append(out, Disk{Key: key, Volume: vol, Size: option(opts, "size")})
+	}
+	return out
+}

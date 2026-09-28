@@ -79,3 +79,37 @@ func (a *applier) testAction(ctx context.Context, act *clientv1.Action) {
 		slog.Warn("acknowledge action", "action", act.Id, "err", err)
 	}
 }
+
+// failoverAction performs one failover step and acknowledges it.
+func (a *applier) failoverAction(ctx context.Context, act *clientv1.Action) {
+	ctx = context.WithoutCancel(ctx)
+	a.failoverMu.Lock()
+	defer a.failoverMu.Unlock()
+	ack := &clientv1.AckActionRequest{ActionId: act.Id}
+	var err error
+	switch k := act.Kind.(type) {
+	case *clientv1.Action_FailoverStopGuests:
+		m := k.FailoverStopGuests
+		ack.Output, err = a.failover.StopAndLock(ctx, m.Vmids, m.ShutdownTimeoutSeconds)
+	case *clientv1.Action_FailoverSnapshot:
+		err = a.failover.Snapshot(ctx, k.FailoverSnapshot.Datasets, k.FailoverSnapshot.Snapshot)
+	case *clientv1.Action_FailoverReplicate:
+		err = a.failover.Replicate(ctx, k.FailoverReplicate.PullJobs)
+	case *clientv1.Action_FailoverPrepare:
+		ack.Output, err = a.failover.Prepare(ctx, k.FailoverPrepare.PlanId, k.FailoverPrepare.Vmids)
+	case *clientv1.Action_FailoverStartGuest:
+		err = a.failover.StartGuest(ctx, k.FailoverStartGuest.PlanId, k.FailoverStartGuest.Vmid)
+	case *clientv1.Action_FailoverCheckGuest:
+		ack.GuestCheck, err = a.failover.CheckGuest(ctx, k.FailoverCheckGuest.PlanId, k.FailoverCheckGuest.Vmid)
+	}
+	ack.Succeeded = err == nil
+	if err != nil {
+		ack.Message = err.Error()
+		slog.Error("failover action failed", "action", act.Id, "err", err)
+	} else {
+		slog.Info("failover action completed", "action", act.Id)
+	}
+	if _, err := a.api.AckAction(ctx, connect.NewRequest(ack)); err != nil {
+		slog.Warn("acknowledge action", "action", act.Id, "err", err)
+	}
+}

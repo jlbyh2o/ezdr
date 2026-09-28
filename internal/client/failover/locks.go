@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/jlbyh2o/ezdr/internal/client/guests"
 )
 
 // LockTag marks guests on the primary that were failed over.
@@ -23,13 +25,21 @@ const LockTag = "ezdr-failed-over"
 // Runner performs failover steps. Tests replace its fields.
 type Runner struct {
 	// PVE is Proxmox's cluster file system root.
-	PVE string
-	Run func(ctx context.Context, name string, args ...string) ([]byte, error)
+	PVE    string
+	Guests guests.Paths
+	Run    func(ctx context.Context, name string, args ...string) ([]byte, error)
+	Node   func() (string, error)
 }
 
 // NewRunner returns a Runner for the real host.
 func NewRunner() *Runner {
-	return &Runner{PVE: "/etc/pve", Run: runCommand}
+	return &Runner{PVE: "/etc/pve", Guests: guests.DefaultPaths, Run: runCommand, Node: nodeName}
+}
+
+func nodeName() (string, error) {
+	h, err := os.Hostname()
+	short, _, _ := strings.Cut(h, ".")
+	return short, err
 }
 
 func runCommand(ctx context.Context, name string, args ...string) ([]byte, error) {
