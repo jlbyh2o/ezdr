@@ -297,7 +297,7 @@ func validateStorage(spec *planv1.PlanSpec, usedStorage []string, primary, dr *i
 	for pool, n := range needed {
 		if free := drPools[pool].FreeBytes; float64(free) < float64(n)*spaceHeadroom {
 			is.warnf(0, "DR pool %q has %s free; the protected disks use %s (plus 20%% headroom recommended)",
-				pool, formatBytes(free), formatBytes(n))
+				pool, FormatBytes(free), FormatBytes(n))
 		}
 	}
 }
@@ -358,7 +358,8 @@ func sorted(is issues) []*planv1.Issue {
 	return is
 }
 
-func formatBytes(n uint64) string {
+// FormatBytes formats a size in binary units, such as "1.5 GiB".
+func FormatBytes(n uint64) string {
 	const unit = 1024
 	if n < unit {
 		return fmt.Sprintf("%d B", n)

@@ -283,6 +283,9 @@ service FailoverService {
   rpc ConfirmFailover(ConfirmFailoverRequest) returns (ConfirmFailoverResponse);
   // RetryFailover runs a failed step of a committed failover again.
   rpc RetryFailover(RetryFailoverRequest) returns (RetryFailoverResponse);
+  // RunFailbackPreflight checks what failing a failed-over plan back would
+  // do. See docs/design/failback.md.
+  rpc RunFailbackPreflight(RunFailbackPreflightRequest) returns (RunFailbackPreflightResponse);
 }
 
 message GetFailoverOptionsRequest {
@@ -369,6 +372,48 @@ message Failover {
   repeated string notes = 13;
   // Set for failovers run on the DR host's command line (break-glass).
   bool break_glass = 14;
+}
+
+message RunFailbackPreflightRequest {
+  string plan_id = 1;
+}
+
+message RunFailbackPreflightResponse {
+  FailbackPreflight preflight = 1;
+}
+
+// FailbackPreflight is what failing back would do, from both hosts' current
+// snapshots and inventories.
+message FailbackPreflight {
+  google.protobuf.Timestamp checked_at = 1;
+  repeated FailbackDataset datasets = 2;
+  // Whether any dataset on the primary changed after its common snapshot;
+  // failing back discards those changes, which the operator confirms.
+  bool diverged = 3;
+  // Configuration changes made at the DR site that failing back doesn't
+  // carry over: the primary keeps its own configuration.
+  repeated string config_changes = 4;
+  // Problems that block the failback.
+  repeated string problems = 5;
+  // Concerns that don't block it.
+  repeated string warnings = 6;
+}
+
+message FailbackDataset {
+  // Dataset on the primary.
+  string dataset = 1;
+  // Its replica on the DR host.
+  string replica = 2;
+  // Newest snapshot both hosts have; the copy starts from it. Empty if
+  // there's none.
+  string common_snapshot = 3;
+  // About how much the DR host has written since the common snapshot.
+  uint64 copy_bytes = 4;
+  // Changes on the primary after the common snapshot, which failing back
+  // discards: newer snapshots, and the space written after the common
+  // snapshot.
+  repeated string discarded_snapshots = 5;
+  uint64 diverged_bytes = 6;
 }
 
 // DnsRecordSwitch is a DNS record a failover switches.

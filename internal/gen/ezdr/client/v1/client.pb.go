@@ -1696,7 +1696,9 @@ type DatasetSnapshots struct {
 	Exists          bool                   `protobuf:"varint,2,opt,name=exists,proto3" json:"exists,omitempty"`
 	ReferencedBytes uint64                 `protobuf:"varint,3,opt,name=referenced_bytes,json=referencedBytes,proto3" json:"referenced_bytes,omitempty"`
 	// Snapshots ("@name") and bookmarks ("#name"), oldest first.
-	Snapshots     []*SnapshotInfo `protobuf:"bytes,4,rep,name=snapshots,proto3" json:"snapshots,omitempty"`
+	Snapshots []*SnapshotInfo `protobuf:"bytes,4,rep,name=snapshots,proto3" json:"snapshots,omitempty"`
+	// Space written since the newest snapshot.
+	WrittenBytes  uint64 `protobuf:"varint,5,opt,name=written_bytes,json=writtenBytes,proto3" json:"written_bytes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1759,11 +1761,21 @@ func (x *DatasetSnapshots) GetSnapshots() []*SnapshotInfo {
 	return nil
 }
 
+func (x *DatasetSnapshots) GetWrittenBytes() uint64 {
+	if x != nil {
+		return x.WrittenBytes
+	}
+	return 0
+}
+
 type SnapshotInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Guid          uint64                 `protobuf:"varint,2,opt,name=guid,proto3" json:"guid,omitempty"`
-	Createtxg     uint64                 `protobuf:"varint,3,opt,name=createtxg,proto3" json:"createtxg,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Name      string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Guid      uint64                 `protobuf:"varint,2,opt,name=guid,proto3" json:"guid,omitempty"`
+	Createtxg uint64                 `protobuf:"varint,3,opt,name=createtxg,proto3" json:"createtxg,omitempty"`
+	// Space written between the previous snapshot and this one; zero for
+	// bookmarks.
+	WrittenBytes  uint64 `protobuf:"varint,4,opt,name=written_bytes,json=writtenBytes,proto3" json:"written_bytes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1815,6 +1827,13 @@ func (x *SnapshotInfo) GetGuid() uint64 {
 func (x *SnapshotInfo) GetCreatetxg() uint64 {
 	if x != nil {
 		return x.Createtxg
+	}
+	return 0
+}
+
+func (x *SnapshotInfo) GetWrittenBytes() uint64 {
+	if x != nil {
+		return x.WrittenBytes
 	}
 	return 0
 }
@@ -4185,16 +4204,18 @@ const file_ezdr_client_v1_client_proto_rawDesc = "" +
 	"\rzrepl_version\x18\x01 \x01(\tR\fzreplVersion\x12#\n" +
 	"\rzrepl_running\x18\x02 \x01(\bR\fzreplRunning\x12<\n" +
 	"\bdatasets\x18\x03 \x03(\v2 .ezdr.client.v1.DatasetSnapshotsR\bdatasets\x12'\n" +
-	"\x0frelease_preview\x18\x04 \x03(\tR\x0ereleasePreview\"\xab\x01\n" +
+	"\x0frelease_preview\x18\x04 \x03(\tR\x0ereleasePreview\"\xd0\x01\n" +
 	"\x10DatasetSnapshots\x12\x18\n" +
 	"\adataset\x18\x01 \x01(\tR\adataset\x12\x16\n" +
 	"\x06exists\x18\x02 \x01(\bR\x06exists\x12)\n" +
 	"\x10referenced_bytes\x18\x03 \x01(\x04R\x0freferencedBytes\x12:\n" +
-	"\tsnapshots\x18\x04 \x03(\v2\x1c.ezdr.client.v1.SnapshotInfoR\tsnapshots\"T\n" +
+	"\tsnapshots\x18\x04 \x03(\v2\x1c.ezdr.client.v1.SnapshotInfoR\tsnapshots\x12#\n" +
+	"\rwritten_bytes\x18\x05 \x01(\x04R\fwrittenBytes\"y\n" +
 	"\fSnapshotInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04guid\x18\x02 \x01(\x04R\x04guid\x12\x1c\n" +
-	"\tcreatetxg\x18\x03 \x01(\x04R\tcreatetxg\"\x0e\n" +
+	"\tcreatetxg\x18\x03 \x01(\x04R\tcreatetxg\x12#\n" +
+	"\rwritten_bytes\x18\x04 \x01(\x04R\fwrittenBytes\"\x0e\n" +
 	"\fZreplUpgrade\"=\n" +
 	"\x0fZreplRemoveJobs\x12\x12\n" +
 	"\x04jobs\x18\x01 \x03(\tR\x04jobs\x12\x16\n" +

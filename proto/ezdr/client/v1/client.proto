@@ -228,12 +228,17 @@ message DatasetSnapshots {
   uint64 referenced_bytes = 3;
   // Snapshots ("@name") and bookmarks ("#name"), oldest first.
   repeated SnapshotInfo snapshots = 4;
+  // Space written since the newest snapshot.
+  uint64 written_bytes = 5;
 }
 
 message SnapshotInfo {
   string name = 1;
   uint64 guid = 2;
   uint64 createtxg = 3;
+  // Space written between the previous snapshot and this one; zero for
+  // bookmarks.
+  uint64 written_bytes = 4;
 }
 
 // ZreplUpgrade installs the supported zrepl version (0.7) if an older one is

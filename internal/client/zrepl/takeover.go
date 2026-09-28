@@ -44,7 +44,7 @@ func (a *Applier) Preflight(ctx context.Context, datasets []string, releaseJob s
 		}
 		d := &clientv1.DatasetSnapshots{Dataset: ds}
 		out, err := a.Run(ctx, "zfs", "list", "-Hp", "-t", "filesystem,volume,snapshot,bookmark", "-d", "1",
-			"-o", "name,guid,createtxg,referenced", ds)
+			"-o", "name,guid,createtxg,referenced,written", ds)
 		if err != nil {
 			if strings.Contains(err.Error(), "does not exist") {
 				res.Datasets = append(res.Datasets, d)
@@ -55,17 +55,19 @@ func (a *Applier) Preflight(ctx context.Context, datasets []string, releaseJob s
 		d.Exists = true
 		for line := range strings.SplitSeq(strings.TrimSpace(string(out)), "\n") {
 			f := strings.Split(line, "\t")
-			if len(f) != 4 {
+			if len(f) != 5 {
 				continue
 			}
 			guid, _ := strconv.ParseUint(f[1], 10, 64)
 			txg, _ := strconv.ParseUint(f[2], 10, 64)
+			written, _ := strconv.ParseUint(f[4], 10, 64) // "-" for bookmarks
 			if f[0] == ds {
 				d.ReferencedBytes, _ = strconv.ParseUint(f[3], 10, 64)
+				d.WrittenBytes = written
 				continue
 			}
 			if name, ok := strings.CutPrefix(f[0], ds); ok && (strings.HasPrefix(name, "@") || strings.HasPrefix(name, "#")) {
-				d.Snapshots = append(d.Snapshots, &clientv1.SnapshotInfo{Name: name, Guid: guid, Createtxg: txg})
+				d.Snapshots = append(d.Snapshots, &clientv1.SnapshotInfo{Name: name, Guid: guid, Createtxg: txg, WrittenBytes: written})
 			}
 		}
 		slices.SortStableFunc(d.Snapshots, func(x, y *clientv1.SnapshotInfo) int {

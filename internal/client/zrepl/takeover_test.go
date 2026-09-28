@@ -133,11 +133,11 @@ func TestRemoveJobsRejected(t *testing.T) {
 func TestPreflight(t *testing.T) {
 	ds := "rpool/vm-101-disk-0"
 	f := &fakeRunner{out: map[string]string{
-		"zfs list -Hp -t filesystem,volume,snapshot,bookmark -d 1 -o name,guid,createtxg,referenced " + ds: "" +
-			ds + "\t1\t10\t4096\n" +
-			ds + "@zrepl_2\t30\t300\t4096\n" +
-			ds + "#zrepl_CURSOR_G_x_J_pve1_source\t20\t200\t4096\n" +
-			ds + "@zrepl_1\t20\t200\t4096\n",
+		"zfs list -Hp -t filesystem,volume,snapshot,bookmark -d 1 -o name,guid,createtxg,referenced,written " + ds: "" +
+			ds + "\t1\t10\t4096\t512\n" +
+			ds + "@zrepl_2\t30\t300\t4096\t1024\n" +
+			ds + "#zrepl_CURSOR_G_x_J_pve1_source\t20\t200\t4096\t-\n" +
+			ds + "@zrepl_1\t20\t200\t4096\t2048\n",
 		"zrepl zfs-abstraction release-all --job pve1_source --dry-run": "would destroy x\nwould destroy y\n",
 	}}
 	a := &Applier{Paths: testPaths(t), Run: f.run}
@@ -149,7 +149,8 @@ func TestPreflight(t *testing.T) {
 		t.Fatalf("result = %v", res)
 	}
 	d := res.Datasets[0]
-	if !d.Exists || d.ReferencedBytes != 4096 || len(d.Snapshots) != 3 || d.Snapshots[0].Guid != 20 || d.Snapshots[2].Name != "@zrepl_2" {
+	if !d.Exists || d.ReferencedBytes != 4096 || d.WrittenBytes != 512 || len(d.Snapshots) != 3 || d.Snapshots[0].Guid != 20 ||
+		d.Snapshots[2].Name != "@zrepl_2" || d.Snapshots[2].WrittenBytes != 1024 {
 		t.Errorf("dataset = %v", d)
 	}
 	// The fake reports no such dataset for anything it doesn't know.
