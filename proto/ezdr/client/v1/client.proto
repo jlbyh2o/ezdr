@@ -23,6 +23,9 @@ service ClientService {
 
   // ReportReplication reports the status of EZDR's zrepl jobs on the host.
   rpc ReportReplication(ReportReplicationRequest) returns (ReportReplicationResponse);
+  // ReportGuestConfigs reports the configurations the desired state asks
+  // for; it replaces the host's previous report.
+  rpc ReportGuestConfigs(ReportGuestConfigsRequest) returns (ReportGuestConfigsResponse);
 }
 
 message SubscribeRequest {
@@ -120,6 +123,32 @@ message DesiredState {
   // The host-to-host WireGuard tunnel for plans that use EZDR tunnels; unset
   // when none do (the interface is then removed).
   SiteTunnel site_tunnel = 3;
+  // Primary: VMIDs whose configuration to report (guests of active and
+  // paused plans), sorted.
+  repeated uint32 report_guest_configs = 4;
+  // DR host: the configuration of each active or paused plan's guests, to
+  // keep for test failover and failover.
+  repeated PlanGuestConfigs plan_guest_configs = 5;
+}
+
+// PlanGuestConfigs are one plan's guest configurations, as stored on the DR
+// host.
+message PlanGuestConfigs {
+  string plan_id = 1;
+  string plan_name = 2;
+  string primary_hostname = 3;
+  repeated GuestConfig guests = 4;
+}
+
+// GuestConfig is a guest's current Proxmox configuration file (without
+// snapshot sections or pending changes).
+message GuestConfig {
+  uint32 vmid = 1;
+  // "qemu" or "lxc".
+  string type = 2;
+  string config = 3;
+  // When the primary first reported this configuration (set by the portal).
+  google.protobuf.Timestamp changed_at = 4;
 }
 
 // SiteTunnel is the host's replication tunnel interface (ezdr1). Each
@@ -240,6 +269,12 @@ message ReportReplicationRequest {
 }
 
 message ReportReplicationResponse {}
+
+message ReportGuestConfigsRequest {
+  repeated GuestConfig guests = 1;
+}
+
+message ReportGuestConfigsResponse {}
 
 // JobStatus is one of EZDR's zrepl jobs, from `zrepl status`.
 message JobStatus {

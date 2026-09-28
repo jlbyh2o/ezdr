@@ -1,12 +1,16 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"errors"
 	"log/slog"
+	"maps"
+	"slices"
 
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
 	planv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/plan/v1"
@@ -110,6 +114,9 @@ func (d *Deps) desiredState(ctx context.Context, hostID string) (*clientv1.Desir
 	for _, p := range problems {
 		slog.Warn("desired state incomplete", "host", hostID, "problem", p)
 	}
+	if ds.ReportGuestConfigs, ds.PlanGuestConfigs, err = d.guestConfigState(ctx, hostID); err != nil {
+		return nil, err
+	}
 	b, err := proto.MarshalOptions{Deterministic: true}.Marshal(ds)
 	if err != nil {
 		return nil, err
@@ -158,4 +165,52 @@ func (d *Deps) relatedHosts(ctx context.Context, hostID string) []string {
 		}
 	}
 	return ids
+}
+
+// guestConfigState returns, for active and paused plans, the VMIDs whose
+// configurations hostID should report (as primary) and the configurations
+// it should keep (as DR host).
+func (d *Deps) guestConfigState(ctx context.Context, hostID string) ([]uint32, []*clientv1.PlanGuestConfigs, error) {
+	plans, err := d.Store.ListPlans(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	report := map[uint32]bool{}
+	var keep []*clientv1.PlanGuestConfigs
+	for _, p := range plans {
+		if (p.State != store.PlanActive && p.State != store.PlanPaused) || p.AppliedSpec == nil {
+			continue
+		}
+		spec := &planv1.PlanSpec{}
+		if err := proto.Unmarshal(p.AppliedSpec, spec); err != nil {
+			return nil, nil, err
+		}
+		if spec.PrimaryHostId == hostID {
+			for _, g := range spec.Guests {
+				report[g.Vmid] = true
+			}
+		}
+		if spec.DrHostId != hostID {
+			continue
+		}
+		primary, err := d.Store.HostByID(ctx, spec.PrimaryHostId)
+		if err != nil {
+			return nil, nil, err
+		}
+		configs, err := d.Store.GuestConfigs(ctx, spec.PrimaryHostId)
+		if err != nil {
+			return nil, nil, err
+		}
+		pc := &clientv1.PlanGuestConfigs{PlanId: p.ID, PlanName: p.Name, PrimaryHostname: primary.Hostname}
+		for _, g := range spec.Guests {
+			if c, ok := configs[g.Vmid]; ok {
+				pc.Guests = append(pc.Guests, &clientv1.GuestConfig{Vmid: c.VMID, Type: c.Type, Config: c.Config,
+					ChangedAt: timestamppb.New(c.ChangedAt)})
+			}
+		}
+		slices.SortFunc(pc.Guests, func(a, b *clientv1.GuestConfig) int { return cmp.Compare(a.Vmid, b.Vmid) })
+		keep = append(keep, pc)
+	}
+	vmids := slices.Sorted(maps.Keys(report))
+	return vmids, keep, nil
 }

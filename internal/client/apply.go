@@ -1,15 +1,18 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"log/slog"
 	"sync"
 	"time"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/proto"
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
+	"github.com/jlbyh2o/ezdr/internal/client/guests"
 	"github.com/jlbyh2o/ezdr/internal/client/zrepl"
 	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
 	"github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1/clientv1connect"
@@ -34,6 +37,8 @@ type applier struct {
 	lastError string
 	// current is the zrepl configuration last applied successfully.
 	current *clientv1.Zrepl
+	// reportVMIDs are the guests whose configurations the portal wants.
+	reportVMIDs []uint32
 }
 
 func newApplier(api clientv1connect.ClientServiceClient, cert string, siteKey wgtypes.Key) *applier {
@@ -80,6 +85,9 @@ func (a *applier) run(ctx context.Context) {
 			err = a.zrepl.Apply(ctx, ds.GetZrepl())
 			a.zreplMu.Unlock()
 		}
+		if err == nil {
+			err = guests.Store(guests.DefaultPaths, ds.GetPlanGuestConfigs())
+		}
 		if err != nil {
 			if ctx.Err() != nil {
 				return
@@ -92,6 +100,7 @@ func (a *applier) run(ctx context.Context) {
 		}
 		a.mu.Lock()
 		a.lastGen, a.lastError = ds.Generation, errText
+		a.reportVMIDs = ds.GetReportGuestConfigs()
 		if errText == "" {
 			a.current = ds.GetZrepl()
 		}
@@ -132,6 +141,48 @@ func (a *applier) statusLoop(ctx context.Context) {
 			st := a.zrepl.Status(ctx, z)
 			if _, err := a.api.ReportReplication(ctx, connect.NewRequest(st)); err != nil && ctx.Err() == nil {
 				slog.Warn("report replication status", "err", err)
+			}
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+	}
+}
+
+// guestConfigInterval is how often guest configurations are checked for
+// changes; they're reported when they change and at least every
+// guestConfigRefresh.
+const (
+	guestConfigInterval = time.Minute
+	guestConfigRefresh  = 15 * time.Minute
+)
+
+// guestConfigLoop reports the configurations of the guests the portal asks
+// for until ctx is canceled.
+func (a *applier) guestConfigLoop(ctx context.Context) {
+	var last []byte
+	var lastAt time.Time
+	ticker := time.NewTicker(guestConfigInterval)
+	defer ticker.Stop()
+	for {
+		a.mu.Lock()
+		vmids := a.reportVMIDs
+		a.mu.Unlock()
+		configs, errs := guests.ReadAll(guests.DefaultPaths, vmids)
+		for _, err := range errs {
+			slog.Warn("read guest configuration", "err", err)
+		}
+		req := &clientv1.ReportGuestConfigsRequest{Guests: configs}
+		b, _ := proto.MarshalOptions{Deterministic: true}.Marshal(req)
+		if (len(vmids) > 0 || last != nil) && (!bytes.Equal(b, last) || time.Since(lastAt) > guestConfigRefresh) {
+			if _, err := a.api.ReportGuestConfigs(ctx, connect.NewRequest(req)); err != nil {
+				if ctx.Err() == nil {
+					slog.Warn("report guest configurations", "err", err)
+				}
+			} else {
+				last, lastAt = b, time.Now()
 			}
 		}
 		select {

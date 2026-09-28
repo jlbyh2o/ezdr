@@ -46,6 +46,9 @@ const (
 	// ClientServiceReportReplicationProcedure is the fully-qualified name of the ClientService's
 	// ReportReplication RPC.
 	ClientServiceReportReplicationProcedure = "/ezdr.client.v1.ClientService/ReportReplication"
+	// ClientServiceReportGuestConfigsProcedure is the fully-qualified name of the ClientService's
+	// ReportGuestConfigs RPC.
+	ClientServiceReportGuestConfigsProcedure = "/ezdr.client.v1.ClientService/ReportGuestConfigs"
 )
 
 // ClientServiceClient is a client for the ezdr.client.v1.ClientService service.
@@ -61,6 +64,9 @@ type ClientServiceClient interface {
 	AckAction(context.Context, *connect.Request[v1.AckActionRequest]) (*connect.Response[v1.AckActionResponse], error)
 	// ReportReplication reports the status of EZDR's zrepl jobs on the host.
 	ReportReplication(context.Context, *connect.Request[v1.ReportReplicationRequest]) (*connect.Response[v1.ReportReplicationResponse], error)
+	// ReportGuestConfigs reports the configurations the desired state asks
+	// for; it replaces the host's previous report.
+	ReportGuestConfigs(context.Context, *connect.Request[v1.ReportGuestConfigsRequest]) (*connect.Response[v1.ReportGuestConfigsResponse], error)
 }
 
 // NewClientServiceClient constructs a client for the ezdr.client.v1.ClientService service. By
@@ -104,16 +110,23 @@ func NewClientServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(clientServiceMethods.ByName("ReportReplication")),
 			connect.WithClientOptions(opts...),
 		),
+		reportGuestConfigs: connect.NewClient[v1.ReportGuestConfigsRequest, v1.ReportGuestConfigsResponse](
+			httpClient,
+			baseURL+ClientServiceReportGuestConfigsProcedure,
+			connect.WithSchema(clientServiceMethods.ByName("ReportGuestConfigs")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // clientServiceClient implements ClientServiceClient.
 type clientServiceClient struct {
-	subscribe         *connect.Client[v1.SubscribeRequest, v1.SubscribeResponse]
-	reportStatus      *connect.Client[v1.ReportStatusRequest, v1.ReportStatusResponse]
-	reportInventory   *connect.Client[v1.ReportInventoryRequest, v1.ReportInventoryResponse]
-	ackAction         *connect.Client[v1.AckActionRequest, v1.AckActionResponse]
-	reportReplication *connect.Client[v1.ReportReplicationRequest, v1.ReportReplicationResponse]
+	subscribe          *connect.Client[v1.SubscribeRequest, v1.SubscribeResponse]
+	reportStatus       *connect.Client[v1.ReportStatusRequest, v1.ReportStatusResponse]
+	reportInventory    *connect.Client[v1.ReportInventoryRequest, v1.ReportInventoryResponse]
+	ackAction          *connect.Client[v1.AckActionRequest, v1.AckActionResponse]
+	reportReplication  *connect.Client[v1.ReportReplicationRequest, v1.ReportReplicationResponse]
+	reportGuestConfigs *connect.Client[v1.ReportGuestConfigsRequest, v1.ReportGuestConfigsResponse]
 }
 
 // Subscribe calls ezdr.client.v1.ClientService.Subscribe.
@@ -141,6 +154,11 @@ func (c *clientServiceClient) ReportReplication(ctx context.Context, req *connec
 	return c.reportReplication.CallUnary(ctx, req)
 }
 
+// ReportGuestConfigs calls ezdr.client.v1.ClientService.ReportGuestConfigs.
+func (c *clientServiceClient) ReportGuestConfigs(ctx context.Context, req *connect.Request[v1.ReportGuestConfigsRequest]) (*connect.Response[v1.ReportGuestConfigsResponse], error) {
+	return c.reportGuestConfigs.CallUnary(ctx, req)
+}
+
 // ClientServiceHandler is an implementation of the ezdr.client.v1.ClientService service.
 type ClientServiceHandler interface {
 	// Subscribe opens the command stream. The portal sends the current desired
@@ -154,6 +172,9 @@ type ClientServiceHandler interface {
 	AckAction(context.Context, *connect.Request[v1.AckActionRequest]) (*connect.Response[v1.AckActionResponse], error)
 	// ReportReplication reports the status of EZDR's zrepl jobs on the host.
 	ReportReplication(context.Context, *connect.Request[v1.ReportReplicationRequest]) (*connect.Response[v1.ReportReplicationResponse], error)
+	// ReportGuestConfigs reports the configurations the desired state asks
+	// for; it replaces the host's previous report.
+	ReportGuestConfigs(context.Context, *connect.Request[v1.ReportGuestConfigsRequest]) (*connect.Response[v1.ReportGuestConfigsResponse], error)
 }
 
 // NewClientServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -193,6 +214,12 @@ func NewClientServiceHandler(svc ClientServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(clientServiceMethods.ByName("ReportReplication")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientServiceReportGuestConfigsHandler := connect.NewUnaryHandler(
+		ClientServiceReportGuestConfigsProcedure,
+		svc.ReportGuestConfigs,
+		connect.WithSchema(clientServiceMethods.ByName("ReportGuestConfigs")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/ezdr.client.v1.ClientService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClientServiceSubscribeProcedure:
@@ -205,6 +232,8 @@ func NewClientServiceHandler(svc ClientServiceHandler, opts ...connect.HandlerOp
 			clientServiceAckActionHandler.ServeHTTP(w, r)
 		case ClientServiceReportReplicationProcedure:
 			clientServiceReportReplicationHandler.ServeHTTP(w, r)
+		case ClientServiceReportGuestConfigsProcedure:
+			clientServiceReportGuestConfigsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -232,4 +261,8 @@ func (UnimplementedClientServiceHandler) AckAction(context.Context, *connect.Req
 
 func (UnimplementedClientServiceHandler) ReportReplication(context.Context, *connect.Request[v1.ReportReplicationRequest]) (*connect.Response[v1.ReportReplicationResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.client.v1.ClientService.ReportReplication is not implemented"))
+}
+
+func (UnimplementedClientServiceHandler) ReportGuestConfigs(context.Context, *connect.Request[v1.ReportGuestConfigsRequest]) (*connect.Response[v1.ReportGuestConfigsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.client.v1.ClientService.ReportGuestConfigs is not implemented"))
 }

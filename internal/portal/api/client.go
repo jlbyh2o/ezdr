@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -176,4 +177,29 @@ func (s ClientService) AckAction(ctx context.Context, req *connect.Request[clien
 	}
 	s.Hub.deliver(h.ID, m)
 	return connect.NewResponse(&clientv1.AckActionResponse{}), nil
+}
+
+// maxGuestConfig bounds one reported guest configuration.
+const maxGuestConfig = 64 << 10
+
+// ReportGuestConfigs stores the guest configurations a primary reports and
+// passes changes on to the DR hosts of its plans.
+func (s ClientService) ReportGuestConfigs(ctx context.Context, req *connect.Request[clientv1.ReportGuestConfigsRequest]) (*connect.Response[clientv1.ReportGuestConfigsResponse], error) {
+	h := hostFrom(ctx)
+	configs := make([]store.GuestConfig, 0, len(req.Msg.Guests))
+	for _, g := range req.Msg.Guests {
+		if g.Vmid == 0 || (g.Type != "qemu" && g.Type != "lxc") || len(g.Config) > maxGuestConfig {
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid configuration for guest %d", g.Vmid))
+		}
+		configs = append(configs, store.GuestConfig{VMID: g.Vmid, Type: g.Type, Config: g.Config})
+	}
+	changed, err := s.Store.PutGuestConfigs(ctx, h.ID, configs)
+	if err != nil {
+		return nil, internalError(err)
+	}
+	if changed {
+		slog.Info("guest configurations updated", "host", h.Hostname, "guests", len(configs))
+		s.reconcile(context.WithoutCancel(ctx), s.relatedHosts(ctx, h.ID)...)
+	}
+	return connect.NewResponse(&clientv1.ReportGuestConfigsResponse{}), nil
 }

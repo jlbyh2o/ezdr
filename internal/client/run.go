@@ -101,6 +101,7 @@ func subscribe(ctx context.Context, api clientv1connect.ClientServiceClient, app
 	// and replication status while connected.
 	go app.report(ctx)
 	go app.statusLoop(ctx)
+	go app.guestConfigLoop(ctx)
 
 	received := false
 	for stream.Receive() {
