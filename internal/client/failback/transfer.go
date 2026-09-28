@@ -48,6 +48,9 @@ const (
 	// dialTimeout is how long the DR host tries to reach the primary, which
 	// starts listening at about the same time.
 	dialTimeout = 2 * time.Minute
+	// waitDelay bounds how long waiting for a killed zfs command waits for
+	// its output pipes, which a leftover child process could keep open.
+	waitDelay = 5 * time.Second
 )
 
 // dialRetry is how long the DR host waits between attempts (shortened in
@@ -183,6 +186,9 @@ func (t *Transfer) serve(ctx context.Context, f *framer, targets map[string]*cli
 			if err != nil {
 				b, _ := json.Marshal(result{Bytes: n, Error: err.Error()})
 				_ = f.write(frameResult, b)
+				// Closing with data unread would reset the connection and
+				// could lose the result: read on until the DR host stops.
+				f.drain(10 * time.Second)
 				return out, fmt.Errorf("%s: %w", h.Dataset, err)
 			}
 			done[h.Dataset] = true
@@ -219,6 +225,7 @@ func (t *Transfer) receiveOne(ctx context.Context, f *framer, targets map[string
 		args = append(args, "-F")
 	}
 	cmd := t.Command(ctx, "zfs", append(args, h.Dataset)...)
+	cmd.WaitDelay = waitDelay
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	stdin, err := cmd.StdinPipe()
@@ -348,6 +355,7 @@ func (t *Transfer) sendOne(ctx context.Context, f *framer, s *clientv1.FailbackS
 		args = []string{"send", "-w"}
 	}
 	cmd := t.Command(ctx, "zfs", append(args, "-I", s.Replica+"@"+s.FromSnapshot, to)...)
+	cmd.WaitDelay = waitDelay
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	stdout, err := cmd.StdoutPipe()
@@ -357,19 +365,44 @@ func (t *Transfer) sendOne(ctx context.Context, f *framer, s *clientv1.FailbackS
 	if err := cmd.Start(); err != nil {
 		return 0, fmt.Errorf("zfs send: %w", err)
 	}
+	// The primary answers each dataset once: after the end frame, or early
+	// if receiving fails. Its answer is read while sending, so an early
+	// failure stops zfs send with the primary's reason.
+	_ = f.conn.SetReadDeadline(time.Time{})
+	answer := make(chan answerMsg, 1)
+	go func() {
+		r, ok := f.result()
+		answer <- answerMsg{r, ok}
+	}()
+	stopped := func(a answerMsg) error {
+		if a.ok && a.r.Error != "" {
+			return fmt.Errorf("the primary: %s", a.r.Error)
+		}
+		return errors.New("the primary stopped receiving")
+	}
 	var n uint64
 	buf := make([]byte, maxFrame)
 	for {
 		k, rerr := io.ReadFull(stdout, buf)
 		if k > 0 {
-			if err := f.write(frameData, buf[:k]); err != nil {
+			var err error
+			select {
+			case a := <-answer:
+				err = stopped(a)
+			default:
+				if werr := f.write(frameData, buf[:k]); werr != nil {
+					err = fmt.Errorf("connection to the primary: %w", werr)
+					select {
+					case a := <-answer:
+						err = stopped(a)
+					case <-time.After(10 * time.Second):
+					}
+				}
+			}
+			if err != nil {
 				_ = cmd.Process.Kill()
 				_ = cmd.Wait()
-				// The primary may have said why it stopped reading.
-				if r, ok := f.result(10 * time.Second); ok && r.Error != "" {
-					return n, fmt.Errorf("the primary: %s", r.Error)
-				}
-				return n, fmt.Errorf("connection to the primary: %w", err)
+				return n, err
 			}
 			n += uint64(k)
 		}
@@ -385,12 +418,13 @@ func (t *Transfer) sendOne(ctx context.Context, f *framer, s *clientv1.FailbackS
 	if err := f.write(frameEnd, nil); err != nil {
 		return n, fmt.Errorf("connection to the primary: %w", err)
 	}
-	r, ok := f.result(idleTimeout)
+	_ = f.conn.SetReadDeadline(time.Now().Add(idleTimeout))
+	a := <-answer
 	switch {
-	case !ok:
+	case !a.ok:
 		return n, errors.New("the primary didn't answer")
-	case r.Error != "":
-		return n, fmt.Errorf("the primary: %s", r.Error)
+	case a.r.Error != "":
+		return n, fmt.Errorf("the primary: %s", a.r.Error)
 	}
 	return n, nil
 }
@@ -480,6 +514,11 @@ func (f *framer) read() (byte, []byte, error) {
 
 func (f *framer) readWithin(d time.Duration) (byte, []byte, error) {
 	_ = f.conn.SetReadDeadline(time.Now().Add(d))
+	return f.readFrame()
+}
+
+// readFrame reads a frame with the connection's current read deadline.
+func (f *framer) readFrame() (byte, []byte, error) {
 	var hdr [5]byte
 	if _, err := io.ReadFull(f.r, hdr[:]); err != nil {
 		return 0, nil, err
@@ -495,10 +534,22 @@ func (f *framer) readWithin(d time.Duration) (byte, []byte, error) {
 	return hdr[0], payload, nil
 }
 
+// drain discards what the peer sends until it closes the connection or d
+// passes.
+func (f *framer) drain(d time.Duration) {
+	_ = f.conn.SetReadDeadline(time.Now().Add(d))
+	_, _ = io.Copy(io.Discard, f.r)
+}
+
+type answerMsg struct {
+	r  result
+	ok bool
+}
+
 // result reads the primary's result frame.
-func (f *framer) result(d time.Duration) (result, bool) {
+func (f *framer) result() (result, bool) {
 	var r result
-	typ, payload, err := f.readWithin(d)
+	typ, payload, err := f.readFrame()
 	if err != nil || typ != frameResult || json.Unmarshal(payload, &r) != nil {
 		return r, false
 	}
