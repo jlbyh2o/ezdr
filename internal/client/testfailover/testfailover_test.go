@@ -162,7 +162,7 @@ func TestPrepareStartCheckCleanup(t *testing.T) {
 	// Proxmox percent-encodes some characters when it rewrites a VM's
 	// description (as qm set does); the guest must still be recognized.
 	encoded := strings.Replace(string(vm), "plan Main (", "plan Main%3A (", 1)
-	if err := os.WriteFile(r.configPath("qemu", 10201), []byte(encoded), 0o600); err != nil {
+	if err := os.WriteFile(r.configPath("qemu", 10201), []byte(encoded), 0o600); err != nil { //nolint:gosec // test file
 		t.Fatal(err)
 	}
 	if err := r.StartGuest(ctx, "t1", "qemu", 10201); err != nil {
