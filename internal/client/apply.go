@@ -13,6 +13,7 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	"github.com/jlbyh2o/ezdr/internal/client/guests"
+	"github.com/jlbyh2o/ezdr/internal/client/testfailover"
 	"github.com/jlbyh2o/ezdr/internal/client/zrepl"
 	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
 	"github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1/clientv1connect"
@@ -30,7 +31,10 @@ type applier struct {
 	mu      sync.Mutex
 	// zreplMu serializes changes to zrepl's configuration: applying desired
 	// state and takeover actions.
-	zreplMu   sync.Mutex
+	zreplMu sync.Mutex
+	// testMu serializes test failover actions.
+	testMu    sync.Mutex
+	tests     *testfailover.Runner
 	pending   *clientv1.DesiredState
 	wake      chan struct{}
 	lastGen   uint64
@@ -42,7 +46,8 @@ type applier struct {
 }
 
 func newApplier(api clientv1connect.ClientServiceClient, cert string, siteKey wgtypes.Key) *applier {
-	return &applier{api: api, zrepl: zrepl.NewApplier(), cert: cert, siteKey: siteKey, wake: make(chan struct{}, 1)}
+	return &applier{api: api, zrepl: zrepl.NewApplier(), tests: testfailover.NewRunner(), cert: cert, siteKey: siteKey,
+		wake: make(chan struct{}, 1)}
 }
 
 // submit queues desired state, replacing anything not yet started.

@@ -49,3 +49,33 @@ func (a *applier) takeoverAction(ctx context.Context, act *clientv1.Action) {
 		a.report(ctx)
 	}
 }
+
+// testAction performs one test failover step and acknowledges it with the
+// result.
+func (a *applier) testAction(ctx context.Context, act *clientv1.Action) {
+	ctx = context.WithoutCancel(ctx)
+	a.testMu.Lock()
+	defer a.testMu.Unlock()
+	ack := &clientv1.AckActionRequest{ActionId: act.Id}
+	var err error
+	switch k := act.Kind.(type) {
+	case *clientv1.Action_TestOptions:
+		ack.TestOptions, err = a.tests.Options(ctx, k.TestOptions.Replicas, k.TestOptions.SnapshotPrefix)
+	case *clientv1.Action_TestPrepare:
+		ack.Output, err = a.tests.Prepare(ctx, k.TestPrepare)
+	case *clientv1.Action_TestStartGuest:
+		err = a.tests.StartGuest(ctx, k.TestStartGuest.TestId, k.TestStartGuest.Type, k.TestStartGuest.TestVmid)
+	case *clientv1.Action_TestCheckGuest:
+		ack.GuestCheck, err = a.tests.CheckGuest(ctx, k.TestCheckGuest.TestId, k.TestCheckGuest.Type, k.TestCheckGuest.TestVmid)
+	case *clientv1.Action_TestCleanup:
+		ack.Output, err = a.tests.Cleanup(ctx, k.TestCleanup)
+	}
+	ack.Succeeded = err == nil
+	if err != nil {
+		ack.Message = err.Error()
+		slog.Error("test failover action failed", "action", act.Id, "err", err)
+	}
+	if _, err := a.api.AckAction(ctx, connect.NewRequest(ack)); err != nil {
+		slog.Warn("acknowledge action", "action", act.Id, "err", err)
+	}
+}

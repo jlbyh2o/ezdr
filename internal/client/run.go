@@ -147,6 +147,9 @@ func handleAction(ctx context.Context, api clientv1connect.ClientServiceClient, 
 		// These can take minutes (an upgrade, restarting zrepl), so they run
 		// off the stream loop.
 		go app.takeoverAction(ctx, a)
+	case *clientv1.Action_TestOptions, *clientv1.Action_TestPrepare, *clientv1.Action_TestStartGuest,
+		*clientv1.Action_TestCheckGuest, *clientv1.Action_TestCleanup:
+		go app.testAction(ctx, a)
 	default:
 		slog.Warn("rejected unsupported action", "action", a.Id)
 		fail("unsupported action; upgrade the ezdr client")

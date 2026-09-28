@@ -50,7 +50,94 @@ message Action {
     ZreplRemoveJobs zrepl_remove_jobs = 5;
     ZreplRestoreConfig zrepl_restore_config = 6;
     ZreplReleaseJobs zrepl_release_jobs = 7;
+    TestOptions test_options = 8;
+    TestPrepare test_prepare = 9;
+    TestStartGuest test_start_guest = 10;
+    TestCheckGuest test_check_guest = 11;
+    TestCleanup test_cleanup = 12;
   }
+}
+
+// The Test* actions run test failovers on the DR host. See
+// docs/design/test-failover.md. Actions that touch a guest only act on test
+// guests of the given test: tagged ezdr-test, marked with the test's ID, and
+// with every disk on a test storage.
+
+// TestOptions lists the snapshots all the given replicas have (for choosing
+// a point in time) and the host's available memory.
+message TestOptions {
+  repeated string replicas = 1;
+  // Only snapshots with this prefix are listed.
+  string snapshot_prefix = 2;
+}
+
+message TestOptionsResult {
+  // Newest first.
+  repeated TestSnapshot snapshots = 1;
+  uint64 memory_available_bytes = 2;
+}
+
+message TestSnapshot {
+  string name = 1;
+  google.protobuf.Timestamp created_at = 2;
+}
+
+// TestGuest is one guest of a test failover.
+message TestGuest {
+  uint32 vmid = 1;
+  uint32 test_vmid = 2;
+  // "qemu" or "lxc".
+  string type = 3;
+  repeated TestDisk disks = 4;
+}
+
+message TestDisk {
+  // The volume ID in the guest's configuration, such as
+  // "local-zfs:vm-201-disk-0".
+  string volume = 1;
+  // The replica on the DR host, such as
+  // "tank/replicated/rpool/data/vm-201-disk-0".
+  string replica = 2;
+  // The clone's volume name on the test storage, such as "vm-10201-disk-0".
+  string clone = 3;
+}
+
+// TestPrepare creates the test storage, clones the guests' disks from the
+// snapshot, and registers the test guests. Repeating it is safe.
+message TestPrepare {
+  string plan_id = 1;
+  string plan_name = 2;
+  string test_id = 3;
+  string snapshot = 4;
+  string bridge = 5;
+  repeated TestGuest guests = 6;
+}
+
+message TestStartGuest {
+  string test_id = 1;
+  uint32 test_vmid = 2;
+  string type = 3;
+}
+
+message TestCheckGuest {
+  string test_id = 1;
+  uint32 test_vmid = 2;
+  string type = 3;
+}
+
+message TestGuestCheck {
+  bool running = 1;
+  // Whether the VM's configuration enables the QEMU guest agent, and whether
+  // it answered a ping.
+  bool agent_enabled = 2;
+  bool agent_ok = 3;
+}
+
+// TestCleanup stops and destroys a test's guests and clones. Repeating it
+// is safe.
+message TestCleanup {
+  string test_id = 1;
+  repeated TestGuest guests = 2;
 }
 
 // The Zrepl* actions take over an existing zrepl setup. See
@@ -257,6 +344,8 @@ message AckActionRequest {
   ZreplPreflightResult preflight = 4;
   // Command output worth showing, such as released holds.
   repeated string output = 5;
+  TestOptionsResult test_options = 6;
+  TestGuestCheck guest_check = 7;
 }
 
 message AckActionResponse {}
