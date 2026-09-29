@@ -190,6 +190,11 @@ The page stays a single page, reorganized:
   available after the operation finishes, as a record.
 - The same content as today's dialogs, moved into pages; the dialogs keep
   only the start flow. Dialogs lose their duplicate Close button.
+- `/plans/:id/failovers/latest` and `/failbacks/latest` show the plan's
+  newest one, so status buttons link without knowing IDs. Opening the
+  failover or failback dialog while one hasn't finished opens its page.
+- The plan's test failover section shows the running test (linking to
+  its page) or the last one; all operations are in the History section.
 
 ## 6. New-plan wizard
 

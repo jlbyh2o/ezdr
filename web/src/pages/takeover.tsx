@@ -1,5 +1,6 @@
 import { CheckCircle2, Circle, CircleAlert, Loader2, MinusCircle, TriangleAlert, XCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -9,18 +10,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { type Plan, type Takeover, TakeoverState } from '@/gen/ezdr/portal/v1/portal_pb'
 import { errorMessage, planClient } from '@/lib/api'
 import { formatBytes, formatRelative } from '@/lib/format'
+import { operationPath } from '@/lib/operations'
 
 // TakeoverDialog runs the takeover preflight for an adopted plan, shows what
-// taking over would do, and after confirmation follows the takeover's
-// progress. A takeover that's already running is shown directly.
+// taking over would do, and after confirmation opens the takeover's page. A
+// takeover that's already running opens its page instead.
 export function TakeoverDialog({ plan, onClose }: { plan: Plan; onClose: () => void }) {
+  const navigate = useNavigate()
   // The plan stops adopting once the takeover completes; keep the job names.
   const [adopted] = useState(plan.spec?.takeover)
   // Each preflight run has a number; the result records which run it
   // answers, so a newer run shows as checking.
   const [run, setRun] = useState(0)
   const [result, setResult] = useState<{ run: number; takeover?: Takeover; error?: string }>()
-  const [progress, setProgress] = useState<Takeover>()
   const [starting, setStarting] = useState(false)
   const [startError, setStartError] = useState<string>()
 
@@ -33,7 +35,7 @@ export function TakeoverDialog({ plan, onClose }: { plan: Plan; onClose: () => v
           const current = await planClient.getTakeover({ id: plan.id })
           const st = current.takeover?.state
           if (st === TakeoverState.RUNNING || (st === TakeoverState.FAILED && current.takeover?.rollingBack)) {
-            if (active) setProgress(current.takeover)
+            if (active) navigate(operationPath.takeover(plan.id))
             return
           }
         }
@@ -46,45 +48,21 @@ export function TakeoverDialog({ plan, onClose }: { plan: Plan; onClose: () => v
     return () => {
       active = false
     }
-  }, [plan.id, run])
-
-  // Follow a running takeover.
-  const running = progress?.state === TakeoverState.RUNNING
-  useEffect(() => {
-    if (!running) return
-    const timer = setInterval(() => {
-      void planClient.getTakeover({ id: plan.id }).then((r) => r.takeover && setProgress(r.takeover), () => undefined)
-    }, 2000)
-    return () => clearInterval(timer)
-  }, [plan.id, running])
+  }, [plan.id, run, navigate])
 
   async function start() {
     setStarting(true)
     setStartError(undefined)
     try {
-      const r = await planClient.startTakeover({ id: plan.id })
-      setProgress(r.takeover)
+      await planClient.startTakeover({ id: plan.id })
+      navigate(operationPath.takeover(plan.id))
     } catch (err) {
       setStartError(errorMessage(err))
-    } finally {
       setStarting(false)
     }
   }
 
-  async function retryRollback() {
-    setStarting(true)
-    setStartError(undefined)
-    try {
-      const r = await planClient.retryTakeoverRollback({ id: plan.id })
-      setProgress(r.takeover)
-    } catch (err) {
-      setStartError(errorMessage(err))
-    } finally {
-      setStarting(false)
-    }
-  }
-
-  const checking = !progress && result?.run !== run
+  const checking = result?.run !== run
   const takeover = result?.takeover
   const error = checking ? undefined : result?.error
   return (
@@ -95,56 +73,35 @@ export function TakeoverDialog({ plan, onClose }: { plan: Plan; onClose: () => v
           <DialogDescription>
             {plan.spec?.name} replaces <span className="font-mono">{adopted?.sourceJob}</span> on the primary and{' '}
             <span className="font-mono">{adopted?.pullJob}</span> on the DR host.
-            {!progress && ' The preflight below changes nothing.'}
+            {' '}The preflight below changes nothing.
           </DialogDescription>
         </DialogHeader>
-        {progress ? (
-          <>
-            <ProgressView takeover={progress} />
-            <ErrorAlert message={startError} />
-          </>
-        ) : (
-          <>
-            <ErrorAlert message={error} />
-            {checking && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" /> Checking snapshots on both hosts…
-              </div>
-            )}
-            {takeover?.preflight && !checking && <PreflightReport takeover={takeover} />}
-            {takeover?.state === TakeoverState.READY && !checking && (
-              <p className="text-sm text-muted-foreground">
-                Taking over upgrades zrepl where needed, removes the old pull job, replaces the old source job with EZDR's, adds
-                EZDR's pull job, and checks that the first replication is incremental. If any of that fails, both hosts get
-                their original zrepl.yml back and the old jobs run again. Only then are the old jobs' holds and bookmarks
-                released.
-              </p>
-            )}
-            <ErrorAlert message={startError} />
-          </>
+        <ErrorAlert message={error} />
+        {checking && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Checking snapshots on both hosts…
+          </div>
         )}
+        {takeover?.preflight && !checking && <PreflightReport takeover={takeover} />}
+        {takeover?.state === TakeoverState.READY && !checking && (
+          <p className="text-sm text-muted-foreground">
+            Taking over upgrades zrepl where needed, removes the old pull job, replaces the old source job with EZDR's, adds
+            EZDR's pull job, and checks that the first replication is incremental. If any of that fails, both hosts get
+            their original zrepl.yml back and the old jobs run again. Only then are the old jobs' holds and bookmarks
+            released.
+          </p>
+        )}
+        <ErrorAlert message={startError} />
         <DialogFooter>
-          {progress ? (
-            <>
-              {progress.state === TakeoverState.FAILED && progress.rollingBack && (
-                <Button onClick={() => void retryRollback()} disabled={starting}>
-                  Roll back again
-                </Button>
-              )}
-              <Button variant="outline" onClick={onClose}>
-                {running ? 'Close (the takeover continues)' : 'Close'}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="outline" onClick={() => setRun((n) => n + 1)} disabled={checking || starting}>
-                Check again
-              </Button>
-              <Button onClick={() => void start()} disabled={checking || starting || takeover?.state !== TakeoverState.READY}>
-                Take over now
-              </Button>
-            </>
-          )}
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variant="outline" onClick={() => setRun((n) => n + 1)} disabled={checking || starting}>
+            Check again
+          </Button>
+          <Button onClick={() => void start()} disabled={checking || starting || takeover?.state !== TakeoverState.READY}>
+            Take over now
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -159,7 +116,35 @@ const stepIcon: Record<string, React.ReactNode> = {
   skipped: <MinusCircle className="size-4 text-muted-foreground" />,
 }
 
-function ProgressView({ takeover: t }: { takeover: Takeover }) {
+// TakeoverActions offers rolling back again when a rollback failed.
+export function TakeoverActions({ planId, takeover, onChanged }: { planId: string; takeover: Takeover; onChanged: (t: Takeover) => void }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string>()
+  if (takeover.state !== TakeoverState.FAILED || !takeover.rollingBack) return null
+  async function retry() {
+    setBusy(true)
+    setError(undefined)
+    try {
+      const r = await planClient.retryTakeoverRollback({ id: planId })
+      if (r.takeover) onChanged(r.takeover)
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="grid justify-items-end gap-2">
+      <Button onClick={() => void retry()} disabled={busy}>
+        Roll back again
+      </Button>
+      <ErrorAlert message={error} />
+    </div>
+  )
+}
+
+// TakeoverProgress shows a takeover's steps and result.
+export function TakeoverProgress({ takeover: t }: { takeover: Takeover }) {
   return (
     <div className="grid gap-4 text-sm">
       {t.state === TakeoverState.COMPLETED && (

@@ -15,6 +15,10 @@ const HostDetailPage = lazy(() => import('@/pages/host-detail').then((m) => ({ d
 const HostsPage = lazy(() => import('@/pages/hosts').then((m) => ({ default: m.HostsPage })))
 const OverviewPage = lazy(() => import('@/pages/overview').then((m) => ({ default: m.OverviewPage })))
 const PlanEditorPage = lazy(() => import('@/pages/plan-editor').then((m) => ({ default: m.PlanEditorPage })))
+const FailoverPage = lazy(() => import('@/pages/operation').then((m) => ({ default: m.FailoverPage })))
+const FailbackPage = lazy(() => import('@/pages/operation').then((m) => ({ default: m.FailbackPage })))
+const TestPage = lazy(() => import('@/pages/operation').then((m) => ({ default: m.TestPage })))
+const TakeoverPage = lazy(() => import('@/pages/operation').then((m) => ({ default: m.TakeoverPage })))
 const PlansPage = lazy(() => import('@/pages/plans').then((m) => ({ default: m.PlansPage })))
 const SettingsPage = lazy(() => import('@/pages/settings').then((m) => ({ default: m.SettingsPage })))
 const TokensPage = lazy(() => import('@/pages/tokens').then((m) => ({ default: m.TokensPage })))
@@ -79,6 +83,10 @@ function App() {
               <Route path="/plans" element={<PlansPage />} />
               <Route path="/plans/new" element={<PlanEditorPage />} />
               <Route path="/plans/:id" element={<PlanEditorPage key="edit" />} />
+              <Route path="/plans/:id/failovers/:opId" element={<FailoverPage />} />
+              <Route path="/plans/:id/failbacks/:opId" element={<FailbackPage />} />
+              <Route path="/plans/:id/tests/:opId" element={<TestPage />} />
+              <Route path="/plans/:id/takeover" element={<TakeoverPage />} />
               <Route path="/tokens" element={<TokensPage />} />
               <Route path="/alerts" element={<AlertsPage />} />
               <Route path="/audit" element={<AuditPage />} />

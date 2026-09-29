@@ -1,4 +1,5 @@
 import { CircleAlert } from 'lucide-react'
+import { Link } from 'react-router'
 
 import { HealthBadge } from '@/components/health-badge'
 import { RPO } from '@/components/rpo'
@@ -8,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { type Plan, PlanState } from '@/gen/ezdr/portal/v1/portal_pb'
 import { failoverClient, planClient } from '@/lib/api'
 import { formatBytes, formatDuration, formatRelative } from '@/lib/format'
+import { operationPath } from '@/lib/operations'
 import { usePoll } from '@/lib/use-poll'
 
 // PlanStatusCard shows an active plan's replication health.
@@ -122,7 +124,11 @@ export function PlanStateCard({ plan, drHostname }: { plan: Plan; drHostname?: s
               </StatusBadge>
             </CardTitle>
             <CardDescription>
-              {step ? `Now: ${step}.` : 'Starting.'} Use {back ? 'Failback' : 'Failover'} status above to follow it and confirm the result.
+              {step ? `Now: ${step}.` : 'Starting.'}{' '}
+              <Link to={back ? operationPath.failback(plan.id) : operationPath.failover(plan.id)} className="text-foreground underline-offset-2 hover:underline">
+                Follow it and confirm the result
+              </Link>
+              .
             </CardDescription>
           </CardHeader>
         </Card>

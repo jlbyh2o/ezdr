@@ -1,5 +1,6 @@
-import { CheckCircle2, Circle, CircleAlert, FlaskConical, Loader2, MinusCircle, TriangleAlert, XCircle } from 'lucide-react'
-import { Fragment, useEffect, useState } from 'react'
+import { ArrowRight, CheckCircle2, Circle, CircleAlert, FlaskConical, Loader2, MinusCircle, TriangleAlert, XCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -15,7 +16,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { StatusBadge } from '@/components/status-badge'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -32,29 +32,15 @@ import {
 } from '@/gen/ezdr/portal/v1/portal_pb'
 import { errorMessage, testClient } from '@/lib/api'
 import { formatBytes, formatDateTime, formatRelative, toDate } from '@/lib/format'
-import type { Tone } from '@/lib/status'
+import { operationPath, testStates, verdictLabel } from '@/lib/operations'
 import { usePoll } from '@/lib/use-poll'
 
 const activeStates = [TestState.STARTING, TestState.RUNNING, TestState.ENDING]
 
-const stateLabel: Record<TestState, string> = {
-  [TestState.UNSPECIFIED]: 'unknown',
-  [TestState.STARTING]: 'starting',
-  [TestState.RUNNING]: 'running',
-  [TestState.ENDING]: 'ending',
-  [TestState.ENDED]: 'ended',
-  [TestState.FAILED]: 'setup failed',
-}
-
-function testTone(state: TestState): Tone {
-  if (activeStates.includes(state)) return 'info'
-  return state === TestState.FAILED ? 'destructive' : 'neutral'
-}
-
-// TestFailoverCard shows an active or paused plan's current test failover
-// and its history, and starts new tests.
-// startSignal opens the start dialog each time it changes (from the plan
-// page's header).
+// TestFailoverCard shows an active or paused plan's current test failover,
+// with a link to its page, and starts new tests. Past tests are in the
+// plan's history. startSignal opens the start dialog each time it changes
+// (from the plan page's header).
 export function TestFailoverCard({ plan, startSignal = 0 }: { plan: Plan; startSignal?: number }) {
   const { data, error, reload } = usePoll(() => testClient.listTests({ planId: plan.id }), 5000)
   const [starting, setStarting] = useState(false)
@@ -66,7 +52,7 @@ export function TestFailoverCard({ plan, startSignal = 0 }: { plan: Plan; startS
   if (plan.state !== PlanState.ACTIVE && plan.state !== PlanState.PAUSED) return null
   const tests = data?.tests ?? []
   const current = tests.find((t) => activeStates.includes(t.state))
-  const past = tests.filter((t) => t !== current)
+  const last = tests.find((t) => t !== current)
   return (
     <Card>
       <CardHeader>
@@ -83,11 +69,36 @@ export function TestFailoverCard({ plan, startSignal = 0 }: { plan: Plan; startS
           and nothing on the primary changes.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid gap-3 text-sm">
         <ErrorAlert message={error} />
-        {current && <CurrentTest test={current} onChanged={() => void reload()} />}
-        {past.length > 0 && <TestHistory tests={past} onChanged={() => void reload()} />}
-        {!current && past.length === 0 && data && <p className="text-sm text-muted-foreground">No tests yet.</p>}
+        {current && (
+          <Link
+            to={operationPath.test(plan.id, current.id)}
+            className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border px-3 py-2 hover:bg-muted/50"
+          >
+            <StatusBadge tone={testStates[current.state].tone} pulse>
+              {testStates[current.state].label}
+            </StatusBadge>
+            <span>from {formatDateTime(current.snapshotAt)}</span>
+            <span className="text-muted-foreground">
+              {current.guests.filter((g) => g.status === 'running').length} of {current.guests.length} guests running · ends by itself{' '}
+              {formatRelative(current.deadline)}
+            </span>
+            <span className="ml-auto flex items-center gap-1 text-primary">
+              Open test <ArrowRight className="size-4" />
+            </span>
+          </Link>
+        )}
+        {!current && last && (
+          <p className="text-muted-foreground">
+            Last test{' '}
+            <Link to={operationPath.test(plan.id, last.id)} className="text-foreground underline-offset-2 hover:underline">
+              {formatRelative(last.startedAt)}
+            </Link>
+            : {testStates[last.state].label.toLowerCase()}, {verdictLabel[last.verdict]}. All tests are in the history below.
+          </p>
+        )}
+        {!current && !last && data && <p className="text-muted-foreground">No tests yet.</p>}
       </CardContent>
       {starting && (
         <StartTestDialog
@@ -103,6 +114,7 @@ export function TestFailoverCard({ plan, startSignal = 0 }: { plan: Plan; startS
 }
 
 function StartTestDialog({ plan, onClose }: { plan: Plan; onClose: () => void }) {
+  const navigate = useNavigate()
   const [options, setOptions] = useState<GetTestOptionsResponse>()
   const [error, setError] = useState<string>()
   const [selected, setSelected] = useState<Set<number>>(new Set())
@@ -129,11 +141,10 @@ function StartTestDialog({ plan, onClose }: { plan: Plan; onClose: () => void })
     setBusy(true)
     setError(undefined)
     try {
-      await testClient.startTest({ planId: plan.id, vmids: [...selected], snapshot })
-      onClose()
+      const r = await testClient.startTest({ planId: plan.id, vmids: [...selected], snapshot })
+      navigate(operationPath.test(plan.id, r.test?.id ?? ''))
     } catch (err) {
       setError(errorMessage(err))
-    } finally {
       setBusy(false)
     }
   }
@@ -270,7 +281,9 @@ function GuestsTable({ test }: { test: TestRun }) {
   )
 }
 
-function CurrentTest({ test, onChanged }: { test: TestRun; onChanged: () => void }) {
+// TestDetails shows a test's steps and guests, extends or ends it while it
+// runs, and records its verdict.
+export function TestDetails({ test, onChanged }: { test: TestRun; onChanged: () => void }) {
   const [error, setError] = useState<string>()
   async function act(fn: () => Promise<unknown>) {
     setError(undefined)
@@ -282,16 +295,12 @@ function CurrentTest({ test, onChanged }: { test: TestRun; onChanged: () => void
     }
   }
   const failedStep = test.steps.find((s) => s.status === 'failed')
+  const active = activeStates.includes(test.state)
   return (
-    <div className="grid gap-3 rounded-md border p-3 text-sm">
+    <div className="grid gap-4 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <StatusBadge tone={testTone(test.state)} pulse={activeStates.includes(test.state)}>
-            {stateLabel[test.state]}
-          </StatusBadge>
-          <span>from {formatDateTime(test.snapshotAt)}</span>
-        </div>
-        {test.state !== TestState.ENDING && (
+        <span>Point in time: {formatDateTime(test.snapshotAt)}</span>
+        {active && test.state !== TestState.ENDING && (
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={() => void act(() => testClient.extendTest({ id: test.id }))}>
               Extend
@@ -314,10 +323,17 @@ function CurrentTest({ test, onChanged }: { test: TestRun; onChanged: () => void
           </div>
         )}
       </div>
-      <div className="text-xs text-muted-foreground">
-        Started {formatRelative(test.startedAt)} by {test.startedBy}
-        {test.state !== TestState.ENDING && ` · ends by itself ${formatRelative(test.deadline)} (${toDate(test.deadline)?.toLocaleString()})`}
-      </div>
+      {active && test.state !== TestState.ENDING && (
+        <div className="text-xs text-muted-foreground">
+          Ends by itself {formatRelative(test.deadline)} ({toDate(test.deadline)?.toLocaleString()}).
+        </div>
+      )}
+      {test.endedAt && (
+        <div className="text-xs text-muted-foreground">
+          Ended {formatRelative(test.endedAt)}
+          {test.endedBy && ` by ${test.endedBy}`}.
+        </div>
+      )}
       <ErrorAlert message={error} />
       {(failedStep || test.error) && (
         <div className="flex gap-1 text-xs text-destructive">
@@ -414,69 +430,6 @@ function VerdictForm({ test, onSaved }: { test: TestRun; onSaved: () => void }) 
         )}
       </div>
       <ErrorAlert message={error} />
-    </div>
-  )
-}
-
-const verdictLabel: Record<TestVerdict, string> = {
-  [TestVerdict.UNSPECIFIED]: 'no verdict',
-  [TestVerdict.PASSED]: 'passed',
-  [TestVerdict.FAILED]: 'failed',
-}
-
-function TestHistory({ tests, onChanged }: { tests: TestRun[]; onChanged: () => void }) {
-  const [open, setOpen] = useState<string>()
-  return (
-    <div className="grid gap-2">
-      <div className="text-sm font-medium">History</div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Started</TableHead>
-            <TableHead>Point in time</TableHead>
-            <TableHead>Guests running</TableHead>
-            <TableHead>Result</TableHead>
-            <TableHead>Verdict</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tests.map((t) => (
-            <Fragment key={t.id}>
-              <TableRow className="cursor-pointer" onClick={() => setOpen(open === t.id ? undefined : t.id)}>
-                <TableCell className="text-xs">
-                  {formatDateTime(t.startedAt)}
-                  <div className="text-muted-foreground">by {t.startedBy}</div>
-                </TableCell>
-                <TableCell className="text-xs">{formatDateTime(t.snapshotAt)}</TableCell>
-                <TableCell className="text-xs">
-                  {t.guests.filter((g) => g.status === 'running').length} of {t.guests.length}
-                </TableCell>
-                <TableCell className="text-xs">
-                  {stateLabel[t.state]}
-                  {t.endedBy && <div className="text-muted-foreground">by {t.endedBy}</div>}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={t.verdict === TestVerdict.PASSED ? 'success' : t.verdict === TestVerdict.FAILED ? 'destructive' : 'neutral'}>
-                    {verdictLabel[t.verdict]}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-              {open === t.id && (
-                <TableRow>
-                  <TableCell colSpan={5}>
-                    <div className="grid gap-3 py-2">
-                      {t.error && <div className="text-xs text-destructive">{t.error}</div>}
-                      <GuestsTable test={t} />
-                      {t.notes.length > 0 && <Notes notes={t.notes} />}
-                      <VerdictForm test={t} onSaved={onChanged} />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </Fragment>
-          ))}
-        </TableBody>
-      </Table>
     </div>
   )
 }

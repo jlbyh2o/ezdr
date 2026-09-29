@@ -1,5 +1,6 @@
 import { CheckCircle2, CircleAlert, Loader2, RefreshCw, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 
 import { DnsTable } from '@/components/dns-table'
 import { ErrorAlert } from '@/components/error-alert'
@@ -13,13 +14,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { type Failback, type FailbackPreflight, FailbackState, type Plan } from '@/gen/ezdr/portal/v1/portal_pb'
 import { errorMessage, failoverClient } from '@/lib/api'
 import { formatBytes, formatDateTime, formatRelative } from '@/lib/format'
+import { operationPath } from '@/lib/operations'
 
 const unfinished = [FailbackState.RUNNING, FailbackState.AWAITING_CONFIRMATION, FailbackState.FAILED]
 
 // FailbackDialog checks what failing the plan back would do and starts it,
-// or follows the failback that hasn't finished.
+// then opens its page. A failback that hasn't finished opens its page
+// instead.
 export function FailbackDialog({ plan, onClose }: { plan: Plan; onClose: () => void }) {
-  const [failback, setFailback] = useState<Failback>()
+  const navigate = useNavigate()
   // The last failback, when it was undone, to show why.
   const [aborted, setAborted] = useState<Failback>()
   const [preflight, setPreflight] = useState<FailbackPreflight>()
@@ -42,7 +45,6 @@ export function FailbackDialog({ plan, onClose }: { plan: Plan; onClose: () => v
     }
   }, [plan.id])
 
-  // Show the failback if it hasn't finished; otherwise run the preflight.
   useEffect(() => {
     let active = true
     void (async () => {
@@ -50,7 +52,7 @@ export function FailbackDialog({ plan, onClose }: { plan: Plan; onClose: () => v
         const cur = await failoverClient.getFailback({ planId: plan.id })
         if (!active) return
         if (cur.failback && unfinished.includes(cur.failback.state)) {
-          setFailback(cur.failback)
+          navigate(operationPath.failback(plan.id, cur.failback.id))
           return
         }
         if (cur.failback?.state === FailbackState.ABORTED) setAborted(cur.failback)
@@ -62,27 +64,16 @@ export function FailbackDialog({ plan, onClose }: { plan: Plan; onClose: () => v
     return () => {
       active = false
     }
-  }, [plan.id, runPreflight])
+  }, [plan.id, runPreflight, navigate])
 
-  // Follow a running failback.
-  const running = failback?.state === FailbackState.RUNNING
-  useEffect(() => {
-    if (!running) return
-    const t = setInterval(() => {
-      void failoverClient.getFailback({ planId: plan.id }).then((r) => r.failback && setFailback(r.failback), () => undefined)
-    }, 2000)
-    return () => clearInterval(t)
-  }, [plan.id, running])
-
-  async function act(fn: () => Promise<{ failback?: Failback }>) {
+  async function start() {
     setBusy(true)
     setError(undefined)
     try {
-      const r = await fn()
-      if (r.failback) setFailback(r.failback)
+      const r = await failoverClient.startFailback({ planId: plan.id, confirmName: name, discardDiverged: discard })
+      navigate(operationPath.failback(plan.id, r.failback?.id))
     } catch (err) {
       setError(errorMessage(err))
-    } finally {
       setBusy(false)
     }
   }
@@ -100,79 +91,87 @@ export function FailbackDialog({ plan, onClose }: { plan: Plan; onClose: () => v
           </DialogDescription>
         </DialogHeader>
         <ErrorAlert message={error} />
-        {failback ? (
-          <Progress failback={failback} />
-        ) : (
-          <div className="grid gap-4 text-sm">
-            {aborted && (
-              <Alert variant="destructive">
-                <CircleAlert />
-                <AlertTitle>The last failback was undone {formatRelative(aborted.completedAt ?? aborted.startedAt)}</AlertTitle>
-                <AlertDescription>{aborted.error}</AlertDescription>
-              </Alert>
-            )}
-            {checking && !preflight && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" /> Checking both hosts…
-              </div>
-            )}
-            {preflight && <PreflightView preflight={preflight} />}
-            {preflight?.diverged && (
-              <label className="flex items-start gap-2">
-                <input type="checkbox" checked={discard} onChange={(e) => setDiscard(e.target.checked)} />
-                <span>Discard the primary's changes listed above. They can't be recovered.</span>
-              </label>
-            )}
-            {preflight && preflight.problems.length === 0 && (
-              <div className="grid gap-2">
-                <Label htmlFor="confirm-name">
-                  Type <span className="font-mono">{planName}</span> to confirm
-                </Label>
-                <Input id="confirm-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
-              </div>
-            )}
-          </div>
-        )}
+        <div className="grid gap-4 text-sm">
+          {aborted && (
+            <Alert variant="destructive">
+              <CircleAlert />
+              <AlertTitle>The last failback was undone {formatRelative(aborted.completedAt ?? aborted.startedAt)}</AlertTitle>
+              <AlertDescription>{aborted.error}</AlertDescription>
+            </Alert>
+          )}
+          {checking && !preflight && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" /> Checking both hosts…
+            </div>
+          )}
+          {preflight && <PreflightView preflight={preflight} />}
+          {preflight?.diverged && (
+            <label className="flex items-start gap-2">
+              <input type="checkbox" checked={discard} onChange={(e) => setDiscard(e.target.checked)} />
+              <span>Discard the primary's changes listed above. They can't be recovered.</span>
+            </label>
+          )}
+          {preflight && preflight.problems.length === 0 && (
+            <div className="grid gap-2">
+              <Label htmlFor="confirm-name">
+                Type <span className="font-mono">{planName}</span> to confirm
+              </Label>
+              <Input id="confirm-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
+            </div>
+          )}
+        </div>
         <DialogFooter>
-          {failback?.state === FailbackState.AWAITING_CONFIRMATION && (
-            <>
-              <Button variant="outline" disabled={busy} onClick={() => void act(() => failoverClient.confirmFailback({ planId: plan.id }))}>
-                Confirm without switching DNS
-              </Button>
-              <Button
-                disabled={busy}
-                onClick={() => void act(() => failoverClient.confirmFailback({ planId: plan.id, switchDns: true }))}
-              >
-                Confirm and switch DNS back
-              </Button>
-            </>
-          )}
-          {failback?.state === FailbackState.FAILED && (
-            <Button disabled={busy} onClick={() => void act(() => failoverClient.retryFailback({ planId: plan.id }))}>
-              Retry
-            </Button>
-          )}
-          {!failback && (
-            <>
-              <Button variant="outline" disabled={checking} onClick={() => void runPreflight()}>
-                <RefreshCw /> Check again
-              </Button>
-              <Button
-                disabled={busy || checking || blocked || name.trim() !== planName}
-                onClick={() =>
-                  void act(() => failoverClient.startFailback({ planId: plan.id, confirmName: name, discardDiverged: discard }))
-                }
-              >
-                Fail back now
-              </Button>
-            </>
-          )}
-          <Button variant="outline" onClick={onClose}>
-            {running ? 'Close (the failback continues)' : 'Close'}
+          <Button variant="outline" disabled={checking} onClick={() => void runPreflight()}>
+            <RefreshCw /> Check again
+          </Button>
+          <Button disabled={busy || checking || blocked || name.trim() !== planName} onClick={() => void start()}>
+            Fail back now
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+// FailbackActions are what can be done with a failback now: confirm it, or
+// retry a failed step.
+export function FailbackActions({ failback, onChanged }: { failback: Failback; onChanged: (f: Failback) => void }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string>()
+  async function act(fn: () => Promise<{ failback?: Failback }>) {
+    setBusy(true)
+    setError(undefined)
+    try {
+      const r = await fn()
+      if (r.failback) onChanged(r.failback)
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+  const planId = failback.planId
+  return (
+    <div className="grid justify-items-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
+        {failback.state === FailbackState.AWAITING_CONFIRMATION && (
+          <>
+            <Button variant="outline" disabled={busy} onClick={() => void act(() => failoverClient.confirmFailback({ planId }))}>
+              Confirm without switching DNS
+            </Button>
+            <Button disabled={busy} onClick={() => void act(() => failoverClient.confirmFailback({ planId, switchDns: true }))}>
+              Confirm and switch DNS back
+            </Button>
+          </>
+        )}
+        {failback.state === FailbackState.FAILED && (
+          <Button disabled={busy} onClick={() => void act(() => failoverClient.retryFailback({ planId }))}>
+            Retry
+          </Button>
+        )}
+      </div>
+      <ErrorAlert message={error} />
+    </div>
   )
 }
 
@@ -249,13 +248,12 @@ function PreflightView({ preflight: p }: { preflight: FailbackPreflight }) {
   )
 }
 
-function Progress({ failback: f }: { failback: Failback }) {
+// FailbackProgress shows a failback's steps, copy rounds, guests, and DNS
+// records.
+export function FailbackProgress({ failback: f }: { failback: Failback }) {
   return (
     <div className="grid gap-4 text-sm">
-      <div className="text-xs text-muted-foreground">
-        Failback started {formatRelative(f.startedAt)} by {f.startedBy}
-        {f.discardDiverged && " · the primary's diverged data was discarded"}
-      </div>
+      {f.discardDiverged && <div className="text-xs text-muted-foreground">The primary's diverged data was discarded.</div>}
       {f.state === FailbackState.AWAITING_CONFIRMATION && (
         <Alert>
           <TriangleAlert />

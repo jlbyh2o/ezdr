@@ -1,5 +1,6 @@
 import { CheckCircle2, CircleAlert, Ellipsis, FlaskConical, Loader2, Pause, Play, Power, Rocket, ShieldAlert, Trash2, Undo2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
 import { StatusBadge } from '@/components/status-badge'
@@ -29,6 +30,7 @@ import {
 import { Severity } from '@/gen/ezdr/plan/v1/plan_pb'
 import { type Plan, PlanState, type PreviewPlanChangesResponse } from '@/gen/ezdr/portal/v1/portal_pb'
 import { errorMessage, planClient } from '@/lib/api'
+import { operationPath } from '@/lib/operations'
 import { planStates } from '@/lib/status'
 import { FailbackDialog } from '@/pages/failback'
 import { FailoverDialog } from '@/pages/failover'
@@ -258,13 +260,13 @@ export function PlanActions({
           </Button>
         )}
         {plan.state === PlanState.FAILING_OVER && (
-          <Button onClick={() => setDialog('failover')}>
+          <Button render={<Link to={operationPath.failover(plan.id)} />}>
             <Loader2 className="animate-spin" /> Failover status
           </Button>
         )}
         {plan.state === PlanState.FAILED_OVER && (
           <>
-            <Button variant="outline" onClick={() => setDialog('failover')}>
+            <Button variant="outline" render={<Link to={operationPath.failover(plan.id)} />}>
               <ShieldAlert /> Failover details
             </Button>
             <Button onClick={() => setDialog('failback')}>
@@ -273,7 +275,7 @@ export function PlanActions({
           </>
         )}
         {failingBack && (
-          <Button onClick={() => setDialog('failback')}>
+          <Button render={<Link to={operationPath.failback(plan.id)} />}>
             <Loader2 className="animate-spin" /> Failback status
           </Button>
         )}

@@ -28,6 +28,7 @@ import {
 } from '@/gen/ezdr/portal/v1/portal_pb'
 import { overviewClient } from '@/lib/api'
 import { formatDuration, formatRelative } from '@/lib/format'
+import { operationPath } from '@/lib/operations'
 import { healthStates, type Tone } from '@/lib/status'
 import { usePoll } from '@/lib/use-poll'
 import { PageHeader } from '@/pages/layout'
@@ -218,6 +219,21 @@ const opKinds: Record<OperationKind, { label: string; icon: React.ComponentType<
   [OperationKind.FAILBACK]: { label: 'Failback', icon: RotateCcw },
 }
 
+function opLink(o: OverviewOperation): string {
+  switch (o.kind) {
+    case OperationKind.TEST:
+      return operationPath.test(o.planId, o.id)
+    case OperationKind.FAILOVER:
+      return operationPath.failover(o.planId, o.id)
+    case OperationKind.FAILBACK:
+      return operationPath.failback(o.planId, o.id)
+    case OperationKind.TAKEOVER:
+      return operationPath.takeover(o.planId)
+    default:
+      return `/plans/${o.planId}`
+  }
+}
+
 function Operations({ ops }: { ops: OverviewOperation[] }) {
   if (ops.length === 0) return null
   return (
@@ -231,7 +247,7 @@ function Operations({ ops }: { ops: OverviewOperation[] }) {
           return (
             <Link
               key={`${o.kind}:${o.id || o.planId}`}
-              to={`/plans/${o.planId}`}
+              to={opLink(o)}
               className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border px-3 py-2 text-sm hover:bg-muted/50"
             >
               <k.icon className="size-4 text-info" />

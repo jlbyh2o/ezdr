@@ -31,6 +31,7 @@ import {
 import { type GetHostInventoryResponse, type GuestExclusion, type Host, type Plan, PlanState, type ZreplSetup } from '@/gen/ezdr/portal/v1/portal_pb'
 import { HostStatusPanel, PlanActions, StateBadge } from '@/pages/plan-actions'
 import { PlanDnsCard } from '@/pages/plan-dns'
+import { PlanHistoryCard } from '@/pages/plan-history'
 import { PlanStateCard, PlanStatusCard } from '@/pages/plan-status'
 import { TestFailoverCard } from '@/pages/test-failover'
 import { errorMessage, hostClient, planClient } from '@/lib/api'
@@ -45,6 +46,7 @@ type Update = (fn: (s: PlanSpec) => void) => void
 type SectionId =
   | 'status'
   | 'tests'
+  | 'history'
   | 'general'
   | 'takeover'
   | 'guests'
@@ -58,6 +60,7 @@ type SectionId =
 const sectionTitles: Record<SectionId, string> = {
   status: 'Status',
   tests: 'Test failover',
+  history: 'History',
   general: 'General',
   takeover: 'Existing zrepl setup',
   guests: 'Guests',
@@ -312,6 +315,7 @@ export function PlanEditorPage() {
   const visible: SectionId[] = [
     ...(showStatus ? (['status'] as const) : []),
     ...(showTests ? (['tests'] as const) : []),
+    ...(plan ? (['history'] as const) : []),
     'general',
     ...(showTakeover && spec?.takeover ? (['takeover'] as const) : []),
     ...(primaryInv ? (['guests'] as const) : []),
@@ -401,7 +405,12 @@ export function PlanEditorPage() {
               <TestFailoverCard plan={plan} startSignal={startTest} />
             </div>
           )}
-          {(showStatus || showTests) && <h2 className="pt-2 text-lg font-semibold tracking-tight">Settings</h2>}
+          {plan && (
+            <div id={sectionElementId('history')} className="scroll-mt-16">
+              <PlanHistoryCard plan={plan} />
+            </div>
+          )}
+          {plan && <h2 className="pt-2 text-lg font-semibold tracking-tight">Settings</h2>}
           <GeneralCard spec={spec} hosts={hosts} update={update} updateAndSuggest={updateAndSuggest} />
           {showTakeover && primaryInv && drInv && (
             <TakeoverCard
@@ -488,7 +497,7 @@ function SectionNav({
   issues: Issue[]
   onSelect: (id: SectionId) => void
 }) {
-  const settingsStart = ids.findIndex((i) => i !== 'status' && i !== 'tests')
+  const settingsStart = ids.findIndex((i) => i !== 'status' && i !== 'tests' && i !== 'history')
   return (
     <nav className="grid gap-0.5 text-sm" aria-label="Plan sections">
       {ids.map((id, n) => {
