@@ -13,6 +13,11 @@ and managing disaster recovery between Proxmox VE hosts that use ZFS storage.
 | [Inventory](design/inventory.md) | Design for collecting and reporting host inventory and replication readiness (phase 2). |
 | [DR plans](design/dr-plans.md) | Design for DR plans: guests, mappings, schedule, retention, startup order, DNS records, and validation (phase 3). |
 | [Replication](design/replication.md) | Design for activating plans, zrepl configuration, network paths, zrepl takeover, status, and alerts (phase 4). |
+| [Test failover](design/test-failover.md) | Design for test failovers on isolated clones (phase 5). |
+| [Failover](design/failover.md) | Design for planned, unplanned, and break-glass failovers, split-brain locks, and DNS switching (phase 6). |
+| [Failback](design/failback.md) | Design for returning workloads to the primary (phase 7). |
+| [Cleanup](design/cleanup.md) | Design for deleting a plan's replicated data and cleaning up after a takeover. |
+| [Web UI](design/ui.md) | Design for the portal's web interface. |
 | [Test lab](development/test-lab.md) | Recommended nested Proxmox VE lab for development and testing. |
 
 See also [CONTRIBUTING.md](../CONTRIBUTING.md) for development setup and
@@ -20,5 +25,5 @@ conventions.
 
 ## Status
 
-EZDR is in the early design phase. The documents here describe intended
-behavior and will change as the design is refined.
+The design documents describe how each part was built. They're updated when
+the behavior changes, and the code is the final reference.

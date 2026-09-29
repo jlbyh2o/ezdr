@@ -18,11 +18,13 @@ together. From the portal you can:
 
 ## Status
 
-EZDR is in early development. Phases 1–3 are complete: the portal, sign-in
-with TOTP, enrolling hosts over WireGuard, host inventory with replication
-readiness, and DR plans (guests, mappings, schedules, retention, startup
-order, and validation). Replication and failover are not implemented yet. See the [architecture document](docs/architecture.md) for
-the design and roadmap.
+EZDR is young: version 0.x. Every workflow above works end to end and has
+been tested on Proxmox VE 9 lab hosts, including taking over an existing
+hand-written zrepl setup, test failovers, planned, unplanned, and
+break-glass failovers, and incremental failback. Try it on a lab first, and
+run a test failover before relying on it. See the
+[architecture document](docs/architecture.md) for the design and roadmap,
+and [SECURITY.md](SECURITY.md) to report a vulnerability.
 
 ## Quick start
 

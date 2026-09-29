@@ -17,5 +17,11 @@ with you before any public disclosure.
 
 ## Supported versions
 
-EZDR has not had a release yet. Until version 1.0, only the latest commit on
-`master` is supported.
+Until version 1.0, only the latest release is supported: security fixes go
+into a new release rather than into older ones.
+
+## Verifying releases
+
+Release checksums are signed with EZDR's release key, and files and images
+carry GitHub build provenance. See
+[Verify a release](docs/deployment.md#verify-a-release).

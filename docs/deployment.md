@@ -33,7 +33,7 @@ on the server, for example `/opt/ezdr`.
 ### Option 1: Caddy with Let's Encrypt (recommended)
 
 ```sh
-cp .env.example .env    # then set EZDR_DOMAIN=portal.example.com
+cp .env.example .env    # then set EZDR_DOMAIN=portal.example.com (and check EZDR_VERSION)
 docker compose up -d
 ```
 
@@ -50,6 +50,12 @@ cp .env.example .env    # set EZDR_DOMAIN to the server's DNS name or IP address
 docker compose -f compose.self-signed.yaml up -d
 ```
 
+Browsers can't check a self-signed certificate, so before signing in, compare
+the certificate's SHA-256 fingerprint your browser shows with the one in the
+portal's log (`docker compose -f compose.self-signed.yaml logs portal | grep
+sha256_fingerprint`). Otherwise someone who can intercept the connection
+could capture your password and code. Prefer option 1 for production.
+
 ## First sign-in
 
 1. Find the one-time setup code in the portal's log:
@@ -61,6 +67,26 @@ docker compose -f compose.self-signed.yaml up -d
 2. Open the portal, enter the setup code, and create the administrator.
 3. Sign in. On first sign-in you add the portal to an authenticator app and
    receive recovery codes. Store the recovery codes somewhere safe.
+
+## Secure the portal
+
+Whoever controls the portal controls every enrolled host: the portal tells
+the clients, which run as root on your hypervisors, what to replicate and
+when to fail over. Treat the portal server as critical infrastructure:
+
+- Run it on a dedicated server outside the protected sites, and allow only
+  the ports above inbound. Restrict SSH to keys, and to known addresses if
+  you can.
+- Keep the server's operating system and Docker up to date, and upgrade the
+  portal when a release fixes a security issue (watch the repository's
+  releases).
+- Keep the administrator's password and authenticator to the people who run
+  failovers, and store the recovery codes offline.
+- Set up email or webhook alerts (**Settings**), and review the **Audit**
+  log: sign-ins, failed sign-ins, failovers, and configuration changes are
+  recorded there.
+- Protect backups of the portal as carefully as the portal itself (see
+  below).
 
 ## Add a Proxmox VE host
 
@@ -80,24 +106,57 @@ service, interface, and configuration.
 Back up the `portal-data` volume. It contains:
 
 - `ezdr.db`: the database.
-- `secret.key`: the key that encrypts secrets in the database (the portal's
-  WireGuard key and users' TOTP secrets). Without it, a database backup can't
-  be restored. Keep a copy of this file separately from database backups.
+- `secret.key`: the key that encrypts the secrets in the database: the
+  portal's WireGuard key, users' TOTP secrets, the DNS provider token, the
+  SMTP password, and webhook secrets. Without it, a database backup can't be
+  restored.
 - `tls.crt` and `tls.key` (self-signed option only). Restoring these keeps the
   certificate pin that enrolled hosts expect.
 
+A backup of the whole volume holds the database and its key together, so
+anyone with the backup has the portal's secrets: encrypt backups and store
+them securely. To keep the key out of volume backups, store it elsewhere
+(for example, a file on the host mounted read-only into the container) and
+point `EZDR_SECRET_KEY_FILE` at it; back that file up separately.
+
 ## Upgrade
 
-Portal:
+Read the release notes first, and back up the portal.
+
+Portal: set `EZDR_VERSION` in `.env` to the new version, then:
 
 ```sh
 docker compose pull && docker compose up -d
 ```
 
-Client: download `ezdr_linux_amd64.deb` from the
-[latest release](https://github.com/jlbyh2o/ezdr/releases/latest) and run
-`apt install ./ezdr_linux_amd64.deb`. The package restarts the client.
+Client: download `ezdr_linux_amd64.deb`, `checksums.txt`, and
+`checksums.txt.sig` from the
+[release](https://github.com/jlbyh2o/ezdr/releases), verify them (below), and
+run `apt install ./ezdr_linux_amd64.deb`. The package restarts the client.
 (Automatic updates through an apt repository are planned.)
+
+## Verify a release
+
+Each release's `checksums.txt` lists the SHA-256 checksums of its files and
+is signed with EZDR's release key (fingerprint
+`1EEE 2999 9590 0231 E3F0  2BF0 F248 3414 DBDD AB2B`, also in
+[`packaging/release-signing-key.asc`](../packaging/release-signing-key.asc)).
+The installer the portal shows checks this signature and the package's
+checksum before installing anything. To verify files by hand:
+
+```sh
+gpg --import release-signing-key.asc
+gpg --verify checksums.txt.sig checksums.txt    # "Good signature from EZDR release signing"
+sha256sum -c --ignore-missing checksums.txt
+```
+
+The files and the portal image also carry GitHub build provenance, which
+shows that they were built by this repository's release workflow:
+
+```sh
+gh attestation verify ezdr_linux_amd64.deb --repo jlbyh2o/ezdr
+gh attestation verify oci://ghcr.io/jlbyh2o/ezdr-portal:0.1.0 --repo jlbyh2o/ezdr
+```
 
 ## Configuration reference
 

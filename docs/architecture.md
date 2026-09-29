@@ -322,23 +322,28 @@ this information from the plan; it never holds DNS provider credentials.
 
 ### 6.5 Failback
 
-Returns workloads to the original primary once it is repaired.
+Returns workloads to the original primary once it is repaired (see
+[Failback design](design/failback.md)).
 
-1. Reverse replication direction: the DR host becomes the source and the
-   original primary pulls changes. If a common snapshot still exists,
-   replication is incremental; otherwise a full resync is required.
-2. Once in sync, perform a planned failover back to the original primary,
-   including the confirmation step that switches DNS records back to their
+1. A preflight finds each dataset's newest common snapshot and shows what
+   the primary would lose if it changed after the failover.
+2. The DR host sends the changes since the common snapshot to the primary
+   over a mutually authenticated TLS connection, in rounds while the
+   workloads keep running at the DR site.
+3. The DR workloads stop, the final changes are sent, and the DR host is
+   cleaned up (the replicas become read-only replicas again).
+4. Replication resumes in the original direction, incrementally, and the
+   workloads start on the primary in the defined order.
+5. On the operator's confirmation, DNS records switch back to their
    production values.
-3. Restore the original replication direction.
-
-Failback is the most complex workflow and is scheduled last, but the data model
-and zrepl configuration should account for it from the start.
 
 ## 7. Security model
 
-The portal can direct actions on hypervisors, which makes it a high-value
-target. The design limits both the likelihood and the impact of a compromise.
+The portal directs actions on hypervisors, which makes it a high-value
+target. **Whoever controls the portal controls every enrolled host**: it can
+change what is replicated and where, and start failovers. The design makes
+a compromise of the portal hard, and limits what a compromised *host* can
+do to the others:
 
 - **Enrollment:** one-time, expiring tokens, sent over HTTPS with optional
   certificate pinning. Private keys are generated on the host and never leave
@@ -351,13 +356,24 @@ target. The design limits both the likelihood and the impact of a compromise.
 - **Declarative control, not remote execution:** the portal sends desired state
   and a fixed set of named actions (for example, "start test failover for
   plan X"). The client validates every request and rejects anything outside
-  its known actions. There is no arbitrary command execution.
+  its known actions; none runs a command of the portal's choosing. (It does
+  register and start guests from the configurations the portal relays, which
+  is one reason a compromised portal controls the hosts.)
 - **Pull-based replication:** a compromised primary cannot delete DR snapshots.
+  Replicas never take mount points or shares from the sending host, and the
+  values the DR host writes into guest configurations are validated.
+- **Human-confirmed break-glass:** a DR host's report of a break-glass
+  failover locks the primary's workloads only after an administrator
+  confirms it in the portal.
 - **Least-privilege data plane:** zrepl on each side is limited to the datasets
-  in the plan.
-- **Portal hardening:** required TOTP for users, audit log of all actions,
-  secrets encrypted at rest, and a one-time setup code for the first
-  administrator.
+  in the plan. Cleanups remove exactly what the operator reviewed, never data
+  that a storage uses.
+- **Portal hardening:** required TOTP for users, limits on failed sign-ins and
+  request sizes, audit log of all actions, secrets encrypted at rest, and a
+  one-time setup code for the first administrator.
+- **Signed releases:** release checksums are signed, the installer verifies
+  the signature before installing anything, and files and images carry
+  build provenance.
 - **DNS provider credentials stay on the portal:** API tokens are scoped to DNS
   edit on selected zones and are never distributed to clients.
 - **Human-initiated failover:** no automatic failover, reducing the risk of

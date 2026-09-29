@@ -169,8 +169,10 @@ commands:
 - **New host (default):** installs the client and enrolls in one step.
 
   ```sh
-  curl -fsSL https://github.com/jlbyh2o/ezdr/releases/latest/download/install.sh | sh -s -- ezdr1_…
+  curl -fsSL https://github.com/jlbyh2o/ezdr/releases/download/v0.1.0/install.sh | sh -s -- ezdr1_…
   ```
+
+  The URL names the portal's own release, so hosts get the matching client.
 
 - **Client already installed:**
 
@@ -183,14 +185,17 @@ The install script:
 1. Checks that it's running as root on a supported Proxmox VE host.
 2. Installs the `ezdr` package. Until the apt repository exists, it downloads
    the `.deb` from the matching GitHub release and verifies it against the
-   release's published SHA-256 checksums. Once the signed apt repository is
+   release's SHA-256 checksums, whose signature it first checks against
+   EZDR's release key (built into the script). Once the signed apt repository is
    available, the script adds it instead, and apt verifies package signatures
    and provides updates.
 3. Runs `ezdr enroll` with the token. The usual checks and confirmation prompt
    still apply.
 
-The script is served from the project's GitHub releases, **never from the
-portal**, so a compromised portal can't hand hosts a malicious installer.
+The script is served from the project's GitHub releases, never from the
+portal, and installs only files signed with EZDR's release key. The portal
+does build the command an administrator copies, so an administrator should
+check that it downloads from `github.com/jlbyh2o/ezdr`.
 Tokens are single-use and short-lived, so a token left in shell history or
 briefly visible in the process list is not useful to anyone else.
 
