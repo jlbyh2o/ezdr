@@ -39,6 +39,10 @@ type Config struct {
 	// InstalledUnit is set when enroll wrote LocalUnitFile, so unenroll
 	// removes it.
 	InstalledUnit bool `json:"installed_unit,omitempty"`
+	// BootGuardTimeoutSeconds is how long Proxmox's autostart waits for the
+	// portal at boot (0: DefaultBootGuardTimeout). Set it by editing this
+	// file.
+	BootGuardTimeoutSeconds uint32 `json:"boot_guard_timeout_seconds,omitempty"`
 }
 
 // ErrNotEnrolled is returned when the host has no enrollment.

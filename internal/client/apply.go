@@ -32,11 +32,12 @@ import (
 // installing zrepl) don't block the command stream. If newer desired state
 // arrives while applying, only the newest is applied next.
 type applier struct {
-	api     clientv1connect.ClientServiceClient
-	zrepl   *zrepl.Applier
-	cert    string
-	siteKey wgtypes.Key
-	mu      sync.Mutex
+	bootGuard bootGuard
+	api       clientv1connect.ClientServiceClient
+	zrepl     *zrepl.Applier
+	cert      string
+	siteKey   wgtypes.Key
+	mu        sync.Mutex
 	// zreplMu serializes changes to zrepl's configuration: applying desired
 	// state and takeover actions.
 	zreplMu sync.Mutex
@@ -68,7 +69,7 @@ type applier struct {
 func newApplier(api clientv1connect.ClientServiceClient, cert string, siteKey wgtypes.Key) *applier {
 	return &applier{api: api, zrepl: zrepl.NewApplier(), tests: testfailover.NewRunner(), failover: failover.NewRunner(),
 		failback: failback.NewTransfer(), cleanup: cleanup.NewRunner(), cert: cert, siteKey: siteKey,
-		wake: make(chan struct{}, 1)}
+		bootGuard: defaultBootGuard, wake: make(chan struct{}, 1)}
 }
 
 // submit queues desired state, replacing anything not yet started.
@@ -115,8 +116,12 @@ func (a *applier) run(ctx context.Context) {
 		if err == nil {
 			err = guests.Store(guests.DefaultPaths, ds.GetPlanGuestConfigs(), ds.GetPlanRecovery())
 		}
-		if err == nil {
-			err = a.enforceLocks(ctx, ds.GetLockedGuests())
+		// Locks don't wait for the rest: at boot, Proxmox's autostart waits
+		// for them (the boot guard).
+		if lockErr := a.enforceLocks(ctx, ds.GetLockedGuests()); lockErr != nil {
+			err = errors.Join(err, lockErr)
+		} else {
+			a.bootGuardReady(len(ds.GetReportGuestConfigs()) > 0 || len(ds.GetLockedGuests()) > 0)
 		}
 		if err != nil {
 			if ctx.Err() != nil {
@@ -268,6 +273,17 @@ func (a *applier) guestConfigLoop(ctx context.Context) {
 			return
 		case <-ticker.C:
 		}
+	}
+}
+
+// bootGuardReady records whether this host is a plan's primary and that
+// this boot's locks are applied, which lets Proxmox's autostart go on.
+func (a *applier) bootGuardReady(primary bool) {
+	if err := a.bootGuard.setPrimary(primary); err != nil {
+		slog.Warn("boot guard state", "err", err)
+	}
+	if err := a.bootGuard.markReady(); err != nil {
+		slog.Warn("boot guard", "err", err)
 	}
 }
 

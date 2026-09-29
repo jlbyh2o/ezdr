@@ -14,7 +14,9 @@ const unitFile = `[Unit]
 Description=EZDR client
 Documentation=https://github.com/jlbyh2o/ezdr
 Wants=network-online.target
-After=network-online.target
+# Reads guest configurations; Proxmox's autostart waits for it (boot guard),
+# so it must not be ordered after pve-guests.service.
+After=network-online.target pve-cluster.service
 
 [Service]
 ExecStart=/usr/bin/ezdr run

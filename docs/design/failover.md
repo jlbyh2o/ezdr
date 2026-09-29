@@ -118,6 +118,39 @@ running if the primary was cut off rather than down) and applies the lock,
 and it reports what it did. The portal alerts when it had to stop a guest.
 Unlocking happens during failback.
 
+### 5.2 Boot guard on the primary
+
+An unplanned failover happens while the primary is down, so the primary
+learns about it only when its client reaches the portal. Without a guard,
+Proxmox starts the guests set to start at boot before that, and they run
+at both sites until the client stops them, indefinitely if the primary
+can't reach the portal.
+
+- **Hook:** the client installs a drop-in for Proxmox's autostart unit
+  (`pve-guests.service`), which runs `ezdr boot-guard` before guests start
+  (`ExecStartPre=-`: an error never blocks autostart).
+- **What it waits for:** the running client (ordered after
+  `pve-cluster.service`, not after `pve-guests.service`) marks each boot
+  once it has received its desired state from the portal and applied the
+  locks (5.1) in `/run/ezdr/`. Locked guests have `onboot` off and `lock:
+  migrate`, so autostart skips them. Lock enforcement no longer waits for
+  the rest of the desired state (such as zrepl) to apply.
+- **Only where it matters:** the client records, at each apply, whether the
+  host is the primary of an active, paused, or failed-over plan (in
+  `/var/lib/ezdr/`). Other hosts, and primaries before their first plan,
+  don't wait.
+- **Without the portal:** the guard waits up to 5 minutes (a client
+  setting), then lets autostart continue as Proxmox normally would. When the
+  client later reaches the portal, it stops and locks failed-over guests as
+  before, and reports that they had started, which raises the existing
+  alert.
+- **Normal boots:** the guard adds the few seconds the client needs to
+  reach the portal.
+- `ezdr unenroll` removes the drop-in; the package removes it on purge.
+- **Known limits:** a host removed from the portal but not unenrolled waits
+  the full time at each boot; the guard can't help if the client is removed
+  or broken (it then waits the full time and starts the guests).
+
 ## 6. DNS
 
 ### 6.1 Cloudflare

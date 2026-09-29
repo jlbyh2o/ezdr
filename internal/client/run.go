@@ -53,6 +53,10 @@ func Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("site tunnel key: %w", err)
 	}
+	// Hosts enrolled before the boot guard existed get it here.
+	if err := InstallBootGuard(ctx); err != nil {
+		slog.Warn("install the boot guard", "err", err)
+	}
 	app := newApplier(api, cert, siteKey)
 	go app.run(ctx)
 

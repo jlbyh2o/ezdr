@@ -26,6 +26,7 @@ Commands:
   failover --plan <name>
                    Break-glass failover on the DR host when the portal is down
   run              Run the client service (used by systemd)
+  boot-guard       Wait for failed-over guests to be locked (used at boot)
   version          Print version information
   help             Show this help
 
@@ -51,6 +52,8 @@ func main() {
 		err = unenroll(ctx, args)
 	case "run":
 		err = client.Run(ctx)
+	case "boot-guard":
+		client.BootGuard(ctx, os.Stdout)
 	case "failover":
 		err = failoverCmd(ctx, args)
 	case "version":
