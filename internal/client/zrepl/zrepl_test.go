@@ -343,3 +343,19 @@ func TestStatus(t *testing.T) {
 		t.Errorf("empty status = %v", s)
 	}
 }
+
+func TestPrimaryFingerprints(t *testing.T) {
+	key := func(fpr, sub string) string {
+		return "pub:-:4096:1:" + fpr[24:] + ":1500000000:::-:::scESC::::::23::0:\n" +
+			"fpr:::::::::" + fpr + ":\nuid:-::::1500000000::X::zrepl <x@example.com>::::::::::0:\n" +
+			"sub:-:4096:1:" + sub[24:] + ":1500000000::::::e::::::23:\nfpr:::::::::" + sub + ":\n"
+	}
+	one := key("0123456789ABCDEF0123456789ABCDEF01234567", "89ABCDEF0123456789ABCDEF0123456789ABCDEF")
+	if got := primaryFingerprints(one); len(got) != 1 || got[0] != "0123456789ABCDEF0123456789ABCDEF01234567" {
+		t.Errorf("one key: %v", got)
+	}
+	// A second key appended to the file is seen.
+	if got := primaryFingerprints(one + key("FEDCBA9876543210FEDCBA9876543210FEDCBA98", "76543210FEDCBA9876543210FEDCBA9876543210")); len(got) != 2 {
+		t.Errorf("two keys: %v", got)
+	}
+}

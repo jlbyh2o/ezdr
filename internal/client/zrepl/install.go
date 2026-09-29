@@ -127,8 +127,10 @@ func (a *Applier) ensureRepository(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("read zrepl signing key: %w", err)
 	}
-	if fpr := firstFingerprint(string(out)); fpr != aptKeyFPR {
-		return fmt.Errorf("zrepl signing key has fingerprint %s, expected %s; not installing", fpr, aptKeyFPR)
+	// Every key in the file would be trusted: only the expected one may be
+	// there.
+	if fprs := primaryFingerprints(string(out)); len(fprs) != 1 || fprs[0] != aptKeyFPR {
+		return fmt.Errorf("zrepl signing key file has key(s) %v, expected only %s; not installing", fprs, aptKeyFPR)
 	}
 	if _, err := a.Run(ctx, "gpg", "--batch", "--yes", "--dearmor", "-o", aptKeyring, tmp.Name()); err != nil {
 		return fmt.Errorf("install zrepl signing key: %w", err)
@@ -137,14 +139,24 @@ func (a *Applier) ensureRepository(ctx context.Context) error {
 	return writeFile(aptSourcesFile, []byte(source), 0o644)
 }
 
-func firstFingerprint(colons string) string {
+// primaryFingerprints returns the fingerprints of the primary keys (not
+// subkeys) in gpg's colon listing.
+func primaryFingerprints(colons string) []string {
+	var out []string
+	primary := false
 	for _, line := range strings.Split(colons, "\n") {
 		f := strings.Split(line, ":")
-		if len(f) > 9 && f[0] == "fpr" {
-			return f[9]
+		switch {
+		case f[0] == "pub":
+			primary = true
+		case f[0] == "sub":
+			primary = false
+		case f[0] == "fpr" && primary && len(f) > 9:
+			out = append(out, f[9])
+			primary = false
 		}
 	}
-	return ""
+	return out
 }
 
 func debianCodename() (string, error) {
