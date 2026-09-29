@@ -8,6 +8,7 @@ import {
   DnsService,
   FailoverService,
   HostService,
+  OverviewService,
   PlanService,
   SetupService,
   TestFailoverService,
@@ -27,6 +28,7 @@ export const alertClient = createClient(AlertService, transport)
 export const testClient = createClient(TestFailoverService, transport)
 export const failoverClient = createClient(FailoverService, transport)
 export const dnsClient = createClient(DnsService, transport)
+export const overviewClient = createClient(OverviewService, transport)
 
 export function errorMessage(err: unknown): string {
   if (err instanceof ConnectError) {

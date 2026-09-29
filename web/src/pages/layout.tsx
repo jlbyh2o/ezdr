@@ -1,4 +1,4 @@
-import { Bell, ChevronsUpDown, LogOut, Monitor, Moon, ScrollText, Server, Settings, ShieldCheck, Sun } from 'lucide-react'
+import { Bell, ChevronsUpDown, LayoutDashboard, LogOut, Monitor, Moon, ScrollText, Server, Settings, ShieldCheck, Sun } from 'lucide-react'
 import { Link, Outlet, useLocation } from 'react-router'
 
 import { LogoMark } from '@/components/logo'
@@ -38,6 +38,7 @@ import { usePoll } from '@/lib/use-poll'
 type NavItem = { to: string; label: string; icon: React.ComponentType }
 
 const groups: { label: string; items: NavItem[] }[] = [
+  { label: 'Site', items: [{ to: '/', label: 'Overview', icon: LayoutDashboard }] },
   {
     label: 'Protection',
     items: [
@@ -62,7 +63,7 @@ const allItems = [...groups.flatMap((g) => g.items), { to: '/settings', label: '
 function useActive() {
   const { pathname } = useLocation()
   const path = aliases[pathname] ?? pathname
-  return (to: string) => path === to || path.startsWith(to + '/')
+  return (to: string) => path === to || (to !== '/' && path.startsWith(to + '/'))
 }
 
 export function Layout({ user, onSignOut }: { user: User; onSignOut: () => void }) {
@@ -95,7 +96,7 @@ function AppSidebar({ user, onSignOut }: { user: User; onSignOut: () => void }) 
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link to="/plans" />}>
+            <SidebarMenuButton size="lg" render={<Link to="/" />}>
               <LogoMark className="size-8! shrink-0" />
               <div className="grid leading-tight">
                 <span className="font-semibold">EZDR</span>
