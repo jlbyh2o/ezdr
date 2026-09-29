@@ -195,20 +195,12 @@ func adoptGuests(s *planv1.PlanSpec, primary *inventoryv1.Inventory, filters []*
 	}
 }
 
-// adoptStorage points every storage the plan uses at the old receive dataset,
-// on the DR storage whose pool holds it.
+// adoptStorage points every storage the plan uses at the old receive
+// dataset.
 func adoptStorage(s *planv1.PlanSpec, primary, dr *inventoryv1.Inventory, rootFS string, note func(string, ...any)) error {
 	pool, _, _ := strings.Cut(rootFS, "/")
-	target := ""
-	for _, st := range dr.GetStorages() {
-		if st.Type == "zfspool" && (st.ZfsPool == pool || strings.HasPrefix(st.ZfsPool, pool+"/")) {
-			if target == "" || strings.HasPrefix(rootFS, st.ZfsPool+"/") {
-				target = st.Id
-			}
-		}
-	}
-	if target == "" {
-		return fmt.Errorf("no ZFS storage on the DR host uses pool %q, where the old job receives", pool)
+	if !slices.ContainsFunc(dr.GetZfsPools(), func(p *inventoryv1.ZfsPool) bool { return p.Name == pool }) {
+		return fmt.Errorf("the DR host has no ZFS pool %q, where the old job receives", pool)
 	}
 	storages, _ := used(s, guestsByID(primary))
 	mappings := map[string]*planv1.StorageMapping{}
@@ -223,7 +215,7 @@ func adoptStorage(s *planv1.PlanSpec, primary, dr *inventoryv1.Inventory, rootFS
 		} else if m.ReceiveDataset != "" && m.ReceiveDataset != rootFS {
 			note("storage %s: replicas are received into %s (the old job's) instead of %s", src, rootFS, m.ReceiveDataset)
 		}
-		m.TargetStorage, m.ReceiveDataset = target, rootFS
+		m.ReceiveDataset = rootFS
 	}
 	return nil
 }
@@ -328,8 +320,8 @@ func validateTakeover(spec *planv1.PlanSpec, primary, dr *inventoryv1.Inventory,
 	}
 	for _, m := range spec.StorageMappings {
 		if m.ReceiveDataset != setup.Pull.RootFs {
-			is.errorf(0, "storage mapping %s → %s: the adopted setup receives into %s; the plan must too, or every dataset needs a full send",
-				m.SourceStorage, m.TargetStorage, setup.Pull.RootFs)
+			is.errorf(0, "storage %s: the adopted setup receives into %s; the plan must too, or every dataset needs a full send",
+				m.SourceStorage, setup.Pull.RootFs)
 		}
 	}
 

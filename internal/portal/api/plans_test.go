@@ -87,7 +87,7 @@ func TestPlanServiceFlow(t *testing.T) {
 		t.Fatal(err)
 	}
 	spec := suggested.Msg.Spec
-	if spec.StorageMappings[0].TargetStorage != "tank" || spec.NetworkMappings[0].TargetBridge != "vmbr0" || spec.TestBridge != "vmbr99" {
+	if spec.StorageMappings[0].ReceiveDataset != "tank/ezdr/pve1" || spec.NetworkMappings[0].TargetBridge != "vmbr0" || spec.TestBridge != "vmbr99" {
 		t.Fatalf("suggestion = %v", spec)
 	}
 

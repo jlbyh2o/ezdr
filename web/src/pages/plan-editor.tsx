@@ -34,7 +34,7 @@ import { PlanDnsCard } from '@/pages/plan-dns'
 import { PlanStateCard, PlanStatusCard } from '@/pages/plan-status'
 import { TestFailoverCard } from '@/pages/test-failover'
 import { errorMessage, hostClient, planClient } from '@/lib/api'
-import { formatDateTime, formatDuration } from '@/lib/format'
+import { formatBytes, formatDateTime, formatDuration } from '@/lib/format'
 import { describeInterval, drPresets, grid, primaryPresets, splitPeriod, units } from '@/lib/retention'
 import { Field } from '@/pages/setup'
 
@@ -920,7 +920,7 @@ function MappingsCard({
   update: Update
   updateAndSuggest: (fn: (s: PlanSpec) => void) => Promise<void>
 }) {
-  const zfsStorages = drInv.storages.filter((s) => s.type === 'zfspool')
+  const pools = drInv.zfsPools
   const bridges = drInv.interfaces.filter((i) => i.type === 'bridge')
   const primaryName = primaryInv.host?.hostname ?? 'primary'
   return (
@@ -928,7 +928,7 @@ function MappingsCard({
       id="mappings"
       description="Where protected guests' disks and networks go on the DR host."
       summary={[
-        ...spec.storageMappings.map((m) => `${m.sourceStorage} → ${m.targetStorage || '?'}`),
+        ...spec.storageMappings.map((m) => `${m.sourceStorage} → ${m.receiveDataset || '?'}`),
         ...spec.networkMappings.map((m) => `${m.sourceBridge} → ${m.targetBridge || '?'}`),
         spec.testBridge ? `test bridge ${spec.testBridge}` : 'no test bridge',
       ].join(' · ')}
@@ -936,50 +936,52 @@ function MappingsCard({
       <div className="grid gap-2">
         <Label>Storage</Label>
         <p className="text-xs text-muted-foreground">
-          Where each storage's disks are replicated. The DR storage chooses the ZFS pool; the replicas are kept under the dataset next to
-          it, each disk at its full path. Change the dataset to keep replicas apart from other data, or to match an existing zrepl setup
-          (Adopt fills it in).
+          Where each storage's disks are replicated on the DR host: a ZFS pool, and a dataset inside it that holds the replicas, each disk at
+          its full path. Change the dataset to keep replicas apart from other data, or to match an existing zrepl setup (Adopt fills it
+          in).
         </p>
-        <div className="hidden gap-2 text-xs font-medium text-muted-foreground sm:grid sm:grid-cols-[160px_24px_1fr_1.5fr]">
+        <div className="hidden gap-2 text-xs font-medium text-muted-foreground sm:grid sm:grid-cols-[160px_24px_minmax(0,220px)_12px_1fr]">
           <span>On {primaryName}</span>
           <span />
-          <span>DR storage</span>
-          <span>Replicas stored in (ZFS dataset)</span>
+          <span>ZFS pool on the DR host</span>
+          <span />
+          <span>Dataset in the pool</span>
         </div>
         {spec.storageMappings.map((m, i) => {
           const example = exampleDisk(spec, primaryInv, m.sourceStorage)
+          const [pool, ...rest] = m.receiveDataset.split('/')
+          const path = rest.join('/')
+          const setDataset = (p: string, sub: string) =>
+            update((s) => (s.storageMappings[i].receiveDataset = sub.trim() ? `${p}/${sub.trim().replace(/^\/+/, '')}` : p))
           return (
             <div key={m.sourceStorage} className="grid gap-1">
-              <div className="grid items-center gap-2 sm:grid-cols-[160px_24px_1fr_1.5fr]">
+              <div className="grid items-center gap-2 sm:grid-cols-[160px_24px_minmax(0,220px)_12px_1fr]">
                 <span className="font-mono text-sm">{m.sourceStorage}</span>
                 <span className="text-muted-foreground">→</span>
                 <NativeSelect
-                  aria-label={`DR storage for ${m.sourceStorage}`}
-                  value={m.targetStorage}
-                  onChange={(e) =>
-                    update((s) => {
-                      s.storageMappings[i].targetStorage = e.target.value
-                      const pool = zfsStorages.find((z) => z.id === e.target.value)?.zfsPool
-                      if (pool) s.storageMappings[i].receiveDataset = `${pool}/ezdr/${primaryName}`
-                    })
-                  }
+                  aria-label={`ZFS pool for ${m.sourceStorage}`}
+                  value={pool}
+                  onChange={(e) => setDataset(e.target.value, path || `ezdr/${primaryName}`)}
                 >
-                  <option value="">Choose DR storage…</option>
-                  {zfsStorages.map((z) => (
-                    <option key={z.id} value={z.id}>
-                      {z.id}
+                  <option value="">Choose a pool…</option>
+                  {pool && !pools.some((p) => p.name === pool) && <option value={pool}>{pool} (not on the DR host)</option>}
+                  {pools.map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name} ({formatBytes(p.freeBytes)} free)
                     </option>
                   ))}
                 </NativeSelect>
+                <span className="text-center font-mono text-muted-foreground">/</span>
                 <Input
-                  aria-label={`Receive dataset for ${m.sourceStorage}`}
-                  value={m.receiveDataset}
-                  onChange={(e) => update((s) => (s.storageMappings[i].receiveDataset = e.target.value))}
-                  placeholder="pool/dataset"
+                  aria-label={`Dataset for ${m.sourceStorage}'s replicas, in the pool`}
+                  value={path}
+                  disabled={!pool}
+                  onChange={(e) => setDataset(pool, e.target.value)}
+                  placeholder="replicated"
                   className="font-mono text-xs"
                 />
               </div>
-              {example && m.receiveDataset && (
+              {example && pool && (
                 <p className="text-xs text-muted-foreground sm:pl-[184px]">
                   For example, <span className="font-mono">{example}</span> is copied to{' '}
                   <span className="font-mono">

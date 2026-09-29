@@ -788,10 +788,12 @@ type StorageMapping struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Storage ID on the primary.
 	SourceStorage string `protobuf:"bytes,1,opt,name=source_storage,json=sourceStorage,proto3" json:"source_storage,omitempty"`
-	// ZFS storage ID on the DR host.
+	// No longer used: replicas go to receive_dataset, whose pool is the one
+	// that matters. Plans saved before may still have it set.
 	TargetStorage string `protobuf:"bytes,2,opt,name=target_storage,json=targetStorage,proto3" json:"target_storage,omitempty"`
-	// Dataset on the DR host that replicas are received under. Replicas keep
-	// their source path: <receive_dataset>/<source dataset>.
+	// Dataset on the DR host that replicas are received under (its first
+	// component is the ZFS pool). Replicas keep their source path:
+	// <receive_dataset>/<source dataset>.
 	ReceiveDataset string `protobuf:"bytes,3,opt,name=receive_dataset,json=receiveDataset,proto3" json:"receive_dataset,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache

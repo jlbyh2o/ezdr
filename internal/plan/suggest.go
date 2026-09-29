@@ -63,12 +63,12 @@ func Suggest(spec *planv1.PlanSpec, primary, dr *inventoryv1.Inventory) *planv1.
 	for _, src := range usedStorage {
 		m := mappedStorage[src]
 		if m == nil {
-			m = &planv1.StorageMapping{SourceStorage: src, TargetStorage: suggestStorage(src, dr)}
+			m = &planv1.StorageMapping{SourceStorage: src}
 			s.StorageMappings = append(s.StorageMappings, m)
 		}
-		if m.ReceiveDataset == "" && m.TargetStorage != "" {
-			if st := findStorage(dr, m.TargetStorage); st != nil && st.ZfsPool != "" {
-				m.ReceiveDataset = st.ZfsPool + "/ezdr/" + primary.GetHost().GetHostname()
+		if m.ReceiveDataset == "" {
+			if base := suggestDataset(src, dr); base != "" {
+				m.ReceiveDataset = base + "/ezdr/" + primary.GetHost().GetHostname()
 			}
 		}
 	}
@@ -140,15 +140,6 @@ func sortedKeys(m map[string]bool) []string {
 	return out
 }
 
-func findStorage(inv *inventoryv1.Inventory, id string) *inventoryv1.Storage {
-	for _, s := range inv.GetStorages() {
-		if s.Id == id {
-			return s
-		}
-	}
-	return nil
-}
-
 func findInterface(inv *inventoryv1.Inventory, name string) *inventoryv1.NetworkInterface {
 	for _, i := range inv.GetInterfaces() {
 		if i.Name == name {
@@ -158,20 +149,32 @@ func findInterface(inv *inventoryv1.Inventory, name string) *inventoryv1.Network
 	return nil
 }
 
-func suggestStorage(src string, dr *inventoryv1.Inventory) string {
-	var zfs []string
+// suggestDataset returns where to put a storage's replicas on the DR host:
+// the dataset of the DR host's ZFS storage with the same ID or its only
+// one, else the ZFS pool with the most free space.
+func suggestDataset(src string, dr *inventoryv1.Inventory) string {
+	var zfs []*inventoryv1.Storage
 	for _, s := range dr.Storages {
-		if s.Type == "zfspool" {
+		if s.Type == "zfspool" && s.ZfsPool != "" {
 			if s.Id == src {
-				return s.Id
+				return s.ZfsPool
 			}
-			zfs = append(zfs, s.Id)
+			zfs = append(zfs, s)
 		}
 	}
 	if len(zfs) == 1 {
-		return zfs[0]
+		return zfs[0].ZfsPool
 	}
-	return ""
+	var best *inventoryv1.ZfsPool
+	for _, p := range dr.ZfsPools {
+		if best == nil || p.FreeBytes > best.FreeBytes {
+			best = p
+		}
+	}
+	if best == nil {
+		return ""
+	}
+	return best.Name
 }
 
 func suggestBridge(src string, dr *inventoryv1.Inventory) string {

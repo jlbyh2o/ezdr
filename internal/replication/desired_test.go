@@ -24,7 +24,7 @@ func fixture() (Plan, map[string]*Host) {
 	p := Plan{ID: "abcdefghijk", Name: "Main", Spec: &planv1.PlanSpec{
 		PrimaryHostId: "p1", DrHostId: "d1", IntervalSeconds: 300, SnapshotPrefix: "zrepl_",
 		Guests:          []*planv1.PlanGuest{{Vmid: 101}, {Vmid: 102}},
-		StorageMappings: []*planv1.StorageMapping{{SourceStorage: "local-zfs", TargetStorage: "tank", ReceiveDataset: "tank/replicated"}},
+		StorageMappings: []*planv1.StorageMapping{{SourceStorage: "local-zfs", ReceiveDataset: "tank/replicated"}},
 		Network: &planv1.ReplicationNetwork{Path: &planv1.ReplicationNetwork_Existing{
 			Existing: &planv1.ExistingNetwork{PrimaryAddress: "192.0.2.12", Port: 8888}}},
 		PrimaryRetention: []*planv1.RetentionTier{{Count: 1, PeriodSeconds: 3600, KeepAll: true}},

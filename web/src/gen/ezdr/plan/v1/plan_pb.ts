@@ -382,15 +382,17 @@ export type StorageMapping = Message<"ezdr.plan.v1.StorageMapping"> & {
   sourceStorage: string;
 
   /**
-   * ZFS storage ID on the DR host.
+   * No longer used: replicas go to receive_dataset, whose pool is the one
+   * that matters. Plans saved before may still have it set.
    *
    * @generated from field: string target_storage = 2;
    */
   targetStorage: string;
 
   /**
-   * Dataset on the DR host that replicas are received under. Replicas keep
-   * their source path: <receive_dataset>/<source dataset>.
+   * Dataset on the DR host that replicas are received under (its first
+   * component is the ZFS pool). Replicas keep their source path:
+   * <receive_dataset>/<source dataset>.
    *
    * @generated from field: string receive_dataset = 3;
    */

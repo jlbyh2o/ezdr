@@ -88,7 +88,7 @@ func TestSuggest(t *testing.T) {
 		Grid(s.DrRetention) != "1x1d(keep=all) | 14x1d | 8x7d" || Grid(s.PrimaryRetention) != "1x1d(keep=all)" {
 		t.Errorf("defaults = %d %q %q %q", s.IntervalSeconds, s.SnapshotPrefix, Grid(s.DrRetention), Grid(s.PrimaryRetention))
 	}
-	if len(s.StorageMappings) != 1 || s.StorageMappings[0].TargetStorage != "tank-dr" ||
+	if len(s.StorageMappings) != 1 ||
 		s.StorageMappings[0].ReceiveDataset != "tank-dr/ezdr/pve1" {
 		t.Errorf("storage mappings = %v", s.StorageMappings)
 	}
@@ -159,9 +159,9 @@ func TestValidateErrors(t *testing.T) {
 		"vmid used on DR": {func(_ *planv1.PlanSpec, c *Context) {
 			c.DR.Inventory.Guests = []*inventoryv1.Guest{{Vmid: 101, Name: "x"}}
 		}, "already used on pve2"},
-		"unmapped storage":   {func(s *planv1.PlanSpec, _ *Context) { s.StorageMappings = nil }, "isn't mapped to DR storage"},
-		"missing target":     {func(s *planv1.PlanSpec, _ *Context) { s.StorageMappings[0].TargetStorage = "nope" }, "doesn't exist on the DR host"},
-		"non-ZFS target":     {func(s *planv1.PlanSpec, _ *Context) { s.StorageMappings[0].TargetStorage = "local-lvm" }, "must be ZFS"},
+		"unmapped storage":   {func(s *planv1.PlanSpec, _ *Context) { s.StorageMappings = nil }, "choose where its replicas are stored"},
+		"no dataset":         {func(s *planv1.PlanSpec, _ *Context) { s.StorageMappings[0].ReceiveDataset = "" }, "choose where its replicas are stored"},
+		"bad dataset":        {func(s *planv1.PlanSpec, _ *Context) { s.StorageMappings[0].ReceiveDataset = "tank dr/x" }, "isn't a valid ZFS dataset"},
 		"bad receive pool":   {func(s *planv1.PlanSpec, _ *Context) { s.StorageMappings[0].ReceiveDataset = "rpool/x" }, `pool "rpool" doesn't exist`},
 		"unmapped bridge":    {func(s *planv1.PlanSpec, _ *Context) { s.NetworkMappings = nil }, "isn't mapped to a DR bridge"},
 		"missing bridge":     {func(s *planv1.PlanSpec, _ *Context) { s.NetworkMappings[0].TargetBridge = "vmbr7" }, "doesn't exist on the DR host"},
@@ -392,5 +392,15 @@ func TestExcludedGuestsArentUnconfigured(t *testing.T) {
 	ctx.Excluded = map[uint32]bool{202: true}
 	if warns := messages(Validate(validSpec(), ctx), planv1.Severity_SEVERITY_WARNING); strings.Contains(warns, "unconfigured") {
 		t.Errorf("an excluded guest is reported as unconfigured:\n%s", warns)
+	}
+}
+
+func TestSuggestDatasetFallsBackToFreestPool(t *testing.T) {
+	dr := drInv()
+	dr.Storages = nil
+	dr.ZfsPools = []*inventoryv1.ZfsPool{{Name: "small", FreeBytes: 1 << 30}, {Name: "big", FreeBytes: 1 << 40}}
+	s := Suggest(baseSpec(101), primaryInv(), dr)
+	if len(s.StorageMappings) != 1 || !strings.HasPrefix(s.StorageMappings[0].ReceiveDataset, "big/ezdr/") {
+		t.Errorf("mappings = %v", s.StorageMappings)
 	}
 }

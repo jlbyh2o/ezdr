@@ -300,25 +300,16 @@ func validateStorage(spec *planv1.PlanSpec, usedStorage []string, primary, dr *i
 	for _, src := range usedStorage {
 		isUsed[src] = true
 		m := mappings[src]
-		if m == nil || m.TargetStorage == "" {
-			is.errorf(0, "storage %q is used by protected guests but isn't mapped to DR storage", src)
-			continue
-		}
-		target := findStorage(dr, m.TargetStorage)
-		switch {
-		case target == nil:
-			is.errorf(0, "storage mapping %s → %s: %q doesn't exist on the DR host", src, m.TargetStorage, m.TargetStorage)
-			continue
-		case target.Type != "zfspool":
-			is.errorf(0, "storage mapping %s → %s: %q is %s storage; it must be ZFS", src, m.TargetStorage, m.TargetStorage, target.Type)
+		if m == nil || m.ReceiveDataset == "" {
+			is.errorf(0, "storage %q is used by protected guests; choose where its replicas are stored on the DR host", src)
 			continue
 		}
 		pool, _, _ := strings.Cut(m.ReceiveDataset, "/")
 		switch {
-		case m.ReceiveDataset == "" || !datasetPattern.MatchString(m.ReceiveDataset):
-			is.errorf(0, "storage mapping %s → %s needs a valid receive dataset", src, m.TargetStorage)
+		case !datasetPattern.MatchString(m.ReceiveDataset):
+			is.errorf(0, "storage %s: %q isn't a valid ZFS dataset name", src, m.ReceiveDataset)
 		case drPools[pool] == nil:
-			is.errorf(0, "storage mapping %s → %s: the receive dataset's pool %q doesn't exist on the DR host", src, m.TargetStorage, pool)
+			is.errorf(0, "storage %s: ZFS pool %q doesn't exist on the DR host", src, pool)
 		default:
 			for _, pg := range spec.Guests {
 				g := guests[pg.Vmid]
@@ -335,7 +326,7 @@ func validateStorage(spec *planv1.PlanSpec, usedStorage []string, primary, dr *i
 	}
 	for _, m := range spec.StorageMappings {
 		if !isUsed[m.SourceStorage] {
-			is.warnf(0, "storage mapping %s → %s isn't used by any protected disk", m.SourceStorage, m.TargetStorage)
+			is.warnf(0, "storage %s → %s isn't used by any protected disk", m.SourceStorage, m.ReceiveDataset)
 		}
 	}
 	for pool, n := range needed {

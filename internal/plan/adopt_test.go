@@ -88,7 +88,7 @@ func TestAdopt(t *testing.T) {
 	if len(s.Guests) != 1 || s.Guests[0].Vmid != 101 {
 		t.Errorf("guests = %v", s.Guests)
 	}
-	if len(s.StorageMappings) != 1 || s.StorageMappings[0].TargetStorage != "tank-dr" || s.StorageMappings[0].ReceiveDataset != "tank-dr/replicated" {
+	if len(s.StorageMappings) != 1 || s.StorageMappings[0].ReceiveDataset != "tank-dr/replicated" {
 		t.Errorf("storage = %v", s.StorageMappings)
 	}
 	if got := strings.Join(notes, "\n"); !strings.Contains(got, "guest 201 is no longer protected") {
