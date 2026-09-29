@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"time"
 
 	"connectrpc.com/connect"
@@ -16,6 +17,7 @@ import (
 	"github.com/jlbyh2o/ezdr/internal/portal/auth"
 	"github.com/jlbyh2o/ezdr/internal/portal/store"
 	"github.com/jlbyh2o/ezdr/internal/token"
+	"github.com/jlbyh2o/ezdr/internal/version"
 )
 
 // Token lifetimes.
@@ -24,8 +26,17 @@ const (
 	MaxTokenTTL     = 7 * 24 * time.Hour
 )
 
-// InstallScriptURL is where the one-command installer is published.
-const InstallScriptURL = "https://github.com/jlbyh2o/ezdr/releases/latest/download/install.sh"
+// InstallScriptURL returns where the one-command installer of a portal
+// version is published: hosts get the client of the portal's own release.
+// Development builds use the latest release.
+func InstallScriptURL(v string) string {
+	if releaseVersion.MatchString(v) {
+		return "https://github.com/jlbyh2o/ezdr/releases/download/v" + v + "/install.sh"
+	}
+	return "https://github.com/jlbyh2o/ezdr/releases/latest/download/install.sh"
+}
+
+var releaseVersion = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`)
 
 func currentUser(ctx context.Context) store.User {
 	u, _ := auth.UserFrom(ctx)
@@ -75,7 +86,7 @@ func (s TokenService) CreateToken(ctx context.Context, req *connect.Request[port
 	return connect.NewResponse(&portalv1.CreateTokenResponse{
 		Token:          tokenMsg(t),
 		TokenString:    str,
-		InstallCommand: "curl -fsSL " + InstallScriptURL + " | sh -s -- " + str,
+		InstallCommand: "curl -fsSL " + InstallScriptURL(version.Version) + " | sh -s -- " + str,
 		EnrollCommand:  "ezdr enroll " + str,
 	}), nil
 }

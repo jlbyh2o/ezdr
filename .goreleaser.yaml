@@ -70,6 +70,16 @@ nfpms:
 checksum:
   name_template: checksums.txt
   algorithm: sha256
+  extra_files:
+    - glob: build/install.sh
+
+# install.sh verifies checksums.txt with this signature (see
+# packaging/release-signing-key.asc). Local snapshot builds skip it with
+# --skip=sign.
+signs:
+  - artifacts: checksum
+    cmd: gpg
+    args: ["--batch", "--local-user", "{{ .Env.RELEASE_SIGNING_KEY_FPR }}", "--output", "${signature}", "--detach-sign", "${artifact}"]
 
 release:
   extra_files:

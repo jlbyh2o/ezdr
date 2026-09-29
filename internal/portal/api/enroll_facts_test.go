@@ -17,3 +17,15 @@ func TestValidateFactsHostname(t *testing.T) {
 		}
 	}
 }
+
+func TestInstallScriptURL(t *testing.T) {
+	for v, want := range map[string]string{
+		"0.1.0":                  "https://github.com/jlbyh2o/ezdr/releases/download/v0.1.0/install.sh",
+		"dev":                    "https://github.com/jlbyh2o/ezdr/releases/latest/download/install.sh",
+		"0.0.0-SNAPSHOT-d4e8a01": "https://github.com/jlbyh2o/ezdr/releases/latest/download/install.sh",
+	} {
+		if got := InstallScriptURL(v); got != want {
+			t.Errorf("InstallScriptURL(%q) = %s", v, got)
+		}
+	}
+}
