@@ -49,7 +49,8 @@ jobs:
 
   image:
     name: Portal image
-    needs: ci
+    # After the approved release job, so nothing is published without it.
+    needs: release
     runs-on: ubuntu-latest
     permissions:
       contents: read
