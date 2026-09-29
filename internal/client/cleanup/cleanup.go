@@ -50,6 +50,8 @@ func runCommand(ctx context.Context, name string, args ...string) ([]byte, error
 	return out, nil
 }
 
+var cleanupPrefix = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.:-]{1,30}[_.:-]$`)
+
 var datasetPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.:-]*(/[A-Za-z0-9_.:-]+)*$`)
 
 // within reports whether dataset a is b or inside it.
@@ -61,24 +63,32 @@ type host struct {
 	origin map[string]string // clone -> origin snapshot
 	// storages maps zfspool storages to their datasets.
 	storages map[string]string
+	// paths maps storages with a directory (such as dir storages) to it.
+	paths map[string]string
+	// mounts maps mounted datasets to their mount points.
+	mounts map[string]string
 	// volumes maps datasets guests use to the guests' VMIDs.
 	volumes map[string]uint32
 }
 
 func (r *Runner) host(ctx context.Context) (*host, error) {
-	out, err := r.Run(ctx, "zfs", "list", "-Hp", "-t", "filesystem,volume", "-o", "name,used,origin")
+	out, err := r.Run(ctx, "zfs", "list", "-Hp", "-t", "filesystem,volume", "-o", "name,used,origin,mountpoint")
 	if err != nil {
 		return nil, err
 	}
-	h := &host{used: map[string]uint64{}, origin: map[string]string{}, storages: map[string]string{}, volumes: map[string]uint32{}}
+	h := &host{used: map[string]uint64{}, origin: map[string]string{}, storages: map[string]string{}, volumes: map[string]uint32{},
+		paths: map[string]string{}, mounts: map[string]string{}}
 	for _, line := range lines(out) {
 		f := strings.Split(line, "\t")
-		if len(f) != 3 {
+		if len(f) != 4 {
 			continue
 		}
 		h.used[f[0]], _ = strconv.ParseUint(f[1], 10, 64)
 		if f[2] != "-" {
 			h.origin[f[0]] = f[2]
+		}
+		if strings.HasPrefix(f[3], "/") {
+			h.mounts[f[0]] = filepath.Clean(f[3])
 		}
 	}
 	if err := h.readStorages(filepath.Join(r.PVE, "storage.cfg")); err != nil {
@@ -108,7 +118,8 @@ func (r *Runner) host(ctx context.Context) (*host, error) {
 	return h, nil
 }
 
-// readStorages reads the zfspool storages from storage.cfg.
+// readStorages reads zfspool storages' datasets and other storages'
+// directories from storage.cfg.
 func (h *host) readStorages(path string) error {
 	b, err := os.ReadFile(path) //nolint:gosec // Proxmox storage configuration
 	if errors.Is(err, os.ErrNotExist) {
@@ -117,19 +128,21 @@ func (h *host) readStorages(path string) error {
 	if err != nil {
 		return err
 	}
-	id := ""
+	id, zfspool := "", false
 	sc := bufio.NewScanner(bytes.NewReader(b))
 	for sc.Scan() {
 		line := sc.Text()
 		if typ, name, ok := strings.Cut(line, ":"); ok && !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") {
-			id = ""
-			if strings.TrimSpace(typ) == "zfspool" {
-				id = strings.TrimSpace(name)
-			}
+			id, zfspool = strings.TrimSpace(name), strings.TrimSpace(typ) == "zfspool"
 			continue
 		}
-		if k, v, ok := strings.Cut(strings.TrimSpace(line), " "); ok && k == "pool" && id != "" {
+		k, v, ok := strings.Cut(strings.TrimSpace(line), " ")
+		switch {
+		case !ok || id == "":
+		case k == "pool" && zfspool:
 			h.storages[id] = strings.TrimSpace(v)
+		case k == "path":
+			h.paths[id] = filepath.Clean(strings.TrimSpace(v))
 		}
 	}
 	return sc.Err()
@@ -223,13 +236,27 @@ func (r *Runner) planTarget(ctx context.Context, h *host, t *clientv1.DataTarget
 				s.Problems = append(s.Problems, "used by storage "+id)
 			}
 		}
+		// A directory storage on a dataset being destroyed (such as
+		// backups on a dir storage).
+		for ds, mnt := range h.mounts {
+			if !within(ds, t.Dataset) {
+				continue
+			}
+			for id, path := range h.paths {
+				if mnt == "/" || path == mnt || strings.HasPrefix(path, mnt+"/") {
+					s.Problems = append(s.Problems, fmt.Sprintf("storage %s is in %s", id, ds))
+				}
+			}
+		}
 		for ds, vmid := range h.volumes {
 			if within(ds, t.Dataset) {
 				s.Problems = append(s.Problems, fmt.Sprintf("used by guest %d (%s)", vmid, ds))
 			}
 		}
-	} else if t.Prefix == "" {
-		s.Problems = append(s.Problems, "no snapshot prefix")
+	} else if !cleanupPrefix.MatchString(t.Prefix) {
+		// Snapshots are deleted by prefix: it must look like a replication
+		// tool's, such as "ezdr_" or "zrepl_".
+		s.Problems = append(s.Problems, fmt.Sprintf("snapshot prefix %q is too broad to delete snapshots by", t.Prefix))
 		return p, nil
 	}
 	out, err := r.Run(ctx, "zfs", append(append([]string{"list", "-Hp", "-t", "snapshot,bookmark", "-o", "name,clones"}, depth...), t.Dataset)...)

@@ -51,11 +51,11 @@ func testRunner(t *testing.T) (*Runner, *fake) {
 
 func TestScanAndCleanReplicas(t *testing.T) {
 	r, f := testRunner(t)
-	f.out["zfs list -Hp -t filesystem,volume -o name,used,origin"] = "tank\t100\t-\n" +
-		"tank/ezdr/pve1\t10\t-\ntank/ezdr/pve1/rpool\t10\t-\ntank/ezdr/pve1/rpool/data\t10\t-\n" +
-		"tank/ezdr/pve1/rpool/data/vm-101-disk-0\t4096\t-\n" +
-		"tank/ezdr/pve1/rpool/data/vm-102-disk-0\t2048\t-\n" +
-		"tank/ezdr-test/vm-102-disk-0\t1\ttank/ezdr/pve1/rpool/data/vm-102-disk-0@ezdr_2\n"
+	f.out["zfs list -Hp -t filesystem,volume -o name,used,origin,mountpoint"] = "tank\t100\t-\t-\n" +
+		"tank/ezdr/pve1\t10\t-\t-\ntank/ezdr/pve1/rpool\t10\t-\t-\ntank/ezdr/pve1/rpool/data\t10\t-\t-\n" +
+		"tank/ezdr/pve1/rpool/data/vm-101-disk-0\t4096\t-\t-\n" +
+		"tank/ezdr/pve1/rpool/data/vm-102-disk-0\t2048\t-\t-\n" +
+		"tank/ezdr-test/vm-102-disk-0\t1\ttank/ezdr/pve1/rpool/data/vm-102-disk-0@ezdr_2\t-\n"
 	f.out["zfs list -Hp -t snapshot,bookmark -o name,clones -r tank/ezdr/pve1/rpool/data/vm-101-disk-0"] =
 		"tank/ezdr/pve1/rpool/data/vm-101-disk-0@ezdr_1\t-\ntank/ezdr/pve1/rpool/data/vm-101-disk-0@ezdr_2\t-\n"
 	f.out["zfs holds -H tank/ezdr/pve1/rpool/data/vm-101-disk-0@ezdr_1 tank/ezdr/pve1/rpool/data/vm-101-disk-0@ezdr_2"] =
@@ -130,7 +130,7 @@ func TestScanAndCleanReplicas(t *testing.T) {
 
 func TestReplicaInUse(t *testing.T) {
 	r, f := testRunner(t)
-	f.out["zfs list -Hp -t filesystem,volume -o name,used,origin"] = "rpool/data/vm-300-disk-0\t1\t-\ntank/ezdr-test\t1\t-\n"
+	f.out["zfs list -Hp -t filesystem,volume -o name,used,origin,mountpoint"] = "rpool/data/vm-300-disk-0\t1\t-\t-\ntank/ezdr-test\t1\t-\t-\n"
 	f.out["zfs list -Hp -t snapshot,bookmark -o name,clones -r rpool/data/vm-300-disk-0"] = ""
 	f.out["zfs list -Hp -t snapshot,bookmark -o name,clones -r tank/ezdr-test"] = ""
 	res, err := r.Scan(context.Background(), []*clientv1.DataTarget{
@@ -148,9 +148,31 @@ func TestReplicaInUse(t *testing.T) {
 	}
 }
 
+func TestDirectoryStorageAndPrefix(t *testing.T) {
+	r, f := testRunner(t)
+	f.out["zfs list -Hp -t filesystem,volume -o name,used,origin,mountpoint"] = "rpool/ROOT/pve-1\t1\t-\t/\n" +
+		"rpool/var-lib-vz\t1\t-\t/var/lib/vz\nrpool/data/vm-101-disk-0\t1\t-\t-\n"
+	f.out["zfs list -Hp -t snapshot,bookmark -o name,clones -r rpool/ROOT/pve-1"] = ""
+	f.out["zfs list -Hp -t snapshot,bookmark -o name,clones -r rpool/var-lib-vz"] = ""
+	res, err := r.Scan(context.Background(), []*clientv1.DataTarget{
+		{Dataset: "rpool/ROOT/pve-1", Destroy: true},
+		{Dataset: "rpool/var-lib-vz", Destroy: true},
+		{Dataset: "rpool/data/vm-101-disk-0", Prefix: "a"},
+	}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, want := range []string{"storage local is in rpool/ROOT/pve-1", "storage local is in rpool/var-lib-vz",
+		`snapshot prefix "a" is too broad to delete snapshots by`} {
+		if p := res.Datasets[i].Problems; len(p) != 1 || p[0] != want {
+			t.Errorf("%s: problems = %q, want %q", res.Datasets[i].Dataset, p, want)
+		}
+	}
+}
+
 func TestCleanSnapshots(t *testing.T) {
 	r, f := testRunner(t)
-	f.out["zfs list -Hp -t filesystem,volume -o name,used,origin"] = "rpool/data/vm-101-disk-0\t5000\t-\n"
+	f.out["zfs list -Hp -t filesystem,volume -o name,used,origin,mountpoint"] = "rpool/data/vm-101-disk-0\t5000\t-\t-\n"
 	f.out["zfs list -Hp -t snapshot,bookmark -o name,clones -d 1 rpool/data/vm-101-disk-0"] =
 		"rpool/data/vm-101-disk-0@zrepl_1\t-\n" +
 			"rpool/data/vm-101-disk-0@zrepl_2\t-\n" +
