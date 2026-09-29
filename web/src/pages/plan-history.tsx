@@ -68,7 +68,7 @@ async function loadHistory(planId: string): Promise<Row[]> {
       startedAt: f.startedAt,
       startedBy: f.startedBy,
       look: failbackStates[f.state],
-      detail: f.rounds.length > 0 ? `${f.rounds.length} copies, ${formatBytes(copied)}` : '',
+      detail: f.rounds.length > 0 ? `${f.rounds.length} ${f.rounds.length === 1 ? 'copy' : 'copies'}, ${formatBytes(copied)}` : '',
       to: operationPath.failback(planId, f.id),
     })
   }
