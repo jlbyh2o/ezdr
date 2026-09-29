@@ -217,7 +217,9 @@ func (t *Transfer) receiveOne(ctx context.Context, f *framer, targets map[string
 	case !snapshotPattern.MatchString(h.To) || h.To == h.From:
 		return 0, fmt.Errorf("invalid snapshot %q", h.To)
 	}
-	args := []string{"receive"}
+	// The stream comes from the DR host: properties that would mount or
+	// share the dataset elsewhere on this host are ignored.
+	args := []string{"receive", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb"}
 	if tg.Rollback {
 		if _, err := t.Run(ctx, "zfs", "rollback", "-r", h.Dataset+"@"+h.From); err != nil {
 			return 0, err

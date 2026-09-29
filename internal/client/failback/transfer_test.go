@@ -148,9 +148,9 @@ func TestRound(t *testing.T) {
 		want []string
 	}{
 		{primary, []string{
-			"zfs receive rpool/data/vm-201-disk-0",
+			"zfs receive -x mountpoint -x sharenfs -x sharesmb rpool/data/vm-201-disk-0",
 			"zfs get -Hp -o value guid rpool/data/vm-201-disk-0@zrepl_2",
-			"zfs rollback -r rpool/data/subvol-101-disk-0@zrepl_1|zfs receive -F rpool/data/subvol-101-disk-0",
+			"zfs rollback -r rpool/data/subvol-101-disk-0@zrepl_1|zfs receive -x mountpoint -x sharenfs -x sharesmb -F rpool/data/subvol-101-disk-0",
 		}},
 		{dr, []string{
 			"zfs send -L -c -e -I tank/r/rpool/data/vm-201-disk-0@zrepl_1 tank/r/rpool/data/vm-201-disk-0@zrepl_2",

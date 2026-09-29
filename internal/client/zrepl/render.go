@@ -26,6 +26,10 @@ var (
 	hostPattern     = regexp.MustCompile(`^[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$`)
 )
 
+// receiveInherit lists properties a sender must not set on the receiving
+// host: a mount point there could be any directory, such as /etc/cron.d.
+var receiveInherit = []string{"mountpoint", "sharenfs", "sharesmb"}
+
 // Validate checks every field of the desired zrepl state.
 func Validate(z *clientv1.Zrepl) error {
 	names := map[string]bool{}
@@ -218,9 +222,14 @@ func Render(z *clientv1.Zrepl, p Paths) ([]byte, error) {
 				// zrepl requires this to be set for the placeholder datasets
 				// it creates to mirror the source path.
 				"placeholder": m{"encryption": "inherit"},
-				// Nothing on the DR host may change replicas; that would
-				// break incremental receives. Failover lifts this.
-				"properties": m{"override": m{"readonly": "on"}},
+				"properties": m{
+					// Nothing on the DR host may change replicas; that would
+					// break incremental receives. Failover lifts this.
+					"override": m{"readonly": "on"},
+					// Replicas mount under the receive dataset, and never
+					// where (or as shares) the primary says.
+					"inherit": receiveInherit,
+				},
 			},
 			"pruning": m{
 				"keep_sender":   pruneRules(j.SnapshotPrefix, j.PrimaryRetention, true),

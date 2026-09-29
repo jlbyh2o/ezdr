@@ -3,6 +3,7 @@ package zrepl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -128,7 +129,8 @@ func TestRender(t *testing.T) {
 	}
 	recv := pull["recv"].(map[string]any)
 	if recv["placeholder"].(map[string]any)["encryption"] != "inherit" ||
-		recv["properties"].(map[string]any)["override"].(map[string]any)["readonly"] != "on" {
+		recv["properties"].(map[string]any)["override"].(map[string]any)["readonly"] != "on" ||
+		fmt.Sprint(recv["properties"].(map[string]any)["inherit"]) != "[mountpoint sharenfs sharesmb]" {
 		t.Errorf("recv = %v", recv)
 	}
 	pruning := pull["pruning"].(map[string]any)
