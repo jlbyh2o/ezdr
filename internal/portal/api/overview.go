@@ -51,16 +51,40 @@ func (s OverviewService) GetOverview(ctx context.Context, _ *connect.Request[por
 		return nil, internalError(err)
 	}
 	testing := map[string]bool{}
+	// Test copies on DR hosts: host ID, then test VMID.
+	type testCopy struct{ planID, testID string }
+	copies := map[string]map[uint32]testCopy{}
+	drHost := map[string]string{}
+	for _, p := range plans {
+		drHost[p.ID] = p.DRHostID
+	}
 	for _, row := range tests {
 		t := &portalv1.TestRun{}
 		if err := proto.Unmarshal(row.Data, t); err != nil {
 			return nil, internalError(err)
 		}
 		testing[row.PlanID] = t.State == portalv1.TestState_TEST_STATE_RUNNING
+		if dr := drHost[row.PlanID]; dr != "" {
+			if copies[dr] == nil {
+				copies[dr] = map[uint32]testCopy{}
+			}
+			for _, g := range t.Guests {
+				if g.TestVmid != 0 {
+					copies[dr][g.TestVmid] = testCopy{row.PlanID, row.ID}
+				}
+			}
+		}
 		resp.Operations = append(resp.Operations, &portalv1.OverviewOperation{
 			Kind: portalv1.OperationKind_OPERATION_KIND_TEST, Id: row.ID, PlanId: row.PlanID, PlanName: t.PlanName,
 			State: testStateText(t.State), Step: currentStep(t.Steps), StartedBy: t.StartedBy, StartedAt: t.StartedAt,
 		})
+	}
+	for _, h := range resp.Hosts {
+		for _, g := range h.Guests {
+			if c, ok := copies[h.Id][g.Vmid]; ok {
+				g.TestPlanId, g.TestId = c.planID, c.testID
+			}
+		}
 	}
 	for _, sp := range plans {
 		op, err := s.overviewPlan(ctx, sp, testing[sp.ID])

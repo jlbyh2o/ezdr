@@ -12,6 +12,7 @@ const roleStyle: Record<GuestCopy['role'], string> = {
   pending: 'border-dashed border-muted-foreground/35 text-muted-foreground',
   unconfigured: 'border-dashed border-warning/70 text-muted-foreground',
   unprotected: 'border-border text-muted-foreground opacity-60',
+  test: 'border-dashed border-info/60 bg-info/5',
 }
 
 const roleText: Record<GuestCopy['role'], string> = {
@@ -20,6 +21,7 @@ const roleText: Record<GuestCopy['role'], string> = {
   pending: 'Not replicated yet (draft plan)',
   unconfigured: 'Unconfigured: in no plan, and not marked unprotected',
   unprotected: 'Unprotected, by choice',
+  test: 'Test failover copy, on the isolated test bridge',
 }
 
 const sideText = { primary: 'Primary', dr: 'DR host', none: 'Not in a plan' }
@@ -27,7 +29,7 @@ const sideText = { primary: 'Primary', dr: 'DR host', none: 'Not in a plan' }
 // HostNode draws a host with its guests grouped by plan. Heights come from
 // size, so buildChart can lay nodes out before they render.
 export function HostNodeView({ data }: NodeProps<HostNode>) {
-  const { host, side, alsoOther, sections, unconfigured, unprotected, configureAt } = data
+  const { host, side, alsoOther, sections, tests, unconfigured, unprotected, configureAt } = data
   return (
     <div className="rounded-lg border bg-card text-card-foreground shadow-sm" style={{ width: size.width }}>
       <div className="flex items-center gap-2.5 border-b pr-2 pl-3" style={{ height: size.header }}>
@@ -53,6 +55,9 @@ export function HostNodeView({ data }: NodeProps<HostNode>) {
       <div className="px-2.5" style={{ paddingTop: size.padding / 2, paddingBottom: size.padding / 2 }}>
         {sections.map((s) => (
           <PlanSection key={s.plan.id} section={s} side={side} />
+        ))}
+        {tests.map((t) => (
+          <LooseGuests key={t.to} title={`Test failover · ${t.planName}`} guests={t.guests} to={t.to} />
         ))}
         <LooseGuests title="Unconfigured" guests={unconfigured} to={configureAt} />
         <LooseGuests title="Unprotected" guests={unprotected} to={configureAt} />

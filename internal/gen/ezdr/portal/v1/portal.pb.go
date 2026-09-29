@@ -9960,7 +9960,11 @@ type OverviewGuest struct {
 	PlanId   string `protobuf:"bytes,6,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	Template bool   `protobuf:"varint,7,opt,name=template,proto3" json:"template,omitempty"`
 	// The user chose not to protect it.
-	Excluded      bool `protobuf:"varint,8,opt,name=excluded,proto3" json:"excluded,omitempty"`
+	Excluded bool `protobuf:"varint,8,opt,name=excluded,proto3" json:"excluded,omitempty"`
+	// Set when the guest is a running test failover's copy (on the DR host):
+	// the plan and the test.
+	TestPlanId    string `protobuf:"bytes,9,opt,name=test_plan_id,json=testPlanId,proto3" json:"test_plan_id,omitempty"`
+	TestId        string `protobuf:"bytes,10,opt,name=test_id,json=testId,proto3" json:"test_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -10049,6 +10053,20 @@ func (x *OverviewGuest) GetExcluded() bool {
 		return x.Excluded
 	}
 	return false
+}
+
+func (x *OverviewGuest) GetTestPlanId() string {
+	if x != nil {
+		return x.TestPlanId
+	}
+	return ""
+}
+
+func (x *OverviewGuest) GetTestId() string {
+	if x != nil {
+		return x.TestId
+	}
+	return ""
 }
 
 type OverviewPlan struct {
@@ -11126,7 +11144,7 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\flast_seen_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastSeenAt\x12#\n" +
 	"\rhas_inventory\x18\x05 \x01(\bR\fhasInventory\x125\n" +
-	"\x06guests\x18\x06 \x03(\v2\x1d.ezdr.portal.v1.OverviewGuestR\x06guests\"\xe6\x01\n" +
+	"\x06guests\x18\x06 \x03(\v2\x1d.ezdr.portal.v1.OverviewGuestR\x06guests\"\xa1\x02\n" +
 	"\rOverviewGuest\x12\x12\n" +
 	"\x04vmid\x18\x01 \x01(\rR\x04vmid\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x120\n" +
@@ -11135,7 +11153,11 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\x04lock\x18\x05 \x01(\tR\x04lock\x12\x17\n" +
 	"\aplan_id\x18\x06 \x01(\tR\x06planId\x12\x1a\n" +
 	"\btemplate\x18\a \x01(\bR\btemplate\x12\x1a\n" +
-	"\bexcluded\x18\b \x01(\bR\bexcluded\"\xf4\x03\n" +
+	"\bexcluded\x18\b \x01(\bR\bexcluded\x12 \n" +
+	"\ftest_plan_id\x18\t \x01(\tR\n" +
+	"testPlanId\x12\x17\n" +
+	"\atest_id\x18\n" +
+	" \x01(\tR\x06testId\"\xf4\x03\n" +
 	"\fOverviewPlan\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12/\n" +

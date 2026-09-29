@@ -9,8 +9,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
+	inventoryv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/inventory/v1"
 	planv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/plan/v1"
 	portalv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/portal/v1"
+	"github.com/jlbyh2o/ezdr/internal/portal/store"
 )
 
 func TestOverview(t *testing.T) {
@@ -92,5 +94,37 @@ func TestOverview(t *testing.T) {
 	}
 	if g := p.Guests[0]; g.Transferring || g.LastReplicatedAt == nil {
 		t.Errorf("guest replication after the transfer = %v", g)
+	}
+}
+
+func TestOverviewMarksTestCopies(t *testing.T) {
+	d, ctx, planID, dr := testFixture(t)
+	started, err := TestFailoverService{Deps: d}.StartTest(ctx, connect.NewRequest(&portalv1.StartTestRequest{
+		PlanId: planID, Vmids: []uint32{101}, Snapshot: "zrepl_1"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	waitTest(ctx, t, d, started.Msg.Test.Id, portalv1.TestState_TEST_STATE_RUNNING)
+	// The DR host reports the test copy, and a guest of its own.
+	inv := &inventoryv1.Inventory{Host: &inventoryv1.HostInfo{Hostname: "dr1"}, Guests: []*inventoryv1.Guest{
+		{Vmid: 10101, Name: "web", Status: "running"}, {Vmid: 500, Name: "local"}}}
+	data, _ := proto.Marshal(inv)
+	if _, err := d.Store.PutInventory(ctx, store.Inventory{HostID: dr.id, Data: data, Hash: []byte("t"), CollectedAt: time.Now(), GuestCount: 2}); err != nil {
+		t.Fatal(err)
+	}
+	res, err := OverviewService{Deps: d}.GetOverview(ctx, connect.NewRequest(&portalv1.GetOverviewRequest{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, h := range res.Msg.Hosts {
+		if h.Id != dr.id {
+			continue
+		}
+		for _, g := range h.Guests {
+			isCopy := g.TestPlanId == planID && g.TestId == started.Msg.Test.Id
+			if (g.Vmid == 10101) != isCopy {
+				t.Errorf("guest %d: test plan %q, test %q", g.Vmid, g.TestPlanId, g.TestId)
+			}
+		}
 	}
 }

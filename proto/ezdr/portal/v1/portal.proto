@@ -1277,6 +1277,10 @@ message OverviewGuest {
   bool template = 7;
   // The user chose not to protect it.
   bool excluded = 8;
+  // Set when the guest is a running test failover's copy (on the DR host):
+  // the plan and the test.
+  string test_plan_id = 9;
+  string test_id = 10;
 }
 
 message OverviewPlan {

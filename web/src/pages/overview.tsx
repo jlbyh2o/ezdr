@@ -103,6 +103,9 @@ function Legend() {
         <span className="h-3 w-5 rounded border-[1.5px] border-border opacity-60" /> Unprotected
       </span>
       <span className={item}>
+        <span className="h-3 w-5 rounded border-[1.5px] border-dashed border-info/60 bg-info/5" /> Test copy
+      </span>
+      <span className={item}>
         <span className="flex items-center">
           <span className="h-0.5 w-5 bg-success" />
           <span className="-ml-3 size-2 animate-pulse rounded-full bg-success" />

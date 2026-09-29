@@ -498,10 +498,20 @@ func (s *Sim) answer(ctx context.Context, hostID string, a *clientv1.Action) {
 	case *clientv1.Action_TestPrepare:
 		delay = 3 * s.opts.ActionDelay
 		ack.Output = []string{"cloned replicas", "registered test guests"}
+		s.registerTestGuests(ctx, hostID, k.TestPrepare)
 	case *clientv1.Action_TestCheckGuest, *clientv1.Action_FailoverCheckGuest, *clientv1.Action_FailbackCheckGuest:
 		ack.GuestCheck = &clientv1.TestGuestCheck{Running: true}
 	case *clientv1.Action_TestCleanup:
 		ack.Output = []string{"destroyed test guests", "destroyed clones"}
+		var ids []uint32
+		for _, g := range k.TestCleanup.Guests {
+			ids = append(ids, g.TestVmid)
+		}
+		s.editInventory(ctx, hostID, func(inv *inventoryv1.Inventory) {
+			inv.Guests = slices.DeleteFunc(inv.Guests, func(g *inventoryv1.Guest) bool { return slices.Contains(ids, g.Vmid) })
+		})
+	case *clientv1.Action_TestStartGuest:
+		s.editGuests(ctx, hostID, []uint32{k.TestStartGuest.TestVmid}, func(g *inventoryv1.Guest) { g.Status = "running" })
 	case *clientv1.Action_FailoverStopGuests:
 		delay = 3 * s.opts.ActionDelay
 		s.editGuests(ctx, hostID, k.FailoverStopGuests.Vmids, func(g *inventoryv1.Guest) {
@@ -647,6 +657,35 @@ func (s *Sim) registerGuests(ctx context.Context, hostID, planID string, vmids [
 	}
 	s.editInventory(ctx, hostID, func(inv *inventoryv1.Inventory) {
 		inv.Guests = slices.DeleteFunc(inv.Guests, func(g *inventoryv1.Guest) bool { return slices.Contains(vmids, g.Vmid) })
+		inv.Guests = append(inv.Guests, add...)
+	})
+}
+
+// registerTestGuests adds a test's copies to the DR host's inventory,
+// stopped, on the test bridge, as the client registers them.
+func (s *Sim) registerTestGuests(ctx context.Context, hostID string, t *clientv1.TestPrepare) {
+	primary, err := s.inventory(ctx, s.planPrimary(ctx, t.PlanId))
+	if err != nil {
+		return
+	}
+	var add []*inventoryv1.Guest
+	var ids []uint32
+	for _, tg := range t.Guests {
+		for _, g := range primary.Guests {
+			if g.Vmid != tg.Vmid {
+				continue
+			}
+			c := proto.Clone(g).(*inventoryv1.Guest)
+			c.Vmid, c.Status, c.Lock, c.Onboot, c.Tags = tg.TestVmid, "stopped", "", false, []string{"ezdr-test"}
+			for _, n := range c.Nics {
+				n.Bridge = t.Bridge
+			}
+			add = append(add, c)
+			ids = append(ids, tg.TestVmid)
+		}
+	}
+	s.editInventory(ctx, hostID, func(inv *inventoryv1.Inventory) {
+		inv.Guests = slices.DeleteFunc(inv.Guests, func(g *inventoryv1.Guest) bool { return slices.Contains(ids, g.Vmid) })
 		inv.Guests = append(inv.Guests, add...)
 	})
 }

@@ -11,6 +11,7 @@ import {
   PlanState,
 } from '@/gen/ezdr/portal/v1/portal_pb'
 import { formatDuration } from '@/lib/format'
+import { operationPath } from '@/lib/operations'
 import { healthStates, type Tone } from '@/lib/status'
 
 // The replication chart (docs/design/ui.md, section 3.1): primary hosts on
@@ -21,7 +22,7 @@ import { healthStates, type Tone } from '@/lib/status'
 // replica, or a stopped primary copy), pending (no replica yet), or
 // unconfigured (in no plan, and not marked unprotected), or unprotected (the
 // user chose not to protect it).
-export type GuestRole = 'running' | 'standby' | 'pending' | 'unconfigured' | 'unprotected'
+export type GuestRole = 'running' | 'standby' | 'pending' | 'unconfigured' | 'unprotected' | 'test'
 
 export type GuestCopy = {
   vmid: number
@@ -42,6 +43,8 @@ export type HostNodeData = {
   // Also plays the other role, in the other column.
   alsoOther: boolean
   sections: Section[]
+  // Running test failovers' copies, by test.
+  tests: TestGroup[]
   // Guests in no plan: still to decide, or not protected by choice.
   unconfigured: GuestCopy[]
   unprotected: GuestCopy[]
@@ -49,6 +52,8 @@ export type HostNodeData = {
   // section), or the host's page.
   configureAt: string
 }
+
+export type TestGroup = { planName: string; to: string; guests: GuestCopy[] }
 
 export type HostNode = Node<HostNodeData, 'host'>
 export type GuestEdgeData = {
@@ -99,7 +104,7 @@ export function guestHandle(planId: string, vmid: number): string {
 export function nodeHeight(d: HostNodeData): number {
   let h = size.header + size.padding
   for (const s of d.sections) h += size.sectionHeader + Math.max(1, s.guests.length) * size.guest + size.sectionGap
-  for (const list of [d.unconfigured, d.unprotected]) {
+  for (const list of [...d.tests.map((t) => t.guests), d.unconfigured, d.unprotected]) {
     if (list.length > 0) h += size.sectionHeader + Math.min(list.length, size.unprotectedMax + 1) * size.guest + size.sectionGap
   }
   return h
@@ -123,9 +128,21 @@ export function buildChart(ov: GetOverviewResponse): { nodes: HostNode[]; edges:
 
   // Guests in no plan, split by whether the user chose not to protect them.
   const loose = (host: OverviewHost, skip: (g: OverviewGuest) => boolean = () => false) => {
-    const free = host.guests.filter((g) => !g.planId && !g.template && !skip(g))
+    const copies = host.guests.filter((g) => g.testPlanId)
+    const tests: TestGroup[] = []
+    for (const testId of new Set(copies.map((g) => g.testId))) {
+      const mine = copies.filter((g) => g.testId === testId)
+      const planId = mine[0].testPlanId
+      tests.push({
+        planName: plans.find((p) => p.id === planId)?.name ?? 'plan',
+        to: operationPath.test(planId, testId),
+        guests: mine.map((g) => copy(g, g.vmid, 'test')),
+      })
+    }
+    const free = host.guests.filter((g) => !g.planId && !g.template && !g.testPlanId && !skip(g))
     const firstPlan = plans.find((p) => p.primaryHostId === host.id)
     return {
+      tests,
       unconfigured: free.filter((g) => !g.excluded).map((g) => copy(g, g.vmid, 'unconfigured')),
       unprotected: free.filter((g) => g.excluded).map((g) => copy(g, g.vmid, 'unprotected')),
       configureAt: firstPlan ? `/plans/${firstPlan.id}#guests` : `/hosts/${host.id}`,
