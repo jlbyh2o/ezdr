@@ -49,25 +49,29 @@ func TestStopAndLock(t *testing.T) {
 	write(t, r.configPath("qemu", 201), "name: app\nonboot: 1\ntags: web\n")
 	write(t, r.configPath("lxc", 101), "hostname: web\n")
 	write(t, r.configPath("lxc", 102), "hostname: db\nlock: migrate\ntags: ezdr-failed-over\n")
+	write(t, r.configPath("lxc", 103), "hostname: cache\nonboot: 0\n")
 	f.running["qm 201"] = true
 
-	events, err := r.StopAndLock(context.Background(), []uint32{201, 101, 102, 999}, 300)
+	events, err := r.StopAndLock(context.Background(), []uint32{201, 101, 102, 103, 999}, 300)
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := []string{
 		"qm status 201",
 		"qm shutdown 201 --timeout 300 --forceStop 1 --skiplock 1",
-		"qm set 201 --onboot 0 --tags web;ezdr-failed-over;ezdr-onboot --skiplock 1",
+		"qm set 201 --tags web;ezdr-failed-over;ezdr-onboot --onboot 0 --skiplock 1",
 		"qm set 201 --lock migrate --skiplock 1",
 		"pct status 101",
-		"pct set 101 --onboot 0 --tags ezdr-failed-over",
+		"pct set 101 --tags ezdr-failed-over",
 		"pct set 101 --lock migrate",
+		"pct status 103",
+		"pct set 103 --tags ezdr-failed-over",
+		"pct set 103 --lock migrate",
 	}
 	if strings.Join(f.calls, "\n") != strings.Join(want, "\n") {
 		t.Errorf("calls:\n%s\nwant:\n%s", strings.Join(f.calls, "\n"), strings.Join(want, "\n"))
 	}
-	if strings.Join(events, "|") != "stopped guest 201|locked guest 201|locked guest 101" {
+	if strings.Join(events, "|") != "stopped guest 201|locked guest 201|locked guest 101|locked guest 103" {
 		t.Errorf("events = %v", events)
 	}
 }
@@ -83,7 +87,7 @@ func TestUnlock(t *testing.T) {
 	}
 	want := []string{
 		"qm unlock 201", "qm set 201 --onboot 1 --tags web --skiplock 1", "qm status 201", "qm start 201",
-		"pct unlock 101", "pct set 101 --onboot 0 --delete tags", "pct status 101", "pct start 101",
+		"pct unlock 101", "pct set 101 --delete tags", "pct status 101", "pct start 101",
 	}
 	if strings.Join(f.calls, "\n") != strings.Join(want, "\n") {
 		t.Errorf("calls:\n%s\nwant:\n%s", strings.Join(f.calls, "\n"), strings.Join(want, "\n"))

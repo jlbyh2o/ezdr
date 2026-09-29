@@ -173,11 +173,15 @@ func (r *Runner) stopAndLock(ctx context.Context, vmid, timeoutSeconds uint32) (
 	if !slices.Contains(t, LockTag) {
 		t = append(t, LockTag)
 	}
-	// Remember onboot, so unlocking can restore it.
-	if value(conf, "onboot") == "1" && !slices.Contains(t, OnbootTag) {
-		t = append(t, OnbootTag)
+	set := []string{"set", id, "--tags", strings.Join(t, ";")}
+	// Turn onboot off and remember that, so unlocking can turn it back on.
+	// A guest without onboot keeps its configuration as it is.
+	if value(conf, "onboot") == "1" {
+		if !slices.Contains(t, OnbootTag) {
+			set[3] += ";" + OnbootTag
+		}
+		set = append(set, "--onboot", "0")
 	}
-	set := []string{"set", id, "--onboot", "0", "--tags", strings.Join(t, ";")}
 	if typ == "qemu" {
 		set = append(set, "--skiplock", "1")
 	}
@@ -212,11 +216,10 @@ func (r *Runner) Unlock(ctx context.Context, vmids []uint32, start bool) ([]stri
 		id := strconv.FormatUint(uint64(vmid), 10)
 		if Locked(conf) {
 			t := slices.DeleteFunc(tags(conf), func(s string) bool { return s == LockTag || s == OnbootTag })
-			onboot := "0"
+			set := []string{"set", id}
 			if slices.Contains(tags(conf), OnbootTag) {
-				onboot = "1"
+				set = append(set, "--onboot", "1")
 			}
-			set := []string{"set", id, "--onboot", onboot}
 			if len(t) > 0 {
 				set = append(set, "--tags", strings.Join(t, ";"))
 			} else {
