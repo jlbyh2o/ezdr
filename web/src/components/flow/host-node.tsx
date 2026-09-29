@@ -35,7 +35,14 @@ export function HostNodeView({ data }: NodeProps<HostNode>) {
         className="flex items-center gap-2.5 rounded-t-lg border-b px-3 hover:bg-muted/50"
         style={{ height: size.header }}
       >
-        <Server className="size-4 shrink-0 text-muted-foreground" />
+        {/* The icon's color shows whether the host is connected. */}
+        <Server
+          className={`size-5 shrink-0 ${host.online ? 'text-success' : 'text-destructive'}`}
+          role="img"
+          aria-label={host.online ? 'Online' : 'Offline'}
+        >
+          <title>{host.online ? 'Online' : `Offline, last seen ${formatRelative(host.lastSeenAt)}`}</title>
+        </Server>
         <div className="grid min-w-0 leading-tight">
           <span className="truncate font-medium">{host.hostname}</span>
           <span className="text-xs text-muted-foreground">
@@ -43,13 +50,6 @@ export function HostNodeView({ data }: NodeProps<HostNode>) {
             {alsoOther && (side === 'primary' ? ' · also a DR host' : ' · also a primary')}
           </span>
         </div>
-        <span
-          className={`ml-auto flex items-center gap-1.5 text-xs ${host.online ? 'text-success' : 'text-destructive'}`}
-          title={host.online ? 'Online' : `Offline, last seen ${formatRelative(host.lastSeenAt)}`}
-        >
-          <span className={`size-2 rounded-full bg-current ${host.online ? '' : 'animate-pulse'}`} />
-          {host.online ? 'Online' : 'Offline'}
-        </span>
       </Link>
       <div className="px-2.5" style={{ paddingTop: size.padding / 2, paddingBottom: size.padding / 2 }}>
         {sections.map((s) => (
