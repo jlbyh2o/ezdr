@@ -104,27 +104,50 @@ func TestOverviewMarksTestCopies(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	waitTest(ctx, t, d, started.Msg.Test.Id, portalv1.TestState_TEST_STATE_RUNNING)
-	// The DR host reports the test copy, and a guest of its own.
-	inv := &inventoryv1.Inventory{Host: &inventoryv1.HostInfo{Hostname: "dr1"}, Guests: []*inventoryv1.Guest{
-		{Vmid: 10101, Name: "web", Status: "running"}, {Vmid: 500, Name: "local"}}}
-	data, _ := proto.Marshal(inv)
-	if _, err := d.Store.PutInventory(ctx, store.Inventory{HostID: dr.id, Data: data, Hash: []byte("t"), CollectedAt: time.Now(), GuestCount: 2}); err != nil {
-		t.Fatal(err)
-	}
-	res, err := OverviewService{Deps: d}.GetOverview(ctx, connect.NewRequest(&portalv1.GetOverviewRequest{}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, h := range res.Msg.Hosts {
-		if h.Id != dr.id {
-			continue
+	testID := started.Msg.Test.Id
+	waitTest(ctx, t, d, testID, portalv1.TestState_TEST_STATE_RUNNING)
+	// copies reports which of the DR host's guests the overview shows as the
+	// test's copies.
+	copies := func(guests ...*inventoryv1.Guest) map[uint32]bool {
+		t.Helper()
+		inv := &inventoryv1.Inventory{Host: &inventoryv1.HostInfo{Hostname: "dr1"}, Guests: guests}
+		data, _ := proto.Marshal(inv)
+		if _, err := d.Store.PutInventory(ctx, store.Inventory{HostID: dr.id, Data: data, Hash: []byte(time.Now().String()),
+			CollectedAt: time.Now(), GuestCount: len(guests)}); err != nil {
+			t.Fatal(err)
 		}
-		for _, g := range h.Guests {
-			isCopy := g.TestPlanId == planID && g.TestId == started.Msg.Test.Id
-			if (g.Vmid == 10101) != isCopy {
-				t.Errorf("guest %d: test plan %q, test %q", g.Vmid, g.TestPlanId, g.TestId)
+		res, err := OverviewService{Deps: d}.GetOverview(ctx, connect.NewRequest(&portalv1.GetOverviewRequest{}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		out := map[uint32]bool{}
+		for _, h := range res.Msg.Hosts {
+			for _, g := range h.Guests {
+				if h.Id == dr.id {
+					out[g.Vmid] = g.TestPlanId == planID && g.TestId == testID
+				}
 			}
 		}
+		return out
+	}
+	tagged := &inventoryv1.Guest{Vmid: 10101, Name: "web", Status: "running", Tags: []string{"ezdr-test"}}
+	local := &inventoryv1.Guest{Vmid: 500, Name: "local"}
+
+	// The DR host reports the test copy, and a guest of its own.
+	if got := copies(&inventoryv1.Guest{Vmid: 10101, Name: "web", Status: "running"}, local); !got[10101] || got[500] {
+		t.Errorf("running test: %v", got)
+	}
+
+	// Once the test ended, a copy the DR host still reports (its inventory
+	// lags) is still the test's, but only while it's tagged as one.
+	if _, err := (TestFailoverService{Deps: d}).EndTest(ctx, connect.NewRequest(&portalv1.EndTestRequest{Id: testID})); err != nil {
+		t.Fatal(err)
+	}
+	waitTest(ctx, t, d, testID, portalv1.TestState_TEST_STATE_ENDED)
+	if got := copies(tagged, local); !got[10101] || got[500] {
+		t.Errorf("ended test, tagged copy: %v", got)
+	}
+	if got := copies(&inventoryv1.Guest{Vmid: 10101, Name: "someone else's"}); got[10101] {
+		t.Errorf("ended test, untagged guest: %v", got)
 	}
 }

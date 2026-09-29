@@ -4317,8 +4317,9 @@ export type OverviewGuest = Message<"ezdr.portal.v1.OverviewGuest"> & {
   excluded: boolean;
 
   /**
-   * Set when the guest is a running test failover's copy (on the DR host):
-   * the plan and the test.
+   * Set when the guest is a test failover's copy (on the DR host): the plan
+   * and the test. That includes an ended test's copies until the host's
+   * inventory no longer lists them.
    *
    * @generated from field: string test_plan_id = 9;
    */

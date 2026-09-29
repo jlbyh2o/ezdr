@@ -10101,8 +10101,9 @@ type OverviewGuest struct {
 	Template bool   `protobuf:"varint,7,opt,name=template,proto3" json:"template,omitempty"`
 	// The user chose not to protect it.
 	Excluded bool `protobuf:"varint,8,opt,name=excluded,proto3" json:"excluded,omitempty"`
-	// Set when the guest is a running test failover's copy (on the DR host):
-	// the plan and the test.
+	// Set when the guest is a test failover's copy (on the DR host): the plan
+	// and the test. That includes an ended test's copies until the host's
+	// inventory no longer lists them.
 	TestPlanId    string `protobuf:"bytes,9,opt,name=test_plan_id,json=testPlanId,proto3" json:"test_plan_id,omitempty"`
 	TestId        string `protobuf:"bytes,10,opt,name=test_id,json=testId,proto3" json:"test_id,omitempty"`
 	unknownFields protoimpl.UnknownFields

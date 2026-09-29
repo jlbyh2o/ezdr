@@ -15,6 +15,7 @@ import (
 	inventoryv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/inventory/v1"
 	planv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/plan/v1"
 	portalv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/portal/v1"
+	"github.com/jlbyh2o/ezdr/internal/plan"
 	"github.com/jlbyh2o/ezdr/internal/portal/store"
 	"github.com/jlbyh2o/ezdr/internal/replication"
 )
@@ -34,12 +35,15 @@ func (s OverviewService) GetOverview(ctx context.Context, _ *connect.Request[por
 	if err != nil {
 		return nil, internalError(err)
 	}
+	// Guests tagged as test copies: host ID, then VMID.
+	tagged := map[string]map[uint32]bool{}
 	for _, h := range hosts {
-		oh, err := s.overviewHost(ctx, h)
+		oh, t, err := s.overviewHost(ctx, h)
 		if err != nil {
 			return nil, internalError(err)
 		}
 		resp.Hosts = append(resp.Hosts, oh)
+		tagged[h.ID] = t
 	}
 
 	plans, err := s.Store.ListPlans(ctx)
@@ -79,9 +83,39 @@ func (s OverviewService) GetOverview(ctx context.Context, _ *connect.Request[por
 			State: testStateText(t.State), Step: currentStep(t.Steps), StartedBy: t.StartedBy, StartedAt: t.StartedAt,
 		})
 	}
+	// An ended test's copies stay in the DR host's inventory until its next
+	// report: those still tagged as test copies belong to the plan's newest
+	// test, not to the unconfigured guests.
+	ended := map[string]map[uint32]testCopy{}
+	for _, p := range plans {
+		if _, active := testing[p.ID]; active || p.DRHostID == "" {
+			continue
+		}
+		runs, err := s.Store.TestRunsByPlan(ctx, p.ID, 1)
+		if err != nil {
+			return nil, internalError(err)
+		}
+		if len(runs) == 0 {
+			continue
+		}
+		t := &portalv1.TestRun{}
+		if err := proto.Unmarshal(runs[0].Data, t); err != nil {
+			return nil, internalError(err)
+		}
+		if ended[p.DRHostID] == nil {
+			ended[p.DRHostID] = map[uint32]testCopy{}
+		}
+		for _, g := range t.Guests {
+			if g.TestVmid != 0 {
+				ended[p.DRHostID][g.TestVmid] = testCopy{p.ID, runs[0].ID}
+			}
+		}
+	}
 	for _, h := range resp.Hosts {
 		for _, g := range h.Guests {
 			if c, ok := copies[h.Id][g.Vmid]; ok {
+				g.TestPlanId, g.TestId = c.planID, c.testID
+			} else if c, ok := ended[h.Id][g.Vmid]; ok && tagged[h.Id][g.Vmid] {
 				g.TestPlanId, g.TestId = c.planID, c.testID
 			}
 		}
@@ -129,41 +163,47 @@ func planName(plans []store.Plan, id string) string {
 	return ""
 }
 
-func (s OverviewService) overviewHost(ctx context.Context, h store.Host) (*portalv1.OverviewHost, error) {
+// overviewHost also returns the VMIDs of the host's guests tagged as test
+// copies.
+func (s OverviewService) overviewHost(ctx context.Context, h store.Host) (*portalv1.OverviewHost, map[uint32]bool, error) {
 	oh := &portalv1.OverviewHost{Id: h.ID, Hostname: h.Hostname, Online: s.Hub.Online(h.ID), HasInventory: h.HasInventory}
 	if !h.LastSeenAt.IsZero() {
 		oh.LastSeenAt = timestamppb.New(h.LastSeenAt)
 	}
 	if !h.HasInventory {
-		return oh, nil
+		return oh, nil, nil
 	}
 	stored, err := s.Store.HostInventory(ctx, h.ID)
 	if errors.Is(err, store.ErrNotFound) {
-		return oh, nil
+		return oh, nil, nil
 	}
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	inv := &inventoryv1.Inventory{}
 	if err := proto.Unmarshal(stored.Data, inv); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	protected, err := s.Store.GuestPlans(ctx, h.ID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	excluded, err := s.Store.GuestExclusions(ctx, h.ID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	tagged := map[uint32]bool{}
 	for _, g := range inv.Guests {
+		if slices.Contains(g.Tags, plan.TestTag) {
+			tagged[g.Vmid] = true
+		}
 		oh.Guests = append(oh.Guests, &portalv1.OverviewGuest{
 			Vmid: g.Vmid, Name: g.Name, Type: g.Type, Status: g.Status, Lock: g.Lock,
 			PlanId: protected[g.Vmid], Template: g.Template, Excluded: hasKey(excluded, g.Vmid),
 		})
 	}
 	slices.SortFunc(oh.Guests, func(a, b *portalv1.OverviewGuest) int { return int(a.Vmid) - int(b.Vmid) })
-	return oh, nil
+	return oh, tagged, nil
 }
 
 func (s OverviewService) overviewPlan(ctx context.Context, sp store.Plan, testing bool) (*portalv1.OverviewPlan, error) {
