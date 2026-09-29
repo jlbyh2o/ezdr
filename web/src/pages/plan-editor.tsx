@@ -1,7 +1,7 @@
 import { clone, create } from '@bufbuild/protobuf'
-import { ArrowLeft, ArrowRight, ChevronRight, CircleAlert, Plus, Trash2, TriangleAlert } from 'lucide-react'
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router'
+import { ArrowLeft, ArrowRight, Check, ChevronRight, CircleAlert, Pencil, Plus, Rocket, Trash2, TriangleAlert } from 'lucide-react'
+import { createContext, Fragment, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
 import { NativeSelect } from '@/components/native-select'
@@ -74,12 +74,17 @@ const sectionTitles: Record<SectionId, string> = {
 
 const sectionElementId = (id: string) => `section-${id}`
 
+const settingsOrder: SectionId[] = ['general', 'takeover', 'guests', 'mappings', 'network', 'schedule', 'startup', 'dns', 'advanced']
+
 // Sections tells the settings cards whether they're open and which issues
 // they have.
 type SectionsState = {
   isOpen: (id: SectionId) => boolean
   toggle: (id: SectionId) => void
   issues: Issue[]
+  // Replaces toggling when set: the wizard's review jumps to the section's
+  // step instead.
+  onSelect?: (id: SectionId) => void
 }
 
 const Sections = createContext<SectionsState>({ isOpen: () => true, toggle: () => undefined, issues: [] })
@@ -155,6 +160,8 @@ export function PlanEditorPage() {
   const [savedAt, setSavedAt] = useState<Date>()
   const [opened, setOpened] = useState<Partial<Record<SectionId, boolean>>>({})
   const [startTest, setStartTest] = useState(0)
+  const [params, setParams] = useSearchParams()
+  const autoActivate = params.get('activate') === '1'
   // Changes when something besides the plan affects validation.
   const [revalidate, setRevalidate] = useState(0)
 
@@ -246,7 +253,8 @@ export function PlanEditorPage() {
     }
   }
 
-  async function save() {
+  // save creates or updates the plan; a new plan can go on to activation.
+  async function save(activate = false) {
     if (!spec) return
     setSaving(true)
     setError(undefined)
@@ -254,7 +262,7 @@ export function PlanEditorPage() {
       if (isNew) {
         const r = await planClient.createPlan({ spec })
         setDirty(false)
-        navigate(`/plans/${r.plan?.id}`, { replace: true })
+        navigate(`/plans/${r.plan?.id}${activate ? '?activate=1' : ''}`, { replace: true })
         return
       }
       const r = await planClient.updatePlan({ id, spec })
@@ -344,6 +352,65 @@ export function PlanEditorPage() {
   const hostname = (hid: string) => hosts.find((h) => h.id === hid)?.hostname
   const { errors } = counts(issues)
 
+  // The settings cards, by section; null where they don't apply yet.
+  const cards: Partial<Record<SectionId, React.ReactNode>> = {
+    general: <GeneralCard spec={spec} hosts={hosts} update={update} updateAndSuggest={updateAndSuggest} />,
+    takeover:
+      showTakeover && primaryInv && drInv ? (
+        <TakeoverCard
+          spec={spec}
+          inventoriesAt={`${primary?.receivedAt?.seconds}/${dr?.receivedAt?.seconds}`}
+          update={update}
+          replace={(s) => {
+            setSpec(s)
+            setDirty(true)
+          }}
+        />
+      ) : null,
+    guests: primaryInv ? (
+      <GuestsCard
+        spec={spec}
+        inv={primaryInv}
+        guestPlans={primary?.guestPlans ?? {}}
+        excluded={primary?.excludedGuests ?? {}}
+        planId={id}
+        updateAndSuggest={updateAndSuggest}
+        setExcluded={async (vmid, excluded) => {
+          try {
+            await hostClient.setGuestExcluded({ hostId: primaryId, vmid, excluded })
+            setPrimary(await hostClient.getHostInventory({ hostId: primaryId }))
+            setRevalidate((n) => n + 1)
+          } catch (err) {
+            setError(errorMessage(err))
+          }
+        }}
+      />
+    ) : null,
+    mappings:
+      primaryInv && drInv && guests > 0 ? (
+        <MappingsCard spec={spec} primaryInv={primaryInv} drInv={drInv} update={update} updateAndSuggest={updateAndSuggest} />
+      ) : null,
+    network: primaryInv ? <NetworkCard spec={spec} update={update} /> : null,
+    schedule: <ScheduleCard spec={spec} update={update} />,
+    startup: primaryInv && guests > 0 ? <StartupCard spec={spec} inv={primaryInv} update={update} /> : null,
+    dns: primaryInv && guests > 0 ? <DnsCard spec={spec} inv={primaryInv} update={update} /> : null,
+    advanced: <AdvancedCard spec={spec} update={update} />,
+  }
+
+  if (isNew) {
+    return (
+      <NewPlanWizard
+        cards={cards}
+        issues={issues}
+        spec={spec}
+        hosts={hosts}
+        error={error}
+        saving={saving}
+        onCreate={(activate) => void save(activate)}
+      />
+    )
+  }
+
   return (
     <Sections.Provider value={{ isOpen, toggle, issues }}>
       <div className="grid gap-3">
@@ -381,6 +448,8 @@ export function PlanEditorPage() {
                 setStartTest((n) => n + 1)
               }}
               onDeleted={() => navigate('/plans')}
+              autoActivate={autoActivate}
+              onAutoActivated={() => setParams({}, { replace: true })}
             />
           )}
         </div>
@@ -411,45 +480,7 @@ export function PlanEditorPage() {
             </div>
           )}
           {plan && <h2 className="pt-2 text-lg font-semibold tracking-tight">Settings</h2>}
-          <GeneralCard spec={spec} hosts={hosts} update={update} updateAndSuggest={updateAndSuggest} />
-          {showTakeover && primaryInv && drInv && (
-            <TakeoverCard
-              spec={spec}
-              inventoriesAt={`${primary?.receivedAt?.seconds}/${dr?.receivedAt?.seconds}`}
-              update={update}
-              replace={(s) => {
-                setSpec(s)
-                setDirty(true)
-              }}
-            />
-          )}
-          {primaryInv && (
-            <GuestsCard
-              spec={spec}
-              inv={primaryInv}
-              guestPlans={primary?.guestPlans ?? {}}
-              excluded={primary?.excludedGuests ?? {}}
-              planId={id}
-              updateAndSuggest={updateAndSuggest}
-              setExcluded={async (vmid, excluded) => {
-                try {
-                  await hostClient.setGuestExcluded({ hostId: primaryId, vmid, excluded })
-                  setPrimary(await hostClient.getHostInventory({ hostId: primaryId }))
-                  setRevalidate((n) => n + 1)
-                } catch (err) {
-                  setError(errorMessage(err))
-                }
-              }}
-            />
-          )}
-          {primaryInv && drInv && guests > 0 && (
-            <MappingsCard spec={spec} primaryInv={primaryInv} drInv={drInv} update={update} updateAndSuggest={updateAndSuggest} />
-          )}
-          {primaryInv && <NetworkCard spec={spec} update={update} />}
-          <ScheduleCard spec={spec} update={update} />
-          {primaryInv && guests > 0 && <StartupCard spec={spec} inv={primaryInv} update={update} />}
-          {primaryInv && guests > 0 && <DnsCard spec={spec} inv={primaryInv} update={update} />}
-          <AdvancedCard spec={spec} update={update} />
+          {settingsOrder.map((sid) => cards[sid] && <Fragment key={sid}>{cards[sid]}</Fragment>)}
           <div className="lg:hidden">
             <ValidationPanel issues={issues} onSelect={open} />
           </div>
@@ -481,6 +512,193 @@ export function PlanEditorPage() {
         </div>
       </div>
     </Sections.Provider>
+  )
+}
+
+// The new-plan wizard's steps and the sections each one shows.
+const wizardSteps: { title: string; description: string; sections: SectionId[] }[] = [
+  { title: 'Hosts', description: 'Name the plan, and choose the host to protect and the DR host.', sections: ['general'] },
+  {
+    title: 'Guests',
+    description: 'Choose the guests to protect. If the hosts already replicate with zrepl, adopt that setup instead.',
+    sections: ['takeover', 'guests'],
+  },
+  { title: 'Mappings', description: "Choose where the guests' disks and networks go on the DR host.", sections: ['mappings'] },
+  {
+    title: 'Replication',
+    description: 'How the DR host reaches the primary, how often snapshots are taken, and how long they are kept.',
+    sections: ['network', 'schedule', 'advanced'],
+  },
+  {
+    title: 'Recovery',
+    description: 'The order guests start in at failover, and the public DNS records to switch (optional).',
+    sections: ['startup', 'dns'],
+  },
+  { title: 'Review', description: 'Check the plan. Choose a section to change it.', sections: [] },
+]
+
+// NewPlanWizard creates a plan step by step, using the plan page's
+// settings cards. A step can be left once its sections have no errors; the
+// review shows every section's summary.
+function NewPlanWizard({
+  cards,
+  issues,
+  spec,
+  hosts,
+  error,
+  saving,
+  onCreate,
+}: {
+  cards: Partial<Record<SectionId, React.ReactNode>>
+  issues: Issue[]
+  spec: PlanSpec
+  hosts: Host[]
+  error?: string
+  saving: boolean
+  onCreate: (activate: boolean) => void
+}) {
+  const [step, setStep] = useState(0)
+  // Sections are open in the wizard, except Advanced until it's opened.
+  const [openAdvanced, setOpenAdvanced] = useState(false)
+  const errorsIn = (sections: SectionId[]) =>
+    issues.filter((i) => i.severity === Severity.ERROR && sections.includes(i.section as SectionId))
+  const blocked = (n: number) => errorsIn(wizardSteps[n].sections).length > 0
+  // The furthest step that can be reached: every step before it is done.
+  let reachable = 0
+  while (reachable < wizardSteps.length - 1 && !blocked(reachable)) reachable++
+  const current = wizardSteps[step]
+  const review = step === wizardSteps.length - 1
+  const stepIssues = issues.filter((i) => current.sections.includes(i.section as SectionId))
+  const offline = hosts.filter((h) => !h.online && (h.id === spec.primaryHostId || h.id === spec.drHostId))
+  const go = (n: number) => {
+    setStep(n)
+    window.scrollTo({ top: 0 })
+  }
+  const stepOf = (id: SectionId) => wizardSteps.findIndex((w) => w.sections.includes(id))
+  const { errors } = counts(issues)
+
+  return (
+    <div className="grid gap-5">
+      <div className="grid gap-3">
+        <Link to="/plans" className="flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="size-4" /> DR plans
+        </Link>
+        <h1 className="text-2xl font-semibold tracking-tight">New DR plan</h1>
+      </div>
+      <ol className="flex flex-wrap gap-2" aria-label="Steps">
+        {wizardSteps.map((w, n) => {
+          const done = n < step && !blocked(n)
+          const disabled = n > reachable
+          return (
+            <li key={w.title}>
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => go(n)}
+                aria-current={n === step ? 'step' : undefined}
+                className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors disabled:opacity-50 ${
+                  n === step ? 'border-primary bg-primary/10 font-medium text-foreground' : 'text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                <span
+                  className={`flex size-5 items-center justify-center rounded-full text-xs ${
+                    done ? 'bg-success text-white' : n === step ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                  }`}
+                >
+                  {done ? <Check className="size-3" /> : n + 1}
+                </span>
+                {w.title}
+              </button>
+            </li>
+          )
+        })}
+      </ol>
+      <div className="grid gap-1">
+        <h2 className="text-lg font-semibold tracking-tight">{current.title}</h2>
+        <p className="text-sm text-muted-foreground">{current.description}</p>
+      </div>
+      <ErrorAlert message={error} />
+      {step === 0 && offline.length > 0 && (
+        <p className="text-sm text-warning-foreground">
+          {offline.map((h) => h.hostname).join(' and ')} {offline.length === 1 ? 'is' : 'are'} offline: the plan can be created, but not
+          activated until {offline.length === 1 ? 'it reconnects' : 'they reconnect'}.
+        </p>
+      )}
+      {review ? (
+        <Sections.Provider value={{ isOpen: () => false, toggle: () => undefined, issues, onSelect: (id) => go(Math.max(0, stepOf(id))) }}>
+          <div className="grid gap-3">
+            {settingsOrder.map((sid) => cards[sid] && <Fragment key={sid}>{cards[sid]}</Fragment>)}
+          </div>
+          <ValidationPanel issues={issues} onSelect={(id) => go(Math.max(0, stepOf(id)))} />
+        </Sections.Provider>
+      ) : (
+        <Sections.Provider
+          value={{
+            isOpen: (id) => id !== 'advanced' || openAdvanced,
+            toggle: (id) => id === 'advanced' && setOpenAdvanced((o) => !o),
+            issues,
+          }}
+        >
+          <div className="grid gap-4">
+            {current.sections.map((sid) => cards[sid] && <Fragment key={sid}>{cards[sid]}</Fragment>)}
+            {current.sections.every((sid) => !cards[sid]) && (
+              <p className="text-sm text-muted-foreground">Complete the earlier steps first.</p>
+            )}
+          </div>
+          {stepIssues.length > 0 && <StepIssues issues={stepIssues} />}
+        </Sections.Provider>
+      )}
+      <div className="sticky bottom-4 z-20 flex flex-wrap items-center gap-2 rounded-lg border bg-card/95 px-4 py-3 shadow-lg backdrop-blur">
+        <span className="text-sm text-muted-foreground">
+          Step {step + 1} of {wizardSteps.length}
+          {review && errors > 0 && (
+            <span className="text-destructive">
+              {' '}
+              · {errors} error{errors === 1 ? '' : 's'} to fix before activation
+            </span>
+          )}
+        </span>
+        <div className="ml-auto flex flex-wrap gap-2">
+          {step > 0 && (
+            <Button variant="ghost" onClick={() => go(step - 1)}>
+              <ArrowLeft /> Back
+            </Button>
+          )}
+          {review ? (
+            <>
+              <Button variant="outline" disabled={saving} onClick={() => onCreate(false)} title="Save without changing the hosts">
+                Create as draft
+              </Button>
+              <Button disabled={saving || errors > 0} onClick={() => onCreate(true)}>
+                <Rocket /> Create and activate
+              </Button>
+            </>
+          ) : (
+            <Button disabled={blocked(step)} onClick={() => go(step + 1)} title={blocked(step) ? 'Fix the errors in this step first' : undefined}>
+              Next <ArrowRight />
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// StepIssues lists a wizard step's errors and warnings under its sections.
+function StepIssues({ issues }: { issues: Issue[] }) {
+  const sorted = [...issues].sort((a, b) => a.severity - b.severity)
+  return (
+    <div className="grid gap-1 text-sm">
+      {sorted.map((i, n) => {
+        const error = i.severity === Severity.ERROR
+        const Icon = error ? CircleAlert : TriangleAlert
+        return (
+          <div key={n} className={`flex gap-2 ${error ? 'text-destructive' : 'text-warning-foreground'}`}>
+            <Icon className="mt-0.5 size-4 shrink-0" /> {i.message}
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -538,14 +756,23 @@ function Section({
   summary: React.ReactNode
   children: React.ReactNode
 }) {
-  const { isOpen, toggle, issues } = useContext(Sections)
+  const { isOpen, toggle, issues, onSelect } = useContext(Sections)
   const open = isOpen(id)
   const { errors, warnings } = counts(issues.filter((i) => i.section === id))
   return (
     <Card id={sectionElementId(id)} className="scroll-mt-16">
       <CardHeader>
-        <button type="button" className="flex w-full items-start gap-2 text-left" aria-expanded={open} onClick={() => toggle(id)}>
-          <ChevronRight className={`mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform ${open ? 'rotate-90' : ''}`} />
+        <button
+          type="button"
+          className="flex w-full items-start gap-2 text-left"
+          aria-expanded={onSelect ? undefined : open}
+          onClick={() => (onSelect ? onSelect(id) : toggle(id))}
+        >
+          {onSelect ? (
+            <Pencil className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+          ) : (
+            <ChevronRight className={`mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform ${open ? 'rotate-90' : ''}`} />
+          )}
           <div className="grid min-w-0 flex-1 gap-1">
             <CardTitle>{sectionTitles[id]}</CardTitle>
             <CardDescription className={open ? '' : 'truncate'}>{open ? description : summary}</CardDescription>
@@ -612,6 +839,7 @@ function GeneralCard({
             {hosts.map((h) => (
               <option key={h.id} value={h.id}>
                 {h.hostname}
+                {h.online ? '' : ' (offline)'}
               </option>
             ))}
           </NativeSelect>
@@ -633,6 +861,7 @@ function GeneralCard({
               .map((h) => (
                 <option key={h.id} value={h.id}>
                   {h.hostname}
+                  {h.online ? '' : ' (offline)'}
                 </option>
               ))}
           </NativeSelect>

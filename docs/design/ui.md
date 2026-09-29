@@ -212,6 +212,12 @@ The page stays a single page, reorganized:
 It reuses the plan page's section components, pre-filled from
 `SuggestPlan`. Editing an existing plan stays on the plan page.
 
+A step can be left once its sections have no errors (validation issues
+name their section); the step's errors and warnings show under its cards.
+The review shows each section collapsed to its summary, and choosing one
+goes back to its step. "Create and activate" creates the plan and opens
+the plan page with the usual activation (or takeover) preview.
+
 ## 7. Other pages
 
 - **Hosts:** a denser table with status colors, role (primary, DR, both),

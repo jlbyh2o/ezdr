@@ -154,14 +154,24 @@ export function PlanActions({
   dirty,
   onStartTest,
   onDeleted,
+  autoActivate,
+  onAutoActivated,
 }: {
   plan: Plan
   onChanged: (p: Plan) => void
   dirty: boolean
   onStartTest: () => void
   onDeleted: () => void
+  // Opens the activation (or takeover) right away, for "Create and
+  // activate" in the new-plan wizard.
+  autoActivate?: boolean
+  onAutoActivated?: () => void
 }) {
   const [dialog, setDialog] = useState<'activate' | 'apply' | 'takeover' | 'failover' | 'failback'>()
+  if (autoActivate && plan.state === PlanState.DRAFT && !dialog) {
+    setDialog(plan.spec?.takeover ? 'takeover' : 'activate')
+    onAutoActivated?.()
+  }
   const [confirm, setConfirm] = useState<Confirm>()
   const failingBack = plan.state === PlanState.FAILING_BACK
   const failedOver = plan.state === PlanState.FAILING_OVER || plan.state === PlanState.FAILED_OVER || failingBack
