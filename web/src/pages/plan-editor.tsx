@@ -935,45 +935,75 @@ function MappingsCard({
     >
       <div className="grid gap-2">
         <Label>Storage</Label>
-        {spec.storageMappings.map((m, i) => (
-          <div key={m.sourceStorage} className="grid items-center gap-2 sm:grid-cols-[140px_24px_1fr_1.5fr]">
-            <span className="font-mono text-sm">{m.sourceStorage}</span>
-            <span className="text-muted-foreground">→</span>
-            <NativeSelect
-              aria-label={`DR storage for ${m.sourceStorage}`}
-              value={m.targetStorage}
-              onChange={(e) =>
-                update((s) => {
-                  s.storageMappings[i].targetStorage = e.target.value
-                  const pool = zfsStorages.find((z) => z.id === e.target.value)?.zfsPool
-                  if (pool) s.storageMappings[i].receiveDataset = `${pool}/ezdr/${primaryName}`
-                })
-              }
-            >
-              <option value="">Choose DR storage…</option>
-              {zfsStorages.map((z) => (
-                <option key={z.id} value={z.id}>
-                  {z.id}
-                </option>
-              ))}
-            </NativeSelect>
-            <Input
-              aria-label={`Receive dataset for ${m.sourceStorage}`}
-              value={m.receiveDataset}
-              onChange={(e) => update((s) => (s.storageMappings[i].receiveDataset = e.target.value))}
-              placeholder="receive dataset"
-              className="font-mono text-xs"
-            />
-          </div>
-        ))}
         <p className="text-xs text-muted-foreground">
-          Replicas are received as &lt;receive dataset&gt;/&lt;source dataset&gt;.
+          Where each storage's disks are replicated. The DR storage chooses the ZFS pool; the replicas are kept under the dataset next to
+          it, each disk at its full path. Change the dataset to keep replicas apart from other data, or to match an existing zrepl setup
+          (Adopt fills it in).
         </p>
+        <div className="hidden gap-2 text-xs font-medium text-muted-foreground sm:grid sm:grid-cols-[160px_24px_1fr_1.5fr]">
+          <span>On {primaryName}</span>
+          <span />
+          <span>DR storage</span>
+          <span>Replicas stored in (ZFS dataset)</span>
+        </div>
+        {spec.storageMappings.map((m, i) => {
+          const example = exampleDisk(spec, primaryInv, m.sourceStorage)
+          return (
+            <div key={m.sourceStorage} className="grid gap-1">
+              <div className="grid items-center gap-2 sm:grid-cols-[160px_24px_1fr_1.5fr]">
+                <span className="font-mono text-sm">{m.sourceStorage}</span>
+                <span className="text-muted-foreground">→</span>
+                <NativeSelect
+                  aria-label={`DR storage for ${m.sourceStorage}`}
+                  value={m.targetStorage}
+                  onChange={(e) =>
+                    update((s) => {
+                      s.storageMappings[i].targetStorage = e.target.value
+                      const pool = zfsStorages.find((z) => z.id === e.target.value)?.zfsPool
+                      if (pool) s.storageMappings[i].receiveDataset = `${pool}/ezdr/${primaryName}`
+                    })
+                  }
+                >
+                  <option value="">Choose DR storage…</option>
+                  {zfsStorages.map((z) => (
+                    <option key={z.id} value={z.id}>
+                      {z.id}
+                    </option>
+                  ))}
+                </NativeSelect>
+                <Input
+                  aria-label={`Receive dataset for ${m.sourceStorage}`}
+                  value={m.receiveDataset}
+                  onChange={(e) => update((s) => (s.storageMappings[i].receiveDataset = e.target.value))}
+                  placeholder="pool/dataset"
+                  className="font-mono text-xs"
+                />
+              </div>
+              {example && m.receiveDataset && (
+                <p className="text-xs text-muted-foreground sm:pl-[184px]">
+                  For example, <span className="font-mono">{example}</span> is copied to{' '}
+                  <span className="font-mono">
+                    {m.receiveDataset.replace(/\/+$/, '')}/{example}
+                  </span>
+                </p>
+              )}
+            </div>
+          )
+        })}
       </div>
       <div className="grid gap-2">
-        <Label>Networks (VLAN tags are kept)</Label>
+        <Label>Networks</Label>
+        <p className="text-xs text-muted-foreground">
+          The bridge each guest network connects to at the DR site after a failover. VLAN tags are kept, so a VLAN-aware bridge carries
+          tagged networks.
+        </p>
+        <div className="hidden gap-2 text-xs font-medium text-muted-foreground sm:grid sm:grid-cols-[160px_24px_1fr]">
+          <span>Bridge on {primaryName}</span>
+          <span />
+          <span>Bridge on the DR host</span>
+        </div>
         {spec.networkMappings.map((m, i) => (
-          <div key={m.sourceBridge} className="grid items-center gap-2 sm:grid-cols-[140px_24px_1fr]">
+          <div key={m.sourceBridge} className="grid items-center gap-2 sm:grid-cols-[160px_24px_1fr]">
             <span className="font-mono text-sm">{m.sourceBridge}</span>
             <span className="text-muted-foreground">→</span>
             <NativeSelect
@@ -995,7 +1025,12 @@ function MappingsCard({
           </div>
         ))}
       </div>
-      <Field id="test-bridge" label="Test failover bridge (isolated, no physical ports)">
+      <div className="grid gap-2">
+        <Label htmlFor="test-bridge">Test failover bridge</Label>
+        <p className="text-xs text-muted-foreground">
+          Test failovers start copies of the guests on this bridge instead, so it should have no physical ports: the test copies can't
+          reach your network or clash with the guests still running on the primary.
+        </p>
         <NativeSelect id="test-bridge" value={spec.testBridge} onChange={(e) => update((s) => (s.testBridge = e.target.value))}>
           <option value="">None</option>
           {bridges.map((b) => (
@@ -1005,9 +1040,21 @@ function MappingsCard({
             </option>
           ))}
         </NativeSelect>
-      </Field>
+      </div>
     </Section>
   )
+}
+
+// exampleDisk returns the dataset of a protected guest's disk on a storage,
+// to show where replicas land.
+function exampleDisk(spec: PlanSpec, inv: Inventory, storage: string): string | undefined {
+  const vmids = new Set(spec.guests.map((g) => g.vmid))
+  for (const g of inv.guests) {
+    if (!vmids.has(g.vmid)) continue
+    const d = g.disks.find((x) => x.storage === storage && x.zfsDataset)
+    if (d) return d.zfsDataset
+  }
+  return undefined
 }
 
 function NetworkCard({ spec, update }: { spec: PlanSpec; update: Update }) {
