@@ -56,6 +56,32 @@ func (s *Store) latest(ctx context.Context, table, planID string) (FailoverRow, 
 	return fs[0], nil
 }
 
+// list returns a plan's failovers (or failbacks), newest first.
+func (s *Store) list(ctx context.Context, table, planID string) ([]FailoverRow, error) {
+	rows, err := s.db.QueryContext(ctx, "SELECT id, plan_id, active, data, next_step, started_at FROM "+table+ //nolint:gosec // fixed table names
+		" WHERE plan_id = ? ORDER BY started_at DESC", planID)
+	if err != nil {
+		return nil, err
+	}
+	return scanFailovers(rows)
+}
+
+// byID returns one failover (or failback), or ErrNotFound.
+func (s *Store) byID(ctx context.Context, table, id string) (FailoverRow, error) {
+	rows, err := s.db.QueryContext(ctx, "SELECT id, plan_id, active, data, next_step, started_at FROM "+table+" WHERE id = ?", id) //nolint:gosec // fixed table names
+	if err != nil {
+		return FailoverRow{}, err
+	}
+	fs, err := scanFailovers(rows)
+	if err != nil {
+		return FailoverRow{}, err
+	}
+	if len(fs) == 0 {
+		return FailoverRow{}, ErrNotFound
+	}
+	return fs[0], nil
+}
+
 func (s *Store) active(ctx context.Context, table string) ([]FailoverRow, error) {
 	rows, err := s.db.QueryContext(ctx, "SELECT id, plan_id, active, data, next_step, started_at FROM "+table+" WHERE active = 1") //nolint:gosec // fixed table names
 	if err != nil {
@@ -91,6 +117,16 @@ func (s *Store) LatestFailover(ctx context.Context, planID string) (FailoverRow,
 	return s.latest(ctx, failovers, planID)
 }
 
+// Failovers returns a plan's failovers, newest first.
+func (s *Store) Failovers(ctx context.Context, planID string) ([]FailoverRow, error) {
+	return s.list(ctx, failovers, planID)
+}
+
+// FailoverByID returns a failover, or ErrNotFound.
+func (s *Store) FailoverByID(ctx context.Context, id string) (FailoverRow, error) {
+	return s.byID(ctx, failovers, id)
+}
+
 // ActiveFailovers returns the failovers that still need the runner.
 func (s *Store) ActiveFailovers(ctx context.Context) ([]FailoverRow, error) {
 	return s.active(ctx, failovers)
@@ -112,6 +148,16 @@ func (s *Store) UpdateFailover(ctx context.Context, f FailoverRow) error {
 // LatestFailback returns a plan's newest failback, or ErrNotFound.
 func (s *Store) LatestFailback(ctx context.Context, planID string) (FailoverRow, error) {
 	return s.latest(ctx, failbacks, planID)
+}
+
+// Failbacks returns a plan's failbacks, newest first.
+func (s *Store) Failbacks(ctx context.Context, planID string) ([]FailoverRow, error) {
+	return s.list(ctx, failbacks, planID)
+}
+
+// FailbackByID returns a failback, or ErrNotFound.
+func (s *Store) FailbackByID(ctx context.Context, id string) (FailoverRow, error) {
+	return s.byID(ctx, failbacks, id)
 }
 
 // ActiveFailbacks returns the failbacks that still need the runner.

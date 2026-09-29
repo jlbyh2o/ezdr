@@ -155,6 +155,9 @@ const (
 	// FailoverServiceGetFailoverProcedure is the fully-qualified name of the FailoverService's
 	// GetFailover RPC.
 	FailoverServiceGetFailoverProcedure = "/ezdr.portal.v1.FailoverService/GetFailover"
+	// FailoverServiceListFailoversProcedure is the fully-qualified name of the FailoverService's
+	// ListFailovers RPC.
+	FailoverServiceListFailoversProcedure = "/ezdr.portal.v1.FailoverService/ListFailovers"
 	// FailoverServiceConfirmFailoverProcedure is the fully-qualified name of the FailoverService's
 	// ConfirmFailover RPC.
 	FailoverServiceConfirmFailoverProcedure = "/ezdr.portal.v1.FailoverService/ConfirmFailover"
@@ -170,6 +173,9 @@ const (
 	// FailoverServiceGetFailbackProcedure is the fully-qualified name of the FailoverService's
 	// GetFailback RPC.
 	FailoverServiceGetFailbackProcedure = "/ezdr.portal.v1.FailoverService/GetFailback"
+	// FailoverServiceListFailbacksProcedure is the fully-qualified name of the FailoverService's
+	// ListFailbacks RPC.
+	FailoverServiceListFailbacksProcedure = "/ezdr.portal.v1.FailoverService/ListFailbacks"
 	// FailoverServiceConfirmFailbackProcedure is the fully-qualified name of the FailoverService's
 	// ConfirmFailback RPC.
 	FailoverServiceConfirmFailbackProcedure = "/ezdr.portal.v1.FailoverService/ConfirmFailback"
@@ -1488,6 +1494,8 @@ type FailoverServiceClient interface {
 	StartFailover(context.Context, *connect.Request[v1.StartFailoverRequest]) (*connect.Response[v1.StartFailoverResponse], error)
 	// GetFailover returns the plan's latest failover, if any.
 	GetFailover(context.Context, *connect.Request[v1.GetFailoverRequest]) (*connect.Response[v1.GetFailoverResponse], error)
+	// ListFailovers returns a plan's failovers, newest first.
+	ListFailovers(context.Context, *connect.Request[v1.ListFailoversRequest]) (*connect.Response[v1.ListFailoversResponse], error)
 	// ConfirmFailover records that the operator verified the guests on the DR
 	// host, and switches DNS if asked.
 	ConfirmFailover(context.Context, *connect.Request[v1.ConfirmFailoverRequest]) (*connect.Response[v1.ConfirmFailoverResponse], error)
@@ -1500,6 +1508,8 @@ type FailoverServiceClient interface {
 	StartFailback(context.Context, *connect.Request[v1.StartFailbackRequest]) (*connect.Response[v1.StartFailbackResponse], error)
 	// GetFailback returns the plan's latest failback, if any.
 	GetFailback(context.Context, *connect.Request[v1.GetFailbackRequest]) (*connect.Response[v1.GetFailbackResponse], error)
+	// ListFailbacks returns a plan's failbacks, newest first.
+	ListFailbacks(context.Context, *connect.Request[v1.ListFailbacksRequest]) (*connect.Response[v1.ListFailbacksResponse], error)
 	// ConfirmFailback records that the operator verified the guests on the
 	// primary, and switches DNS back if asked.
 	ConfirmFailback(context.Context, *connect.Request[v1.ConfirmFailbackRequest]) (*connect.Response[v1.ConfirmFailbackResponse], error)
@@ -1536,6 +1546,12 @@ func NewFailoverServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(failoverServiceMethods.ByName("GetFailover")),
 			connect.WithClientOptions(opts...),
 		),
+		listFailovers: connect.NewClient[v1.ListFailoversRequest, v1.ListFailoversResponse](
+			httpClient,
+			baseURL+FailoverServiceListFailoversProcedure,
+			connect.WithSchema(failoverServiceMethods.ByName("ListFailovers")),
+			connect.WithClientOptions(opts...),
+		),
 		confirmFailover: connect.NewClient[v1.ConfirmFailoverRequest, v1.ConfirmFailoverResponse](
 			httpClient,
 			baseURL+FailoverServiceConfirmFailoverProcedure,
@@ -1566,6 +1582,12 @@ func NewFailoverServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(failoverServiceMethods.ByName("GetFailback")),
 			connect.WithClientOptions(opts...),
 		),
+		listFailbacks: connect.NewClient[v1.ListFailbacksRequest, v1.ListFailbacksResponse](
+			httpClient,
+			baseURL+FailoverServiceListFailbacksProcedure,
+			connect.WithSchema(failoverServiceMethods.ByName("ListFailbacks")),
+			connect.WithClientOptions(opts...),
+		),
 		confirmFailback: connect.NewClient[v1.ConfirmFailbackRequest, v1.ConfirmFailbackResponse](
 			httpClient,
 			baseURL+FailoverServiceConfirmFailbackProcedure,
@@ -1586,11 +1608,13 @@ type failoverServiceClient struct {
 	getFailoverOptions   *connect.Client[v1.GetFailoverOptionsRequest, v1.GetFailoverOptionsResponse]
 	startFailover        *connect.Client[v1.StartFailoverRequest, v1.StartFailoverResponse]
 	getFailover          *connect.Client[v1.GetFailoverRequest, v1.GetFailoverResponse]
+	listFailovers        *connect.Client[v1.ListFailoversRequest, v1.ListFailoversResponse]
 	confirmFailover      *connect.Client[v1.ConfirmFailoverRequest, v1.ConfirmFailoverResponse]
 	retryFailover        *connect.Client[v1.RetryFailoverRequest, v1.RetryFailoverResponse]
 	runFailbackPreflight *connect.Client[v1.RunFailbackPreflightRequest, v1.RunFailbackPreflightResponse]
 	startFailback        *connect.Client[v1.StartFailbackRequest, v1.StartFailbackResponse]
 	getFailback          *connect.Client[v1.GetFailbackRequest, v1.GetFailbackResponse]
+	listFailbacks        *connect.Client[v1.ListFailbacksRequest, v1.ListFailbacksResponse]
 	confirmFailback      *connect.Client[v1.ConfirmFailbackRequest, v1.ConfirmFailbackResponse]
 	retryFailback        *connect.Client[v1.RetryFailbackRequest, v1.RetryFailbackResponse]
 }
@@ -1608,6 +1632,11 @@ func (c *failoverServiceClient) StartFailover(ctx context.Context, req *connect.
 // GetFailover calls ezdr.portal.v1.FailoverService.GetFailover.
 func (c *failoverServiceClient) GetFailover(ctx context.Context, req *connect.Request[v1.GetFailoverRequest]) (*connect.Response[v1.GetFailoverResponse], error) {
 	return c.getFailover.CallUnary(ctx, req)
+}
+
+// ListFailovers calls ezdr.portal.v1.FailoverService.ListFailovers.
+func (c *failoverServiceClient) ListFailovers(ctx context.Context, req *connect.Request[v1.ListFailoversRequest]) (*connect.Response[v1.ListFailoversResponse], error) {
+	return c.listFailovers.CallUnary(ctx, req)
 }
 
 // ConfirmFailover calls ezdr.portal.v1.FailoverService.ConfirmFailover.
@@ -1635,6 +1664,11 @@ func (c *failoverServiceClient) GetFailback(ctx context.Context, req *connect.Re
 	return c.getFailback.CallUnary(ctx, req)
 }
 
+// ListFailbacks calls ezdr.portal.v1.FailoverService.ListFailbacks.
+func (c *failoverServiceClient) ListFailbacks(ctx context.Context, req *connect.Request[v1.ListFailbacksRequest]) (*connect.Response[v1.ListFailbacksResponse], error) {
+	return c.listFailbacks.CallUnary(ctx, req)
+}
+
 // ConfirmFailback calls ezdr.portal.v1.FailoverService.ConfirmFailback.
 func (c *failoverServiceClient) ConfirmFailback(ctx context.Context, req *connect.Request[v1.ConfirmFailbackRequest]) (*connect.Response[v1.ConfirmFailbackResponse], error) {
 	return c.confirmFailback.CallUnary(ctx, req)
@@ -1652,6 +1686,8 @@ type FailoverServiceHandler interface {
 	StartFailover(context.Context, *connect.Request[v1.StartFailoverRequest]) (*connect.Response[v1.StartFailoverResponse], error)
 	// GetFailover returns the plan's latest failover, if any.
 	GetFailover(context.Context, *connect.Request[v1.GetFailoverRequest]) (*connect.Response[v1.GetFailoverResponse], error)
+	// ListFailovers returns a plan's failovers, newest first.
+	ListFailovers(context.Context, *connect.Request[v1.ListFailoversRequest]) (*connect.Response[v1.ListFailoversResponse], error)
 	// ConfirmFailover records that the operator verified the guests on the DR
 	// host, and switches DNS if asked.
 	ConfirmFailover(context.Context, *connect.Request[v1.ConfirmFailoverRequest]) (*connect.Response[v1.ConfirmFailoverResponse], error)
@@ -1664,6 +1700,8 @@ type FailoverServiceHandler interface {
 	StartFailback(context.Context, *connect.Request[v1.StartFailbackRequest]) (*connect.Response[v1.StartFailbackResponse], error)
 	// GetFailback returns the plan's latest failback, if any.
 	GetFailback(context.Context, *connect.Request[v1.GetFailbackRequest]) (*connect.Response[v1.GetFailbackResponse], error)
+	// ListFailbacks returns a plan's failbacks, newest first.
+	ListFailbacks(context.Context, *connect.Request[v1.ListFailbacksRequest]) (*connect.Response[v1.ListFailbacksResponse], error)
 	// ConfirmFailback records that the operator verified the guests on the
 	// primary, and switches DNS back if asked.
 	ConfirmFailback(context.Context, *connect.Request[v1.ConfirmFailbackRequest]) (*connect.Response[v1.ConfirmFailbackResponse], error)
@@ -1696,6 +1734,12 @@ func NewFailoverServiceHandler(svc FailoverServiceHandler, opts ...connect.Handl
 		connect.WithSchema(failoverServiceMethods.ByName("GetFailover")),
 		connect.WithHandlerOptions(opts...),
 	)
+	failoverServiceListFailoversHandler := connect.NewUnaryHandler(
+		FailoverServiceListFailoversProcedure,
+		svc.ListFailovers,
+		connect.WithSchema(failoverServiceMethods.ByName("ListFailovers")),
+		connect.WithHandlerOptions(opts...),
+	)
 	failoverServiceConfirmFailoverHandler := connect.NewUnaryHandler(
 		FailoverServiceConfirmFailoverProcedure,
 		svc.ConfirmFailover,
@@ -1726,6 +1770,12 @@ func NewFailoverServiceHandler(svc FailoverServiceHandler, opts ...connect.Handl
 		connect.WithSchema(failoverServiceMethods.ByName("GetFailback")),
 		connect.WithHandlerOptions(opts...),
 	)
+	failoverServiceListFailbacksHandler := connect.NewUnaryHandler(
+		FailoverServiceListFailbacksProcedure,
+		svc.ListFailbacks,
+		connect.WithSchema(failoverServiceMethods.ByName("ListFailbacks")),
+		connect.WithHandlerOptions(opts...),
+	)
 	failoverServiceConfirmFailbackHandler := connect.NewUnaryHandler(
 		FailoverServiceConfirmFailbackProcedure,
 		svc.ConfirmFailback,
@@ -1746,6 +1796,8 @@ func NewFailoverServiceHandler(svc FailoverServiceHandler, opts ...connect.Handl
 			failoverServiceStartFailoverHandler.ServeHTTP(w, r)
 		case FailoverServiceGetFailoverProcedure:
 			failoverServiceGetFailoverHandler.ServeHTTP(w, r)
+		case FailoverServiceListFailoversProcedure:
+			failoverServiceListFailoversHandler.ServeHTTP(w, r)
 		case FailoverServiceConfirmFailoverProcedure:
 			failoverServiceConfirmFailoverHandler.ServeHTTP(w, r)
 		case FailoverServiceRetryFailoverProcedure:
@@ -1756,6 +1808,8 @@ func NewFailoverServiceHandler(svc FailoverServiceHandler, opts ...connect.Handl
 			failoverServiceStartFailbackHandler.ServeHTTP(w, r)
 		case FailoverServiceGetFailbackProcedure:
 			failoverServiceGetFailbackHandler.ServeHTTP(w, r)
+		case FailoverServiceListFailbacksProcedure:
+			failoverServiceListFailbacksHandler.ServeHTTP(w, r)
 		case FailoverServiceConfirmFailbackProcedure:
 			failoverServiceConfirmFailbackHandler.ServeHTTP(w, r)
 		case FailoverServiceRetryFailbackProcedure:
@@ -1781,6 +1835,10 @@ func (UnimplementedFailoverServiceHandler) GetFailover(context.Context, *connect
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.GetFailover is not implemented"))
 }
 
+func (UnimplementedFailoverServiceHandler) ListFailovers(context.Context, *connect.Request[v1.ListFailoversRequest]) (*connect.Response[v1.ListFailoversResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.ListFailovers is not implemented"))
+}
+
 func (UnimplementedFailoverServiceHandler) ConfirmFailover(context.Context, *connect.Request[v1.ConfirmFailoverRequest]) (*connect.Response[v1.ConfirmFailoverResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.ConfirmFailover is not implemented"))
 }
@@ -1799,6 +1857,10 @@ func (UnimplementedFailoverServiceHandler) StartFailback(context.Context, *conne
 
 func (UnimplementedFailoverServiceHandler) GetFailback(context.Context, *connect.Request[v1.GetFailbackRequest]) (*connect.Response[v1.GetFailbackResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.GetFailback is not implemented"))
+}
+
+func (UnimplementedFailoverServiceHandler) ListFailbacks(context.Context, *connect.Request[v1.ListFailbacksRequest]) (*connect.Response[v1.ListFailbacksResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.FailoverService.ListFailbacks is not implemented"))
 }
 
 func (UnimplementedFailoverServiceHandler) ConfirmFailback(context.Context, *connect.Request[v1.ConfirmFailbackRequest]) (*connect.Response[v1.ConfirmFailbackResponse], error) {

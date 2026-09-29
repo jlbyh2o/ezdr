@@ -155,3 +155,27 @@ func TestBreakGlassReport(t *testing.T) {
 		t.Error("accepted a break-glass report from the primary")
 	}
 }
+
+func TestListAndGetFailovers(t *testing.T) {
+	d, ctx, planID, _, _ := failoverFixture(t)
+	svc := FailoverService{Deps: d}
+	if _, err := svc.StartFailover(ctx, connect.NewRequest(&portalv1.StartFailoverRequest{PlanId: planID, Planned: true, ConfirmName: "Main"})); err != nil {
+		t.Fatal(err)
+	}
+	waitFailover(ctx, t, d, planID, portalv1.FailoverState_FAILOVER_STATE_AWAITING_CONFIRMATION)
+	list, err := svc.ListFailovers(ctx, connect.NewRequest(&portalv1.ListFailoversRequest{PlanId: planID}))
+	if err != nil || len(list.Msg.Failovers) != 1 {
+		t.Fatalf("list = %v, %v", list, err)
+	}
+	id := list.Msg.Failovers[0].Id
+	got, err := svc.GetFailover(ctx, connect.NewRequest(&portalv1.GetFailoverRequest{PlanId: planID, Id: id}))
+	if err != nil || got.Msg.Failover.GetId() != id {
+		t.Fatalf("get by ID = %v, %v", got, err)
+	}
+	if _, err := svc.GetFailover(ctx, connect.NewRequest(&portalv1.GetFailoverRequest{PlanId: "other", Id: id})); connect.CodeOf(err) != connect.CodeNotFound {
+		t.Errorf("another plan's failover: %v", err)
+	}
+	if fb, err := svc.ListFailbacks(ctx, connect.NewRequest(&portalv1.ListFailbacksRequest{PlanId: planID})); err != nil || len(fb.Msg.Failbacks) != 0 {
+		t.Errorf("failbacks = %v, %v", fb, err)
+	}
+}

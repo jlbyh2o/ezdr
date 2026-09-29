@@ -77,6 +77,10 @@ type simPull struct {
 	sending  time.Time // zero when idle
 	bytes    uint64    // expected bytes of the running transfer
 	duration time.Duration
+	// snap is the running transfer's snapshot. It's taken on the primary
+	// and received on the DR host together when the transfer ends, so a
+	// transfer cut short (by a failover) leaves no snapshot behind.
+	snap simSnap
 	// The previous attempt.
 	lastStart, lastEnd time.Time
 }
@@ -374,6 +378,9 @@ func (s *Sim) step(ctx context.Context, hostID string, now time.Time) {
 				s.finishPull(hostID, p, src)
 			}
 		case !p.sending.IsZero() && now.Sub(p.sending) >= p.duration:
+			for _, dataset := range src.datasets {
+				s.addSnapshot(src.hostID, dataset, p.snap)
+			}
 			s.finishPull(hostID, p, src)
 			p.lastStart, p.lastEnd = p.sending, now
 			// Jitter keeps jobs from running in lockstep.
@@ -382,9 +389,7 @@ func (s *Sim) step(ctx context.Context, hostID string, now time.Time) {
 		case p.sending.IsZero() && !now.Before(p.next):
 			// The primary snapshots, then the DR host pulls.
 			snap := simSnap{name: snapName(src.prefix, now), at: now}
-			for _, dataset := range src.datasets {
-				s.addSnapshot(src.hostID, dataset, snap)
-			}
+			p.snap = snap
 			h := simHash(p.job.Name + snap.name)
 			p.sending, p.bytes = now, 4<<20+h%(512<<20)
 			p.duration = s.opts.Transfer/2 + simSpread(p.job.Name+snap.name, s.opts.Transfer)

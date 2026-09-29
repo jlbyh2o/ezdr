@@ -207,6 +207,13 @@ func (s FailoverService) StartFailback(ctx context.Context, req *connect.Request
 
 // GetFailback returns the plan's latest failback.
 func (s FailoverService) GetFailback(ctx context.Context, req *connect.Request[portalv1.GetFailbackRequest]) (*connect.Response[portalv1.GetFailbackResponse], error) {
+	if req.Msg.Id != "" {
+		fb := &portalv1.Failback{}
+		if err := loadOperation(ctx, s.Store.FailbackByID, req.Msg.Id, req.Msg.PlanId, fb); err != nil {
+			return nil, err
+		}
+		return connect.NewResponse(&portalv1.GetFailbackResponse{Failback: fb}), nil
+	}
 	_, fb, err := s.loadFailback(ctx, req.Msg.PlanId)
 	if errors.Is(err, store.ErrNotFound) {
 		return connect.NewResponse(&portalv1.GetFailbackResponse{}), nil

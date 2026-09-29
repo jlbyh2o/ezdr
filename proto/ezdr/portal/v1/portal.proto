@@ -296,6 +296,8 @@ service FailoverService {
   rpc StartFailover(StartFailoverRequest) returns (StartFailoverResponse);
   // GetFailover returns the plan's latest failover, if any.
   rpc GetFailover(GetFailoverRequest) returns (GetFailoverResponse);
+  // ListFailovers returns a plan's failovers, newest first.
+  rpc ListFailovers(ListFailoversRequest) returns (ListFailoversResponse);
   // ConfirmFailover records that the operator verified the guests on the DR
   // host, and switches DNS if asked.
   rpc ConfirmFailover(ConfirmFailoverRequest) returns (ConfirmFailoverResponse);
@@ -308,6 +310,8 @@ service FailoverService {
   rpc StartFailback(StartFailbackRequest) returns (StartFailbackResponse);
   // GetFailback returns the plan's latest failback, if any.
   rpc GetFailback(GetFailbackRequest) returns (GetFailbackResponse);
+  // ListFailbacks returns a plan's failbacks, newest first.
+  rpc ListFailbacks(ListFailbacksRequest) returns (ListFailbacksResponse);
   // ConfirmFailback records that the operator verified the guests on the
   // primary, and switches DNS back if asked.
   rpc ConfirmFailback(ConfirmFailbackRequest) returns (ConfirmFailbackResponse);
@@ -346,6 +350,17 @@ message StartFailoverResponse {
 
 message GetFailoverRequest {
   string plan_id = 1;
+  // A particular failover of the plan; empty for the newest.
+  string id = 2;
+}
+
+message ListFailoversRequest {
+  string plan_id = 1;
+}
+
+message ListFailoversResponse {
+  // Newest first.
+  repeated Failover failovers = 1;
 }
 
 message GetFailoverResponse {
@@ -458,6 +473,17 @@ message StartFailbackResponse {
 
 message GetFailbackRequest {
   string plan_id = 1;
+  // A particular failback of the plan; empty for the newest.
+  string id = 2;
+}
+
+message ListFailbacksRequest {
+  string plan_id = 1;
+}
+
+message ListFailbacksResponse {
+  // Newest first.
+  repeated Failback failbacks = 1;
 }
 
 message GetFailbackResponse {
