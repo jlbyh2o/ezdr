@@ -82,7 +82,9 @@ cp .env.example .env    # set the domain, version, VPN address, public WireGuard
 docker compose -f compose.private.yaml up -d --build
 ```
 
-Allow inbound UDP 51820 on the public address; the web UI listens only on
+Allow inbound UDP on the WireGuard port (`EZDR_WG_PORT`, 51820 unless the
+VPN already uses it, as NetBird does) on the public address; the web UI
+listens only on
 `EZDR_PRIVATE_IP` (Docker's published ports bypass host firewall rules, so
 the binding is what keeps it private). If the VPN interface can come up
 after Docker at boot, let the server bind addresses that aren't up yet:

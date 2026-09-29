@@ -5,10 +5,10 @@
 # See "Option 3" in docs/deployment.md.
 #
 # 1. Copy ../.env.example to .env here and set EZDR_DOMAIN, EZDR_VERSION,
-#    EZDR_PRIVATE_IP, EZDR_WG_ENDPOINT, EZDR_TUNNEL_PREFIX, and
+#    EZDR_PRIVATE_IP, EZDR_WG_PORT, EZDR_WG_ENDPOINT, EZDR_TUNNEL_PREFIX, and
 #    CLOUDFLARE_API_TOKEN.
-# 2. Allow inbound UDP 51820 on the public address (TCP 443 only on the
-#    private one).
+# 2. Allow inbound UDP EZDR_WG_PORT on the public address (TCP 443 only on
+#    the private one).
 # 3. docker compose -f compose.private.yaml up -d --build
 
 services:
@@ -46,11 +46,12 @@ services:
       EZDR_PUBLIC_URL: https://${EZDR_DOMAIN}
       # Hosts' tunnels go to the public address, not the name's private one.
       EZDR_WG_ENDPOINT: ${EZDR_WG_ENDPOINT:?set EZDR_WG_ENDPOINT (public address:51820) in .env}
+      EZDR_WG_PORT: ${EZDR_WG_PORT:-51820}
       # Away from ranges the VPN uses (NetBird and Tailscale use 100.64.0.0/10).
       EZDR_TUNNEL_PREFIX: ${EZDR_TUNNEL_PREFIX:?set EZDR_TUNNEL_PREFIX in .env}
       EZDR_SITE_TUNNEL_PREFIX: ${EZDR_SITE_TUNNEL_PREFIX:?set EZDR_SITE_TUNNEL_PREFIX in .env}
     ports:
-      - "51820:51820/udp"
+      - "${EZDR_WG_PORT:-51820}:${EZDR_WG_PORT:-51820}/udp"
     volumes:
       - portal-data:/data
 
