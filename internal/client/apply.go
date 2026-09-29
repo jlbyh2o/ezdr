@@ -211,6 +211,24 @@ func (a *applier) statusLoop(ctx context.Context) {
 	}
 }
 
+// breakGlassLoop reports break-glass failovers run on the command line
+// (another process) soon after they happen, and then every statusInterval
+// until the portal has recorded them and the markers are gone.
+func (a *applier) breakGlassLoop(ctx context.Context) {
+	var lastReport time.Time
+	for {
+		if markers, err := a.failover.Markers(); err == nil && len(markers) > 0 && time.Since(lastReport) >= statusInterval {
+			a.report(ctx)
+			lastReport = time.Now()
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(statusPoll):
+		}
+	}
+}
+
 // guestConfigInterval is how often guest configurations are checked for
 // changes; they're reported when they change and at least every
 // guestConfigRefresh.
