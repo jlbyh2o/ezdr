@@ -37,6 +37,10 @@ type Context struct {
 	// OtherTunnels are other applied plans that use EZDR tunnels.
 	OtherTunnels []OtherTunnel
 	Now          time.Time
+	// FailedOver is set while the plan's guests run on the DR host (failing
+	// over, failed over, or failing back): their registrations there are
+	// the plan's own, not conflicts.
+	FailedOver bool
 }
 
 // OtherTunnel is another plan's tunnel, for conflict checks.
@@ -66,14 +70,35 @@ var (
 	dnsNamePattern = regexp.MustCompile(`^(\*\.)?([A-Za-z0-9_]([A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?\.)*[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.?$`)
 )
 
-type issues []*planv1.Issue
+// Settings sections that issues are about (planv1.Issue.Section).
+const (
+	SectionGeneral  = "general"
+	SectionTakeover = "takeover"
+	SectionGuests   = "guests"
+	SectionMappings = "mappings"
+	SectionNetwork  = "network"
+	SectionSchedule = "schedule"
+	SectionDNS      = "dns"
+	SectionAdvanced = "advanced"
+)
+
+// issues collects validation issues, each about the current section.
+type issues struct {
+	list    []*planv1.Issue
+	section string
+}
+
+// in makes the following issues about section.
+func (is *issues) in(section string) { is.section = section }
 
 func (is *issues) errorf(vmid uint32, format string, args ...any) {
-	*is = append(*is, &planv1.Issue{Severity: planv1.Severity_SEVERITY_ERROR, Vmid: vmid, Message: fmt.Sprintf(format, args...)})
+	is.list = append(is.list, &planv1.Issue{Severity: planv1.Severity_SEVERITY_ERROR, Vmid: vmid,
+		Message: fmt.Sprintf(format, args...), Section: is.section})
 }
 
 func (is *issues) warnf(vmid uint32, format string, args ...any) {
-	*is = append(*is, &planv1.Issue{Severity: planv1.Severity_SEVERITY_WARNING, Vmid: vmid, Message: fmt.Sprintf(format, args...)})
+	is.list = append(is.list, &planv1.Issue{Severity: planv1.Severity_SEVERITY_WARNING, Vmid: vmid,
+		Message: fmt.Sprintf(format, args...), Section: is.section})
 }
 
 // Validate checks a plan against its hosts' inventories. Errors block
@@ -86,6 +111,7 @@ func Validate(spec *planv1.PlanSpec, ctx Context) []*planv1.Issue {
 		return sorted(is)
 	}
 	primary, dr := ctx.Primary.Inventory, ctx.DR.Inventory
+	is.in(SectionGeneral)
 	for _, h := range []*Host{ctx.Primary, ctx.DR} {
 		if age := ctx.Now.Sub(h.ReceivedAt); age > staleInventory {
 			is.warnf(0, "%s's inventory is %s old; the host may be offline", h.Hostname, age.Round(time.Minute))
@@ -95,17 +121,23 @@ func Validate(spec *planv1.PlanSpec, ctx Context) []*planv1.Issue {
 	guests := guestsByID(primary)
 	drGuests := guestsByID(dr)
 	protected := map[uint32]bool{}
+	is.in(SectionGuests)
 	for _, pg := range spec.Guests {
 		protected[pg.Vmid] = true
 		validateGuest(pg, guests[pg.Vmid], drGuests[pg.Vmid], ctx, &is)
 	}
 
 	usedStorage, usedBridges := used(spec, guests)
+	is.in(SectionMappings)
 	validateStorage(spec, usedStorage, primary, dr, guests, &is)
 	validateNetwork(spec, usedBridges, dr, guests, &is)
+	is.in(SectionNetwork)
 	validateReplicationNetwork(spec, primary, ctx, &is)
+	is.in(SectionTakeover)
 	validateTakeover(spec, primary, dr, &is)
+	is.in(SectionAdvanced)
 	validateTestSettings(spec, dr, &is)
+	is.in(SectionGuests)
 
 	var unprotected []string
 	for _, g := range primary.Guests {
@@ -120,6 +152,7 @@ func Validate(spec *planv1.PlanSpec, ctx Context) []*planv1.Issue {
 }
 
 func validateGeneral(spec *planv1.PlanSpec, ctx Context, is *issues) {
+	is.in(SectionGeneral)
 	if strings.TrimSpace(spec.Name) == "" {
 		is.errorf(0, "the plan needs a name")
 	}
@@ -137,14 +170,18 @@ func validateGeneral(spec *planv1.PlanSpec, ctx Context, is *issues) {
 			}
 		}
 	}
+	is.in(SectionGuests)
 	if len(spec.Guests) == 0 {
 		is.errorf(0, "select at least one guest to protect")
 	}
+	is.in(SectionSchedule)
 	if spec.IntervalSeconds < MinIntervalSeconds || spec.IntervalSeconds > MaxIntervalSeconds {
 		is.errorf(0, "the snapshot interval must be between 1 minute and 24 hours")
 	}
 	if !prefixPattern.MatchString(spec.SnapshotPrefix) {
+		is.in(SectionAdvanced)
 		is.errorf(0, "the snapshot prefix must be 1-32 letters, digits, or _ . : -")
+		is.in(SectionSchedule)
 	}
 	for _, r := range []struct {
 		label string
@@ -184,7 +221,7 @@ func validateGuest(pg *planv1.PlanGuest, g, onDR *inventoryv1.Guest, ctx Context
 	if other := ctx.OtherPlans[id]; other != "" {
 		is.errorf(id, "guest %d (%s) is already protected by plan %q", id, g.Name, other)
 	}
-	if onDR != nil {
+	if onDR != nil && !ctx.FailedOver {
 		is.errorf(id, "guest ID %d is already used on %s by %q", id, ctx.DR.Hostname, onDR.Name)
 	}
 	for _, d := range g.Disks {
@@ -201,6 +238,9 @@ func validateGuest(pg *planv1.PlanGuest, g, onDR *inventoryv1.Guest, ctx Context
 }
 
 func validateDNS(id uint32, name string, r *planv1.DnsRecord, is *issues) {
+	prev := is.section
+	is.in(SectionDNS)
+	defer is.in(prev)
 	label := fmt.Sprintf("guest %d (%s) DNS record %q", id, name, r.Name)
 	if !dnsNamePattern.MatchString(r.Name) {
 		is.errorf(id, "%s: not a valid DNS name", label)
@@ -354,8 +394,8 @@ func validateNetwork(spec *planv1.PlanSpec, usedBridges []string, dr *inventoryv
 
 // sorted orders errors before warnings, keeping each group's order.
 func sorted(is issues) []*planv1.Issue {
-	sort.SliceStable(is, func(i, j int) bool { return is[i].Severity < is[j].Severity })
-	return is
+	sort.SliceStable(is.list, func(i, j int) bool { return is.list[i].Severity < is.list[j].Severity })
+	return is.list
 }
 
 // FormatBytes formats a size in binary units, such as "1.5 GiB".

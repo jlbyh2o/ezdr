@@ -197,6 +197,10 @@ func (s *Sim) serve(ctx context.Context, hostID string, outbox <-chan *clientv1.
 	defer tick.Stop()
 	heartbeat := time.NewTicker(HeartbeatInterval)
 	defer heartbeat.Stop()
+	// Report the inventory now and every few minutes, as clients do.
+	s.editInventory(ctx, hostID, func(*inventoryv1.Inventory) {})
+	inventory := time.NewTicker(5 * time.Minute)
+	defer inventory.Stop()
 	for {
 		select {
 		case <-ctx.Done():
@@ -210,6 +214,8 @@ func (s *Sim) serve(ctx context.Context, hostID string, outbox <-chan *clientv1.
 			}
 		case <-heartbeat.C:
 			touch()
+		case <-inventory.C:
+			s.editInventory(ctx, hostID, func(*inventoryv1.Inventory) {})
 		case now := <-tick.C:
 			s.step(ctx, hostID, now)
 		}

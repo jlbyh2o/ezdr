@@ -143,4 +143,7 @@ message Issue {
   string message = 2;
   // Guest the issue is about, if any.
   uint32 vmid = 3;
+  // The settings section the issue is about: "general", "takeover",
+  // "guests", "mappings", "network", "schedule", "dns", or "advanced".
+  string section = 4;
 }

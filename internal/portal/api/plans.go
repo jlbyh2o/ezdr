@@ -103,7 +103,15 @@ func (s PlanService) validate(ctx context.Context, spec *planv1.PlanSpec, planID
 			}
 		}
 	}
-	return plan.Validate(spec, plan.Context{Primary: primary, DR: dr, OtherPlans: others, UsedPorts: ports,
+	failedOver := false
+	if planID != "" {
+		if sp, err := s.Store.PlanByID(ctx, planID); err == nil && sp.State == store.PlanFailedOver {
+			failedOver = true
+		} else if running, err := s.failoverRunning(ctx, planID); err == nil && running {
+			failedOver = true
+		}
+	}
+	return plan.Validate(spec, plan.Context{Primary: primary, DR: dr, OtherPlans: others, UsedPorts: ports, FailedOver: failedOver,
 		OtherTunnels: tunnels, Now: time.Now()}), nil
 }
 

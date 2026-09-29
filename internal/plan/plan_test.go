@@ -334,3 +334,55 @@ func TestRunningTestGuestsDontConflict(t *testing.T) {
 		t.Errorf("a running test's guest counted as a conflict:\n%s", errs)
 	}
 }
+
+func TestIssueSections(t *testing.T) {
+	for name, tc := range map[string]struct {
+		change func(*planv1.PlanSpec)
+		want   string
+	}{
+		"name":        {func(s *planv1.PlanSpec) { s.Name = "" }, SectionGeneral},
+		"no guests":   {func(s *planv1.PlanSpec) { s.Guests = nil }, SectionGuests},
+		"guest gone":  {func(s *planv1.PlanSpec) { s.Guests[0].Vmid = 999 }, SectionGuests},
+		"interval":    {func(s *planv1.PlanSpec) { s.IntervalSeconds = 1 }, SectionSchedule},
+		"prefix":      {func(s *planv1.PlanSpec) { s.SnapshotPrefix = "bad prefix" }, SectionAdvanced},
+		"test bridge": {func(s *planv1.PlanSpec) { s.TestBridge = "vmbr404" }, SectionMappings},
+		"address":     {func(s *planv1.PlanSpec) { s.GetNetwork().GetExisting().PrimaryAddress = "" }, SectionNetwork},
+		"timeout":     {func(s *planv1.PlanSpec) { s.ShutdownTimeoutSeconds = 1 }, SectionAdvanced},
+		"dns": {func(s *planv1.PlanSpec) {
+			s.Guests[0].DnsRecords = []*planv1.DnsRecord{{Name: "bad name", Type: planv1.DnsRecordType_DNS_RECORD_TYPE_A,
+				ProductionValue: "192.0.2.1", FailoverValue: "198.51.100.1"}}
+		}, SectionDNS},
+	} {
+		t.Run(name, func(t *testing.T) {
+			s := validSpec()
+			tc.change(s)
+			var got []string
+			for _, is := range Validate(s, ctxFor(primaryInv(), drInv())) {
+				if is.Severity == planv1.Severity_SEVERITY_ERROR {
+					got = append(got, is.Section)
+				}
+			}
+			if len(got) == 0 || got[0] != tc.want {
+				t.Errorf("error sections = %v, want %s first", got, tc.want)
+			}
+		})
+	}
+	// Warnings have sections too.
+	for _, is := range Validate(validSpec(), ctxFor(primaryInv(), drInv())) {
+		if is.Section == "" {
+			t.Errorf("issue without a section: %s", is.Message)
+		}
+	}
+}
+
+func TestFailedOverGuestsOnDR(t *testing.T) {
+	ctx := ctxFor(primaryInv(), drInv())
+	ctx.DR.Inventory.Guests = []*inventoryv1.Guest{{Vmid: 101, Name: "web", Tags: []string{"ezdr-failover"}}}
+	if errs := messages(Validate(validSpec(), ctx), planv1.Severity_SEVERITY_ERROR); !strings.Contains(errs, "already used") {
+		t.Fatalf("an active plan's guest ID on the DR host isn't reported: %s", errs)
+	}
+	ctx.FailedOver = true
+	if errs := messages(Validate(validSpec(), ctx), planv1.Severity_SEVERITY_ERROR); errs != "" {
+		t.Errorf("a failed-over plan's own guests are reported as conflicts:\n%s", errs)
+	}
+}

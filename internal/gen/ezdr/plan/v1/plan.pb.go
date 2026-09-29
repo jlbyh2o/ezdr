@@ -969,7 +969,10 @@ type Issue struct {
 	Severity Severity               `protobuf:"varint,1,opt,name=severity,proto3,enum=ezdr.plan.v1.Severity" json:"severity,omitempty"`
 	Message  string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	// Guest the issue is about, if any.
-	Vmid          uint32 `protobuf:"varint,3,opt,name=vmid,proto3" json:"vmid,omitempty"`
+	Vmid uint32 `protobuf:"varint,3,opt,name=vmid,proto3" json:"vmid,omitempty"`
+	// The settings section the issue is about: "general", "takeover",
+	// "guests", "mappings", "network", "schedule", "dns", or "advanced".
+	Section       string `protobuf:"bytes,4,opt,name=section,proto3" json:"section,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1023,6 +1026,13 @@ func (x *Issue) GetVmid() uint32 {
 		return x.Vmid
 	}
 	return 0
+}
+
+func (x *Issue) GetSection() string {
+	if x != nil {
+		return x.Section
+	}
+	return ""
 }
 
 var File_ezdr_plan_v1_plan_proto protoreflect.FileDescriptor
@@ -1096,11 +1106,12 @@ const file_ezdr_plan_v1_plan_proto_rawDesc = "" +
 	"\rRetentionTier\x12\x14\n" +
 	"\x05count\x18\x01 \x01(\rR\x05count\x12%\n" +
 	"\x0eperiod_seconds\x18\x02 \x01(\rR\rperiodSeconds\x12\x19\n" +
-	"\bkeep_all\x18\x03 \x01(\bR\akeepAll\"i\n" +
+	"\bkeep_all\x18\x03 \x01(\bR\akeepAll\"\x83\x01\n" +
 	"\x05Issue\x122\n" +
 	"\bseverity\x18\x01 \x01(\x0e2\x16.ezdr.plan.v1.SeverityR\bseverity\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x12\n" +
-	"\x04vmid\x18\x03 \x01(\rR\x04vmid*\x95\x01\n" +
+	"\x04vmid\x18\x03 \x01(\rR\x04vmid\x12\x18\n" +
+	"\asection\x18\x04 \x01(\tR\asection*\x95\x01\n" +
 	"\rDnsRecordType\x12\x1f\n" +
 	"\x1bDNS_RECORD_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11DNS_RECORD_TYPE_A\x10\x01\x12\x18\n" +
