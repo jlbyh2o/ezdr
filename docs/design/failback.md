@@ -72,7 +72,7 @@ discarding diverged data if there is any.
 | 1. Copy changes back in rounds: snapshot the replicas on the DR host (the plan's prefix), start the primary's receiver, send the changes since the last round. Repeat until a round copies less than 256 MiB, at most 5 rounds. The first round rolls diverged primary datasets back; later rounds roll back anything written since the previous one. | DR host | yes |
 | 2. Shut down the guests on the DR host (reverse startup order, forced off after the shutdown timeout) and lock them, as failover locks the primary's | — | yes: they're unlocked and started again |
 | 3. Take a final snapshot and send the last changes | — | yes: the DR guests are started again |
-| 4. Remove the DR host's guest registrations (configuration files only), remove the plan's `ezdr-` storages unless another guest uses one, roll the replicas back to the final snapshot, and make them read-only | — | no (retry) |
+| 4. Remove the DR host's guest registrations (configuration files only), remove the plan's `ezdr-` storages unless another guest uses one, roll the replicas back to the final snapshot, and make them read-only; destroy the cloud-init drives the failover created (drives with snapshots are reused replicas and stay) | — | no (retry) |
 | 5. Resume replication: the plan becomes active; the primary's source job and the DR host's pull job return | — | no (retry) |
 | 6. Unlock the primary's guests (restoring onboot) and start them in startup order with their delays; check them | primary | no (retry) |
 | 7. Wait for the operator to verify the guests, then switch DNS back to production values on confirmation | primary | — |

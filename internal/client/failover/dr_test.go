@@ -18,6 +18,8 @@ import (
 type drFake struct {
 	fake
 	datasets map[string]bool
+	// snapshots are the snapshots of a dataset, as zfs lists them.
+	snapshots map[string]string
 }
 
 func (f *drFake) run(ctx context.Context, name string, args ...string) ([]byte, error) {
@@ -29,6 +31,9 @@ func (f *drFake) run(ctx context.Context, name string, args ...string) ([]byte, 
 			return nil, errors.New("dataset does not exist")
 		}
 		return nil, nil
+	case strings.HasPrefix(call, "zfs list -H -t snapshot -o name -d 1 "):
+		f.calls = append(f.calls, call)
+		return []byte(f.snapshots[args[len(args)-1]]), nil
 	case strings.HasPrefix(call, "zfs receive -A "):
 		f.calls = append(f.calls, call)
 		return nil, errors.New("exit status 1: 'x' does not have any resumable receive state to abort")

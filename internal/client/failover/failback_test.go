@@ -82,3 +82,33 @@ func TestCleanupRefusesOtherGuests(t *testing.T) {
 		t.Errorf("removed someone else's guest: %v", err)
 	}
 }
+
+func TestCleanupRemovesCreatedCloudInit(t *testing.T) {
+	ctx := context.Background()
+	r, f := drRunner(t)
+	if _, err := r.Prepare(ctx, "plan1", []uint32{201}); err != nil {
+		t.Fatal(err)
+	}
+	// The failover created a fresh drive: it goes.
+	drive := "tank/ezdr/pve1/rpool/data/vm-201-cloudinit"
+	f.datasets[drive] = true
+	f.calls = nil
+	notes, err := r.Cleanup(ctx, "plan1", []uint32{201}, "zrepl_9")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(strings.Join(f.calls, "\n"), "zfs destroy "+drive) ||
+		!strings.Contains(strings.Join(notes, "|"), "removed guest 201's cloud-init drive "+drive) {
+		t.Errorf("calls = %q, notes = %q", f.calls, notes)
+	}
+
+	// A reused replica of the drive (with snapshots) is kept.
+	f.snapshots = map[string]string{drive: drive + "@zrepl_1\n"}
+	f.calls = nil
+	if _, err := r.Cleanup(ctx, "plan1", []uint32{201}, "zrepl_9"); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(strings.Join(f.calls, "\n"), "destroy") {
+		t.Errorf("destroyed a reused replica: %q", f.calls)
+	}
+}

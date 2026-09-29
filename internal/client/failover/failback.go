@@ -18,8 +18,9 @@ import (
 // guests failed back (docs/design/failback.md, section 4): it deletes their
 // configuration files, never their disks (which are the replicas), removes
 // the plan's storages unless another guest uses one, rolls each replica
-// back to the snapshot the primary has, and makes it read-only again.
-// Repeating it is safe. It returns what it did.
+// back to the snapshot the primary has, and makes it read-only again. It
+// also destroys the cloud-init drives the failover created. Repeating it is
+// safe. It returns what it did.
 func (r *Runner) Cleanup(ctx context.Context, planID string, vmids []uint32, snapshot string) ([]string, error) {
 	if !snapshotPattern.MatchString(snapshot) {
 		return nil, fmt.Errorf("invalid snapshot name %q", snapshot)
@@ -101,8 +102,44 @@ func (r *Runner) Cleanup(ctx context.Context, planID string, vmids []uint32, sna
 				return notes, err
 			}
 		}
+		note, err := r.removeCloudInit(ctx, vmid, st.Config, rec.Storages)
+		if err != nil {
+			return notes, err
+		}
+		if note != "" {
+			notes = append(notes, note)
+		}
 	}
 	return notes, nil
+}
+
+// removeCloudInit destroys the cloud-init drive the failover created for a
+// VM (see ensureCloudInit), which is left on the plan's storage once the
+// guest is removed. A drive with snapshots is a replica from an earlier
+// setup that the failover reused, and is kept.
+func (r *Runner) removeCloudInit(ctx context.Context, vmid uint32, original string, storages []*clientv1.RecoveryStorage) (string, error) {
+	if key, _ := cloudInitDrive(original); key == "" {
+		return "", nil
+	}
+	name := "vm-" + strconv.FormatUint(uint64(vmid), 10) + "-cloudinit"
+	for _, s := range storages {
+		ds := s.ReceiveDataset + "/" + s.SourceDataset + "/" + name
+		if _, err := r.Run(ctx, "zfs", "list", "-H", "-o", "name", ds); err != nil {
+			continue // not there (or removed by an earlier attempt)
+		}
+		out, err := r.Run(ctx, "zfs", "list", "-H", "-t", "snapshot", "-o", "name", "-d", "1", ds)
+		if err != nil {
+			return "", err
+		}
+		if strings.TrimSpace(string(out)) != "" {
+			continue
+		}
+		if _, err := r.Run(ctx, "zfs", "destroy", ds); err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("removed guest %d's cloud-init drive %s", vmid, ds), nil
+	}
+	return "", nil
 }
 
 // storageUsers lists the guests on this node whose configuration refers to
