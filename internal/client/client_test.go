@@ -10,8 +10,12 @@ import (
 	"crypto/x509/pkix"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"math/big"
 	"net/netip"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -133,5 +137,30 @@ func TestConfigRoundTrip(t *testing.T) {
 	}
 	if _, err := LoadConfig(t.TempDir()); !errors.Is(err, ErrNotEnrolled) {
 		t.Errorf("missing config: err = %v, want ErrNotEnrolled", err)
+	}
+}
+
+func TestRootOnly(t *testing.T) {
+	bin := filepath.Join(t.TempDir(), "ezdr")
+	if err := os.WriteFile(bin, nil, 0o755); err != nil { //nolint:gosec // test binary
+		t.Fatal(err)
+	}
+	if os.Getuid() != 0 {
+		if err := rootOnly(bin); err == nil {
+			t.Error("accepted a binary another user owns")
+		}
+	}
+	if _, err := os.Stat("/usr/bin/env"); err == nil {
+		if err := rootOnly("/usr/bin/env"); err != nil {
+			t.Errorf("/usr/bin/env: %v", err)
+		}
+	}
+}
+
+func TestPrintable(t *testing.T) {
+	var b strings.Builder
+	fmt.Fprintf(printable{&b}, "plan %s\n", "Main\x1b]0;evil\x07\u009b2J…")
+	if got := b.String(); got != "plan Main]0;evil2J…\n" {
+		t.Errorf("printed %q", got)
 	}
 }

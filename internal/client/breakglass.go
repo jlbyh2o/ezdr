@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/jlbyh2o/ezdr/internal/client/failover"
 	"github.com/jlbyh2o/ezdr/internal/client/guests"
@@ -21,6 +22,8 @@ import (
 // without the portal (docs/design/failover.md, section 7). The operator
 // confirms by typing the plan's name.
 func BreakGlassFailover(ctx context.Context, in io.Reader, out io.Writer, planArg string) error {
+	// Names and values come from the portal and the primary.
+	out = printable{out}
 	r := failover.NewRunner()
 	recs, err := guests.LoadRecovery(r.Guests)
 	if err != nil {
@@ -142,4 +145,22 @@ func BreakGlassFailover(ctx context.Context, in io.Reader, out io.Writer, planAr
 	fmt.Fprintln(out, "\nDone. When the portal is reachable again, this host reports the failover. Confirm it there to lock the")
 	fmt.Fprintln(out, "primary's copies: until then, they could start on the primary too.")
 	return nil
+}
+
+// printable writes text without control characters other than newlines and
+// tabs, so nothing written can control the terminal. Each write must hold
+// whole characters (as fmt's do).
+type printable struct{ w io.Writer }
+
+func (p printable) Write(b []byte) (int, error) {
+	clean := strings.Map(func(r rune) rune {
+		if r != '\n' && r != '\t' && unicode.IsControl(r) {
+			return -1
+		}
+		return r
+	}, string(b))
+	if _, err := io.WriteString(p.w, clean); err != nil {
+		return 0, err
+	}
+	return len(b), nil
 }
