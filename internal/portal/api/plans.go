@@ -103,6 +103,10 @@ func (s PlanService) validate(ctx context.Context, spec *planv1.PlanSpec, planID
 			}
 		}
 	}
+	replicas, err := s.otherReplicas(ctx, all, planID, spec.DrHostId)
+	if err != nil {
+		return nil, err
+	}
 	excluded := map[uint32]bool{}
 	if spec.PrimaryHostId != "" {
 		ex, err := s.Store.GuestExclusions(ctx, spec.PrimaryHostId)
@@ -122,7 +126,47 @@ func (s PlanService) validate(ctx context.Context, spec *planv1.PlanSpec, planID
 		}
 	}
 	return plan.Validate(spec, plan.Context{Primary: primary, DR: dr, OtherPlans: others, UsedPorts: ports, FailedOver: failedOver, Excluded: excluded,
-		OtherTunnels: tunnels, Now: time.Now()}), nil
+		OtherTunnels: tunnels, OtherReplicas: replicas, Now: time.Now()}), nil
+}
+
+// otherReplicas returns where the plans other than planID with the given DR
+// host keep their replicas, from both their saved and applied
+// specifications.
+func (s PlanService) otherReplicas(ctx context.Context, all []store.Plan, planID, drHostID string) ([]plan.OtherReplicas, error) {
+	hosts := map[string]*plan.Host{}
+	var out []plan.OtherReplicas
+	for _, p := range all {
+		if p.ID == planID || p.DRHostID != drHostID || drHostID == "" {
+			continue
+		}
+		h, ok := hosts[p.PrimaryHostID]
+		if !ok {
+			var err error
+			if h, err = s.loadHost(ctx, p.PrimaryHostID); err != nil {
+				return nil, err
+			}
+			hosts[p.PrimaryHostID] = h
+		}
+		if h == nil || h.Inventory == nil {
+			continue
+		}
+		o := plan.OtherReplicas{Plan: p.Name}
+		for _, b := range [][]byte{p.Spec, p.AppliedSpec} {
+			if b == nil {
+				continue
+			}
+			sp, err := decodeSpec(b)
+			if err != nil {
+				return nil, err
+			}
+			o.Paths = append(o.Paths, plan.ReplicaPaths(sp, h.Inventory)...)
+			for _, g := range plan.JobGroups(sp, h.Inventory) {
+				o.ReceiveDatasets = append(o.ReceiveDatasets, g.ReceiveDataset)
+			}
+		}
+		out = append(out, o)
+	}
+	return out, nil
 }
 
 // checkSpec enforces what a plan needs before it can be saved at all. Other

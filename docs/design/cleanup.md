@@ -97,9 +97,11 @@ cloud-init volume, so removing stale cloud-init replicas is safe.
 ## 4. Validation: shared replica paths
 
 - A plan's replica paths are `<receive dataset>/<source dataset>` for each
-  of its disks. Validation reports an **error** when any of them equals, or
-  is nested in, a replica path or receive dataset of another plan, and
-  names that plan and the dataset.
+  of its disks. Validation reports an **error**, naming the other plan and
+  the dataset, when a replica path equals or is nested in (either way) a
+  replica path of another plan with the same DR host, or when a receive
+  dataset of either plan lies at or under a replica path of the other.
+  Sharing a receive dataset is fine as long as the replica paths differ.
 - Two plans on the same primary already can't share disks (they can't share
   guests), so in practice this catches plans from different primaries with
   the same receive dataset and the same pool and disk names.

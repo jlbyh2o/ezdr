@@ -404,3 +404,32 @@ func TestSuggestDatasetFallsBackToFreestPool(t *testing.T) {
 		t.Errorf("mappings = %v", s.StorageMappings)
 	}
 }
+
+func TestReplicaPathConflicts(t *testing.T) {
+	s := validSpec()
+	if got := strings.Join(ReplicaPaths(s, primaryInv()), " "); got != "tank-dr/ezdr/pve1/rpool/subvol-101-disk-0 tank-dr/ezdr/pve1/rpool/vm-201-disk-0" {
+		t.Fatalf("replica paths = %s", got)
+	}
+	for _, tc := range []struct {
+		name  string
+		other OtherReplicas
+		want  string
+	}{
+		{"same receive dataset, other disks", OtherReplicas{Plan: "Other", ReceiveDatasets: []string{"tank-dr/ezdr/pve1"},
+			Paths: []string{"tank-dr/ezdr/pve1/rpool/vm-300-disk-0"}}, ""},
+		{"same replica path", OtherReplicas{Plan: "Other", ReceiveDatasets: []string{"tank-dr/ezdr/pve1"},
+			Paths: []string{"tank-dr/ezdr/pve1/rpool/vm-201-disk-0"}},
+			`replicas would share tank-dr/ezdr/pve1/rpool/vm-201-disk-0 with plan "Other" on the DR host`},
+		{"receive dataset inside a replica", OtherReplicas{Plan: "Nested", ReceiveDatasets: []string{"tank-dr/ezdr/pve1/rpool/subvol-101-disk-0/x"}},
+			`replicas would share tank-dr/ezdr/pve1/rpool/subvol-101-disk-0 with plan "Nested"`},
+		{"our receive dataset inside their replica", OtherReplicas{Plan: "Outer", Paths: []string{"tank-dr/ezdr"}},
+			`replicas would share tank-dr/ezdr/pve1 (and 2 more) with plan "Outer"`},
+	} {
+		ctx := ctxFor(primaryInv(), drInv())
+		ctx.OtherReplicas = []OtherReplicas{tc.other}
+		errs := messages(Validate(s, ctx), planv1.Severity_SEVERITY_ERROR)
+		if tc.want == "" && errs != "" || !strings.Contains(errs, tc.want) {
+			t.Errorf("%s: errors = %q, want %q", tc.name, errs, tc.want)
+		}
+	}
+}

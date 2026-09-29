@@ -36,7 +36,10 @@ type Context struct {
 	UsedPorts map[uint32]string
 	// OtherTunnels are other applied plans that use EZDR tunnels.
 	OtherTunnels []OtherTunnel
-	Now          time.Time
+	// OtherReplicas are where other plans with the same DR host keep their
+	// replicas.
+	OtherReplicas []OtherReplicas
+	Now           time.Time
 	// FailedOver is set while the plan's guests run on the DR host (failing
 	// over, failed over, or failing back): their registrations there are
 	// the plan's own, not conflicts.
@@ -51,6 +54,14 @@ type OtherTunnel struct {
 	Plan                    string
 	PrimaryHostID, DRHostID string
 	Tunnel                  *planv1.EzdrTunnel
+}
+
+// OtherReplicas is where another plan keeps its replicas on the DR host,
+// for conflict checks.
+type OtherReplicas struct {
+	Plan            string
+	ReceiveDatasets []string
+	Paths           []string
 }
 
 // listener returns the ID of the host that accepts a tunnel's connection.
@@ -134,6 +145,7 @@ func Validate(spec *planv1.PlanSpec, ctx Context) []*planv1.Issue {
 	is.in(SectionMappings)
 	validateStorage(spec, usedStorage, primary, dr, guests, &is)
 	validateNetwork(spec, usedBridges, dr, guests, &is)
+	validateReplicaPaths(spec, primary, ctx, &is)
 	is.in(SectionNetwork)
 	validateReplicationNetwork(spec, primary, ctx, &is)
 	is.in(SectionTakeover)
@@ -526,3 +538,49 @@ func validateTestSettings(spec *planv1.PlanSpec, dr *inventoryv1.Inventory, is *
 		}
 	}
 }
+
+// validateReplicaPaths reports replicas that would share a dataset with
+// another plan's: equal or nested replica paths, or another plan's receive
+// dataset inside one of this plan's replicas (or the other way around).
+// Cleaning up one plan's data would then delete the other's.
+func validateReplicaPaths(spec *planv1.PlanSpec, primary *inventoryv1.Inventory, ctx Context, is *issues) {
+	paths := ReplicaPaths(spec, primary)
+	var receive []string
+	for _, g := range JobGroups(spec, primary) {
+		receive = append(receive, g.ReceiveDataset)
+	}
+	for _, o := range ctx.OtherReplicas {
+		shared := map[string]bool{}
+		for _, p := range paths {
+			for _, q := range o.Paths {
+				if within(p, q) || within(q, p) {
+					shared[p] = true
+				}
+			}
+			for _, r := range o.ReceiveDatasets {
+				if within(r, p) {
+					shared[p] = true
+				}
+			}
+		}
+		for _, r := range receive {
+			for _, q := range o.Paths {
+				if within(r, q) {
+					shared[r] = true
+				}
+			}
+		}
+		if len(shared) == 0 {
+			continue
+		}
+		list := sortedKeys(shared)
+		more := ""
+		if len(list) > 1 {
+			more = fmt.Sprintf(" (and %d more)", len(list)-1)
+		}
+		is.errorf(0, "replicas would share %s%s with plan %q on the DR host; choose another receive dataset", list[0], more, o.Plan)
+	}
+}
+
+// within reports whether dataset a is b or inside it.
+func within(a, b string) bool { return a == b || strings.HasPrefix(a, b+"/") }

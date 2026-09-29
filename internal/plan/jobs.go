@@ -85,6 +85,19 @@ func JobGroups(spec *planv1.PlanSpec, primary *inventoryv1.Inventory) []JobGroup
 	return groups
 }
 
+// ReplicaPaths returns where a plan's replicas are on the DR host: each
+// replicated disk's dataset under its receive dataset, sorted.
+func ReplicaPaths(spec *planv1.PlanSpec, primary *inventoryv1.Inventory) []string {
+	var paths []string
+	for _, g := range JobGroups(spec, primary) {
+		for _, d := range g.Datasets {
+			paths = append(paths, g.ReceiveDataset+"/"+d)
+		}
+	}
+	sort.Strings(paths)
+	return paths
+}
+
 // BasePort returns the plan's first zrepl port.
 func BasePort(spec *planv1.PlanSpec) uint32 {
 	var p uint32

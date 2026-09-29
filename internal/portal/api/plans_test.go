@@ -360,3 +360,53 @@ func TestTunnelPlan(t *testing.T) {
 		t.Errorf("failed over: tunnel = %v, zrepl = %v", pds.SiteTunnel, pds.Zrepl)
 	}
 }
+
+func TestSharedReplicaPaths(t *testing.T) {
+	d, ctx, primary, dr := planTestDeps(t)
+	svc := PlanService{Deps: d}
+	// A second primary with a disk of the same name.
+	if _, err := d.Store.CreateToken(ctx, store.Token{ID: "tpve2", SecretHash: []byte("s"), CreatedBy: "admin",
+		ExpiresAt: time.Now().Add(time.Hour)}); err != nil {
+		t.Fatal(err)
+	}
+	h, err := d.Store.EnrollHost(ctx, "tpve2", []byte("s"), store.Host{ID: "pve2", Hostname: "pve2", MachineID: "pve2",
+		WireGuardPublicKey: bytes.Repeat([]byte("q"), 32)}, func([]netip.Addr) (netip.Addr, error) { return netip.MustParseAddr("100.64.42.9"), nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, _ := proto.Marshal(&inventoryv1.Inventory{
+		Host: &inventoryv1.HostInfo{Hostname: "pve2"},
+		Guests: []*inventoryv1.Guest{{Vmid: 101, Name: "web", Ready: true, Disks: []*inventoryv1.Disk{{Key: "rootfs", Storage: "local-zfs",
+			ZfsDataset: "rpool/subvol-101-disk-0", Readiness: inventoryv1.Readiness_READINESS_REPLICABLE}}}},
+		Storages: []*inventoryv1.Storage{{Id: "local-zfs", Type: "zfspool", ZfsPool: "rpool"}},
+	})
+	if _, err := d.Store.PutInventory(ctx, store.Inventory{HostID: h.ID, Data: data, Hash: []byte("pve2"), CollectedAt: time.Now()}); err != nil {
+		t.Fatal(err)
+	}
+
+	spec := func(name, primary, receive string) *planv1.PlanSpec {
+		return &planv1.PlanSpec{Name: name, PrimaryHostId: primary, DrHostId: dr, Guests: []*planv1.PlanGuest{{Vmid: 101}},
+			StorageMappings: []*planv1.StorageMapping{{SourceStorage: "local-zfs", ReceiveDataset: receive}}}
+	}
+	if _, err := svc.CreatePlan(ctx, connect.NewRequest(&portalv1.CreatePlanRequest{Spec: spec("First", primary, "tank/shared")})); err != nil {
+		t.Fatal(err)
+	}
+	conflict := func(s *planv1.PlanSpec) string {
+		v, err := svc.ValidatePlan(ctx, connect.NewRequest(&portalv1.ValidatePlanRequest{Spec: s}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, i := range v.Msg.Issues {
+			if strings.Contains(i.Message, "replicas would share") {
+				return i.Message
+			}
+		}
+		return ""
+	}
+	if got := conflict(spec("Second", h.ID, "tank/shared")); !strings.Contains(got, `tank/shared/rpool/subvol-101-disk-0 with plan "First"`) {
+		t.Errorf("shared path not reported: %q", got)
+	}
+	if got := conflict(spec("Second", h.ID, "tank/ezdr/pve2")); got != "" {
+		t.Errorf("separate paths reported: %q", got)
+	}
+}
