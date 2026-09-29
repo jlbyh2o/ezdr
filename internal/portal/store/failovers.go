@@ -177,3 +177,34 @@ func (s *Store) CreateFailback(ctx context.Context, f FailoverRow) error {
 func (s *Store) UpdateFailback(ctx context.Context, f FailoverRow) error {
 	return s.update(ctx, failbacks, f)
 }
+
+// Cleanup kinds, each stored in its own table (with the same columns as
+// failovers).
+const (
+	CleanupPlan     = "plan_deletions"
+	CleanupTakeover = "takeover_cleanups"
+)
+
+// LatestCleanup returns a plan's newest cleanup of a kind, or ErrNotFound.
+func (s *Store) LatestCleanup(ctx context.Context, kind, planID string) (FailoverRow, error) {
+	return s.latest(ctx, kind, planID)
+}
+
+// ActiveCleanups returns the cleanups of a kind that still need the runner.
+func (s *Store) ActiveCleanups(ctx context.Context, kind string) ([]FailoverRow, error) {
+	return s.active(ctx, kind)
+}
+
+// ErrCleanupActive is returned when a plan already has a cleanup running.
+var ErrCleanupActive = errors.New("the plan already has a cleanup running")
+
+// CreateCleanup stores a new cleanup, unless the plan has an active one of
+// the same kind.
+func (s *Store) CreateCleanup(ctx context.Context, kind string, f FailoverRow) error {
+	return s.create(ctx, kind, f, ErrCleanupActive)
+}
+
+// UpdateCleanup saves a cleanup's progress.
+func (s *Store) UpdateCleanup(ctx context.Context, kind string, f FailoverRow) error {
+	return s.update(ctx, kind, f)
+}

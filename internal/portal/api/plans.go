@@ -222,6 +222,9 @@ func (s PlanService) planMsg(ctx context.Context, p store.Plan) (*portalv1.Plan,
 	if running, err := s.failbackRunning(ctx, p.ID); err == nil && running {
 		msg.State = portalv1.PlanState_PLAN_STATE_FAILING_BACK
 	}
+	if deleting, err := s.deletionActive(ctx, p.ID); err == nil && deleting {
+		msg.State = portalv1.PlanState_PLAN_STATE_DELETING
+	}
 	if p.AppliedSpec != nil {
 		if msg.AppliedSpec, err = decodeSpec(p.AppliedSpec); err != nil {
 			return nil, err
@@ -399,6 +402,30 @@ func (s PlanService) DeletePlan(ctx context.Context, req *connect.Request[portal
 		return nil, internalError(err)
 	} else if len(runs) > 0 && runs[0].Active {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("end the plan's test failover before deleting it"))
+	}
+	if err := s.refuseIfFailedOver(ctx, sp.ID); err != nil {
+		return nil, err
+	}
+	if _, c, err := s.loadCleanup(ctx, portalv1.DataCleanupKind_DATA_CLEANUP_KIND_TAKEOVER, sp.ID); err == nil &&
+		c.State == portalv1.DataCleanupState_DATA_CLEANUP_STATE_RUNNING {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("wait for the takeover cleanup to finish"))
+	}
+	if req.Msg.DeleteData {
+		if strings.TrimSpace(req.Msg.ConfirmName) != sp.Name {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("type the plan's name to confirm"))
+		}
+		spec, err := decodeSpec(sp.Spec)
+		if err != nil {
+			return nil, internalError(err)
+		}
+		p, err := s.planDataPreview(ctx, sp, spec)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := s.startCleanup(ctx, sp, portalv1.DataCleanupKind_DATA_CLEANUP_KIND_PLAN, p); err != nil {
+			return nil, err
+		}
+		return connect.NewResponse(&portalv1.DeletePlanResponse{}), nil
 	}
 	if err := s.Store.DeletePlan(ctx, sp.ID); err != nil {
 		return nil, internalError(err)
@@ -613,6 +640,9 @@ func (s PlanService) ActivatePlan(ctx context.Context, req *connect.Request[port
 	if spec.Takeover != nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan adopts an existing zrepl setup; take it over instead"))
 	}
+	if err := s.refuseIfFailedOver(ctx, sp.ID); err != nil {
+		return nil, err
+	}
 	if err := s.requireValid(ctx, spec, sp.ID); err != nil {
 		return nil, err
 	}
@@ -754,6 +784,11 @@ func (s PlanService) refuseIfFailedOver(ctx context.Context, id string) error {
 		return internalError(err)
 	} else if running {
 		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan's failback hasn't finished"))
+	}
+	if deleting, err := s.deletionActive(ctx, id); err != nil {
+		return internalError(err)
+	} else if deleting {
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the plan's data is being deleted"))
 	}
 	return nil
 }

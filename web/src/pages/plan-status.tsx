@@ -11,6 +11,7 @@ import { failoverClient, planClient } from '@/lib/api'
 import { formatBytes, formatDuration, formatRelative } from '@/lib/format'
 import { operationPath } from '@/lib/operations'
 import { usePoll } from '@/lib/use-poll'
+import { DeletionCard } from '@/pages/data-cleanup'
 
 // PlanStatusCard shows an active plan's replication health.
 export function PlanStatusCard({ plan }: { plan: Plan }) {
@@ -81,7 +82,7 @@ export function PlanStatusCard({ plan }: { plan: Plan }) {
 }
 
 // PlanStateCard explains a plan that isn't replicating normally: paused,
-// failing over, failed over, or failing back.
+// failing over, failed over, failing back, or being deleted.
 export function PlanStateCard({ plan, drHostname }: { plan: Plan; drHostname?: string }) {
   const failover = plan.state === PlanState.FAILING_OVER || plan.state === PlanState.FAILED_OVER
   const { data: fo } = usePoll(
@@ -178,6 +179,8 @@ export function PlanStateCard({ plan, drHostname }: { plan: Plan; drHostname?: s
         </Card>
       )
     }
+    case PlanState.DELETING:
+      return <DeletionCard plan={plan} />
     default:
       return null
   }

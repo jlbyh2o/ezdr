@@ -50,6 +50,10 @@ type fakeHost struct {
 	failSend    int
 	failCleanup int
 	written     uint64
+	// failDataCleanup fails that many data cleanups; scanProblem is
+	// reported for every dataset a data scan looks at.
+	failDataCleanup int
+	scanProblem     string
 	// peer is the other host: a DR host's replication brings the peer's
 	// latest snapshot.
 	peer *fakeHost
@@ -230,6 +234,35 @@ func (f *fakeHost) answer(a *clientv1.Action) bool {
 	case *clientv1.Action_TestCleanup:
 		name = "test cleanup"
 		ack.Output = []string{"destroyed test guest", "destroyed clone"}
+	case *clientv1.Action_DataScan:
+		name = "scan"
+		ack.DataScan = &clientv1.DataScanResult{}
+		f.mu.Lock()
+		for _, t := range k.DataScan.Targets {
+			sc := &clientv1.DatasetScan{Dataset: t.Dataset, Exists: true, ReclaimBytes: 1 << 20, Snapshots: 3}
+			if f.scanProblem != "" {
+				sc.Problems = []string{f.scanProblem}
+			}
+			ack.DataScan.Datasets = append(ack.DataScan.Datasets, sc)
+		}
+		f.mu.Unlock()
+	case *clientv1.Action_DataCleanup:
+		var ts []string
+		for _, t := range k.DataCleanup.Targets {
+			if t.Destroy {
+				ts = append(ts, t.Dataset+":destroy")
+			} else {
+				ts = append(ts, t.Dataset+":"+t.Prefix)
+			}
+		}
+		name = "cleanup " + strings.Join(ts, ",") + " release " + strings.Join(k.DataCleanup.ReleaseJobs, ",")
+		ack.Output = []string{"destroyed something"}
+		f.mu.Lock()
+		if f.failDataCleanup > 0 {
+			f.failDataCleanup--
+			ack.Succeeded, ack.Message = false, "zfs destroy failed"
+		}
+		f.mu.Unlock()
 	default:
 		name = "other"
 	}

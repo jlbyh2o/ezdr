@@ -286,6 +286,22 @@ service PlanService {
   rpc DeactivatePlan(DeactivatePlanRequest) returns (DeactivatePlanResponse);
   // GetPlanStatus returns an active plan's replication health.
   rpc GetPlanStatus(GetPlanStatusRequest) returns (GetPlanStatusResponse);
+  // PreviewPlanDataDeletion asks both hosts what deleting a deactivated
+  // plan's replicated data would remove. It changes nothing. See
+  // docs/design/cleanup.md.
+  rpc PreviewPlanDataDeletion(PreviewPlanDataDeletionRequest) returns (PreviewPlanDataDeletionResponse);
+  // PreviewTakeoverCleanup asks both hosts what cleaning up after a
+  // completed takeover's old zrepl jobs would remove. It changes nothing.
+  rpc PreviewTakeoverCleanup(PreviewTakeoverCleanupRequest) returns (PreviewTakeoverCleanupResponse);
+  // StartTakeoverCleanup cleans up after a completed takeover's old jobs.
+  rpc StartTakeoverCleanup(StartTakeoverCleanupRequest) returns (StartTakeoverCleanupResponse);
+  // GetDataCleanup returns the plan's latest cleanup of the given kind.
+  rpc GetDataCleanup(GetDataCleanupRequest) returns (GetDataCleanupResponse);
+  // RetryDataCleanup runs a failed cleanup's failed step again.
+  rpc RetryDataCleanup(RetryDataCleanupRequest) returns (RetryDataCleanupResponse);
+  // CancelDataCleanup gives up on a failed cleanup. A plan whose deletion
+  // is canceled is kept as a draft; data already deleted stays deleted.
+  rpc CancelDataCleanup(CancelDataCleanupRequest) returns (CancelDataCleanupResponse);
 }
 
 // FailoverService fails plans over to their DR hosts. See
@@ -1008,6 +1024,8 @@ enum PlanState {
   PLAN_STATE_FAILED_OVER = 5;
   // A failback is running.
   PLAN_STATE_FAILING_BACK = 6;
+  // The plan's replicated data is being deleted, and then the plan.
+  PLAN_STATE_DELETING = 7;
 }
 
 message Plan {
@@ -1088,6 +1106,11 @@ message UpdatePlanResponse {
 
 message DeletePlanRequest {
   string id = 1;
+  // Also delete the plan's replicated data on both hosts first (see
+  // PreviewPlanDataDeletion). The plan is deleted once that succeeds.
+  bool delete_data = 2;
+  // The plan's name, typed by the operator to confirm deleting data.
+  string confirm_name = 3;
 }
 
 message DeletePlanResponse {}
@@ -1355,4 +1378,128 @@ message OverviewOperation {
   string started_by = 7;
   google.protobuf.Timestamp started_at = 8;
   bool awaiting_confirmation = 9;
+}
+
+// DataCleanupKind is what a cleanup removes. See docs/design/cleanup.md.
+enum DataCleanupKind {
+  DATA_CLEANUP_KIND_UNSPECIFIED = 0;
+  // A deleted plan's replicas and snapshots; the plan is deleted last.
+  DATA_CLEANUP_KIND_PLAN = 1;
+  // What a takeover's old zrepl jobs left behind.
+  DATA_CLEANUP_KIND_TAKEOVER = 2;
+}
+
+enum DataCleanupState {
+  DATA_CLEANUP_STATE_UNSPECIFIED = 0;
+  DATA_CLEANUP_STATE_RUNNING = 1;
+  DATA_CLEANUP_STATE_COMPLETED = 2;
+  // A step failed; it can be retried or the cleanup canceled.
+  DATA_CLEANUP_STATE_FAILED = 3;
+  DATA_CLEANUP_STATE_CANCELED = 4;
+}
+
+// DataCleanupPreview is what a cleanup would remove on each host.
+message DataCleanupPreview {
+  google.protobuf.Timestamp checked_at = 1;
+  repeated HostDataCleanup hosts = 2;
+  // What blocks the cleanup.
+  repeated string problems = 3;
+}
+
+message HostDataCleanup {
+  string host_id = 1;
+  string hostname = 2;
+  // "primary" or "DR host".
+  string role = 3;
+  // Only datasets that exist.
+  repeated DatasetCleanup datasets = 4;
+  // zrepl jobs whose holds and cursors are released first.
+  repeated string release_jobs = 5;
+  uint64 reclaim_bytes = 6;
+  // Datasets left alone, and why (for example, a zrepl job still covers
+  // them).
+  repeated string notes = 7;
+}
+
+message DatasetCleanup {
+  string dataset = 1;
+  // Destroy the dataset; otherwise delete its snapshots and bookmarks
+  // whose names start with prefix.
+  bool destroy = 2;
+  string prefix = 3;
+  string empty_parents_below = 4;
+  uint64 reclaim_bytes = 5;
+  uint32 snapshots = 6;
+  uint32 bookmarks = 7;
+  repeated string skipped = 8;
+  repeated string problems = 9;
+}
+
+// DataCleanup is a cleanup run: it removes exactly what its preview
+// listed.
+message DataCleanup {
+  string id = 1;
+  string plan_id = 2;
+  DataCleanupKind kind = 3;
+  DataCleanupState state = 4;
+  string started_by = 5;
+  google.protobuf.Timestamp started_at = 6;
+  google.protobuf.Timestamp completed_at = 7;
+  DataCleanupPreview preview = 8;
+  repeated TakeoverStep steps = 9;
+  string error = 10;
+  // The plan's name, kept for messages after the plan is deleted.
+  string plan_name = 11;
+}
+
+message PreviewPlanDataDeletionRequest {
+  string plan_id = 1;
+}
+
+message PreviewPlanDataDeletionResponse {
+  DataCleanupPreview preview = 1;
+}
+
+message PreviewTakeoverCleanupRequest {
+  string plan_id = 1;
+}
+
+message PreviewTakeoverCleanupResponse {
+  DataCleanupPreview preview = 1;
+}
+
+message StartTakeoverCleanupRequest {
+  string plan_id = 1;
+}
+
+message StartTakeoverCleanupResponse {
+  DataCleanup cleanup = 1;
+}
+
+message GetDataCleanupRequest {
+  string plan_id = 1;
+  DataCleanupKind kind = 2;
+}
+
+message GetDataCleanupResponse {
+  // Unset if the plan has no cleanup of that kind.
+  DataCleanup cleanup = 1;
+}
+
+message RetryDataCleanupRequest {
+  string plan_id = 1;
+  DataCleanupKind kind = 2;
+}
+
+message RetryDataCleanupResponse {
+  DataCleanup cleanup = 1;
+}
+
+message CancelDataCleanupRequest {
+  string plan_id = 1;
+  DataCleanupKind kind = 2;
+}
+
+message CancelDataCleanupResponse {
+  DataCleanup cleanup = 1;
 }

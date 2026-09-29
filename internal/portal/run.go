@@ -135,6 +135,7 @@ func StartBackground(ctx context.Context, d *api.Deps) {
 	go d.ResumeTakeovers(ctx)
 	go d.RunTestSupervisor(ctx)
 	go d.ResumeFailovers(ctx)
+	go d.ResumeCleanups(ctx)
 	go d.ResumeFailbacks(ctx)
 	go d.RunDNSChecker(ctx)
 }

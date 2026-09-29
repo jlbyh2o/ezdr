@@ -146,6 +146,24 @@ const (
 	// PlanServiceGetPlanStatusProcedure is the fully-qualified name of the PlanService's GetPlanStatus
 	// RPC.
 	PlanServiceGetPlanStatusProcedure = "/ezdr.portal.v1.PlanService/GetPlanStatus"
+	// PlanServicePreviewPlanDataDeletionProcedure is the fully-qualified name of the PlanService's
+	// PreviewPlanDataDeletion RPC.
+	PlanServicePreviewPlanDataDeletionProcedure = "/ezdr.portal.v1.PlanService/PreviewPlanDataDeletion"
+	// PlanServicePreviewTakeoverCleanupProcedure is the fully-qualified name of the PlanService's
+	// PreviewTakeoverCleanup RPC.
+	PlanServicePreviewTakeoverCleanupProcedure = "/ezdr.portal.v1.PlanService/PreviewTakeoverCleanup"
+	// PlanServiceStartTakeoverCleanupProcedure is the fully-qualified name of the PlanService's
+	// StartTakeoverCleanup RPC.
+	PlanServiceStartTakeoverCleanupProcedure = "/ezdr.portal.v1.PlanService/StartTakeoverCleanup"
+	// PlanServiceGetDataCleanupProcedure is the fully-qualified name of the PlanService's
+	// GetDataCleanup RPC.
+	PlanServiceGetDataCleanupProcedure = "/ezdr.portal.v1.PlanService/GetDataCleanup"
+	// PlanServiceRetryDataCleanupProcedure is the fully-qualified name of the PlanService's
+	// RetryDataCleanup RPC.
+	PlanServiceRetryDataCleanupProcedure = "/ezdr.portal.v1.PlanService/RetryDataCleanup"
+	// PlanServiceCancelDataCleanupProcedure is the fully-qualified name of the PlanService's
+	// CancelDataCleanup RPC.
+	PlanServiceCancelDataCleanupProcedure = "/ezdr.portal.v1.PlanService/CancelDataCleanup"
 	// FailoverServiceGetFailoverOptionsProcedure is the fully-qualified name of the FailoverService's
 	// GetFailoverOptions RPC.
 	FailoverServiceGetFailoverOptionsProcedure = "/ezdr.portal.v1.FailoverService/GetFailoverOptions"
@@ -896,6 +914,22 @@ type PlanServiceClient interface {
 	DeactivatePlan(context.Context, *connect.Request[v1.DeactivatePlanRequest]) (*connect.Response[v1.DeactivatePlanResponse], error)
 	// GetPlanStatus returns an active plan's replication health.
 	GetPlanStatus(context.Context, *connect.Request[v1.GetPlanStatusRequest]) (*connect.Response[v1.GetPlanStatusResponse], error)
+	// PreviewPlanDataDeletion asks both hosts what deleting a deactivated
+	// plan's replicated data would remove. It changes nothing. See
+	// docs/design/cleanup.md.
+	PreviewPlanDataDeletion(context.Context, *connect.Request[v1.PreviewPlanDataDeletionRequest]) (*connect.Response[v1.PreviewPlanDataDeletionResponse], error)
+	// PreviewTakeoverCleanup asks both hosts what cleaning up after a
+	// completed takeover's old zrepl jobs would remove. It changes nothing.
+	PreviewTakeoverCleanup(context.Context, *connect.Request[v1.PreviewTakeoverCleanupRequest]) (*connect.Response[v1.PreviewTakeoverCleanupResponse], error)
+	// StartTakeoverCleanup cleans up after a completed takeover's old jobs.
+	StartTakeoverCleanup(context.Context, *connect.Request[v1.StartTakeoverCleanupRequest]) (*connect.Response[v1.StartTakeoverCleanupResponse], error)
+	// GetDataCleanup returns the plan's latest cleanup of the given kind.
+	GetDataCleanup(context.Context, *connect.Request[v1.GetDataCleanupRequest]) (*connect.Response[v1.GetDataCleanupResponse], error)
+	// RetryDataCleanup runs a failed cleanup's failed step again.
+	RetryDataCleanup(context.Context, *connect.Request[v1.RetryDataCleanupRequest]) (*connect.Response[v1.RetryDataCleanupResponse], error)
+	// CancelDataCleanup gives up on a failed cleanup. A plan whose deletion
+	// is canceled is kept as a draft; data already deleted stays deleted.
+	CancelDataCleanup(context.Context, *connect.Request[v1.CancelDataCleanupRequest]) (*connect.Response[v1.CancelDataCleanupResponse], error)
 }
 
 // NewPlanServiceClient constructs a client for the ezdr.portal.v1.PlanService service. By default,
@@ -1035,32 +1069,74 @@ func NewPlanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(planServiceMethods.ByName("GetPlanStatus")),
 			connect.WithClientOptions(opts...),
 		),
+		previewPlanDataDeletion: connect.NewClient[v1.PreviewPlanDataDeletionRequest, v1.PreviewPlanDataDeletionResponse](
+			httpClient,
+			baseURL+PlanServicePreviewPlanDataDeletionProcedure,
+			connect.WithSchema(planServiceMethods.ByName("PreviewPlanDataDeletion")),
+			connect.WithClientOptions(opts...),
+		),
+		previewTakeoverCleanup: connect.NewClient[v1.PreviewTakeoverCleanupRequest, v1.PreviewTakeoverCleanupResponse](
+			httpClient,
+			baseURL+PlanServicePreviewTakeoverCleanupProcedure,
+			connect.WithSchema(planServiceMethods.ByName("PreviewTakeoverCleanup")),
+			connect.WithClientOptions(opts...),
+		),
+		startTakeoverCleanup: connect.NewClient[v1.StartTakeoverCleanupRequest, v1.StartTakeoverCleanupResponse](
+			httpClient,
+			baseURL+PlanServiceStartTakeoverCleanupProcedure,
+			connect.WithSchema(planServiceMethods.ByName("StartTakeoverCleanup")),
+			connect.WithClientOptions(opts...),
+		),
+		getDataCleanup: connect.NewClient[v1.GetDataCleanupRequest, v1.GetDataCleanupResponse](
+			httpClient,
+			baseURL+PlanServiceGetDataCleanupProcedure,
+			connect.WithSchema(planServiceMethods.ByName("GetDataCleanup")),
+			connect.WithClientOptions(opts...),
+		),
+		retryDataCleanup: connect.NewClient[v1.RetryDataCleanupRequest, v1.RetryDataCleanupResponse](
+			httpClient,
+			baseURL+PlanServiceRetryDataCleanupProcedure,
+			connect.WithSchema(planServiceMethods.ByName("RetryDataCleanup")),
+			connect.WithClientOptions(opts...),
+		),
+		cancelDataCleanup: connect.NewClient[v1.CancelDataCleanupRequest, v1.CancelDataCleanupResponse](
+			httpClient,
+			baseURL+PlanServiceCancelDataCleanupProcedure,
+			connect.WithSchema(planServiceMethods.ByName("CancelDataCleanup")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // planServiceClient implements PlanServiceClient.
 type planServiceClient struct {
-	listPlans             *connect.Client[v1.ListPlansRequest, v1.ListPlansResponse]
-	getPlan               *connect.Client[v1.GetPlanRequest, v1.GetPlanResponse]
-	createPlan            *connect.Client[v1.CreatePlanRequest, v1.CreatePlanResponse]
-	updatePlan            *connect.Client[v1.UpdatePlanRequest, v1.UpdatePlanResponse]
-	deletePlan            *connect.Client[v1.DeletePlanRequest, v1.DeletePlanResponse]
-	validatePlan          *connect.Client[v1.ValidatePlanRequest, v1.ValidatePlanResponse]
-	suggestPlan           *connect.Client[v1.SuggestPlanRequest, v1.SuggestPlanResponse]
-	listZreplSetups       *connect.Client[v1.ListZreplSetupsRequest, v1.ListZreplSetupsResponse]
-	adoptZreplSetup       *connect.Client[v1.AdoptZreplSetupRequest, v1.AdoptZreplSetupResponse]
-	runTakeoverPreflight  *connect.Client[v1.RunTakeoverPreflightRequest, v1.RunTakeoverPreflightResponse]
-	getTakeover           *connect.Client[v1.GetTakeoverRequest, v1.GetTakeoverResponse]
-	startTakeover         *connect.Client[v1.StartTakeoverRequest, v1.StartTakeoverResponse]
-	retryTakeoverRollback *connect.Client[v1.RetryTakeoverRollbackRequest, v1.RetryTakeoverRollbackResponse]
-	previewPlanChanges    *connect.Client[v1.PreviewPlanChangesRequest, v1.PreviewPlanChangesResponse]
-	activatePlan          *connect.Client[v1.ActivatePlanRequest, v1.ActivatePlanResponse]
-	applyPlanChanges      *connect.Client[v1.ApplyPlanChangesRequest, v1.ApplyPlanChangesResponse]
-	discardPlanChanges    *connect.Client[v1.DiscardPlanChangesRequest, v1.DiscardPlanChangesResponse]
-	pausePlan             *connect.Client[v1.PausePlanRequest, v1.PausePlanResponse]
-	resumePlan            *connect.Client[v1.ResumePlanRequest, v1.ResumePlanResponse]
-	deactivatePlan        *connect.Client[v1.DeactivatePlanRequest, v1.DeactivatePlanResponse]
-	getPlanStatus         *connect.Client[v1.GetPlanStatusRequest, v1.GetPlanStatusResponse]
+	listPlans               *connect.Client[v1.ListPlansRequest, v1.ListPlansResponse]
+	getPlan                 *connect.Client[v1.GetPlanRequest, v1.GetPlanResponse]
+	createPlan              *connect.Client[v1.CreatePlanRequest, v1.CreatePlanResponse]
+	updatePlan              *connect.Client[v1.UpdatePlanRequest, v1.UpdatePlanResponse]
+	deletePlan              *connect.Client[v1.DeletePlanRequest, v1.DeletePlanResponse]
+	validatePlan            *connect.Client[v1.ValidatePlanRequest, v1.ValidatePlanResponse]
+	suggestPlan             *connect.Client[v1.SuggestPlanRequest, v1.SuggestPlanResponse]
+	listZreplSetups         *connect.Client[v1.ListZreplSetupsRequest, v1.ListZreplSetupsResponse]
+	adoptZreplSetup         *connect.Client[v1.AdoptZreplSetupRequest, v1.AdoptZreplSetupResponse]
+	runTakeoverPreflight    *connect.Client[v1.RunTakeoverPreflightRequest, v1.RunTakeoverPreflightResponse]
+	getTakeover             *connect.Client[v1.GetTakeoverRequest, v1.GetTakeoverResponse]
+	startTakeover           *connect.Client[v1.StartTakeoverRequest, v1.StartTakeoverResponse]
+	retryTakeoverRollback   *connect.Client[v1.RetryTakeoverRollbackRequest, v1.RetryTakeoverRollbackResponse]
+	previewPlanChanges      *connect.Client[v1.PreviewPlanChangesRequest, v1.PreviewPlanChangesResponse]
+	activatePlan            *connect.Client[v1.ActivatePlanRequest, v1.ActivatePlanResponse]
+	applyPlanChanges        *connect.Client[v1.ApplyPlanChangesRequest, v1.ApplyPlanChangesResponse]
+	discardPlanChanges      *connect.Client[v1.DiscardPlanChangesRequest, v1.DiscardPlanChangesResponse]
+	pausePlan               *connect.Client[v1.PausePlanRequest, v1.PausePlanResponse]
+	resumePlan              *connect.Client[v1.ResumePlanRequest, v1.ResumePlanResponse]
+	deactivatePlan          *connect.Client[v1.DeactivatePlanRequest, v1.DeactivatePlanResponse]
+	getPlanStatus           *connect.Client[v1.GetPlanStatusRequest, v1.GetPlanStatusResponse]
+	previewPlanDataDeletion *connect.Client[v1.PreviewPlanDataDeletionRequest, v1.PreviewPlanDataDeletionResponse]
+	previewTakeoverCleanup  *connect.Client[v1.PreviewTakeoverCleanupRequest, v1.PreviewTakeoverCleanupResponse]
+	startTakeoverCleanup    *connect.Client[v1.StartTakeoverCleanupRequest, v1.StartTakeoverCleanupResponse]
+	getDataCleanup          *connect.Client[v1.GetDataCleanupRequest, v1.GetDataCleanupResponse]
+	retryDataCleanup        *connect.Client[v1.RetryDataCleanupRequest, v1.RetryDataCleanupResponse]
+	cancelDataCleanup       *connect.Client[v1.CancelDataCleanupRequest, v1.CancelDataCleanupResponse]
 }
 
 // ListPlans calls ezdr.portal.v1.PlanService.ListPlans.
@@ -1168,6 +1244,36 @@ func (c *planServiceClient) GetPlanStatus(ctx context.Context, req *connect.Requ
 	return c.getPlanStatus.CallUnary(ctx, req)
 }
 
+// PreviewPlanDataDeletion calls ezdr.portal.v1.PlanService.PreviewPlanDataDeletion.
+func (c *planServiceClient) PreviewPlanDataDeletion(ctx context.Context, req *connect.Request[v1.PreviewPlanDataDeletionRequest]) (*connect.Response[v1.PreviewPlanDataDeletionResponse], error) {
+	return c.previewPlanDataDeletion.CallUnary(ctx, req)
+}
+
+// PreviewTakeoverCleanup calls ezdr.portal.v1.PlanService.PreviewTakeoverCleanup.
+func (c *planServiceClient) PreviewTakeoverCleanup(ctx context.Context, req *connect.Request[v1.PreviewTakeoverCleanupRequest]) (*connect.Response[v1.PreviewTakeoverCleanupResponse], error) {
+	return c.previewTakeoverCleanup.CallUnary(ctx, req)
+}
+
+// StartTakeoverCleanup calls ezdr.portal.v1.PlanService.StartTakeoverCleanup.
+func (c *planServiceClient) StartTakeoverCleanup(ctx context.Context, req *connect.Request[v1.StartTakeoverCleanupRequest]) (*connect.Response[v1.StartTakeoverCleanupResponse], error) {
+	return c.startTakeoverCleanup.CallUnary(ctx, req)
+}
+
+// GetDataCleanup calls ezdr.portal.v1.PlanService.GetDataCleanup.
+func (c *planServiceClient) GetDataCleanup(ctx context.Context, req *connect.Request[v1.GetDataCleanupRequest]) (*connect.Response[v1.GetDataCleanupResponse], error) {
+	return c.getDataCleanup.CallUnary(ctx, req)
+}
+
+// RetryDataCleanup calls ezdr.portal.v1.PlanService.RetryDataCleanup.
+func (c *planServiceClient) RetryDataCleanup(ctx context.Context, req *connect.Request[v1.RetryDataCleanupRequest]) (*connect.Response[v1.RetryDataCleanupResponse], error) {
+	return c.retryDataCleanup.CallUnary(ctx, req)
+}
+
+// CancelDataCleanup calls ezdr.portal.v1.PlanService.CancelDataCleanup.
+func (c *planServiceClient) CancelDataCleanup(ctx context.Context, req *connect.Request[v1.CancelDataCleanupRequest]) (*connect.Response[v1.CancelDataCleanupResponse], error) {
+	return c.cancelDataCleanup.CallUnary(ctx, req)
+}
+
 // PlanServiceHandler is an implementation of the ezdr.portal.v1.PlanService service.
 type PlanServiceHandler interface {
 	ListPlans(context.Context, *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error)
@@ -1215,6 +1321,22 @@ type PlanServiceHandler interface {
 	DeactivatePlan(context.Context, *connect.Request[v1.DeactivatePlanRequest]) (*connect.Response[v1.DeactivatePlanResponse], error)
 	// GetPlanStatus returns an active plan's replication health.
 	GetPlanStatus(context.Context, *connect.Request[v1.GetPlanStatusRequest]) (*connect.Response[v1.GetPlanStatusResponse], error)
+	// PreviewPlanDataDeletion asks both hosts what deleting a deactivated
+	// plan's replicated data would remove. It changes nothing. See
+	// docs/design/cleanup.md.
+	PreviewPlanDataDeletion(context.Context, *connect.Request[v1.PreviewPlanDataDeletionRequest]) (*connect.Response[v1.PreviewPlanDataDeletionResponse], error)
+	// PreviewTakeoverCleanup asks both hosts what cleaning up after a
+	// completed takeover's old zrepl jobs would remove. It changes nothing.
+	PreviewTakeoverCleanup(context.Context, *connect.Request[v1.PreviewTakeoverCleanupRequest]) (*connect.Response[v1.PreviewTakeoverCleanupResponse], error)
+	// StartTakeoverCleanup cleans up after a completed takeover's old jobs.
+	StartTakeoverCleanup(context.Context, *connect.Request[v1.StartTakeoverCleanupRequest]) (*connect.Response[v1.StartTakeoverCleanupResponse], error)
+	// GetDataCleanup returns the plan's latest cleanup of the given kind.
+	GetDataCleanup(context.Context, *connect.Request[v1.GetDataCleanupRequest]) (*connect.Response[v1.GetDataCleanupResponse], error)
+	// RetryDataCleanup runs a failed cleanup's failed step again.
+	RetryDataCleanup(context.Context, *connect.Request[v1.RetryDataCleanupRequest]) (*connect.Response[v1.RetryDataCleanupResponse], error)
+	// CancelDataCleanup gives up on a failed cleanup. A plan whose deletion
+	// is canceled is kept as a draft; data already deleted stays deleted.
+	CancelDataCleanup(context.Context, *connect.Request[v1.CancelDataCleanupRequest]) (*connect.Response[v1.CancelDataCleanupResponse], error)
 }
 
 // NewPlanServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -1350,6 +1472,42 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(planServiceMethods.ByName("GetPlanStatus")),
 		connect.WithHandlerOptions(opts...),
 	)
+	planServicePreviewPlanDataDeletionHandler := connect.NewUnaryHandler(
+		PlanServicePreviewPlanDataDeletionProcedure,
+		svc.PreviewPlanDataDeletion,
+		connect.WithSchema(planServiceMethods.ByName("PreviewPlanDataDeletion")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServicePreviewTakeoverCleanupHandler := connect.NewUnaryHandler(
+		PlanServicePreviewTakeoverCleanupProcedure,
+		svc.PreviewTakeoverCleanup,
+		connect.WithSchema(planServiceMethods.ByName("PreviewTakeoverCleanup")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceStartTakeoverCleanupHandler := connect.NewUnaryHandler(
+		PlanServiceStartTakeoverCleanupProcedure,
+		svc.StartTakeoverCleanup,
+		connect.WithSchema(planServiceMethods.ByName("StartTakeoverCleanup")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceGetDataCleanupHandler := connect.NewUnaryHandler(
+		PlanServiceGetDataCleanupProcedure,
+		svc.GetDataCleanup,
+		connect.WithSchema(planServiceMethods.ByName("GetDataCleanup")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceRetryDataCleanupHandler := connect.NewUnaryHandler(
+		PlanServiceRetryDataCleanupProcedure,
+		svc.RetryDataCleanup,
+		connect.WithSchema(planServiceMethods.ByName("RetryDataCleanup")),
+		connect.WithHandlerOptions(opts...),
+	)
+	planServiceCancelDataCleanupHandler := connect.NewUnaryHandler(
+		PlanServiceCancelDataCleanupProcedure,
+		svc.CancelDataCleanup,
+		connect.WithSchema(planServiceMethods.ByName("CancelDataCleanup")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/ezdr.portal.v1.PlanService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PlanServiceListPlansProcedure:
@@ -1394,6 +1552,18 @@ func NewPlanServiceHandler(svc PlanServiceHandler, opts ...connect.HandlerOption
 			planServiceDeactivatePlanHandler.ServeHTTP(w, r)
 		case PlanServiceGetPlanStatusProcedure:
 			planServiceGetPlanStatusHandler.ServeHTTP(w, r)
+		case PlanServicePreviewPlanDataDeletionProcedure:
+			planServicePreviewPlanDataDeletionHandler.ServeHTTP(w, r)
+		case PlanServicePreviewTakeoverCleanupProcedure:
+			planServicePreviewTakeoverCleanupHandler.ServeHTTP(w, r)
+		case PlanServiceStartTakeoverCleanupProcedure:
+			planServiceStartTakeoverCleanupHandler.ServeHTTP(w, r)
+		case PlanServiceGetDataCleanupProcedure:
+			planServiceGetDataCleanupHandler.ServeHTTP(w, r)
+		case PlanServiceRetryDataCleanupProcedure:
+			planServiceRetryDataCleanupHandler.ServeHTTP(w, r)
+		case PlanServiceCancelDataCleanupProcedure:
+			planServiceCancelDataCleanupHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1485,6 +1655,30 @@ func (UnimplementedPlanServiceHandler) DeactivatePlan(context.Context, *connect.
 
 func (UnimplementedPlanServiceHandler) GetPlanStatus(context.Context, *connect.Request[v1.GetPlanStatusRequest]) (*connect.Response[v1.GetPlanStatusResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.GetPlanStatus is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) PreviewPlanDataDeletion(context.Context, *connect.Request[v1.PreviewPlanDataDeletionRequest]) (*connect.Response[v1.PreviewPlanDataDeletionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.PreviewPlanDataDeletion is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) PreviewTakeoverCleanup(context.Context, *connect.Request[v1.PreviewTakeoverCleanupRequest]) (*connect.Response[v1.PreviewTakeoverCleanupResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.PreviewTakeoverCleanup is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) StartTakeoverCleanup(context.Context, *connect.Request[v1.StartTakeoverCleanupRequest]) (*connect.Response[v1.StartTakeoverCleanupResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.StartTakeoverCleanup is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) GetDataCleanup(context.Context, *connect.Request[v1.GetDataCleanupRequest]) (*connect.Response[v1.GetDataCleanupResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.GetDataCleanup is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) RetryDataCleanup(context.Context, *connect.Request[v1.RetryDataCleanupRequest]) (*connect.Response[v1.RetryDataCleanupResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.RetryDataCleanup is not implemented"))
+}
+
+func (UnimplementedPlanServiceHandler) CancelDataCleanup(context.Context, *connect.Request[v1.CancelDataCleanupRequest]) (*connect.Response[v1.CancelDataCleanupResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.PlanService.CancelDataCleanup is not implemented"))
 }
 
 // FailoverServiceClient is a client for the ezdr.portal.v1.FailoverService service.

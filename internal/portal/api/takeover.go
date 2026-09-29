@@ -186,6 +186,9 @@ func (s PlanService) StartTakeover(ctx context.Context, req *connect.Request[por
 	if sp.State != store.PlanDraft || spec.Takeover == nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("only a draft plan that adopts a zrepl setup can take it over"))
 	}
+	if err := s.refuseIfFailedOver(ctx, sp.ID); err != nil {
+		return nil, err
+	}
 	row, err := s.Store.TakeoverByPlan(ctx, sp.ID)
 	if errors.Is(err, store.ErrNotFound) {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("run the preflight first"))

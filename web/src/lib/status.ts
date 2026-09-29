@@ -13,6 +13,7 @@ export const planStates: Record<PlanState, { label: string; tone: Tone }> = {
   [PlanState.FAILING_OVER]: { label: 'Failing over', tone: 'info' },
   [PlanState.FAILED_OVER]: { label: 'Failed over', tone: 'warning' },
   [PlanState.FAILING_BACK]: { label: 'Failing back', tone: 'info' },
+  [PlanState.DELETING]: { label: 'Deleting', tone: 'info' },
 }
 
 // Health of plans without one (drafts, paused plans) has no label.

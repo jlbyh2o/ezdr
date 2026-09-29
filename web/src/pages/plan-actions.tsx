@@ -32,6 +32,7 @@ import { type Plan, PlanState, type PreviewPlanChangesResponse } from '@/gen/ezd
 import { errorMessage, planClient } from '@/lib/api'
 import { operationPath } from '@/lib/operations'
 import { planStates } from '@/lib/status'
+import { DeletePlanDialog } from '@/pages/data-cleanup'
 import { FailbackDialog } from '@/pages/failback'
 import { FailoverDialog } from '@/pages/failover'
 import { TakeoverDialog } from '@/pages/takeover'
@@ -40,7 +41,7 @@ export function StateBadge({ state, pending }: { state: PlanState; pending?: boo
   const st = planStates[state]
   return (
     <span className="inline-flex items-center gap-1">
-      <StatusBadge tone={st.tone} pulse={state === PlanState.FAILING_OVER || state === PlanState.FAILING_BACK}>
+      <StatusBadge tone={st.tone} pulse={state === PlanState.FAILING_OVER || state === PlanState.FAILING_BACK || state === PlanState.DELETING}>
         {st.label}
       </StatusBadge>
       {pending && <Badge variant="warning">Pending changes</Badge>}
@@ -167,7 +168,7 @@ export function PlanActions({
   autoActivate?: boolean
   onAutoActivated?: () => void
 }) {
-  const [dialog, setDialog] = useState<'activate' | 'apply' | 'takeover' | 'failover' | 'failback'>()
+  const [dialog, setDialog] = useState<'activate' | 'apply' | 'takeover' | 'failover' | 'failback' | 'delete'>()
   if (autoActivate && plan.state === PlanState.DRAFT && !dialog) {
     setDialog(plan.spec?.takeover ? 'takeover' : 'activate')
     onAutoActivated?.()
@@ -233,21 +234,7 @@ export function PlanActions({
       label: 'Delete plan',
       icon: <Trash2 />,
       destructive: true,
-      onClick: () =>
-        setConfirm({
-          title: `Delete ${name}?`,
-          description: "The plan's settings are removed. Its guests are no longer protected by it.",
-          label: 'Delete plan',
-          destructive: true,
-          run: async () => {
-            try {
-              await planClient.deletePlan({ id: plan.id })
-              onDeleted()
-            } catch (err) {
-              setError(errorMessage(err))
-            }
-          },
-        }),
+      onClick: () => setDialog('delete'),
     })
   }
 
@@ -363,6 +350,17 @@ export function PlanActions({
           plan={plan}
           onClose={() => {
             setDialog(undefined)
+            void act(() => planClient.getPlan({ id: plan.id }))
+          }}
+        />
+      )}
+      {dialog === 'delete' && (
+        <DeletePlanDialog
+          plan={plan}
+          onDeleted={onDeleted}
+          onClose={() => {
+            setDialog(undefined)
+            // Deleting the data first shows the plan as deleting.
             void act(() => planClient.getPlan({ id: plan.id }))
           }}
         />

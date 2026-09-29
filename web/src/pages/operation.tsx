@@ -5,7 +5,7 @@ import { Link, useParams } from 'react-router'
 import { ErrorAlert } from '@/components/error-alert'
 import { StatusBadge } from '@/components/status-badge'
 import { Card, CardContent } from '@/components/ui/card'
-import type { Failback, Failover, Takeover, TestRun } from '@/gen/ezdr/portal/v1/portal_pb'
+import { type Failback, type Failover, type Takeover, TakeoverState, type TestRun } from '@/gen/ezdr/portal/v1/portal_pb'
 import { failoverClient, planClient, testClient } from '@/lib/api'
 import { formatDateTime, formatRelative } from '@/lib/format'
 import { failbackStates, failoverStates, takeoverStates, testStates } from '@/lib/operations'
@@ -13,6 +13,7 @@ import type { Tone } from '@/lib/status'
 import { usePoll } from '@/lib/use-poll'
 import { FailbackActions, FailbackProgress } from '@/pages/failback'
 import { FailoverActions, FailoverProgress } from '@/pages/failover'
+import { TakeoverCleanupCard } from '@/pages/data-cleanup'
 import { TakeoverActions, TakeoverProgress } from '@/pages/takeover'
 import { TestDetails } from '@/pages/test-failover'
 
@@ -181,6 +182,7 @@ export function TakeoverPage() {
       error={error ?? (data && !t ? 'This plan has no takeover.' : undefined)}
     >
       {t && <TakeoverProgress takeover={t} />}
+      {t?.state === TakeoverState.COMPLETED && <TakeoverCleanupCard planId={id} />}
     </OperationShell>
   )
 }

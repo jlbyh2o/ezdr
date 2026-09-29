@@ -586,6 +586,35 @@ func (s *Sim) answer(ctx context.Context, hostID string, a *clientv1.Action) {
 		})
 	case *clientv1.Action_ZreplUpgrade:
 		delay = 2 * s.opts.ActionDelay
+	case *clientv1.Action_DataScan:
+		ack.DataScan = &clientv1.DataScanResult{}
+		for _, t := range k.DataScan.Targets {
+			sc := &clientv1.DatasetScan{Dataset: t.Dataset, Exists: true, Snapshots: uint32(simHash(t.Dataset)%40) + 1} //nolint:gosec // small
+			sc.ReclaimBytes = (simHash(t.Dataset+"size") % 200) << 20
+			if t.Destroy {
+				sc.ReclaimBytes <<= 4
+			}
+			ack.DataScan.Datasets = append(ack.DataScan.Datasets, sc)
+		}
+	case *clientv1.Action_DataCleanup:
+		delay = 3 * s.opts.ActionDelay
+		var destroyed []string
+		for _, j := range k.DataCleanup.ReleaseJobs {
+			ack.Output = append(ack.Output, "released the holds and cursors of zrepl job "+j)
+		}
+		for _, t := range k.DataCleanup.Targets {
+			if t.Destroy {
+				destroyed = append(destroyed, t.Dataset)
+				ack.Output = append(ack.Output, "destroyed "+t.Dataset)
+			} else {
+				ack.Output = append(ack.Output, "deleted the snapshots on "+t.Dataset)
+			}
+		}
+		s.editInventory(ctx, hostID, func(inv *inventoryv1.Inventory) {
+			inv.ZfsDatasets = slices.DeleteFunc(inv.ZfsDatasets, func(d *inventoryv1.ZfsDataset) bool {
+				return slices.Contains(destroyed, d.Name)
+			})
+		})
 	}
 	select {
 	case <-ctx.Done():
