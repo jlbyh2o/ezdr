@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -534,5 +535,47 @@ func TestTakeoverReleaseFailure(t *testing.T) {
 	sp, _, _ := PlanService{Deps: d}.loadPlan(ctx, id)
 	if sp.State != store.PlanActive {
 		t.Errorf("plan state = %s", sp.State)
+	}
+}
+
+// Adopting leaves out guests marked unprotected, even if the old job
+// replicates them.
+func TestAdoptSkipsUnprotected(t *testing.T) {
+	d, ctx, primary, dr := planTestDeps(t)
+	svc := PlanService{Deps: d}
+	for id, jobs := range map[string][]*inventoryv1.ZreplJob{
+		primary: {{Name: "old_source", Type: "source", ListenAddress: "192.0.2.10:8888", SnapshottingType: "periodic",
+			SnapshotPrefix: "zrepl_", SnapshotIntervalSeconds: 300,
+			Filesystems: []*inventoryv1.ZreplFilter{{Pattern: "rpool<", Include: true}}}},
+		dr: {{Name: "old_pull", Type: "pull", ConnectAddress: "192.0.2.10:8888", RootFs: "tank/replicated", IntervalSeconds: 300}},
+	} {
+		ph, err := svc.loadHost(ctx, id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ph.Inventory.Zrepl = &inventoryv1.Zrepl{Version: "v0.7.0", Running: true, Jobs: jobs}
+		data, _ := proto.Marshal(ph.Inventory)
+		if _, err := d.Store.PutInventory(ctx, store.Inventory{HostID: id, Data: data, Hash: []byte(id + "z"), CollectedAt: time.Now()}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	adopt := func() *portalv1.AdoptZreplSetupResponse {
+		t.Helper()
+		res, err := svc.AdoptZreplSetup(ctx, connect.NewRequest(&portalv1.AdoptZreplSetupRequest{
+			Spec: &planv1.PlanSpec{Name: "Main", PrimaryHostId: primary, DrHostId: dr}, SourceJob: "old_source", PullJob: "old_pull"}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return res.Msg
+	}
+	if got := adopt(); len(got.Spec.Guests) != 1 || got.Spec.Guests[0].Vmid != 101 {
+		t.Fatalf("adopted guests = %v", got.Spec.Guests)
+	}
+	if err := d.Store.SetGuestExcluded(ctx, primary, 101, true, "admin"); err != nil {
+		t.Fatal(err)
+	}
+	got := adopt()
+	if len(got.Spec.Guests) != 0 || !slices.ContainsFunc(got.Notes, func(n string) bool { return strings.Contains(n, "unprotected") && strings.Contains(n, "101") }) {
+		t.Errorf("guests = %v, notes = %q", got.Spec.Guests, got.Notes)
 	}
 }

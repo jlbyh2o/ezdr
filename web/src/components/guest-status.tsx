@@ -30,15 +30,37 @@ export function GuestStatus({
     await setExcluded(on)
     setBusy(false)
   }
+  // A protected guest can also carry the mark (for example, if a plan adopted
+  // it): show it, so it can be undone.
+  const marked = exclusion && (
+    <>
+      <span className="text-muted-foreground" title={`Marked by ${exclusion.by}, ${formatDateTime(exclusion.at)}`}>
+        · marked unprotected
+      </span>
+      <Button variant="ghost" size="xs" disabled={busy} onClick={() => void run(false)}>
+        Undo
+      </Button>
+    </>
+  )
   if (template) return <span className="text-muted-foreground">Template</span>
   if (plan) {
     return (
-      <Link to={`/plans/${plan.id}`} className="text-success hover:underline">
-        Protected by {plan.name}
-      </Link>
+      <span className="inline-flex items-center gap-2">
+        <Link to={`/plans/${plan.id}`} className="text-success hover:underline">
+          Protected by {plan.name}
+        </Link>
+        {marked}
+      </span>
     )
   }
-  if (protectedHere || inOtherPlan) return <span className="text-success">Protected</span>
+  if (protectedHere || inOtherPlan) {
+    return (
+      <span className="inline-flex items-center gap-2">
+        <span className="text-success">Protected</span>
+        {marked}
+      </span>
+    )
+  }
   if (exclusion) {
     return (
       <span className="inline-flex items-center gap-2">

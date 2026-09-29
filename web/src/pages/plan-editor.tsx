@@ -1061,7 +1061,9 @@ function GuestsCard({
                     type="checkbox"
                     aria-label={`Protect ${g.name}`}
                     checked={selected.has(g.vmid)}
-                    disabled={!!other || g.template || !!excluded[g.vmid]}
+                    // A guest marked unprotected can't be added, but one
+                    // already in the plan can always be removed.
+                    disabled={!!other || g.template || (!!excluded[g.vmid] && !selected.has(g.vmid))}
                     onChange={(e) => toggle(g.vmid, e.target.checked)}
                   />
                 </TableCell>

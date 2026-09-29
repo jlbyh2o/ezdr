@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -499,6 +500,24 @@ func (s PlanService) AdoptZreplSetup(ctx context.Context, req *connect.Request[p
 	adopted, notes, err := plan.Adopt(spec, primary, dr, req.Msg.SourceJob, req.Msg.PullJob)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, err)
+	}
+	// Guests marked unprotected stay out, even if the old job replicates
+	// them: the mark is a deliberate choice.
+	excluded, err := s.Store.GuestExclusions(ctx, spec.PrimaryHostId)
+	if err != nil {
+		return nil, internalError(err)
+	}
+	var left []string
+	adopted.Guests = slices.DeleteFunc(adopted.Guests, func(g *planv1.PlanGuest) bool {
+		_, ok := excluded[g.Vmid]
+		if ok {
+			left = append(left, fmt.Sprint(g.Vmid))
+		}
+		return ok
+	})
+	if len(left) > 0 {
+		notes = append(notes, "left out guests marked unprotected, which the old job replicates: "+strings.Join(left, ", ")+
+			"; after the takeover they're no longer replicated")
 	}
 	return connect.NewResponse(&portalv1.AdoptZreplSetupResponse{Spec: adopted, Notes: notes}), nil
 }
