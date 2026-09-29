@@ -1,4 +1,4 @@
-import { TriangleAlert } from 'lucide-react'
+import { KeyRound, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { Host } from '@/gen/ezdr/portal/v1/portal_pb'
@@ -29,6 +29,9 @@ export function HostsPage() {
   return (
     <>
       <PageHeader title="Hosts" description="Proxmox VE hosts enrolled in this portal.">
+        <Button variant="outline" render={<Link to="/tokens" />}>
+          <KeyRound /> Enrollment tokens
+        </Button>
         <AddHostDialog onCreated={() => void reload()} />
       </PageHeader>
       <ErrorAlert message={error} />
@@ -57,18 +60,18 @@ export function HostsPage() {
                     {h.hostname}
                   </Link>
                   {h.duplicateMachineId && (
-                    <div className="flex items-center gap-1 text-xs text-amber-600">
+                    <div className="flex items-center gap-1 text-xs text-warning-foreground">
                       <TriangleAlert className="size-3" /> Same machine ID as another host; remove the stale one.
                     </div>
                   )}
                 </TableCell>
                 <TableCell>
                   {h.online ? (
-                    <Badge>Online</Badge>
+                    <StatusBadge tone="success">Online</StatusBadge>
                   ) : (
-                    <Badge variant="secondary" title={`Last seen ${formatDateTime(h.lastSeenAt)}`}>
+                    <StatusBadge tone="destructive" title={`Last seen ${formatDateTime(h.lastSeenAt)}`}>
                       Offline · {formatRelative(h.lastSeenAt)}
-                    </Badge>
+                    </StatusBadge>
                   )}
                 </TableCell>
                 <TableCell className="text-xs">

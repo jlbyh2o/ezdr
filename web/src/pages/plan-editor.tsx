@@ -543,7 +543,7 @@ function GuestsCard({
                   {other ? (
                     <span className="text-muted-foreground">in plan {other.name}</span>
                   ) : g.ready ? (
-                    <Badge>Ready</Badge>
+                    <Badge variant="success">Ready</Badge>
                   ) : (
                     <Badge variant="destructive">Not ready</Badge>
                   )}
@@ -1163,7 +1163,7 @@ function ValidationPanel({ issues }: { issues: Issue[] }) {
           </div>
         ))}
         {warnings.map((i, n) => (
-          <div key={`w${n}`} className="flex gap-2 text-amber-700">
+          <div key={`w${n}`} className="flex gap-2 text-warning-foreground">
             <TriangleAlert className="mt-0.5 size-4 shrink-0" /> {i.message}
           </div>
         ))}

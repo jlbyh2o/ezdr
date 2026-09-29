@@ -66,7 +66,7 @@ export function PlanDnsCard({ plan }: { plan: Plan }) {
                   <TableCell className="font-mono text-xs">
                     {r.current || '—'}
                     {r.problems.map((p) => (
-                      <div key={p} className={`font-sans ${r.drift ? 'text-destructive' : 'text-amber-700'}`}>
+                      <div key={p} className={`font-sans ${r.drift ? 'text-destructive' : 'text-warning-foreground'}`}>
                         {p}
                       </div>
                     ))}

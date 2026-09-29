@@ -2,6 +2,7 @@ import { CheckCircle2, CircleAlert, Loader2, Pause, Play, Power, Rocket, ShieldA
 import { useEffect, useState } from 'react'
 
 import { ErrorAlert } from '@/components/error-alert'
+import { StatusBadge } from '@/components/status-badge'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,25 +28,19 @@ import {
 import { Severity } from '@/gen/ezdr/plan/v1/plan_pb'
 import { type Plan, PlanState, type PreviewPlanChangesResponse } from '@/gen/ezdr/portal/v1/portal_pb'
 import { errorMessage, planClient } from '@/lib/api'
+import { planStates } from '@/lib/status'
 import { FailbackDialog } from '@/pages/failback'
 import { FailoverDialog } from '@/pages/failover'
 import { TakeoverDialog } from '@/pages/takeover'
 
-const stateLabel: Record<PlanState, string> = {
-  [PlanState.UNSPECIFIED]: 'unknown',
-  [PlanState.DRAFT]: 'Draft',
-  [PlanState.ACTIVE]: 'Active',
-  [PlanState.PAUSED]: 'Paused',
-  [PlanState.FAILING_OVER]: 'Failing over',
-  [PlanState.FAILED_OVER]: 'Failed over',
-  [PlanState.FAILING_BACK]: 'Failing back',
-}
-
 export function StateBadge({ state, pending }: { state: PlanState; pending?: boolean }) {
+  const st = planStates[state]
   return (
     <span className="inline-flex items-center gap-1">
-      <Badge variant={state === PlanState.ACTIVE ? 'default' : 'secondary'}>{stateLabel[state]}</Badge>
-      {pending && <Badge variant="outline">pending changes</Badge>}
+      <StatusBadge tone={st.tone} pulse={state === PlanState.FAILING_OVER || state === PlanState.FAILING_BACK}>
+        {st.label}
+      </StatusBadge>
+      {pending && <Badge variant="warning">Pending changes</Badge>}
     </span>
   )
 }
@@ -316,11 +311,11 @@ export function HostStatusPanel({ plan }: { plan: Plan }) {
             <div className="flex items-center justify-between gap-2">
               <span className="font-medium">{h.hostname}</span>
               {!h.online ? (
-                <Badge variant="secondary">offline</Badge>
+                <Badge variant="destructive">offline</Badge>
               ) : h.applyError ? (
                 <Badge variant="destructive">error</Badge>
               ) : h.applied ? (
-                <span className="flex items-center gap-1 text-xs text-emerald-700">
+                <span className="flex items-center gap-1 text-xs text-success">
                   <CheckCircle2 className="size-4" /> applied
                 </span>
               ) : (

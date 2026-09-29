@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { StatusBadge } from '@/components/status-badge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,6 +32,7 @@ import {
 } from '@/gen/ezdr/portal/v1/portal_pb'
 import { errorMessage, testClient } from '@/lib/api'
 import { formatBytes, formatDateTime, formatRelative, toDate } from '@/lib/format'
+import type { Tone } from '@/lib/status'
 import { usePoll } from '@/lib/use-poll'
 
 const activeStates = [TestState.STARTING, TestState.RUNNING, TestState.ENDING]
@@ -42,6 +44,11 @@ const stateLabel: Record<TestState, string> = {
   [TestState.ENDING]: 'ending',
   [TestState.ENDED]: 'ended',
   [TestState.FAILED]: 'setup failed',
+}
+
+function testTone(state: TestState): Tone {
+  if (activeStates.includes(state)) return 'info'
+  return state === TestState.FAILED ? 'destructive' : 'neutral'
 }
 
 // TestFailoverCard shows an active or paused plan's current test failover
@@ -220,7 +227,7 @@ function StartTestDialog({ plan, onClose }: { plan: Plan; onClose: () => void })
 const guestIcon: Record<string, React.ReactNode> = {
   pending: <Circle className="size-4 text-muted-foreground" />,
   starting: <Loader2 className="size-4 animate-spin" />,
-  running: <CheckCircle2 className="size-4 text-emerald-700" />,
+  running: <CheckCircle2 className="size-4 text-success" />,
   failed: <XCircle className="size-4 text-destructive" />,
   stopped: <MinusCircle className="size-4 text-muted-foreground" />,
 }
@@ -272,7 +279,9 @@ function CurrentTest({ test, onChanged }: { test: TestRun; onChanged: () => void
     <div className="grid gap-3 rounded-md border p-3 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Badge>{stateLabel[test.state]}</Badge>
+          <StatusBadge tone={testTone(test.state)} pulse={activeStates.includes(test.state)}>
+            {stateLabel[test.state]}
+          </StatusBadge>
           <span>from {formatDateTime(test.snapshotAt)}</span>
         </div>
         {test.state !== TestState.ENDING && (
@@ -440,7 +449,7 @@ function TestHistory({ tests, onChanged }: { tests: TestRun[]; onChanged: () => 
                   {t.endedBy && <div className="text-muted-foreground">by {t.endedBy}</div>}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={t.verdict === TestVerdict.PASSED ? 'default' : t.verdict === TestVerdict.FAILED ? 'destructive' : 'secondary'}>
+                  <Badge variant={t.verdict === TestVerdict.PASSED ? 'success' : t.verdict === TestVerdict.FAILED ? 'destructive' : 'neutral'}>
                     {verdictLabel[t.verdict]}
                   </Badge>
                 </TableCell>

@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { StatusBadge } from '@/components/status-badge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -61,7 +62,7 @@ export function HostDetailPage() {
       >
         {host && (
           <div className="flex items-center gap-2">
-            {host.online ? <Badge>Online</Badge> : <Badge variant="secondary">Offline</Badge>}
+            {host.online ? <StatusBadge tone="success">Online</StatusBadge> : <StatusBadge tone="destructive">Offline</StatusBadge>}
             <Button variant="outline" onClick={() => void refresh()} disabled={!host.online || refreshing}>
               <RefreshCw className={refreshing ? 'animate-spin' : ''} /> Refresh
             </Button>
@@ -178,7 +179,7 @@ function GuestsTable({ guests, plans }: { guests: Guest[]; plans: GuestPlans }) 
             </TableCell>
             <TableCell className="text-xs">
               {g.status}
-              {g.lock && <div className="text-amber-600">locked: {g.lock}</div>}
+              {g.lock && <div className="text-warning-foreground">locked: {g.lock}</div>}
             </TableCell>
             <TableCell className="text-xs whitespace-nowrap">
               {g.cores > 0 ? `${g.cores} vCPU` : 'all CPUs'} · {formatBytes(g.memoryBytes)}
@@ -204,9 +205,9 @@ function GuestsTable({ guests, plans }: { guests: Guest[]; plans: GuestPlans }) 
               ))}
             </TableCell>
             <TableCell>
-              {g.ready ? <Badge>Ready</Badge> : <Badge variant="destructive">Not ready</Badge>}
+              {g.ready ? <Badge variant="success">Ready</Badge> : <Badge variant="destructive">Not ready</Badge>}
               {g.readinessWarnings.map((w) => (
-                <div key={w} className="mt-1 flex gap-1 text-xs text-amber-600">
+                <div key={w} className="mt-1 flex gap-1 text-xs text-warning-foreground">
                   <TriangleAlert className="mt-0.5 size-3 shrink-0" /> {w}
                 </div>
               ))}
@@ -258,7 +259,7 @@ function StorageView({ inv }: { inv: Inventory }) {
                     {s.totalBytes > 0n ? `${formatBytes(s.usedBytes)} of ${formatBytes(s.totalBytes)}` : '—'}
                   </TableCell>
                   <TableCell>
-                    {s.type === 'zfspool' ? <Badge>ZFS</Badge> : <Badge variant="secondary">Not supported</Badge>}
+                    {s.type === 'zfspool' ? <Badge variant="success">ZFS</Badge> : <Badge variant="neutral">Not supported</Badge>}
                   </TableCell>
                 </TableRow>
               ))}
@@ -285,7 +286,7 @@ function StorageView({ inv }: { inv: Inventory }) {
                 <TableRow key={p.name}>
                   <TableCell className="font-medium">{p.name}</TableCell>
                   <TableCell>
-                    <Badge variant={p.health === 'ONLINE' ? 'default' : 'destructive'}>{p.health}</Badge>
+                    <Badge variant={p.health === 'ONLINE' ? 'success' : 'destructive'}>{p.health}</Badge>
                   </TableCell>
                   <TableCell className="text-xs">
                     {formatBytes(p.allocatedBytes)} of {formatBytes(p.sizeBytes)}
@@ -395,7 +396,7 @@ function ZreplView({ inv }: { inv: Inventory }) {
                 <TableCell>
                   <div className="font-mono text-xs">{j.name}</div>
                   <div className="mt-1">
-                    {j.managed ? <Badge>EZDR</Badge> : <Badge variant="secondary">Hand-written</Badge>}
+                    {j.managed ? <Badge>EZDR</Badge> : <Badge variant="neutral">Hand-written</Badge>}
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground break-all">{j.file}</div>
                 </TableCell>

@@ -4,8 +4,8 @@ const icons: Record<string, React.ReactNode> = {
   pending: <Circle className="size-4 text-muted-foreground" />,
   running: <Loader2 className="size-4 animate-spin" />,
   starting: <Loader2 className="size-4 animate-spin" />,
-  done: <CheckCircle2 className="size-4 text-emerald-700" />,
-  switched: <CheckCircle2 className="size-4 text-emerald-700" />,
+  done: <CheckCircle2 className="size-4 text-success" />,
+  switched: <CheckCircle2 className="size-4 text-success" />,
   failed: <XCircle className="size-4 text-destructive" />,
   skipped: <MinusCircle className="size-4 text-muted-foreground" />,
 }

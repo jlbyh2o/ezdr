@@ -64,10 +64,10 @@ export function PlansPage() {
                       {p.errorCount} error{p.errorCount === 1 ? '' : 's'}
                     </Badge>
                   ) : (
-                    <Badge>Valid</Badge>
+                    <Badge variant="success">Valid</Badge>
                   )}
                   {p.warningCount > 0 && (
-                    <span className="ml-2 text-xs text-amber-600">
+                    <span className="ml-2 text-xs text-warning-foreground">
                       {p.warningCount} warning{p.warningCount === 1 ? '' : 's'}
                     </span>
                   )}

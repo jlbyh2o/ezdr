@@ -1,5 +1,5 @@
 import { ErrorAlert } from '@/components/error-alert'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/status-badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { alertClient } from '@/lib/api'
 import { formatDateTime } from '@/lib/format'
@@ -26,7 +26,7 @@ export function AlertsPage() {
           <TableBody>
             {data.map((a, i) => (
               <TableRow key={i} className="align-top">
-                <TableCell>{a.resolvedAt ? <Badge variant="secondary">resolved</Badge> : <Badge variant="destructive">firing</Badge>}</TableCell>
+                <TableCell>{a.resolvedAt ? <StatusBadge tone="neutral">Resolved</StatusBadge> : <StatusBadge tone="destructive">Firing</StatusBadge>}</TableCell>
                 <TableCell>
                   <div className="font-medium">{a.title}</div>
                   <div className="text-xs whitespace-pre-line text-muted-foreground">{a.message}</div>

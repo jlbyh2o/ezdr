@@ -1,22 +1,13 @@
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/status-badge'
 import { HealthState } from '@/gen/ezdr/portal/v1/portal_pb'
-
-const labels: Record<HealthState, { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  [HealthState.UNSPECIFIED]: { text: '—', variant: 'outline' },
-  [HealthState.NONE]: { text: '—', variant: 'outline' },
-  [HealthState.HEALTHY]: { text: 'Healthy', variant: 'default' },
-  [HealthState.SYNCING]: { text: 'Initial sync', variant: 'secondary' },
-  [HealthState.LAGGING]: { text: 'Lagging', variant: 'destructive' },
-  [HealthState.FAILING]: { text: 'Failing', variant: 'destructive' },
-  [HealthState.UNKNOWN]: { text: 'Unknown', variant: 'secondary' },
-}
+import { healthStates } from '@/lib/status'
 
 export function HealthBadge({ state, title }: { state?: HealthState; title?: string }) {
-  const l = labels[state ?? HealthState.UNSPECIFIED]
-  if (l.text === '—') return <span className="text-muted-foreground">—</span>
+  const h = healthStates[state ?? HealthState.UNSPECIFIED]
+  if (!h.label) return <span className="text-muted-foreground">—</span>
   return (
-    <Badge variant={l.variant} title={title}>
-      {l.text}
-    </Badge>
+    <StatusBadge tone={h.tone} title={title} pulse={state === HealthState.SYNCING}>
+      {h.label}
+    </StatusBadge>
   )
 }

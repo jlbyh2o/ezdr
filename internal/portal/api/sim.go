@@ -643,7 +643,14 @@ func (s *Sim) editInventory(ctx context.Context, hostID string, fn func(*invento
 	data, _ := proto.Marshal(msg)
 	h := fnv.New128a()
 	_, _ = h.Write(data)
-	if _, err := s.d.Store.PutInventory(ctx, store.Inventory{HostID: hostID, Data: data, Hash: h.Sum(nil), CollectedAt: time.Now()}); err != nil {
+	notReady := 0
+	for _, g := range msg.Guests {
+		if !g.Ready {
+			notReady++
+		}
+	}
+	if _, err := s.d.Store.PutInventory(ctx, store.Inventory{HostID: hostID, Data: data, Hash: h.Sum(nil), CollectedAt: time.Now(),
+		GuestCount: len(msg.Guests), GuestsNotReady: notReady}); err != nil {
 		slog.Error("sim: put inventory", "host", hostID, "err", err)
 	}
 }

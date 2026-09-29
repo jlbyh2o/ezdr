@@ -146,9 +146,11 @@ func seed(ctx context.Context, d *api.Deps) error {
 			return err
 		}
 		ids[h.name] = host.ID
-		data, _ := proto.Marshal(inventory(h))
+		inv := inventory(h)
+		data, _ := proto.Marshal(inv)
 		sum := sha256.Sum256(data)
-		if _, err := d.Store.PutInventory(ctx, store.Inventory{HostID: host.ID, Data: data, Hash: sum[:], CollectedAt: time.Now()}); err != nil {
+		if _, err := d.Store.PutInventory(ctx, store.Inventory{HostID: host.ID, Data: data, Hash: sum[:], CollectedAt: time.Now(),
+			GuestCount: len(inv.Guests)}); err != nil {
 			return err
 		}
 		if _, err := d.Store.SetHostZrepl(ctx, host.ID, "-----BEGIN CERTIFICATE-----\nfake "+h.name+"\n-----END CERTIFICATE-----\n", "v0.7.0"); err != nil {

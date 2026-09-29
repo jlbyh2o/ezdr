@@ -50,7 +50,7 @@ export function TokensPage() {
                 <TableRow key={t.id}>
                   <TableCell>{t.description || <span className="text-muted-foreground">—</span>}</TableCell>
                   <TableCell>
-                    <Badge variant={state === 'active' ? 'default' : 'secondary'}>{state}</Badge>
+                    <Badge variant={state === 'active' ? 'success' : 'neutral'}>{state}</Badge>
                   </TableCell>
                   <TableCell className="text-xs">
                     {formatDateTime(t.createdAt)} by {t.createdBy}
