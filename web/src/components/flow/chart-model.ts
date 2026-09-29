@@ -110,6 +110,13 @@ export function nodeHeight(d: HostNodeData): number {
   return h
 }
 
+// dimensions sizes a node before React Flow measures it. Each poll brings
+// new node objects, and a node without a size is hidden until measured: the
+// chart would blink, and the pulses along the edges jump, every poll.
+function dimensions(d: HostNodeData) {
+  return { width: size.width, initialHeight: nodeHeight(d) }
+}
+
 export function buildChart(ov: GetOverviewResponse): { nodes: HostNode[]; edges: PlanEdge[]; height: number } {
   const hosts = new Map(ov.hosts.map((h) => [h.id, h]))
   const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)
@@ -198,7 +205,7 @@ export function buildChart(ov: GetOverviewResponse): { nodes: HostNode[]; edges:
   const place = (items: HostNodeData[], x: number, height: number) => {
     let y = (top - height) / 2
     for (const d of items) {
-      nodes.push({ id: `${d.side}:${d.host.id}`, type: 'host', position: { x, y }, data: d, width: size.width })
+      nodes.push({ id: `${d.side}:${d.host.id}`, type: 'host', position: { x, y }, data: d, ...dimensions(d) })
       y += nodeHeight(d) + size.rowGap
     }
   }
@@ -229,7 +236,7 @@ export function buildChart(ov: GetOverviewResponse): { nodes: HostNode[]; edges:
         type: 'host',
         position: { x: i * (size.width + size.rowGap), y },
         data: d,
-        width: size.width,
+        ...dimensions(d),
       })
       rowHeight = Math.max(rowHeight, nodeHeight(d))
     })
