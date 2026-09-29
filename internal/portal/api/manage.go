@@ -157,6 +157,17 @@ func (s HostService) GetHostInventory(ctx context.Context, req *connect.Request[
 		resp.ChangedAt, resp.ReceivedAt = ts(inv.ChangedAt), ts(inv.ReceivedAt)
 	}
 
+	excluded, err := s.Store.GuestExclusions(ctx, h.ID)
+	if err != nil {
+		return nil, internalError(err)
+	}
+	if len(excluded) > 0 {
+		resp.ExcludedGuests = map[uint32]*portalv1.GuestExclusion{}
+		for vmid, e := range excluded {
+			resp.ExcludedGuests[vmid] = &portalv1.GuestExclusion{By: e.By, At: ts(e.At)}
+		}
+	}
+
 	guestPlans, err := s.Store.GuestPlans(ctx, h.ID)
 	if err != nil {
 		return nil, internalError(err)
@@ -176,6 +187,28 @@ func (s HostService) GetHostInventory(ctx context.Context, req *connect.Request[
 		}
 	}
 	return connect.NewResponse(resp), nil
+}
+
+// SetGuestExcluded records or clears the choice not to protect a guest.
+func (s HostService) SetGuestExcluded(ctx context.Context, req *connect.Request[portalv1.SetGuestExcludedRequest]) (*connect.Response[portalv1.SetGuestExcludedResponse], error) {
+	u, _ := auth.UserFrom(ctx)
+	m := req.Msg
+	if m.Vmid == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("choose a guest"))
+	}
+	err := s.Store.SetGuestExcluded(ctx, m.HostId, m.Vmid, m.Excluded, u.Username)
+	if errors.Is(err, store.ErrNotFound) {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("host not found"))
+	}
+	if err != nil {
+		return nil, internalError(err)
+	}
+	action := "guest.protect"
+	if m.Excluded {
+		action = "guest.unprotect"
+	}
+	s.audit(ctx, u.Username, action, fmt.Sprintf("host:%s/guest:%d", m.HostId, m.Vmid), "")
+	return connect.NewResponse(&portalv1.SetGuestExcludedResponse{}), nil
 }
 
 // RefreshInventory asks an online host to report its inventory now.

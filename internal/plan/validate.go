@@ -41,6 +41,9 @@ type Context struct {
 	// over, failed over, or failing back): their registrations there are
 	// the plan's own, not conflicts.
 	FailedOver bool
+	// Excluded are the primary's guests the user chose not to protect: they
+	// aren't reported as unconfigured.
+	Excluded map[uint32]bool
 }
 
 // OtherTunnel is another plan's tunnel, for conflict checks.
@@ -141,12 +144,13 @@ func Validate(spec *planv1.PlanSpec, ctx Context) []*planv1.Issue {
 
 	var unprotected []string
 	for _, g := range primary.Guests {
-		if !protected[g.Vmid] && ctx.OtherPlans[g.Vmid] == "" && !g.Template {
+		if !protected[g.Vmid] && ctx.OtherPlans[g.Vmid] == "" && !g.Template && !ctx.Excluded[g.Vmid] {
 			unprotected = append(unprotected, fmt.Sprintf("%d (%s)", g.Vmid, g.Name))
 		}
 	}
 	if len(unprotected) > 0 {
-		is.warnf(0, "%s has guests that no plan protects: %s", ctx.Primary.Hostname, strings.Join(unprotected, ", "))
+		is.warnf(0, "%s has unconfigured guests: %s. Protect them in a plan, or mark them unprotected in Guests",
+			ctx.Primary.Hostname, strings.Join(unprotected, ", "))
 	}
 	return sorted(is)
 }

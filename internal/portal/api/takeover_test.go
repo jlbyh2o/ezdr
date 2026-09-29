@@ -62,6 +62,8 @@ type fakeHost struct {
 }
 
 // run serves the host until ctx is done; wait returns once it has stopped.
+// It returns once the host is connected, so tests don't race its first
+// connection.
 func (f *fakeHost) run(ctx context.Context, t *testing.T) {
 	f.stopped = make(chan struct{})
 	go func() {
@@ -74,6 +76,11 @@ func (f *fakeHost) run(ctx context.Context, t *testing.T) {
 			release()
 		}
 	}()
+	for deadline := time.Now().Add(5 * time.Second); !f.d.Hub.Online(f.id); time.Sleep(time.Millisecond) {
+		if time.Now().After(deadline) {
+			t.Fatalf("fake host %s didn't connect", f.id)
+		}
+	}
 }
 
 // serve handles one connection until ctx is done or the host drops it.

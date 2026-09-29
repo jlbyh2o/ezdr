@@ -138,6 +138,9 @@ service HostService {
   rpc GetHostInventory(GetHostInventoryRequest) returns (GetHostInventoryResponse);
   // RefreshInventory asks an online host to report its inventory now.
   rpc RefreshInventory(RefreshInventoryRequest) returns (RefreshInventoryResponse);
+  // SetGuestExcluded records the choice not to protect a guest (shown as
+  // "unprotected"), or clears it. Plans don't warn about such guests.
+  rpc SetGuestExcluded(SetGuestExcludedRequest) returns (SetGuestExcludedResponse);
 }
 
 message GetHostInventoryRequest {
@@ -154,7 +157,22 @@ message GetHostInventoryResponse {
   google.protobuf.Timestamp received_at = 4;
   // Plans protecting this host's guests: VMID to plan.
   map<uint32, PlanRef> guest_plans = 5;
+  // Guests the user chose not to protect: VMID to the choice.
+  map<uint32, GuestExclusion> excluded_guests = 6;
 }
+
+message GuestExclusion {
+  string by = 1;
+  google.protobuf.Timestamp at = 2;
+}
+
+message SetGuestExcludedRequest {
+  string host_id = 1;
+  uint32 vmid = 2;
+  bool excluded = 3;
+}
+
+message SetGuestExcludedResponse {}
 
 message PlanRef {
   string id = 1;
@@ -1231,6 +1249,8 @@ message OverviewGuest {
   // The plan protecting the guest, if any (drafts included).
   string plan_id = 6;
   bool template = 7;
+  // The user chose not to protect it.
+  bool excluded = 8;
 }
 
 message OverviewPlan {

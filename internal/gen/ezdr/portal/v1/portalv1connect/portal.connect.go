@@ -86,6 +86,9 @@ const (
 	// HostServiceRefreshInventoryProcedure is the fully-qualified name of the HostService's
 	// RefreshInventory RPC.
 	HostServiceRefreshInventoryProcedure = "/ezdr.portal.v1.HostService/RefreshInventory"
+	// HostServiceSetGuestExcludedProcedure is the fully-qualified name of the HostService's
+	// SetGuestExcluded RPC.
+	HostServiceSetGuestExcludedProcedure = "/ezdr.portal.v1.HostService/SetGuestExcluded"
 	// AuditServiceListAuditEventsProcedure is the fully-qualified name of the AuditService's
 	// ListAuditEvents RPC.
 	AuditServiceListAuditEventsProcedure = "/ezdr.portal.v1.AuditService/ListAuditEvents"
@@ -597,6 +600,9 @@ type HostServiceClient interface {
 	GetHostInventory(context.Context, *connect.Request[v1.GetHostInventoryRequest]) (*connect.Response[v1.GetHostInventoryResponse], error)
 	// RefreshInventory asks an online host to report its inventory now.
 	RefreshInventory(context.Context, *connect.Request[v1.RefreshInventoryRequest]) (*connect.Response[v1.RefreshInventoryResponse], error)
+	// SetGuestExcluded records the choice not to protect a guest (shown as
+	// "unprotected"), or clears it. Plans don't warn about such guests.
+	SetGuestExcluded(context.Context, *connect.Request[v1.SetGuestExcludedRequest]) (*connect.Response[v1.SetGuestExcludedResponse], error)
 }
 
 // NewHostServiceClient constructs a client for the ezdr.portal.v1.HostService service. By default,
@@ -634,6 +640,12 @@ func NewHostServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(hostServiceMethods.ByName("RefreshInventory")),
 			connect.WithClientOptions(opts...),
 		),
+		setGuestExcluded: connect.NewClient[v1.SetGuestExcludedRequest, v1.SetGuestExcludedResponse](
+			httpClient,
+			baseURL+HostServiceSetGuestExcludedProcedure,
+			connect.WithSchema(hostServiceMethods.ByName("SetGuestExcluded")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -643,6 +655,7 @@ type hostServiceClient struct {
 	deleteHost       *connect.Client[v1.DeleteHostRequest, v1.DeleteHostResponse]
 	getHostInventory *connect.Client[v1.GetHostInventoryRequest, v1.GetHostInventoryResponse]
 	refreshInventory *connect.Client[v1.RefreshInventoryRequest, v1.RefreshInventoryResponse]
+	setGuestExcluded *connect.Client[v1.SetGuestExcludedRequest, v1.SetGuestExcludedResponse]
 }
 
 // ListHosts calls ezdr.portal.v1.HostService.ListHosts.
@@ -665,6 +678,11 @@ func (c *hostServiceClient) RefreshInventory(ctx context.Context, req *connect.R
 	return c.refreshInventory.CallUnary(ctx, req)
 }
 
+// SetGuestExcluded calls ezdr.portal.v1.HostService.SetGuestExcluded.
+func (c *hostServiceClient) SetGuestExcluded(ctx context.Context, req *connect.Request[v1.SetGuestExcludedRequest]) (*connect.Response[v1.SetGuestExcludedResponse], error) {
+	return c.setGuestExcluded.CallUnary(ctx, req)
+}
+
 // HostServiceHandler is an implementation of the ezdr.portal.v1.HostService service.
 type HostServiceHandler interface {
 	ListHosts(context.Context, *connect.Request[v1.ListHostsRequest]) (*connect.Response[v1.ListHostsResponse], error)
@@ -672,6 +690,9 @@ type HostServiceHandler interface {
 	GetHostInventory(context.Context, *connect.Request[v1.GetHostInventoryRequest]) (*connect.Response[v1.GetHostInventoryResponse], error)
 	// RefreshInventory asks an online host to report its inventory now.
 	RefreshInventory(context.Context, *connect.Request[v1.RefreshInventoryRequest]) (*connect.Response[v1.RefreshInventoryResponse], error)
+	// SetGuestExcluded records the choice not to protect a guest (shown as
+	// "unprotected"), or clears it. Plans don't warn about such guests.
+	SetGuestExcluded(context.Context, *connect.Request[v1.SetGuestExcludedRequest]) (*connect.Response[v1.SetGuestExcludedResponse], error)
 }
 
 // NewHostServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -705,6 +726,12 @@ func NewHostServiceHandler(svc HostServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(hostServiceMethods.ByName("RefreshInventory")),
 		connect.WithHandlerOptions(opts...),
 	)
+	hostServiceSetGuestExcludedHandler := connect.NewUnaryHandler(
+		HostServiceSetGuestExcludedProcedure,
+		svc.SetGuestExcluded,
+		connect.WithSchema(hostServiceMethods.ByName("SetGuestExcluded")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/ezdr.portal.v1.HostService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case HostServiceListHostsProcedure:
@@ -715,6 +742,8 @@ func NewHostServiceHandler(svc HostServiceHandler, opts ...connect.HandlerOption
 			hostServiceGetHostInventoryHandler.ServeHTTP(w, r)
 		case HostServiceRefreshInventoryProcedure:
 			hostServiceRefreshInventoryHandler.ServeHTTP(w, r)
+		case HostServiceSetGuestExcludedProcedure:
+			hostServiceSetGuestExcludedHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -738,6 +767,10 @@ func (UnimplementedHostServiceHandler) GetHostInventory(context.Context, *connec
 
 func (UnimplementedHostServiceHandler) RefreshInventory(context.Context, *connect.Request[v1.RefreshInventoryRequest]) (*connect.Response[v1.RefreshInventoryResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.HostService.RefreshInventory is not implemented"))
+}
+
+func (UnimplementedHostServiceHandler) SetGuestExcluded(context.Context, *connect.Request[v1.SetGuestExcludedRequest]) (*connect.Response[v1.SetGuestExcludedResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.HostService.SetGuestExcluded is not implemented"))
 }
 
 // AuditServiceClient is a client for the ezdr.portal.v1.AuditService service.

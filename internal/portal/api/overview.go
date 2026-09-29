@@ -91,6 +91,11 @@ func (s OverviewService) GetOverview(ctx context.Context, _ *connect.Request[por
 	return connect.NewResponse(resp), nil
 }
 
+func hasKey[K comparable, V any](m map[K]V, k K) bool {
+	_, ok := m[k]
+	return ok
+}
+
 func planName(plans []store.Plan, id string) string {
 	for _, p := range plans {
 		if p.ID == id {
@@ -123,10 +128,14 @@ func (s OverviewService) overviewHost(ctx context.Context, h store.Host) (*porta
 	if err != nil {
 		return nil, err
 	}
+	excluded, err := s.Store.GuestExclusions(ctx, h.ID)
+	if err != nil {
+		return nil, err
+	}
 	for _, g := range inv.Guests {
 		oh.Guests = append(oh.Guests, &portalv1.OverviewGuest{
 			Vmid: g.Vmid, Name: g.Name, Type: g.Type, Status: g.Status, Lock: g.Lock,
-			PlanId: protected[g.Vmid], Template: g.Template,
+			PlanId: protected[g.Vmid], Template: g.Template, Excluded: hasKey(excluded, g.Vmid),
 		})
 	}
 	slices.SortFunc(oh.Guests, func(a, b *portalv1.OverviewGuest) int { return int(a.Vmid) - int(b.Vmid) })

@@ -91,8 +91,15 @@ what to do next.
     copy gray (and marked locked).
   - Test clones don't appear as guests; a running test shows as a badge on
     the DR host's copy ("test running").
-- **Unprotected guests** (in no plan) appear on their host dimmed, with a
-  dashed outline and no edge. The host shows "N unprotected".
+- Guests in no plan appear on their host without an edge, in two groups:
+  - **Unconfigured:** not decided yet, with a dashed yellow outline. Plans
+    on the host warn about them.
+  - **Unprotected:** the user chose not to protect them (dimmed). Plans
+    don't warn about them.
+
+  The choice is recorded per host (who and when) and made or undone in a
+  plan's Guests section, where each guest in no plan shows "Mark
+  unprotected" or "Undo".
 - **Edges** run from each guest's copy on the primary to its copy on the
   DR host, one per guest, with an **arrow** showing the direction the plan
   copies data (toward the DR host; back toward the primary while failing

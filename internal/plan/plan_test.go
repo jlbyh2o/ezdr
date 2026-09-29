@@ -134,7 +134,7 @@ func TestValidateValidPlan(t *testing.T) {
 		t.Fatalf("unexpected errors:\n%s", errs)
 	}
 	warns := messages(is, planv1.Severity_SEVERITY_WARNING)
-	for _, want := range []string{"PCI passthrough", "no plan protects: 202 (legacy)"} {
+	for _, want := range []string{"PCI passthrough", "unconfigured guests: 202 (legacy)"} {
 		if !strings.Contains(warns, want) {
 			t.Errorf("missing warning %q in:\n%s", want, warns)
 		}
@@ -384,5 +384,13 @@ func TestFailedOverGuestsOnDR(t *testing.T) {
 	ctx.FailedOver = true
 	if errs := messages(Validate(validSpec(), ctx), planv1.Severity_SEVERITY_ERROR); errs != "" {
 		t.Errorf("a failed-over plan's own guests are reported as conflicts:\n%s", errs)
+	}
+}
+
+func TestExcludedGuestsArentUnconfigured(t *testing.T) {
+	ctx := ctxFor(primaryInv(), drInv())
+	ctx.Excluded = map[uint32]bool{202: true}
+	if warns := messages(Validate(validSpec(), ctx), planv1.Severity_SEVERITY_WARNING); strings.Contains(warns, "unconfigured") {
+		t.Errorf("an excluded guest is reported as unconfigured:\n%s", warns)
 	}
 }

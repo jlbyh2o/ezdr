@@ -103,6 +103,16 @@ func (s PlanService) validate(ctx context.Context, spec *planv1.PlanSpec, planID
 			}
 		}
 	}
+	excluded := map[uint32]bool{}
+	if spec.PrimaryHostId != "" {
+		ex, err := s.Store.GuestExclusions(ctx, spec.PrimaryHostId)
+		if err != nil {
+			return nil, err
+		}
+		for vmid := range ex {
+			excluded[vmid] = true
+		}
+	}
 	failedOver := false
 	if planID != "" {
 		if sp, err := s.Store.PlanByID(ctx, planID); err == nil && sp.State == store.PlanFailedOver {
@@ -111,7 +121,7 @@ func (s PlanService) validate(ctx context.Context, spec *planv1.PlanSpec, planID
 			failedOver = true
 		}
 	}
-	return plan.Validate(spec, plan.Context{Primary: primary, DR: dr, OtherPlans: others, UsedPorts: ports, FailedOver: failedOver,
+	return plan.Validate(spec, plan.Context{Primary: primary, DR: dr, OtherPlans: others, UsedPorts: ports, FailedOver: failedOver, Excluded: excluded,
 		OtherTunnels: tunnels, Now: time.Now()}), nil
 }
 

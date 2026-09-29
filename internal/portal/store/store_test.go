@@ -532,3 +532,35 @@ func TestSiteTunnelState(t *testing.T) {
 		t.Errorf("host site state = %v %q", h.SiteAddress, h.SitePublicKey)
 	}
 }
+
+func TestGuestExclusions(t *testing.T) {
+	s := openTest(t)
+	ctx := context.Background()
+	if _, err := s.CreateToken(ctx, Token{ID: "t", SecretHash: []byte("s"), CreatedBy: "admin", ExpiresAt: time.Now().Add(time.Hour)}); err != nil {
+		t.Fatal(err)
+	}
+	h, err := s.EnrollHost(ctx, "t", []byte("s"), newHost("h1", "m1"), seqAlloc(netip.MustParseAddr("100.64.42.2")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SetGuestExcluded(ctx, h.ID, 130, true, "admin"); err != nil {
+		t.Fatal(err)
+	}
+	// Marking it again keeps the first record.
+	if err := s.SetGuestExcluded(ctx, h.ID, 130, true, "someone"); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.GuestExclusions(ctx, h.ID)
+	if err != nil || len(got) != 1 || got[130].By != "admin" || got[130].At.IsZero() {
+		t.Fatalf("exclusions = %v, %v", got, err)
+	}
+	if err := s.SetGuestExcluded(ctx, "nope", 1, true, "admin"); !errors.Is(err, ErrNotFound) {
+		t.Errorf("unknown host: %v", err)
+	}
+	if err := s.SetGuestExcluded(ctx, h.ID, 130, false, "admin"); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.GuestExclusions(ctx, h.ID); len(got) != 0 {
+		t.Errorf("exclusions after clearing = %v", got)
+	}
+}
