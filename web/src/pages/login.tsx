@@ -94,7 +94,7 @@ export function LoginPage({ onSignedIn }: { onSignedIn: (u: User) => void }) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={submitCode} className="grid gap-4">
+          <form key="code" onSubmit={submitCode} className="grid gap-4">
             <ErrorAlert message={error} />
             {setup && (
               <div className="grid justify-items-center gap-3">
@@ -105,9 +105,10 @@ export function LoginPage({ onSignedIn }: { onSignedIn: (u: User) => void }) {
                 </div>
               </div>
             )}
-            <Field id="code" label={setup ? '6-digit code' : 'Code'}>
+            <Field id="totp" label={setup ? '6-digit code' : 'Code'}>
               <Input
-                id="code"
+                id="totp"
+                name="totp"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 inputMode={setup ? 'numeric' : 'text'}
@@ -134,13 +135,13 @@ export function LoginPage({ onSignedIn }: { onSignedIn: (u: User) => void }) {
         <CardTitle>Sign in</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={submitPassword} className="grid gap-4">
+        <form key="password" onSubmit={submitPassword} className="grid gap-4">
           <ErrorAlert message={error} />
           <Field id="username" label="Username">
-            <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus required />
+            <Input id="username" name="username" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus required />
           </Field>
           <Field id="password" label="Password">
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
+            <Input id="password" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
           </Field>
           <Button type="submit" disabled={busy}>
             Continue
