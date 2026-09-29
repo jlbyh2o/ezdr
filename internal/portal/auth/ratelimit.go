@@ -47,3 +47,13 @@ func (r *RateLimiter) Allow(key string) bool {
 	e.seen = now
 	return e.lim.Allow()
 }
+
+// Ready reports whether an event for key would be allowed now, without
+// counting one. Use it with Allow to limit only failures: check Ready
+// first, and call Allow when the attempt fails.
+func (r *RateLimiter) Ready(key string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	e, ok := r.entries[key]
+	return !ok || e.lim.Tokens() >= 1
+}

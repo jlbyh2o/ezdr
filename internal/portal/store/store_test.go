@@ -57,6 +57,9 @@ func TestRecoveryCodesAreSingleUse(t *testing.T) {
 	if err := s.SetTOTP(ctx, u.ID, []byte("sealed"), [][]byte{[]byte("a"), []byte("b")}); err != nil {
 		t.Fatal(err)
 	}
+	if err := s.SetTOTP(ctx, u.ID, []byte("other"), [][]byte{[]byte("c")}); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("second TOTP setup: %v", err)
+	}
 	ok, err := s.UseRecoveryCode(ctx, u.ID, []byte("a"))
 	if err != nil || !ok {
 		t.Fatalf("first use: ok=%v err=%v", ok, err)

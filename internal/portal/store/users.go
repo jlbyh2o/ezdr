@@ -86,11 +86,12 @@ func (s *Store) UserByID(ctx context.Context, id string) (User, error) {
 		"SELECT "+userColumns+" FROM users WHERE id = ?", id))
 }
 
-// SetTOTP stores a user's encrypted TOTP secret and replaces their recovery
-// codes with the given hashes.
+// SetTOTP stores the encrypted TOTP secret of a user who has none yet and
+// replaces their recovery codes with the given hashes. It returns
+// ErrNotFound if the user doesn't exist or already has a secret.
 func (s *Store) SetTOTP(ctx context.Context, userID string, sealedSecret []byte, recoveryCodeHashes [][]byte) error {
 	return s.tx(ctx, func(tx *sql.Tx) error {
-		res, err := tx.ExecContext(ctx, "UPDATE users SET totp_secret = ? WHERE id = ?", sealedSecret, userID)
+		res, err := tx.ExecContext(ctx, "UPDATE users SET totp_secret = ? WHERE id = ? AND totp_secret IS NULL", sealedSecret, userID)
 		if err != nil {
 			return err
 		}

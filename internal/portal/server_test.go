@@ -1,6 +1,8 @@
 package portal
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -8,6 +10,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/jlbyh2o/ezdr/internal/gen/ezdr/portal/v1/portalv1connect"
 	"github.com/jlbyh2o/ezdr/internal/portal/api"
 )
 
@@ -76,5 +79,21 @@ func TestSPAFallbackOnlyForPageLoads(t *testing.T) {
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/ezdr.client.v1.ClientService/ReportStatus", strings.NewReader("{}")))
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("POST to unknown path: status = %d, want 404", rec.Code)
+	}
+}
+
+func TestRequestSizeLimit(t *testing.T) {
+	// A small compressed request that expands far beyond the limit.
+	var body bytes.Buffer
+	zw := gzip.NewWriter(&body)
+	_, _ = zw.Write([]byte(`{"username":"` + strings.Repeat("a", 8<<20) + `"}`))
+	_ = zw.Close()
+	req := httptest.NewRequest(http.MethodPost, portalv1connect.AuthServiceLoginProcedure, &body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Encoding", "gzip")
+	rec := httptest.NewRecorder()
+	NewHandler(testUI()).ServeHTTP(rec, req)
+	if !strings.Contains(rec.Body.String(), "resource_exhausted") {
+		t.Errorf("status %d: %s", rec.Code, rec.Body.String())
 	}
 }

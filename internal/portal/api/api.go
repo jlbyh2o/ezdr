@@ -50,8 +50,13 @@ type Deps struct {
 	challenges  *auth.Challenges
 	replayGuard *auth.ReplayGuard
 	// Rate limits for unauthenticated endpoints.
-	loginByIP     *auth.RateLimiter
-	loginByUser   *auth.RateLimiter
+	loginByIP *auth.RateLimiter
+	// Failed passwords per username and source address: failures from one
+	// address can't lock the user out elsewhere.
+	loginFailures *auth.RateLimiter
+	// Failed TOTP or recovery codes per user (only possible with the
+	// password).
+	totpFailures  *auth.RateLimiter
 	enrollByIP    *auth.RateLimiter
 	setupByIP     *auth.RateLimiter
 	initLimitOnce sync.Once
@@ -62,7 +67,8 @@ func (d *Deps) init() {
 		d.challenges = auth.NewChallenges()
 		d.replayGuard = auth.NewReplayGuard()
 		d.loginByIP = auth.NewRateLimiter(6*time.Second, 10)
-		d.loginByUser = auth.NewRateLimiter(time.Minute, 5)
+		d.loginFailures = auth.NewRateLimiter(time.Minute, 5)
+		d.totpFailures = auth.NewRateLimiter(5*time.Minute, 10)
 		d.enrollByIP = auth.NewRateLimiter(6*time.Second, 10)
 		d.setupByIP = auth.NewRateLimiter(time.Minute, 5)
 	})

@@ -24,8 +24,16 @@ func userMsg(u store.User) *portalv1.User {
 func (s AuthService) Login(ctx context.Context, req *connect.Request[portalv1.LoginRequest]) (*connect.Response[portalv1.LoginResponse], error) {
 	s.init()
 	username := strings.TrimSpace(req.Msg.Username)
-	if !s.loginByIP.Allow(SourceAddress(ctx).String()) || !s.loginByUser.Allow(strings.ToLower(username)) {
+	source := SourceAddress(ctx).String()
+	failureKey := strings.ToLower(username) + "\x00" + source
+	if !s.loginByIP.Allow(source) || !s.loginFailures.Ready(failureKey) {
 		return nil, rateLimited()
+	}
+	if validateUsername(username) != nil {
+		// No such user can exist; don't store the name.
+		s.loginFailures.Allow(failureKey)
+		s.audit(ctx, "", "auth.login_failed", "", "invalid username")
+		return nil, connect.NewError(connect.CodeUnauthenticated, errBadCredentials)
 	}
 
 	u, err := s.Store.UserByUsername(ctx, username)
@@ -33,8 +41,13 @@ func (s AuthService) Login(ctx context.Context, req *connect.Request[portalv1.Lo
 		return nil, internalError(err)
 	}
 	if !auth.VerifyPassword(req.Msg.Password, u.PasswordHash) {
+		s.loginFailures.Allow(failureKey)
 		s.audit(ctx, username, "auth.login_failed", "", "wrong username or password")
 		return nil, connect.NewError(connect.CodeUnauthenticated, errBadCredentials)
+	}
+
+	if !s.totpFailures.Ready(u.ID) {
+		return nil, rateLimited()
 	}
 
 	ch := auth.Challenge{UserID: u.ID}
@@ -61,6 +74,9 @@ func (s AuthService) VerifyTotp(ctx context.Context, req *connect.Request[portal
 	if !ok {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errBadCode)
 	}
+	if !s.totpFailures.Ready(ch.UserID) {
+		return nil, rateLimited()
+	}
 	u, err := s.Store.UserByID(ctx, ch.UserID)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errBadCode)
@@ -77,7 +93,10 @@ func (s AuthService) VerifyTotp(ctx context.Context, req *connect.Request[portal
 			return nil, s.totpFailed(ctx, u)
 		}
 		codes, hashes := auth.NewRecoveryCodes()
-		if err := s.Store.SetTOTP(ctx, u.ID, s.Box.Seal([]byte(ch.PendingSecret)), hashes); err != nil {
+		// Another sign-in may have set up TOTP since this one started.
+		if err := s.Store.SetTOTP(ctx, u.ID, s.Box.Seal([]byte(ch.PendingSecret)), hashes); errors.Is(err, store.ErrNotFound) {
+			return nil, connect.NewError(connect.CodeUnauthenticated, errBadCode)
+		} else if err != nil {
 			return nil, internalError(err)
 		}
 		resp.RecoveryCodes = codes
@@ -113,6 +132,7 @@ func (s AuthService) VerifyTotp(ctx context.Context, req *connect.Request[portal
 }
 
 func (s AuthService) totpFailed(ctx context.Context, u store.User) error {
+	s.totpFailures.Allow(u.ID)
 	s.audit(ctx, u.Username, "auth.login_failed", "user:"+u.ID, "wrong TOTP or recovery code")
 	return connect.NewError(connect.CodeUnauthenticated, errBadCode)
 }

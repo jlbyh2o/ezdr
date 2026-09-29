@@ -34,9 +34,13 @@ func PublicHandler(d *api.Deps, ui fs.FS) http.Handler {
 	mux.HandleFunc("GET /api/health", handleHealth)
 	mux.Handle("/api/", http.NotFoundHandler())
 
-	mux.Handle(enrollv1connect.NewEnrollmentServiceHandler(api.EnrollmentService{Deps: d}))
+	// Limits apply after decompression, and requests are read before the
+	// sign-in check.
+	mux.Handle(enrollv1connect.NewEnrollmentServiceHandler(api.EnrollmentService{Deps: d},
+		connect.WithReadMaxBytes(maxEnrollRequest)))
 
-	userAPI := connect.WithInterceptors(api.RequireUser(publicProcedures...))
+	userAPI := connect.WithHandlerOptions(connect.WithInterceptors(api.RequireUser(publicProcedures...)),
+		connect.WithReadMaxBytes(maxUserRequest))
 	for _, register := range []func() (string, http.Handler){
 		func() (string, http.Handler) {
 			return portalv1connect.NewSetupServiceHandler(api.SetupService{Deps: d}, userAPI)
@@ -77,7 +81,21 @@ func PublicHandler(d *api.Deps, ui fs.FS) http.Handler {
 	}
 
 	mux.Handle("/", spaHandler(ui))
-	return withSecurityHeaders(mux)
+	return withSecurityHeaders(withBodyLimit(mux))
+}
+
+const (
+	maxEnrollRequest = 64 << 10
+	// Plans with many guests are the largest requests.
+	maxUserRequest = 1 << 20
+)
+
+// withBodyLimit caps request bodies as sent (compressed or not).
+func withBodyLimit(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, maxUserRequest)
+		next.ServeHTTP(w, r)
+	})
 }
 
 // TunnelHandler serves the client API. It must only be served on the tunnel
