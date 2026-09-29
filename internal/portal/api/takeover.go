@@ -410,7 +410,7 @@ func (d *Deps) takeoverStep(ctx context.Context, i int, row *store.Takeover, spe
 		return "added EZDR's pull job", d.waitApplied(ctx, spec.DrHostId)
 
 	case stepVerify:
-		return d.verifyTakeover(ctx, row.PlanID, spec, t)
+		return d.verifyTakeover(ctx, row, spec, t)
 
 	case stepRelease:
 		var n int
@@ -480,10 +480,12 @@ func (d *Deps) waitApplied(ctx context.Context, hostID string) error {
 	return fmt.Errorf("the host didn't apply its configuration within %s", applyTimeout)
 }
 
-// verifyTakeover waits for EZDR's pull job to replicate every dataset that
-// preflight found a common snapshot for, incrementally, in an attempt that
-// started after the pull job was added.
-func (d *Deps) verifyTakeover(ctx context.Context, planID string, spec *planv1.PlanSpec, t *portalv1.Takeover) (string, error) {
+// verifyTakeover starts EZDR's pull job and waits for it to replicate every
+// dataset that preflight found a common snapshot for, incrementally, in an
+// attempt that started after the pull job was added. The step's detail says
+// what it waits for, and for how long at most.
+func (d *Deps) verifyTakeover(ctx context.Context, row *store.Takeover, spec *planv1.PlanSpec, t *portalv1.Takeover) (string, error) {
+	planID := row.PlanID
 	primary, _, err := d.loadInventoriesFor(ctx, spec)
 	if err != nil {
 		return "", err
@@ -501,7 +503,22 @@ func (d *Deps) verifyTakeover(ctx context.Context, planID string, spec *planv1.P
 	since := t.Steps[stepAddPull].UpdatedAt.AsTime()
 	timeout := max(minVerifyTimeout, 3*time.Duration(spec.IntervalSeconds)*time.Second)
 	deadline := time.Now().Add(timeout)
+	// Otherwise zrepl runs the new job first one interval after it started.
+	started := "started EZDR's first replication"
+	if err := d.wakePullJobs(ctx, planID, spec); err != nil {
+		started = fmt.Sprintf("couldn't start the first replication now (%v); zrepl starts it within %s",
+			err, (time.Duration(spec.IntervalSeconds) * time.Second).String())
+	}
+	progress := func(msg string) {
+		t.Steps[stepVerify].Detail = fmt.Sprintf("%s; waiting up to %s (until %s UTC) for every dataset to arrive incrementally: %s",
+			started, timeout.Round(time.Minute), deadline.UTC().Format("15:04"), msg)
+		t.Steps[stepVerify].UpdatedAt = timestamppb.Now()
+		if err := d.saveTakeover(ctx, *row, t); err != nil {
+			slog.Warn("save takeover progress", "plan", planID, "err", err)
+		}
+	}
 	last := "waiting for the first replication"
+	progress(last)
 	for time.Now().Before(deadline) {
 		done, msg, err := d.checkFirstReplication(ctx, spec.DrHostId, pulls, want, since)
 		if err != nil {
@@ -509,6 +526,9 @@ func (d *Deps) verifyTakeover(ctx context.Context, planID string, spec *planv1.P
 		}
 		if done {
 			return msg, nil
+		}
+		if msg != last {
+			progress(msg)
 		}
 		last = msg
 		if err := sleep(ctx, takeoverPoll); err != nil {

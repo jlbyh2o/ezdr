@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -166,5 +167,31 @@ func TestTestFailoverSetupFailure(t *testing.T) {
 	// A failed test frees the plan for the next one.
 	if _, err := svc.StartTest(ctx, connect.NewRequest(&portalv1.StartTestRequest{PlanId: planID, Vmids: []uint32{101}, Snapshot: "zrepl_2"})); err != nil {
 		t.Errorf("starting again after a failure: %v", err)
+	}
+}
+
+// Applying changes to an active plan starts its pull job at once, instead
+// of one interval after zrepl restarts.
+func TestApplyStartsReplication(t *testing.T) {
+	d, ctx, id, dr := testFixture(t)
+	svc := PlanService{Deps: d}
+	got, err := svc.GetPlan(ctx, connect.NewRequest(&portalv1.GetPlanRequest{Id: id}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	spec := got.Msg.Plan.Spec
+	spec.IntervalSeconds = 600
+	if _, err := svc.UpdatePlan(ctx, connect.NewRequest(&portalv1.UpdatePlanRequest{Id: id, Spec: spec})); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.ApplyPlanChanges(ctx, connect.NewRequest(&portalv1.ApplyPlanChangesRequest{Id: id})); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(15 * time.Second)
+	for !slices.Contains(dr.did(), "replicate") {
+		if time.Now().After(deadline) {
+			t.Fatalf("pull job not started; DR actions = %v", dr.did())
+		}
+		time.Sleep(50 * time.Millisecond)
 	}
 }

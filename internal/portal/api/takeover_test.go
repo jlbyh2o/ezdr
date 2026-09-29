@@ -424,7 +424,7 @@ func TestTakeover(t *testing.T) {
 			t.Errorf("step %q: %s %s", s.Name, s.Status, s.Detail)
 		}
 	}
-	if got := strings.Join(dr.did(), "|"); got != "preflight|remove old_pull|release old_pull" {
+	if got := strings.Join(dr.did(), "|"); got != "preflight|remove old_pull|replicate|release old_pull" {
 		t.Errorf("DR actions = %s", got)
 	}
 	if got := strings.Join(primary.did(), "|"); got != "preflight|remove old_source|release old_source" {
@@ -451,7 +451,7 @@ func TestTakeoverRollsBack(t *testing.T) {
 	if tk.State != portalv1.TakeoverState_TAKEOVER_STATE_ROLLED_BACK || !strings.Contains(tk.Error, "sent in full") {
 		t.Fatalf("takeover = %v", tk)
 	}
-	if got := strings.Join(dr.did(), "|"); got != "preflight|remove old_pull|restore" {
+	if got := strings.Join(dr.did(), "|"); got != "preflight|remove old_pull|replicate|restore" {
 		t.Errorf("DR actions = %s", got)
 	}
 	if got := strings.Join(primary.did(), "|"); got != "preflight|remove old_source|restore" {
@@ -477,7 +477,7 @@ func TestTakeoverResendsAfterDisconnect(t *testing.T) {
 	if tk.State != portalv1.TakeoverState_TAKEOVER_STATE_COMPLETED {
 		t.Fatalf("takeover = %v", tk)
 	}
-	if got := strings.Join(dr.did(), "|"); got != "preflight|remove old_pull|remove old_pull|release old_pull" {
+	if got := strings.Join(dr.did(), "|"); got != "preflight|remove old_pull|remove old_pull|replicate|release old_pull" {
 		t.Errorf("DR actions = %s", got)
 	}
 	_ = primary

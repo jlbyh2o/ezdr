@@ -653,6 +653,7 @@ func (s PlanService) ActivatePlan(ctx context.Context, req *connect.Request[port
 	if err != nil {
 		return nil, err
 	}
+	go s.wakeReplication(context.WithoutCancel(ctx), sp.ID)
 	return connect.NewResponse(&portalv1.ActivatePlanResponse{Plan: p}), nil
 }
 
@@ -678,6 +679,7 @@ func (s PlanService) ApplyPlanChanges(ctx context.Context, req *connect.Request[
 	if err != nil {
 		return nil, err
 	}
+	go s.wakeReplication(context.WithoutCancel(ctx), sp.ID)
 	return connect.NewResponse(&portalv1.ApplyPlanChangesResponse{Plan: p}), nil
 }
 
@@ -745,6 +747,7 @@ func (s PlanService) ResumePlan(ctx context.Context, req *connect.Request[portal
 	if err != nil {
 		return nil, err
 	}
+	go s.wakeReplication(context.WithoutCancel(ctx), sp.ID)
 	return connect.NewResponse(&portalv1.ResumePlanResponse{Plan: p}), nil
 }
 
