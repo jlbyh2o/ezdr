@@ -34,17 +34,18 @@ func main() {
 	listen := flag.String("listen", "127.0.0.1:8080", "address to serve on")
 	reset := flag.Bool("reset", false, "delete the data directory and seed it again")
 	fast := flag.Bool("fast", false, "replicate every 20 seconds instead of every minute")
+	empty := flag.Bool("empty", false, "seed only the administrator, no hosts or plans")
 	flag.Parse()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	if err := run(ctx, *dataDir, *listen, *reset, *fast); err != nil {
+	if err := run(ctx, *dataDir, *listen, *reset, *fast, *empty); err != nil {
 		slog.Error("dev portal exited", "err", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, dataDir, listen string, reset, fast bool) error {
+func run(ctx context.Context, dataDir, listen string, reset, fast, empty bool) error {
 	// Claim the port first, so a second instance fails before touching the
 	// data directory.
 	ln, err := net.Listen("tcp", listen)
@@ -92,7 +93,7 @@ func run(ctx context.Context, dataDir, listen string, reset, fast bool) error {
 	}
 	fresh := n == 0
 	if fresh {
-		if err := seed(ctx, d); err != nil {
+		if err := seed(ctx, d, empty); err != nil {
 			return fmt.Errorf("seed: %w", err)
 		}
 	}
@@ -113,7 +114,7 @@ func run(ctx context.Context, dataDir, listen string, reset, fast bool) error {
 		return err
 	}
 	portal.StartBackground(ctx, d)
-	if fresh {
+	if fresh && !empty {
 		go func() {
 			if err := scenario(ctx, d); err != nil && ctx.Err() == nil {
 				slog.Error("scenario", "err", err)

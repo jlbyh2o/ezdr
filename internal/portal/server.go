@@ -68,6 +68,9 @@ func PublicHandler(d *api.Deps, ui fs.FS) http.Handler {
 		func() (string, http.Handler) {
 			return portalv1connect.NewDnsServiceHandler(api.DNSService{Deps: d}, userAPI)
 		},
+		func() (string, http.Handler) {
+			return portalv1connect.NewOverviewServiceHandler(api.OverviewService{Deps: d}, userAPI)
+		},
 	} {
 		p, h := register()
 		mux.Handle(p, api.WithSameOrigin(api.WithSession(d.Store, h)))

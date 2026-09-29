@@ -72,10 +72,13 @@ type simSource struct {
 }
 
 type simPull struct {
-	job     *clientv1.PullJob
-	next    time.Time
-	sending time.Time // zero when idle
-	bytes   uint64    // expected bytes of the running transfer
+	job      *clientv1.PullJob
+	next     time.Time
+	sending  time.Time // zero when idle
+	bytes    uint64    // expected bytes of the running transfer
+	duration time.Duration
+	// The previous attempt.
+	lastStart, lastEnd time.Time
 }
 
 // NewSim returns a simulation for d's hosts, with the snapshots saved in
@@ -239,7 +242,8 @@ func (s *Sim) apply(ctx context.Context, hostID string, ds *clientv1.DesiredStat
 	for _, j := range ds.GetZrepl().GetPullJobs() {
 		p := old[j.Name]
 		if p == nil {
-			p = &simPull{next: time.Now().Add(2 * time.Second)}
+			// Stagger the jobs across the cycle, as their schedules would be.
+			p = &simPull{next: time.Now().Add(2*time.Second + simSpread(j.Name, s.opts.Cycle))}
 		}
 		p.job = j
 		pulls = append(pulls, p)
@@ -363,16 +367,21 @@ func (s *Sim) step(ctx context.Context, hostID string, now time.Time) {
 			if _, done := s.latest(hostID, p.job.ReceiveDataset+"/"+src.datasets[0]); !done && len(src.datasets) > 0 {
 				s.finishPull(hostID, p, src)
 			}
-		case !p.sending.IsZero() && now.Sub(p.sending) >= s.opts.Transfer:
+		case !p.sending.IsZero() && now.Sub(p.sending) >= p.duration:
 			s.finishPull(hostID, p, src)
-			p.sending, p.next = time.Time{}, now.Add(s.opts.Cycle)
+			p.lastStart, p.lastEnd = p.sending, now
+			// Jitter keeps jobs from running in lockstep.
+			jitter := simSpread(p.job.Name+now.String(), s.opts.Cycle/2)
+			p.sending, p.next = time.Time{}, now.Add(s.opts.Cycle+jitter)
 		case p.sending.IsZero() && !now.Before(p.next):
 			// The primary snapshots, then the DR host pulls.
 			snap := simSnap{name: snapName(src.prefix, now), at: now}
 			for _, dataset := range src.datasets {
 				s.addSnapshot(src.hostID, dataset, snap)
 			}
-			p.sending, p.bytes = now, 4<<20+uint64(simHash(snap.name)%(512<<20))
+			h := simHash(p.job.Name + snap.name)
+			p.sending, p.bytes = now, 4<<20+h%(512<<20)
+			p.duration = s.opts.Transfer/2 + simSpread(p.job.Name+snap.name, s.opts.Transfer)
 		}
 		st.Jobs = append(st.Jobs, s.jobStatus(hostID, p, src, now))
 	}
@@ -407,7 +416,9 @@ func (s *Sim) jobStatus(hostID string, p *simPull, src simSource, now time.Time)
 	js := &clientv1.JobStatus{Name: p.job.Name, Type: "pull", State: "done"}
 	sending := !p.sending.IsZero()
 	if sending {
-		js.State, js.AttemptStartedAt = "replicating", timestamppb.New(p.sending)
+		js.State, js.AttemptStartedAt = "fan-out-filesystems", timestamppb.New(p.sending)
+	} else if !p.lastStart.IsZero() {
+		js.AttemptStartedAt, js.AttemptFinishedAt = timestamppb.New(p.lastStart), timestamppb.New(p.lastEnd)
 	}
 	msg := s.failing[jobPrefixOf(p.job.Name)]
 	for _, dataset := range src.datasets {
@@ -417,12 +428,20 @@ func (s *Sim) jobStatus(hostID string, p *simPull, src simSource, now time.Time)
 		}
 		if sending {
 			per := p.bytes / uint64(max(1, len(src.datasets)))
-			frac := min(1, float64(now.Sub(p.sending))/float64(s.opts.Transfer))
+			frac := min(1, float64(now.Sub(p.sending))/float64(max(1, p.duration)))
 			ds.State, ds.BytesExpected, ds.BytesReplicated = "stepping", per, uint64(float64(per)*frac)
 		}
 		js.Datasets = append(js.Datasets, ds)
 	}
 	return js
+}
+
+// simSpread returns a duration below d, the same for the same key.
+func simSpread(key string, d time.Duration) time.Duration {
+	if d <= 0 {
+		return 0
+	}
+	return time.Duration(simHash(key) % uint64(d)) //nolint:gosec // below d, so it fits
 }
 
 func simHash(s string) uint64 {

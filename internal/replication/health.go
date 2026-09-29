@@ -184,3 +184,12 @@ func TestClonePruningError(msg string) bool {
 	}
 	return clones
 }
+
+// Transferring reports whether a pull job's latest replication attempt is
+// still running. zrepl's attempt states are "planning",
+// "fan-out-filesystems" (replicating), "planning-error",
+// "filesystem-error", and "done".
+func Transferring(js *clientv1.JobStatus) bool {
+	return js.GetAttemptStartedAt() != nil && js.GetAttemptFinishedAt() == nil &&
+		(js.State == "planning" || js.State == "fan-out-filesystems")
+}

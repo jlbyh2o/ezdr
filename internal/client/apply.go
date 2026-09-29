@@ -23,6 +23,7 @@ import (
 	"github.com/jlbyh2o/ezdr/internal/client/zrepl"
 	clientv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1"
 	"github.com/jlbyh2o/ezdr/internal/gen/ezdr/client/v1/clientv1connect"
+	"github.com/jlbyh2o/ezdr/internal/replication"
 	"github.com/jlbyh2o/ezdr/internal/version"
 )
 
@@ -162,28 +163,46 @@ func (a *applier) report(ctx context.Context) {
 	}
 }
 
-// statusInterval is how often replication status is reported.
-const statusInterval = time.Minute
+// Replication status is checked every statusPoll (statusActivePoll while a
+// transfer runs) and reported while transfers run, when one ends, and at
+// least every statusInterval, so the portal can show transfers as they
+// happen.
+const (
+	statusInterval   = time.Minute
+	statusPoll       = 15 * time.Second
+	statusActivePoll = 5 * time.Second
+)
 
-// statusLoop reports the replication status of the applied pull jobs every
-// minute until ctx is canceled.
+// statusLoop reports the replication status of the applied pull jobs until
+// ctx is canceled.
 func (a *applier) statusLoop(ctx context.Context) {
-	ticker := time.NewTicker(statusInterval)
-	defer ticker.Stop()
+	var lastReport time.Time
+	wasActive := false
 	for {
 		a.mu.Lock()
 		z := a.current
 		a.mu.Unlock()
+		active := false
 		if len(z.GetPullJobs()) > 0 {
 			st := a.zrepl.Status(ctx, z)
-			if _, err := a.api.ReportReplication(ctx, connect.NewRequest(st)); err != nil && ctx.Err() == nil {
-				slog.Warn("report replication status", "err", err)
+			active = slices.ContainsFunc(st.Jobs, replication.Transferring)
+			if active || wasActive || time.Since(lastReport) >= statusInterval {
+				if _, err := a.api.ReportReplication(ctx, connect.NewRequest(st)); err != nil && ctx.Err() == nil {
+					slog.Warn("report replication status", "err", err)
+				} else {
+					lastReport = time.Now()
+				}
 			}
+		}
+		wasActive = active
+		wait := statusPoll
+		if active {
+			wait = statusActivePoll
 		}
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
+		case <-time.After(wait):
 		}
 	}
 }

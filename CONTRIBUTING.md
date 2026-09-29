@@ -59,7 +59,7 @@ For web UI development, run the development portal and, in another terminal,
 the Vite dev server:
 
 ```sh
-go run ./cmd/ezdr-devportal          # add -reset to start over, -fast for more activity
+go run ./cmd/ezdr-devportal   # -reset starts over, -fast adds activity, -empty seeds nothing
 cd web && pnpm dev
 ```
 

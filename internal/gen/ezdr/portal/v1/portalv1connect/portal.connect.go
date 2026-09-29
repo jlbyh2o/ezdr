@@ -41,6 +41,8 @@ const (
 	TestFailoverServiceName = "ezdr.portal.v1.TestFailoverService"
 	// AlertServiceName is the fully-qualified name of the AlertService service.
 	AlertServiceName = "ezdr.portal.v1.AlertService"
+	// OverviewServiceName is the fully-qualified name of the OverviewService service.
+	OverviewServiceName = "ezdr.portal.v1.OverviewService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -217,6 +219,9 @@ const (
 	AlertServiceSendTestAlertProcedure = "/ezdr.portal.v1.AlertService/SendTestAlert"
 	// AlertServiceListAlertsProcedure is the fully-qualified name of the AlertService's ListAlerts RPC.
 	AlertServiceListAlertsProcedure = "/ezdr.portal.v1.AlertService/ListAlerts"
+	// OverviewServiceGetOverviewProcedure is the fully-qualified name of the OverviewService's
+	// GetOverview RPC.
+	OverviewServiceGetOverviewProcedure = "/ezdr.portal.v1.OverviewService/GetOverview"
 )
 
 // SetupServiceClient is a client for the ezdr.portal.v1.SetupService service.
@@ -2336,4 +2341,74 @@ func (UnimplementedAlertServiceHandler) SendTestAlert(context.Context, *connect.
 
 func (UnimplementedAlertServiceHandler) ListAlerts(context.Context, *connect.Request[v1.ListAlertsRequest]) (*connect.Response[v1.ListAlertsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.AlertService.ListAlerts is not implemented"))
+}
+
+// OverviewServiceClient is a client for the ezdr.portal.v1.OverviewService service.
+type OverviewServiceClient interface {
+	GetOverview(context.Context, *connect.Request[v1.GetOverviewRequest]) (*connect.Response[v1.GetOverviewResponse], error)
+}
+
+// NewOverviewServiceClient constructs a client for the ezdr.portal.v1.OverviewService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewOverviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) OverviewServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	overviewServiceMethods := v1.File_ezdr_portal_v1_portal_proto.Services().ByName("OverviewService").Methods()
+	return &overviewServiceClient{
+		getOverview: connect.NewClient[v1.GetOverviewRequest, v1.GetOverviewResponse](
+			httpClient,
+			baseURL+OverviewServiceGetOverviewProcedure,
+			connect.WithSchema(overviewServiceMethods.ByName("GetOverview")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// overviewServiceClient implements OverviewServiceClient.
+type overviewServiceClient struct {
+	getOverview *connect.Client[v1.GetOverviewRequest, v1.GetOverviewResponse]
+}
+
+// GetOverview calls ezdr.portal.v1.OverviewService.GetOverview.
+func (c *overviewServiceClient) GetOverview(ctx context.Context, req *connect.Request[v1.GetOverviewRequest]) (*connect.Response[v1.GetOverviewResponse], error) {
+	return c.getOverview.CallUnary(ctx, req)
+}
+
+// OverviewServiceHandler is an implementation of the ezdr.portal.v1.OverviewService service.
+type OverviewServiceHandler interface {
+	GetOverview(context.Context, *connect.Request[v1.GetOverviewRequest]) (*connect.Response[v1.GetOverviewResponse], error)
+}
+
+// NewOverviewServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewOverviewServiceHandler(svc OverviewServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	overviewServiceMethods := v1.File_ezdr_portal_v1_portal_proto.Services().ByName("OverviewService").Methods()
+	overviewServiceGetOverviewHandler := connect.NewUnaryHandler(
+		OverviewServiceGetOverviewProcedure,
+		svc.GetOverview,
+		connect.WithSchema(overviewServiceMethods.ByName("GetOverview")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/ezdr.portal.v1.OverviewService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case OverviewServiceGetOverviewProcedure:
+			overviewServiceGetOverviewHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedOverviewServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedOverviewServiceHandler struct{}
+
+func (UnimplementedOverviewServiceHandler) GetOverview(context.Context, *connect.Request[v1.GetOverviewRequest]) (*connect.Response[v1.GetOverviewResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ezdr.portal.v1.OverviewService.GetOverview is not implemented"))
 }

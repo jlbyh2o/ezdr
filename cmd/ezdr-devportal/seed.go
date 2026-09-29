@@ -118,10 +118,11 @@ func inventory(h fakeHost) *inventoryv1.Inventory {
 	return inv
 }
 
-// seed creates the administrator, the hosts, and the plans (as drafts).
-func seed(ctx context.Context, d *api.Deps) error {
+// seed creates the administrator and, unless empty, the hosts and the plans
+// (as drafts).
+func seed(ctx context.Context, d *api.Deps, empty bool) error {
 	u, err := d.Store.CreateFirstUser(ctx, seedUser, auth.HashPassword("dev-password-1234"))
-	if err != nil {
+	if err != nil || empty {
 		return err
 	}
 	ctx = auth.WithUser(ctx, u)
