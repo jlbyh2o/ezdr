@@ -10104,8 +10104,17 @@ type OverviewGuest struct {
 	// Set when the guest is a test failover's copy (on the DR host): the plan
 	// and the test. That includes an ended test's copies until the host's
 	// inventory no longer lists them.
-	TestPlanId    string `protobuf:"bytes,9,opt,name=test_plan_id,json=testPlanId,proto3" json:"test_plan_id,omitempty"`
-	TestId        string `protobuf:"bytes,10,opt,name=test_id,json=testId,proto3" json:"test_id,omitempty"`
+	TestPlanId string `protobuf:"bytes,9,opt,name=test_plan_id,json=testPlanId,proto3" json:"test_plan_id,omitempty"`
+	TestId     string `protobuf:"bytes,10,opt,name=test_id,json=testId,proto3" json:"test_id,omitempty"`
+	// The sum of its disks' configured sizes.
+	AllocatedBytes uint64 `protobuf:"varint,11,opt,name=allocated_bytes,json=allocatedBytes,proto3" json:"allocated_bytes,omitempty"`
+	// The data its disks hold on the host after compression, snapshots
+	// excluded: ZFS disks only (see used_zfs_only). Can be up to about 15
+	// minutes old.
+	UsedBytes uint64 `protobuf:"varint,12,opt,name=used_bytes,json=usedBytes,proto3" json:"used_bytes,omitempty"`
+	// True when some of its sized disks aren't on ZFS: used_bytes leaves them
+	// out.
+	UsedZfsOnly   bool `protobuf:"varint,13,opt,name=used_zfs_only,json=usedZfsOnly,proto3" json:"used_zfs_only,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -10208,6 +10217,27 @@ func (x *OverviewGuest) GetTestId() string {
 		return x.TestId
 	}
 	return ""
+}
+
+func (x *OverviewGuest) GetAllocatedBytes() uint64 {
+	if x != nil {
+		return x.AllocatedBytes
+	}
+	return 0
+}
+
+func (x *OverviewGuest) GetUsedBytes() uint64 {
+	if x != nil {
+		return x.UsedBytes
+	}
+	return 0
+}
+
+func (x *OverviewGuest) GetUsedZfsOnly() bool {
+	if x != nil {
+		return x.UsedZfsOnly
+	}
+	return false
 }
 
 type OverviewPlan struct {
@@ -10361,7 +10391,10 @@ type OverviewGuestReplication struct {
 	BytesDone     uint64 `protobuf:"varint,6,opt,name=bytes_done,json=bytesDone,proto3" json:"bytes_done,omitempty"`
 	Disks         uint32 `protobuf:"varint,7,opt,name=disks,proto3" json:"disks,omitempty"`
 	// Replication errors of its disks.
-	Errors        []string `protobuf:"bytes,8,rep,name=errors,proto3" json:"errors,omitempty"`
+	Errors []string `protobuf:"bytes,8,rep,name=errors,proto3" json:"errors,omitempty"`
+	// The space its replicas use on the DR host, snapshots included; 0 while
+	// none exists. Can be up to about 15 minutes old.
+	ReplicaBytes  uint64 `protobuf:"varint,9,opt,name=replica_bytes,json=replicaBytes,proto3" json:"replica_bytes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -10450,6 +10483,13 @@ func (x *OverviewGuestReplication) GetErrors() []string {
 		return x.Errors
 	}
 	return nil
+}
+
+func (x *OverviewGuestReplication) GetReplicaBytes() uint64 {
+	if x != nil {
+		return x.ReplicaBytes
+	}
+	return 0
 }
 
 type OverviewTransfer struct {
@@ -12258,7 +12298,7 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\flast_seen_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastSeenAt\x12#\n" +
 	"\rhas_inventory\x18\x05 \x01(\bR\fhasInventory\x125\n" +
-	"\x06guests\x18\x06 \x03(\v2\x1d.ezdr.portal.v1.OverviewGuestR\x06guests\"\xa1\x02\n" +
+	"\x06guests\x18\x06 \x03(\v2\x1d.ezdr.portal.v1.OverviewGuestR\x06guests\"\x8d\x03\n" +
 	"\rOverviewGuest\x12\x12\n" +
 	"\x04vmid\x18\x01 \x01(\rR\x04vmid\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x120\n" +
@@ -12271,7 +12311,11 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\ftest_plan_id\x18\t \x01(\tR\n" +
 	"testPlanId\x12\x17\n" +
 	"\atest_id\x18\n" +
-	" \x01(\tR\x06testId\"\xf4\x03\n" +
+	" \x01(\tR\x06testId\x12'\n" +
+	"\x0fallocated_bytes\x18\v \x01(\x04R\x0eallocatedBytes\x12\x1d\n" +
+	"\n" +
+	"used_bytes\x18\f \x01(\x04R\tusedBytes\x12\"\n" +
+	"\rused_zfs_only\x18\r \x01(\bR\vusedZfsOnly\"\xf4\x03\n" +
 	"\fOverviewPlan\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12/\n" +
@@ -12287,7 +12331,7 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	" \x01(\bR\x0ependingChanges\x12<\n" +
 	"\flast_test_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastTestAt\x12@\n" +
-	"\x06guests\x18\f \x03(\v2(.ezdr.portal.v1.OverviewGuestReplicationR\x06guests\"\xb9\x02\n" +
+	"\x06guests\x18\f \x03(\v2(.ezdr.portal.v1.OverviewGuestReplicationR\x06guests\"\xde\x02\n" +
 	"\x18OverviewGuestReplication\x12\x12\n" +
 	"\x04vmid\x18\x01 \x01(\rR\x04vmid\x12H\n" +
 	"\x12last_replicated_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x10lastReplicatedAt\x12'\n" +
@@ -12297,7 +12341,8 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\n" +
 	"bytes_done\x18\x06 \x01(\x04R\tbytesDone\x12\x14\n" +
 	"\x05disks\x18\a \x01(\rR\x05disks\x12\x16\n" +
-	"\x06errors\x18\b \x03(\tR\x06errors\"\xb4\x02\n" +
+	"\x06errors\x18\b \x03(\tR\x06errors\x12#\n" +
+	"\rreplica_bytes\x18\t \x01(\x04R\freplicaBytes\"\xb4\x02\n" +
 	"\x10OverviewTransfer\x12H\n" +
 	"\tdirection\x18\x01 \x01(\x0e2*.ezdr.portal.v1.OverviewTransfer.DirectionR\tdirection\x12%\n" +
 	"\x0ebytes_expected\x18\x02 \x01(\x04R\rbytesExpected\x12\x1d\n" +

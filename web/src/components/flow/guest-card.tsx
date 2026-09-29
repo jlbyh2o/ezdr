@@ -56,6 +56,9 @@ export function GuestCard({ data, x, y }: { data: GuestEdgeData; x: number; y: n
           )}
         {!!plan.health?.rpoAlertSeconds && row('Alert after', formatDuration(plan.health.rpoAlertSeconds))}
         {r && r.disks > 1 && row('Disks', r.disks)}
+        {guest.allocated > 0n && row('Allocated', formatBytes(guest.allocated))}
+        {guest.used > 0n && row('Used', `about ${formatBytes(guest.used)}${guest.usedZfsOnly ? ' (ZFS disks only)' : ''}`)}
+        {r && plan.state !== PlanState.DRAFT && row('On DR host', r.replicaBytes > 0n ? `about ${formatBytes(r.replicaBytes)}` : 'not yet')}
         {r?.errors.map((e) => row('Error', <span className="whitespace-normal text-destructive">{e}</span>))}
       </dl>
     </div>

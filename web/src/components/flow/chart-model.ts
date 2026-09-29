@@ -10,7 +10,7 @@ import {
   type OverviewPlan,
   PlanState,
 } from '@/gen/ezdr/portal/v1/portal_pb'
-import { formatDuration } from '@/lib/format'
+import { formatBytes, formatDuration } from '@/lib/format'
 import { operationPath } from '@/lib/operations'
 import { healthStates, type Tone } from '@/lib/status'
 
@@ -31,6 +31,11 @@ export type GuestCopy = {
   role: GuestRole
   locked: boolean
   status: string
+  // Its disks: configured sizes, and the data they hold (ZFS disks only
+  // when usedZfsOnly).
+  allocated: bigint
+  used: bigint
+  usedZfsOnly: boolean
 }
 
 export type Section = { plan: OverviewPlan; guests: GuestCopy[] }
@@ -88,7 +93,29 @@ function copy(g: OverviewGuest | undefined, vmid: number, role: GuestRole, fallb
     role,
     locked: !!g?.lock,
     status: g?.status ?? '',
+    allocated: g?.allocatedBytes ?? 0n,
+    used: g?.usedBytes ?? 0n,
+    usedZfsOnly: !!g?.usedZfsOnly,
   }
+}
+
+// storageDetails describes a guest's storage in short parts, such as "32
+// GiB allocated". Usage comes with the hosts' periodic inventory, so it can
+// be a few minutes old. replica is the space its replicas use on the DR
+// host, when it's in a plan past the draft stage.
+export function storageDetails(g: GuestCopy, replica?: bigint): string[] {
+  if (g.allocated === 0n && g.used === 0n) return []
+  const parts = [`${formatBytes(g.allocated)} allocated`]
+  if (g.used > 0n) parts.push(`about ${formatBytes(g.used)} used${g.usedZfsOnly ? ' (ZFS disks only)' : ''}`)
+  if (replica !== undefined) {
+    parts.push(replica > 0n ? `about ${formatBytes(replica)} on the DR host` : 'not on the DR host yet')
+  }
+  return parts
+}
+
+// sectionAllocated is the total allocated size of a plan section's guests.
+export function sectionAllocated(s: Section): bigint {
+  return s.guests.reduce((sum, g) => sum + g.allocated, 0n)
 }
 
 function running(g?: OverviewGuest): boolean {

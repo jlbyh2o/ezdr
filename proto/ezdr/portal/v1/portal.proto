@@ -1307,6 +1307,15 @@ message OverviewGuest {
   // inventory no longer lists them.
   string test_plan_id = 9;
   string test_id = 10;
+  // The sum of its disks' configured sizes.
+  uint64 allocated_bytes = 11;
+  // The data its disks hold on the host after compression, snapshots
+  // excluded: ZFS disks only (see used_zfs_only). Can be up to about 15
+  // minutes old.
+  uint64 used_bytes = 12;
+  // True when some of its sized disks aren't on ZFS: used_bytes leaves them
+  // out.
+  bool used_zfs_only = 13;
 }
 
 message OverviewPlan {
@@ -1343,6 +1352,9 @@ message OverviewGuestReplication {
   uint32 disks = 7;
   // Replication errors of its disks.
   repeated string errors = 8;
+  // The space its replicas use on the DR host, snapshots included; 0 while
+  // none exists. Can be up to about 15 minutes old.
+  uint64 replica_bytes = 9;
 }
 
 message OverviewTransfer {

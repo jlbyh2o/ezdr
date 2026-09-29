@@ -12,6 +12,7 @@ import (
 	inventoryv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/inventory/v1"
 	planv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/plan/v1"
 	portalv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/portal/v1"
+	"github.com/jlbyh2o/ezdr/internal/plan"
 	"github.com/jlbyh2o/ezdr/internal/portal/store"
 )
 
@@ -149,5 +150,76 @@ func TestOverviewMarksTestCopies(t *testing.T) {
 	}
 	if got := copies(&inventoryv1.Guest{Vmid: 10101, Name: "someone else's"}); got[10101] {
 		t.Errorf("ended test, untagged guest: %v", got)
+	}
+}
+
+func TestOverviewGuestStorage(t *testing.T) {
+	d, ctx, primary, dr := planTestDeps(t)
+	svc := PlanService{Deps: d}
+	sug, _ := svc.SuggestPlan(ctx, connect.NewRequest(&portalv1.SuggestPlanRequest{Spec: &planv1.PlanSpec{
+		Name: "Main", PrimaryHostId: primary, DrHostId: dr, Guests: []*planv1.PlanGuest{{Vmid: 101}},
+	}}))
+	sug.Msg.Spec.NetworkMappings[0].TargetBridge = "vmbr0"
+	created, err := svc.CreatePlan(ctx, connect.NewRequest(&portalv1.CreatePlanRequest{Spec: sug.Msg.Spec}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.ActivatePlan(ctx, connect.NewRequest(&portalv1.ActivatePlanRequest{Id: created.Msg.Plan.Id})); err != nil {
+		t.Fatal(err)
+	}
+
+	edit := func(hostID string, fn func(*inventoryv1.Inventory)) *inventoryv1.Inventory {
+		t.Helper()
+		stored, err := d.Store.HostInventory(ctx, hostID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		inv := &inventoryv1.Inventory{}
+		if err := proto.Unmarshal(stored.Data, inv); err != nil {
+			t.Fatal(err)
+		}
+		fn(inv)
+		data, _ := proto.Marshal(inv)
+		if _, err := d.Store.PutInventory(ctx, store.Inventory{HostID: hostID, Data: data, Hash: []byte("edited"), CollectedAt: time.Now()}); err != nil {
+			t.Fatal(err)
+		}
+		return inv
+	}
+	// Guest 101: a 32 GiB disk on ZFS holding 5 GiB, and an 8 GiB disk
+	// elsewhere.
+	inv := edit(primary, func(inv *inventoryv1.Inventory) {
+		g := inv.Guests[0]
+		g.Disks[0].SizeBytes = 32 << 30
+		g.Disks = append(g.Disks, &inventoryv1.Disk{Key: "mp0", Storage: "nfs", Volume: "101/disk.raw", SizeBytes: 8 << 30,
+			Readiness: inventoryv1.Readiness_READINESS_NOT_NEEDED})
+		inv.ZfsDatasets = append(inv.ZfsDatasets, &inventoryv1.ZfsDataset{Name: "rpool/subvol-101-disk-0", Type: "filesystem",
+			UsedBytes: 7 << 30, ReferencedBytes: 5 << 30})
+	})
+	groups := plan.JobGroups(sug.Msg.Spec, inv)
+	if len(groups) != 1 {
+		t.Fatalf("job groups = %v", groups)
+	}
+	edit(dr, func(inv *inventoryv1.Inventory) {
+		inv.ZfsDatasets = append(inv.ZfsDatasets, &inventoryv1.ZfsDataset{Name: groups[0].ReceiveDataset + "/rpool/subvol-101-disk-0",
+			Type: "filesystem", UsedBytes: 6 << 30, ReferencedBytes: 5 << 30})
+	})
+
+	res, err := OverviewService{Deps: d}.GetOverview(ctx, connect.NewRequest(&portalv1.GetOverviewRequest{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, h := range res.Msg.Hosts {
+		if h.Id != primary {
+			continue
+		}
+		if g := h.Guests[0]; g.AllocatedBytes != 40<<30 || g.UsedBytes != 5<<30 || !g.UsedZfsOnly {
+			t.Errorf("guest 101 storage = %v", g)
+		}
+		if g := h.Guests[1]; g.AllocatedBytes != 0 || g.UsedBytes != 0 || g.UsedZfsOnly {
+			t.Errorf("guest 102 storage = %v", g)
+		}
+	}
+	if gs := res.Msg.Plans[0].Guests; len(gs) != 1 || gs[0].ReplicaBytes != 6<<30 {
+		t.Errorf("guest replication = %v", gs)
 	}
 }

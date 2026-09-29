@@ -980,6 +980,22 @@ function TakeoverCard({
   )
 }
 
+// guestStorage sums up a guest's disks, as the overview does: their
+// configured sizes, and the data their ZFS datasets reference (zfsOnly when
+// some sized disk has none).
+function guestStorage(g: Inventory['guests'][number], referenced: Map<string, bigint>) {
+  let allocated = 0n
+  let used = 0n
+  let zfsOnly = false
+  for (const d of g.disks) {
+    allocated += d.sizeBytes
+    const r = d.zfsDataset ? referenced.get(d.zfsDataset) : undefined
+    if (r !== undefined) used += r
+    else if (d.sizeBytes > 0n) zfsOnly = true
+  }
+  return { allocated, used, zfsOnly }
+}
+
 function GuestsCard({
   spec,
   inv,
@@ -1005,6 +1021,8 @@ function GuestsCard({
   }
   const selectable = inv.guests.filter((g) => !g.template && !otherPlan(g.vmid) && !excluded[g.vmid])
   const unconfigured = selectable.filter((g) => !selected.has(g.vmid)).length
+  const referenced = new Map(inv.zfsDatasets.map((d) => [d.name, d.referencedBytes]))
+  const allocated = inv.guests.filter((g) => selected.has(g.vmid)).reduce((sum, g) => sum + guestStorage(g, referenced).allocated, 0n)
 
   function toggle(vmid: number, on: boolean) {
     void updateAndSuggest((s) => {
@@ -1023,7 +1041,7 @@ function GuestsCard({
   return (
     <Section
       id="guests"
-      description={`${spec.guests.length} of ${inv.guests.length} guests on ${inv.host?.hostname} selected.`}
+      description={`${spec.guests.length} of ${inv.guests.length} guests on ${inv.host?.hostname} selected${allocated > 0n ? ` · ${formatBytes(allocated)} allocated` : ''}.`}
       summary={[
         spec.guests.length === 0
           ? 'No guests selected'
@@ -1047,6 +1065,7 @@ function GuestsCard({
             <TableHead className="w-8" />
             <TableHead>ID</TableHead>
             <TableHead>Name</TableHead>
+            <TableHead>Size</TableHead>
             <TableHead>Replication</TableHead>
             <TableHead className="text-right">Status</TableHead>
           </TableRow>
@@ -1054,6 +1073,7 @@ function GuestsCard({
         <TableBody>
           {inv.guests.map((g) => {
             const other = otherPlan(g.vmid)
+            const st = guestStorage(g, referenced)
             return (
               <TableRow key={g.vmid}>
                 <TableCell>
@@ -1074,6 +1094,14 @@ function GuestsCard({
                     {g.type === GuestType.VM ? 'VM' : 'container'}
                     {g.template && ' · template'}
                   </span>
+                </TableCell>
+                <TableCell className="text-xs whitespace-nowrap tabular-nums">
+                  {st.allocated > 0n ? formatBytes(st.allocated) : '—'}
+                  {st.used > 0n && (
+                    <div className="text-muted-foreground" title="Data on the disks after compression, snapshots excluded; can be a few minutes old">
+                      {formatBytes(st.used)} used{st.zfsOnly && ' (ZFS disks only)'}
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell className="text-xs">
                   {other ? (

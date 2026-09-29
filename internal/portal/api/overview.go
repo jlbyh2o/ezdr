@@ -149,6 +149,29 @@ func (s OverviewService) GetOverview(ctx context.Context, _ *connect.Request[por
 	return connect.NewResponse(resp), nil
 }
 
+func datasetsByName(inv *inventoryv1.Inventory) map[string]*inventoryv1.ZfsDataset {
+	m := make(map[string]*inventoryv1.ZfsDataset, len(inv.ZfsDatasets))
+	for _, d := range inv.ZfsDatasets {
+		m[d.Name] = d
+	}
+	return m
+}
+
+// guestStorage sums up a guest's disks: their configured sizes, and the
+// data their ZFS datasets reference. zfsOnly is true when some sized disk
+// has no dataset in the inventory, so used leaves it out.
+func guestStorage(g *inventoryv1.Guest, datasets map[string]*inventoryv1.ZfsDataset) (allocated, used uint64, zfsOnly bool) {
+	for _, d := range g.Disks {
+		allocated += d.SizeBytes
+		if ds := datasets[d.ZfsDataset]; d.ZfsDataset != "" && ds != nil {
+			used += ds.ReferencedBytes
+		} else if d.SizeBytes > 0 {
+			zfsOnly = true
+		}
+	}
+	return allocated, used, zfsOnly
+}
+
 func hasKey[K comparable, V any](m map[K]V, k K) bool {
 	_, ok := m[k]
 	return ok
@@ -193,14 +216,17 @@ func (s OverviewService) overviewHost(ctx context.Context, h store.Host) (*porta
 		return nil, nil, err
 	}
 	tagged := map[uint32]bool{}
+	datasets := datasetsByName(inv)
 	for _, g := range inv.Guests {
 		if slices.Contains(g.Tags, plan.TestTag) {
 			tagged[g.Vmid] = true
 		}
-		oh.Guests = append(oh.Guests, &portalv1.OverviewGuest{
+		og := &portalv1.OverviewGuest{
 			Vmid: g.Vmid, Name: g.Name, Type: g.Type, Status: g.Status, Lock: g.Lock,
 			PlanId: protected[g.Vmid], Template: g.Template, Excluded: hasKey(excluded, g.Vmid),
-		})
+		}
+		og.AllocatedBytes, og.UsedBytes, og.UsedZfsOnly = guestStorage(g, datasets)
+		oh.Guests = append(oh.Guests, og)
 	}
 	slices.SortFunc(oh.Guests, func(a, b *portalv1.OverviewGuest) int { return int(a.Vmid) - int(b.Vmid) })
 	return oh, tagged, nil
@@ -277,6 +303,20 @@ func (s OverviewService) guestReplication(ctx context.Context, spec *planv1.Plan
 		r := &portalv1.OverviewGuestReplication{Vmid: pg.Vmid}
 		byVMID[pg.Vmid] = r
 		out = append(out, r)
+	}
+	// The space the replicas use on the DR host.
+	if dr, err := s.Store.HostInventory(ctx, spec.DrHostId); err == nil {
+		drInv := &inventoryv1.Inventory{}
+		if proto.Unmarshal(dr.Data, drInv) == nil {
+			replicas := datasetsByName(drInv)
+			for _, g := range plan.JobGroups(spec, inv) {
+				for _, d := range g.Datasets {
+					if r, ds := byVMID[owner[d]], replicas[g.ReceiveDataset+"/"+d]; r != nil && ds != nil {
+						r.ReplicaBytes += ds.UsedBytes
+					}
+				}
+			}
+		}
 	}
 	missing := map[uint32]bool{}
 	for _, ds := range datasets {

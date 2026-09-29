@@ -3,9 +3,20 @@ import { Box, FlaskConical, Lock, Monitor, Server, Settings } from 'lucide-react
 import { useEffect } from 'react'
 import { Link } from 'react-router'
 
-import { type GuestCopy, guestHandle, type HostNode, linkState, type Section, size, toneColor } from '@/components/flow/chart-model'
+import {
+  type GuestCopy,
+  guestHandle,
+  type HostNode,
+  linkState,
+  type Section,
+  sectionAllocated,
+  size,
+  storageDetails,
+  toneColor,
+} from '@/components/flow/chart-model'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { formatRelative } from '@/lib/format'
+import { PlanState } from '@/gen/ezdr/portal/v1/portal_pb'
+import { formatBytes, formatRelative } from '@/lib/format'
 
 const roleStyle: Record<GuestCopy['role'], string> = {
   running: 'border-success/70 bg-success/5',
@@ -91,12 +102,21 @@ function LooseGuests({ title, guests, to }: { title: string; guests: GuestCopy[]
 function PlanSection({ section, side }: { section: Section; side: 'primary' | 'dr' | 'none' }) {
   const { plan, guests } = section
   const st = linkState(plan)
+  const total = sectionAllocated(section)
+  // Replica sizes, once the portal reports the plan's guests.
+  const replica = (vmid: number) =>
+    plan.state === PlanState.DRAFT ? undefined : plan.guests.find((r) => r.vmid === vmid)?.replicaBytes
   return (
     <div style={{ marginBottom: size.sectionGap }}>
       <div className="flex items-center gap-2 text-xs" style={{ height: size.sectionHeader }}>
         <Link to={`/plans/${plan.id}`} className="shrink-0 font-medium hover:underline">
           {plan.name}
         </Link>
+        {total > 0n && (
+          <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums" title="Allocated to the plan's guests">
+            {formatBytes(total)}
+          </span>
+        )}
         {plan.testing && side === 'dr' && (
           <span className="flex shrink-0 items-center gap-1 rounded-full bg-info/12 px-1.5 py-0.5 text-[11px] text-info">
             <FlaskConical className="size-3" /> Test
@@ -118,6 +138,7 @@ function PlanSection({ section, side }: { section: Section; side: 'primary' | 'd
             guest={g}
             to={`/plans/${plan.id}#guests`}
             planName={plan.name}
+            replica={replica(g.vmid)}
             handle={side === 'primary' || side === 'dr' ? { side, id: guestHandle(plan.id, g.vmid) } : undefined}
           />
         ))
@@ -130,17 +151,21 @@ function GuestRow({
   guest,
   to,
   planName,
+  replica,
   handle,
 }: {
   guest: GuestCopy
   // Where the guest is configured: its plan, or where to choose one.
   to: string
   planName?: string
+  // The space its replicas use on the DR host, when known.
+  replica?: bigint
   // Where the guest's edge attaches: the right side on the primary, the
   // left side on the DR host.
   handle?: { side: 'primary' | 'dr'; id: string }
 }) {
   const Icon = guest.vm ? Monitor : Box
+  const details = storageDetails(guest, replica)
   return (
     <div className="relative" style={{ height: size.guest, paddingTop: 2, paddingBottom: 2 }}>
       {handle?.side === 'primary' && (
@@ -157,7 +182,12 @@ function GuestRow({
                 <Icon className="size-3.5 shrink-0 opacity-70" />
                 <span className="font-mono text-[11px] opacity-70">{guest.vmid}</span>
                 <span className="truncate">{guest.name}</span>
-                {guest.locked && <Lock className="ml-auto size-3 shrink-0 opacity-70" />}
+                <span className="ml-auto flex shrink-0 items-center gap-1.5">
+                  {guest.locked && <Lock className="size-3 opacity-70" />}
+                  {guest.allocated > 0n && (
+                    <span className="text-[11px] tabular-nums opacity-60">{formatBytes(guest.allocated)}</span>
+                  )}
+                </span>
               </span>
             }
           />
@@ -172,6 +202,7 @@ function GuestRow({
                 {guest.locked ? ' · locked' : ''}
               </span>
               {planName && <span>Plan: {planName}</span>}
+              {details.length > 0 && <span>Disks: {details.join(' · ')}</span>}
             </div>
           </TooltipContent>
         </Tooltip>

@@ -15,6 +15,7 @@ import (
 	inventoryv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/inventory/v1"
 	planv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/plan/v1"
 	portalv1 "github.com/jlbyh2o/ezdr/internal/gen/ezdr/portal/v1"
+	"github.com/jlbyh2o/ezdr/internal/plan"
 	"github.com/jlbyh2o/ezdr/internal/portal/api"
 	"github.com/jlbyh2o/ezdr/internal/portal/auth"
 	"github.com/jlbyh2o/ezdr/internal/portal/store"
@@ -111,11 +112,28 @@ func inventory(h fakeHost) *inventoryv1.Inventory {
 		}
 		guest.Disks = []*inventoryv1.Disk{{Key: key, Storage: storage, Volume: vol, SizeBytes: g.diskGB << 30,
 			ZfsDataset: dataset + "/" + vol, Readiness: inventoryv1.Readiness_READINESS_REPLICABLE}}
+		// Between 30% and 75% of the disk holds data.
+		refer := (g.diskGB << 30) * (30 + uint64(g.vmid)*7%46) / 100
+		zd := &inventoryv1.ZfsDataset{Name: dataset + "/" + vol, Type: "filesystem", UsedBytes: refer + refer/8,
+			ReferencedBytes: refer, Compression: "lz4", Encryption: "off"}
+		if g.vm {
+			zd.Type, zd.VolumeSizeBytes = "volume", g.diskGB<<30
+		}
+		inv.ZfsDatasets = append(inv.ZfsDatasets, zd)
 		guest.Nics = []*inventoryv1.Nic{{Key: "net0", Bridge: "vmbr0", Model: "virtio",
 			Mac: fmt.Sprintf("BC:24:11:00:%02X:%02X", g.vmid>>8, g.vmid&0xff)}}
 		inv.Guests = append(inv.Guests, guest)
 	}
 	return inv
+}
+
+// datasetSizes returns the data each dataset references, by name.
+func datasetSizes(inv *inventoryv1.Inventory) map[string]uint64 {
+	m := map[string]uint64{}
+	for _, d := range inv.ZfsDatasets {
+		m[d.Name] = d.ReferencedBytes
+	}
+	return m
 }
 
 // seed creates the administrator and, unless empty, the hosts and the plans
@@ -134,6 +152,7 @@ func seed(ctx context.Context, d *api.Deps, empty bool) error {
 		return a, nil
 	}
 	ids := map[string]string{}
+	invs := map[string]*inventoryv1.Inventory{}
 	for _, h := range hosts {
 		tok := "seed-" + h.name
 		if _, err := d.Store.CreateToken(ctx, store.Token{ID: tok, SecretHash: []byte("s"), CreatedBy: seedUser,
@@ -148,6 +167,7 @@ func seed(ctx context.Context, d *api.Deps, empty bool) error {
 		}
 		ids[h.name] = host.ID
 		inv := inventory(h)
+		invs[h.name] = inv
 		data, _ := proto.Marshal(inv)
 		sum := sha256.Sum256(data)
 		if _, err := d.Store.PutInventory(ctx, store.Inventory{HostID: host.ID, Data: data, Hash: sum[:], CollectedAt: time.Now(),
@@ -184,6 +204,26 @@ func seed(ctx context.Context, d *api.Deps, empty bool) error {
 			if is.Severity == planv1.Severity_SEVERITY_ERROR {
 				return fmt.Errorf("plan %s: %s", p.name, is.Message)
 			}
+		}
+		// Replicas on the DR host, with some snapshots.
+		if p.state != "draft" {
+			source := datasetSizes(invs[p.primary])
+			for _, g := range plan.JobGroups(spec, invs[p.primary]) {
+				for _, ds := range g.Datasets {
+					invs[p.dr].ZfsDatasets = append(invs[p.dr].ZfsDatasets, &inventoryv1.ZfsDataset{Name: g.ReceiveDataset + "/" + ds,
+						Type: "filesystem", UsedBytes: source[ds] + source[ds]/4, ReferencedBytes: source[ds], Compression: "lz4", Encryption: "off"})
+				}
+			}
+		}
+	}
+	for _, h := range hosts {
+		if !h.dr {
+			continue
+		}
+		data, _ := proto.Marshal(invs[h.name])
+		sum := sha256.Sum256(data)
+		if _, err := d.Store.PutInventory(ctx, store.Inventory{HostID: ids[h.name], Data: data, Hash: sum[:], CollectedAt: time.Now()}); err != nil {
+			return err
 		}
 	}
 	slog.Info("seeded the dev portal", "hosts", len(hosts), "plans", len(plans))
