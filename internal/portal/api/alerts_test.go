@@ -43,6 +43,13 @@ func TestAlertSettingsKeepSecrets(t *testing.T) {
 	if stored.Smtp.Password != "p@ss" || stored.Webhooks[0].Secret != "s1" {
 		t.Errorf("stored secrets = %q %q", stored.Smtp.Password, stored.Webhooks[0].Secret)
 	}
+	// Another server doesn't get the stored password.
+	moved := proto.CloneOf(st)
+	moved.Smtp.Host = "smtp.other.example.com"
+	_, _ = svc.UpdateAlertSettings(ctx, connect.NewRequest(&portalv1.UpdateAlertSettingsRequest{Settings: moved}))
+	if stored, _ = d.loadAlertSettings(ctx); stored.Smtp.Host == moved.Smtp.Host && stored.Smtp.Password != "" {
+		t.Error("stored password kept for another server")
+	}
 	st.Webhooks[0].ClearSecret = true
 	_, _ = svc.UpdateAlertSettings(ctx, connect.NewRequest(&portalv1.UpdateAlertSettingsRequest{Settings: st}))
 	if stored, _ = d.loadAlertSettings(ctx); stored.Webhooks[0].Secret != "" {

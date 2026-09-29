@@ -43,6 +43,16 @@ func TestWebhook(t *testing.T) {
 	if err := ValidateURL("ftp://example.com"); err == nil {
 		t.Error("ftp URL accepted")
 	}
+
+	// Redirects aren't followed.
+	var followed bool
+	target := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { followed = true }))
+	defer target.Close()
+	redirect := httptest.NewServer(http.RedirectHandler(target.URL, http.StatusTemporaryRedirect))
+	defer redirect.Close()
+	if err := (Webhook{URL: redirect.URL}).Send(context.Background(), sample); err == nil || followed {
+		t.Errorf("redirect followed: %v", err)
+	}
 }
 
 // fakeSMTP accepts one message and returns what it received.

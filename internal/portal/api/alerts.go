@@ -100,8 +100,11 @@ func (s AlertService) UpdateAlertSettings(ctx context.Context, req *connect.Requ
 	if next.Smtp == nil {
 		next.Smtp = &portalv1.SmtpSettings{}
 	}
-	if next.Smtp.Password == "" {
-		next.Smtp.Password = old.GetSmtp().GetPassword()
+	// The stored password is kept only for the same server and account, so
+	// it can't be sent to another one.
+	if o := old.GetSmtp(); next.Smtp.Password == "" && next.Smtp.Host == o.GetHost() && next.Smtp.Port == o.GetPort() &&
+		next.Smtp.Security == o.GetSecurity() && next.Smtp.Username == o.GetUsername() {
+		next.Smtp.Password = o.GetPassword()
 	}
 	if next.Smtp.Enabled {
 		if err := smtpChannel(next.Smtp).Validate(); err != nil {
@@ -182,6 +185,7 @@ func (s AlertService) SendTestAlert(ctx context.Context, _ *connect.Request[port
 	if len(results) == 0 {
 		results = []string{"no channels are configured"}
 	}
+	s.audit(ctx, currentUser(ctx).Username, "alerts.test", "", strings.Join(results, "; "))
 	return connect.NewResponse(&portalv1.SendTestAlertResponse{Results: results}), nil
 }
 

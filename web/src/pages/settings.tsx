@@ -70,6 +70,15 @@ export function SettingsPage() {
     }
   }
 
+  // The portal keeps a stored password only for the same server and
+  // account.
+  function updateServer(fn: (s: AlertSettings) => void) {
+    update((s) => {
+      fn(s)
+      s.smtp!.hasPassword = false
+    })
+  }
+
   if (!settings) return <ErrorAlert message={error} />
   const smtp = settings.smtp ?? create(SmtpSettingsSchema)
   return (
@@ -107,21 +116,21 @@ export function SettingsPage() {
           </label>
           <div className="grid gap-4 sm:grid-cols-[1fr_100px_160px]">
             <Field id="smtp-host" label="SMTP server">
-              <Input id="smtp-host" value={smtp.host} placeholder="smtp.example.com" onChange={(e) => update((s) => (s.smtp!.host = e.target.value))} />
+              <Input id="smtp-host" value={smtp.host} placeholder="smtp.example.com" onChange={(e) => updateServer((s) => (s.smtp!.host = e.target.value))} />
             </Field>
             <Field id="smtp-port" label="Port">
               <Input
                 id="smtp-port"
                 type="number"
                 value={smtp.port || ''}
-                onChange={(e) => update((s) => (s.smtp!.port = Math.round(Number(e.target.value))))}
+                onChange={(e) => updateServer((s) => (s.smtp!.port = Math.round(Number(e.target.value))))}
               />
             </Field>
             <Field id="smtp-security" label="Security">
               <NativeSelect
                 id="smtp-security"
                 value={smtp.security}
-                onChange={(e) => update((s) => (s.smtp!.security = Number(e.target.value)))}
+                onChange={(e) => updateServer((s) => (s.smtp!.security = Number(e.target.value)))}
               >
                 <option value={SmtpSecurity.STARTTLS}>STARTTLS</option>
                 <option value={SmtpSecurity.TLS}>TLS</option>
@@ -131,7 +140,7 @@ export function SettingsPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field id="smtp-user" label="Username (optional)">
-              <Input id="smtp-user" value={smtp.username} autoComplete="off" onChange={(e) => update((s) => (s.smtp!.username = e.target.value))} />
+              <Input id="smtp-user" value={smtp.username} autoComplete="off" onChange={(e) => updateServer((s) => (s.smtp!.username = e.target.value))} />
             </Field>
             <Field id="smtp-pass" label={smtp.hasPassword ? 'Password (leave empty to keep)' : 'Password'}>
               <Input

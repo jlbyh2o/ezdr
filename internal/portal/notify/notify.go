@@ -193,6 +193,12 @@ func ValidateURL(raw string) error {
 	return nil
 }
 
+// webhookClient doesn't follow redirects: a webhook goes only to the URL
+// an administrator entered.
+var webhookClient = &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error {
+	return http.ErrUseLastResponse
+}}
+
 // SignatureHeader carries the HMAC-SHA256 of the request body, as
 // "sha256=<hex>", when the webhook has a secret.
 const SignatureHeader = "X-EZDR-Signature"
@@ -226,7 +232,7 @@ func (w Webhook) Send(ctx context.Context, n Notification) error {
 	}
 	client := w.Client
 	if client == nil {
-		client = http.DefaultClient
+		client = webhookClient
 	}
 	resp, err := client.Do(req)
 	if err != nil {
