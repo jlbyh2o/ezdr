@@ -108,7 +108,10 @@ export function FailbackDialog({ plan, onClose }: { plan: Plan; onClose: () => v
           {preflight?.diverged && (
             <label className="flex items-start gap-2">
               <input type="checkbox" checked={discard} onChange={(e) => setDiscard(e.target.checked)} />
-              <span>Discard the primary's changes listed above. They can't be recovered.</span>
+              <span>
+                Discard the primary's changes listed above. They can't be recovered: if you may need them (for example, work
+                done just before an outage), back up those guests on the primary first.
+              </span>
             </label>
           )}
           {preflight && preflight.problems.length === 0 && (
