@@ -31,7 +31,6 @@ import { formatDuration, formatRelative } from '@/lib/format'
 import { operationPath } from '@/lib/operations'
 import { healthStates, type Tone } from '@/lib/status'
 import { usePoll } from '@/lib/use-poll'
-import { PageHeader } from '@/pages/layout'
 
 // React Flow is large; load it with the chart.
 const ReplicationChart = lazy(() =>
@@ -49,7 +48,6 @@ export function OverviewPage() {
 
   return (
     <>
-      <PageHeader title="Overview" description="Where every guest replicates, and how each plan is doing." />
       <ErrorAlert message={error} />
       {data && (
         <>
