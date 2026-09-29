@@ -10,14 +10,16 @@ const roleStyle: Record<GuestCopy['role'], string> = {
   running: 'border-success/70 bg-success/5',
   standby: 'border-muted-foreground/35 bg-muted/60 text-muted-foreground',
   pending: 'border-dashed border-muted-foreground/35 text-muted-foreground',
-  unprotected: 'border-dashed border-border text-muted-foreground opacity-75',
+  unconfigured: 'border-dashed border-warning/70 text-muted-foreground',
+  unprotected: 'border-border text-muted-foreground opacity-60',
 }
 
 const roleText: Record<GuestCopy['role'], string> = {
   running: 'Running',
   standby: 'Standby',
   pending: 'Not replicated yet (draft plan)',
-  unprotected: 'Not protected by any plan',
+  unconfigured: 'Unconfigured: in no plan, and not marked unprotected',
+  unprotected: 'Unprotected, by choice',
 }
 
 const sideText = { primary: 'Primary', dr: 'DR host', none: 'Not in a plan' }
@@ -25,9 +27,7 @@ const sideText = { primary: 'Primary', dr: 'DR host', none: 'Not in a plan' }
 // HostNode draws a host with its guests grouped by plan. Heights come from
 // size, so buildChart can lay nodes out before they render.
 export function HostNodeView({ data }: NodeProps<HostNode>) {
-  const { host, side, alsoOther, sections, unprotected } = data
-  const hidden = unprotected.length - size.unprotectedMax
-  const shown = hidden > 1 ? unprotected.slice(0, size.unprotectedMax) : unprotected
+  const { host, side, alsoOther, sections, unconfigured, unprotected, configureAt } = data
   return (
     <div className="rounded-lg border bg-card text-card-foreground shadow-sm" style={{ width: size.width }}>
       <div className="flex items-center gap-2.5 border-b pr-2 pl-3" style={{ height: size.header }}>
@@ -54,26 +54,31 @@ export function HostNodeView({ data }: NodeProps<HostNode>) {
         {sections.map((s) => (
           <PlanSection key={s.plan.id} section={s} side={side} />
         ))}
-        {unprotected.length > 0 && (
-          <div style={{ marginBottom: size.sectionGap }}>
-            <div className="flex items-center text-xs text-muted-foreground" style={{ height: size.sectionHeader }}>
-              Not protected ({unprotected.length})
-            </div>
-            {shown.map((g) => (
-              <GuestRow key={g.vmid} guest={g} to={`/hosts/${host.id}`} />
-            ))}
-            {hidden > 1 && (
-              <Link
-                to={`/hosts/${host.id}`}
-                className="flex items-center px-2 text-xs text-muted-foreground hover:text-foreground"
-                style={{ height: size.guest }}
-              >
-                and {hidden} more
-              </Link>
-            )}
-          </div>
-        )}
+        <LooseGuests title="Unconfigured" guests={unconfigured} to={configureAt} />
+        <LooseGuests title="Unprotected" guests={unprotected} to={configureAt} />
       </div>
+    </div>
+  )
+}
+
+// LooseGuests lists guests in no plan, up to a few, then a count.
+function LooseGuests({ title, guests, to }: { title: string; guests: GuestCopy[]; to: string }) {
+  if (guests.length === 0) return null
+  const hidden = guests.length - size.unprotectedMax
+  const shown = hidden > 1 ? guests.slice(0, size.unprotectedMax) : guests
+  return (
+    <div style={{ marginBottom: size.sectionGap }}>
+      <div className="flex items-center text-xs text-muted-foreground" style={{ height: size.sectionHeader }}>
+        {title} ({guests.length})
+      </div>
+      {shown.map((g) => (
+        <GuestRow key={g.vmid} guest={g} to={to} />
+      ))}
+      {hidden > 1 && (
+        <Link to={to} className="flex items-center px-2 text-xs text-muted-foreground hover:text-foreground" style={{ height: size.guest }}>
+          and {hidden} more
+        </Link>
+      )}
     </div>
   )
 }
@@ -123,7 +128,7 @@ function GuestRow({
   handle,
 }: {
   guest: GuestCopy
-  // Where the guest's settings are: its plan, or its host if unprotected.
+  // Where the guest is configured: its plan, or where to choose one.
   to: string
   planName?: string
   // Where the guest's edge attaches: the right side on the primary, the

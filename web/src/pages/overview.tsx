@@ -96,7 +96,10 @@ function Legend() {
         <span className="h-3 w-5 rounded border-[1.5px] border-muted-foreground/35 bg-muted/60" /> Standby
       </span>
       <span className={item}>
-        <span className="h-3 w-5 rounded border-[1.5px] border-dashed border-border" /> Not protected
+        <span className="h-3 w-5 rounded border-[1.5px] border-dashed border-warning/70" /> Unconfigured
+      </span>
+      <span className={item}>
+        <span className="h-3 w-5 rounded border-[1.5px] border-border opacity-60" /> Unprotected
       </span>
       <span className={item}>
         <span className="flex items-center">

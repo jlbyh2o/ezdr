@@ -28,13 +28,13 @@ import {
   RetentionTierSchema,
   Severity,
 } from '@/gen/ezdr/plan/v1/plan_pb'
-import { type GetHostInventoryResponse, type Host, type Plan, PlanState, type ZreplSetup } from '@/gen/ezdr/portal/v1/portal_pb'
+import { type GetHostInventoryResponse, type GuestExclusion, type Host, type Plan, PlanState, type ZreplSetup } from '@/gen/ezdr/portal/v1/portal_pb'
 import { HostStatusPanel, PlanActions, StateBadge } from '@/pages/plan-actions'
 import { PlanDnsCard } from '@/pages/plan-dns'
 import { PlanStateCard, PlanStatusCard } from '@/pages/plan-status'
 import { TestFailoverCard } from '@/pages/test-failover'
 import { errorMessage, hostClient, planClient } from '@/lib/api'
-import { formatDuration } from '@/lib/format'
+import { formatDateTime, formatDuration } from '@/lib/format'
 import { describeInterval, drPresets, grid, primaryPresets, splitPeriod, units } from '@/lib/retention'
 import { Field } from '@/pages/setup'
 
@@ -152,6 +152,8 @@ export function PlanEditorPage() {
   const [savedAt, setSavedAt] = useState<Date>()
   const [opened, setOpened] = useState<Partial<Record<SectionId, boolean>>>({})
   const [startTest, setStartTest] = useState(0)
+  // Changes when something besides the plan affects validation.
+  const [revalidate, setRevalidate] = useState(0)
 
   // Load the plan (or defaults for a new one) and the host list.
   useEffect(() => {
@@ -205,7 +207,7 @@ export function PlanEditorPage() {
       void planClient.validatePlan({ spec, planId: id ?? '' }).then((r) => setIssues(r.issues), () => undefined)
     }, 300)
     return () => clearTimeout(validateTimer.current)
-  }, [spec, id])
+  }, [spec, id, revalidate])
 
   // Warn before leaving the page with unsaved changes.
   useEffect(() => {
@@ -413,7 +415,23 @@ export function PlanEditorPage() {
             />
           )}
           {primaryInv && (
-            <GuestsCard spec={spec} inv={primaryInv} guestPlans={primary?.guestPlans ?? {}} planId={id} updateAndSuggest={updateAndSuggest} />
+            <GuestsCard
+              spec={spec}
+              inv={primaryInv}
+              guestPlans={primary?.guestPlans ?? {}}
+              excluded={primary?.excludedGuests ?? {}}
+              planId={id}
+              updateAndSuggest={updateAndSuggest}
+              setExcluded={async (vmid, excluded) => {
+                try {
+                  await hostClient.setGuestExcluded({ hostId: primaryId, vmid, excluded })
+                  setPrimary(await hostClient.getHostInventory({ hostId: primaryId }))
+                  setRevalidate((n) => n + 1)
+                } catch (err) {
+                  setError(errorMessage(err))
+                }
+              }}
+            />
           )}
           {primaryInv && drInv && guests > 0 && (
             <MappingsCard spec={spec} primaryInv={primaryInv} drInv={drInv} update={update} updateAndSuggest={updateAndSuggest} />
@@ -727,21 +745,27 @@ function GuestsCard({
   spec,
   inv,
   guestPlans,
+  excluded,
   planId,
   updateAndSuggest,
+  setExcluded,
 }: {
   spec: PlanSpec
   inv: Inventory
   guestPlans: GetHostInventoryResponse['guestPlans']
+  excluded: GetHostInventoryResponse['excludedGuests']
   planId?: string
   updateAndSuggest: (fn: (s: PlanSpec) => void) => Promise<void>
+  // Records (or clears) the choice not to protect a guest.
+  setExcluded: (vmid: number, excluded: boolean) => Promise<void>
 }) {
   const selected = new Set(spec.guests.map((g) => g.vmid))
   const otherPlan = (vmid: number) => {
     const p = guestPlans[vmid]
     return p && p.id !== planId ? p : undefined
   }
-  const selectable = inv.guests.filter((g) => !g.template && !otherPlan(g.vmid))
+  const selectable = inv.guests.filter((g) => !g.template && !otherPlan(g.vmid) && !excluded[g.vmid])
+  const unconfigured = selectable.filter((g) => !selected.has(g.vmid)).length
 
   function toggle(vmid: number, on: boolean) {
     void updateAndSuggest((s) => {
@@ -761,11 +785,14 @@ function GuestsCard({
     <Section
       id="guests"
       description={`${spec.guests.length} of ${inv.guests.length} guests on ${inv.host?.hostname} selected.`}
-      summary={
+      summary={[
         spec.guests.length === 0
           ? 'No guests selected'
-          : `${spec.guests.length} guest${spec.guests.length === 1 ? '' : 's'}: ${spec.guests.map((g) => guestName(inv, g.vmid)).join(', ')}`
-      }
+          : `${spec.guests.length} guest${spec.guests.length === 1 ? '' : 's'}: ${spec.guests.map((g) => guestName(inv, g.vmid)).join(', ')}`,
+        unconfigured > 0 && `${unconfigured} unconfigured on ${inv.host?.hostname}`,
+      ]
+        .filter(Boolean)
+        .join(' · ')}
     >
       <div className="flex gap-2">
         <Button variant="outline" size="sm" onClick={selectAllReplicable}>
@@ -782,6 +809,7 @@ function GuestsCard({
             <TableHead>ID</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Replication</TableHead>
+            <TableHead className="text-right">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -794,7 +822,7 @@ function GuestsCard({
                     type="checkbox"
                     aria-label={`Protect ${g.name}`}
                     checked={selected.has(g.vmid)}
-                    disabled={!!other || g.template}
+                    disabled={!!other || g.template || !!excluded[g.vmid]}
                     onChange={(e) => toggle(g.vmid, e.target.checked)}
                   />
                 </TableCell>
@@ -815,12 +843,67 @@ function GuestsCard({
                     <Badge variant="destructive">Not ready</Badge>
                   )}
                 </TableCell>
+                <TableCell className="text-right text-xs">
+                  <GuestStatus
+                    protectedHere={selected.has(g.vmid)}
+                    inOtherPlan={!!other}
+                    template={g.template}
+                    exclusion={excluded[g.vmid]}
+                    setExcluded={(on) => setExcluded(g.vmid, on)}
+                  />
+                </TableCell>
               </TableRow>
             )
           })}
         </TableBody>
       </Table>
     </Section>
+  )
+}
+
+// GuestStatus says whether a guest is protected, and lets a guest in no
+// plan be marked unprotected (a deliberate choice, so plans stop warning)
+// or back.
+function GuestStatus({
+  protectedHere,
+  inOtherPlan,
+  template,
+  exclusion,
+  setExcluded,
+}: {
+  protectedHere: boolean
+  inOtherPlan: boolean
+  template: boolean
+  exclusion?: GuestExclusion
+  setExcluded: (on: boolean) => Promise<void>
+}) {
+  const [busy, setBusy] = useState(false)
+  const run = async (on: boolean) => {
+    setBusy(true)
+    await setExcluded(on)
+    setBusy(false)
+  }
+  if (template) return <span className="text-muted-foreground">Template</span>
+  if (protectedHere || inOtherPlan) return <span className="text-success">Protected</span>
+  if (exclusion) {
+    return (
+      <span className="inline-flex items-center gap-2">
+        <span className="text-muted-foreground" title={`Marked by ${exclusion.by}, ${formatDateTime(exclusion.at)}`}>
+          Unprotected
+        </span>
+        <Button variant="ghost" size="xs" disabled={busy} onClick={() => void run(false)}>
+          Undo
+        </Button>
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="text-warning-foreground">Unconfigured</span>
+      <Button variant="outline" size="xs" disabled={busy} onClick={() => void run(true)} title="Stop warning about this guest">
+        Mark unprotected
+      </Button>
+    </span>
   )
 }
 

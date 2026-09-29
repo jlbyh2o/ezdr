@@ -19,8 +19,9 @@ import { healthStates, type Tone } from '@/lib/status'
 
 // A guest as shown in a host: running (green outline), standby (gray: a
 // replica, or a stopped primary copy), pending (no replica yet), or
-// unprotected (in no plan).
-export type GuestRole = 'running' | 'standby' | 'pending' | 'unprotected'
+// unconfigured (in no plan, and not marked unprotected), or unprotected (the
+// user chose not to protect it).
+export type GuestRole = 'running' | 'standby' | 'pending' | 'unconfigured' | 'unprotected'
 
 export type GuestCopy = {
   vmid: number
@@ -41,7 +42,12 @@ export type HostNodeData = {
   // Also plays the other role, in the other column.
   alsoOther: boolean
   sections: Section[]
+  // Guests in no plan: still to decide, or not protected by choice.
+  unconfigured: GuestCopy[]
   unprotected: GuestCopy[]
+  // Where those guests are configured: a plan of this host (its Guests
+  // section), or the host's page.
+  configureAt: string
 }
 
 export type HostNode = Node<HostNodeData, 'host'>
@@ -93,8 +99,8 @@ export function guestHandle(planId: string, vmid: number): string {
 export function nodeHeight(d: HostNodeData): number {
   let h = size.header + size.padding
   for (const s of d.sections) h += size.sectionHeader + Math.max(1, s.guests.length) * size.guest + size.sectionGap
-  if (d.unprotected.length > 0) {
-    h += size.sectionHeader + Math.min(d.unprotected.length, size.unprotectedMax + 1) * size.guest + size.sectionGap
+  for (const list of [d.unconfigured, d.unprotected]) {
+    if (list.length > 0) h += size.sectionHeader + Math.min(list.length, size.unprotectedMax + 1) * size.guest + size.sectionGap
   }
   return h
 }
@@ -115,6 +121,17 @@ export function buildChart(ov: GetOverviewResponse): { nodes: HostNode[]; edges:
     }
   }
 
+  // Guests in no plan, split by whether the user chose not to protect them.
+  const loose = (host: OverviewHost, skip: (g: OverviewGuest) => boolean = () => false) => {
+    const free = host.guests.filter((g) => !g.planId && !g.template && !skip(g))
+    const firstPlan = plans.find((p) => p.primaryHostId === host.id)
+    return {
+      unconfigured: free.filter((g) => !g.excluded).map((g) => copy(g, g.vmid, 'unconfigured')),
+      unprotected: free.filter((g) => g.excluded).map((g) => copy(g, g.vmid, 'unprotected')),
+      configureAt: firstPlan ? `/plans/${firstPlan.id}#guests` : `/hosts/${host.id}`,
+    }
+  }
+
   const guestOf = (hostId: string, vmid: number) => hosts.get(hostId)?.guests.find((g) => g.vmid === vmid)
 
   const primaryNode = (id: string): HostNodeData => {
@@ -128,10 +145,7 @@ export function buildChart(ov: GetOverviewResponse): { nodes: HostNode[]; edges:
           return copy(g, vmid, running(g) ? 'running' : 'standby')
         }),
       }))
-    const unprotected = host.guests
-      .filter((g) => !g.planId && !g.template)
-      .map((g) => copy(g, g.vmid, 'unprotected'))
-    return { host, side: 'primary', alsoOther: drIds.includes(id), sections, unprotected }
+    return { host, side: 'primary', alsoOther: drIds.includes(id), sections, ...loose(host) }
   }
 
   const drNode = (id: string): HostNodeData => {
@@ -153,10 +167,7 @@ export function buildChart(ov: GetOverviewResponse): { nodes: HostNode[]; edges:
     }))
     // Guests registered for failed-over plans are shown in their plan.
     const registered = new Set(mine.filter((p) => failoverStates.includes(p.state)).flatMap((p) => p.vmids))
-    const unprotected = host.guests
-      .filter((g) => !g.planId && !g.template && !registered.has(g.vmid))
-      .map((g) => copy(g, g.vmid, 'unprotected'))
-    return { host, side: 'dr', alsoOther: primaryIds.includes(id), sections, unprotected }
+    return { host, side: 'dr', alsoOther: primaryIds.includes(id), sections, ...loose(host, (g) => registered.has(g.vmid)) }
   }
 
   const left = primaryIds.map(primaryNode)
@@ -188,7 +199,7 @@ export function buildChart(ov: GetOverviewResponse): { nodes: HostNode[]; edges:
         side: 'none',
         alsoOther: false,
         sections: [],
-        unprotected: host.guests.filter((g) => !g.template).map((g) => copy(g, g.vmid, 'unprotected')),
+        ...loose(host),
       }),
     )
   let height = top

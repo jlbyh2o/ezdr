@@ -1,21 +1,23 @@
-import { useEffect, useState } from 'react'
+import { lazy, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
 import type { User } from '@/gen/ezdr/portal/v1/portal_pb'
 import { authClient, errorMessage, isUnauthenticated, setupClient } from '@/lib/api'
-import { AlertsPage } from '@/pages/alerts'
-import { AuditPage } from '@/pages/audit'
-import { HostDetailPage } from '@/pages/host-detail'
-import { HostsPage } from '@/pages/hosts'
 import { Layout } from '@/pages/layout'
 import { LoginPage } from '@/pages/login'
-import { OverviewPage } from '@/pages/overview'
-import { PlanEditorPage } from '@/pages/plan-editor'
-import { PlansPage } from '@/pages/plans'
-import { SettingsPage } from '@/pages/settings'
 import { SetupPage } from '@/pages/setup'
-import { TokensPage } from '@/pages/tokens'
+
+// Pages load on demand, keeping the first download small.
+const AlertsPage = lazy(() => import('@/pages/alerts').then((m) => ({ default: m.AlertsPage })))
+const AuditPage = lazy(() => import('@/pages/audit').then((m) => ({ default: m.AuditPage })))
+const HostDetailPage = lazy(() => import('@/pages/host-detail').then((m) => ({ default: m.HostDetailPage })))
+const HostsPage = lazy(() => import('@/pages/hosts').then((m) => ({ default: m.HostsPage })))
+const OverviewPage = lazy(() => import('@/pages/overview').then((m) => ({ default: m.OverviewPage })))
+const PlanEditorPage = lazy(() => import('@/pages/plan-editor').then((m) => ({ default: m.PlanEditorPage })))
+const PlansPage = lazy(() => import('@/pages/plans').then((m) => ({ default: m.PlansPage })))
+const SettingsPage = lazy(() => import('@/pages/settings').then((m) => ({ default: m.SettingsPage })))
+const TokensPage = lazy(() => import('@/pages/tokens').then((m) => ({ default: m.TokensPage })))
 
 type State =
   | { kind: 'loading' }

@@ -1,4 +1,5 @@
 import { Bell, ChevronsUpDown, LayoutDashboard, LogOut, Monitor, Moon, ScrollText, Server, Settings, ShieldCheck, Sun } from 'lucide-react'
+import { Suspense } from 'react'
 import { Link, Outlet, useLocation } from 'react-router'
 
 import { LogoMark } from '@/components/logo'
@@ -79,7 +80,10 @@ export function Layout({ user, onSignOut }: { user: User; onSignOut: () => void 
           <span className="text-sm text-muted-foreground">{current?.label}</span>
         </header>
         <div className="mx-auto grid w-full max-w-7xl gap-4 p-4 md:p-6">
-          <Outlet />
+          {/* Pages load on demand; the layout stays while they do. */}
+          <Suspense fallback={null}>
+            <Outlet />
+          </Suspense>
         </div>
       </SidebarInset>
     </SidebarProvider>
