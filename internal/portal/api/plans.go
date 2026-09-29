@@ -422,6 +422,9 @@ func (s PlanService) DeletePlan(ctx context.Context, req *connect.Request[portal
 		if err != nil {
 			return nil, err
 		}
+		if err := checkFingerprint(p, req.Msg.PreviewFingerprint); err != nil {
+			return nil, err
+		}
 		if _, err := s.startCleanup(ctx, sp, portalv1.DataCleanupKind_DATA_CLEANUP_KIND_PLAN, p); err != nil {
 			return nil, err
 		}

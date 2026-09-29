@@ -8628,9 +8628,11 @@ type DeletePlanRequest struct {
 	// PreviewPlanDataDeletion). The plan is deleted once that succeeds.
 	DeleteData bool `protobuf:"varint,2,opt,name=delete_data,json=deleteData,proto3" json:"delete_data,omitempty"`
 	// The plan's name, typed by the operator to confirm deleting data.
-	ConfirmName   string `protobuf:"bytes,3,opt,name=confirm_name,json=confirmName,proto3" json:"confirm_name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	ConfirmName string `protobuf:"bytes,3,opt,name=confirm_name,json=confirmName,proto3" json:"confirm_name,omitempty"`
+	// With delete_data: the fingerprint of the reviewed preview.
+	PreviewFingerprint string `protobuf:"bytes,4,opt,name=preview_fingerprint,json=previewFingerprint,proto3" json:"preview_fingerprint,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *DeletePlanRequest) Reset() {
@@ -8680,6 +8682,13 @@ func (x *DeletePlanRequest) GetDeleteData() bool {
 func (x *DeletePlanRequest) GetConfirmName() string {
 	if x != nil {
 		return x.ConfirmName
+	}
+	return ""
+}
+
+func (x *DeletePlanRequest) GetPreviewFingerprint() string {
+	if x != nil {
+		return x.PreviewFingerprint
 	}
 	return ""
 }
@@ -10628,7 +10637,11 @@ type DataCleanupPreview struct {
 	CheckedAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=checked_at,json=checkedAt,proto3" json:"checked_at,omitempty"`
 	Hosts     []*HostDataCleanup     `protobuf:"bytes,2,rep,name=hosts,proto3" json:"hosts,omitempty"`
 	// What blocks the cleanup.
-	Problems      []string `protobuf:"bytes,3,rep,name=problems,proto3" json:"problems,omitempty"`
+	Problems []string `protobuf:"bytes,3,rep,name=problems,proto3" json:"problems,omitempty"`
+	// Identifies what the cleanup would remove (not sizes or counts). A
+	// cleanup starts only with the fingerprint of the preview the operator
+	// reviewed, and only if nothing changed since.
+	Fingerprint   string `protobuf:"bytes,4,opt,name=fingerprint,proto3" json:"fingerprint,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -10682,6 +10695,13 @@ func (x *DataCleanupPreview) GetProblems() []string {
 		return x.Problems
 	}
 	return nil
+}
+
+func (x *DataCleanupPreview) GetFingerprint() string {
+	if x != nil {
+		return x.Fingerprint
+	}
+	return ""
 }
 
 type HostDataCleanup struct {
@@ -11195,10 +11215,12 @@ func (x *PreviewTakeoverCleanupResponse) GetPreview() *DataCleanupPreview {
 }
 
 type StartTakeoverCleanupRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PlanId        string                 `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	PlanId string                 `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	// The fingerprint of the reviewed preview.
+	PreviewFingerprint string `protobuf:"bytes,2,opt,name=preview_fingerprint,json=previewFingerprint,proto3" json:"preview_fingerprint,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *StartTakeoverCleanupRequest) Reset() {
@@ -11234,6 +11256,13 @@ func (*StartTakeoverCleanupRequest) Descriptor() ([]byte, []int) {
 func (x *StartTakeoverCleanupRequest) GetPlanId() string {
 	if x != nil {
 		return x.PlanId
+	}
+	return ""
+}
+
+func (x *StartTakeoverCleanupRequest) GetPreviewFingerprint() string {
+	if x != nil {
+		return x.PreviewFingerprint
 	}
 	return ""
 }
@@ -12124,12 +12153,13 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\x04spec\x18\x02 \x01(\v2\x16.ezdr.plan.v1.PlanSpecR\x04spec\"k\n" +
 	"\x12UpdatePlanResponse\x12(\n" +
 	"\x04plan\x18\x01 \x01(\v2\x14.ezdr.portal.v1.PlanR\x04plan\x12+\n" +
-	"\x06issues\x18\x02 \x03(\v2\x13.ezdr.plan.v1.IssueR\x06issues\"g\n" +
+	"\x06issues\x18\x02 \x03(\v2\x13.ezdr.plan.v1.IssueR\x06issues\"\x98\x01\n" +
 	"\x11DeletePlanRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vdelete_data\x18\x02 \x01(\bR\n" +
 	"deleteData\x12!\n" +
-	"\fconfirm_name\x18\x03 \x01(\tR\vconfirmName\"\x14\n" +
+	"\fconfirm_name\x18\x03 \x01(\tR\vconfirmName\x12/\n" +
+	"\x13preview_fingerprint\x18\x04 \x01(\tR\x12previewFingerprint\"\x14\n" +
 	"\x12DeletePlanResponse\"Z\n" +
 	"\x13ValidatePlanRequest\x12*\n" +
 	"\x04spec\x18\x01 \x01(\v2\x16.ezdr.plan.v1.PlanSpecR\x04spec\x12\x17\n" +
@@ -12289,12 +12319,13 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"started_by\x18\a \x01(\tR\tstartedBy\x129\n" +
 	"\n" +
 	"started_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x123\n" +
-	"\x15awaiting_confirmation\x18\t \x01(\bR\x14awaitingConfirmation\"\xa2\x01\n" +
+	"\x15awaiting_confirmation\x18\t \x01(\bR\x14awaitingConfirmation\"\xc4\x01\n" +
 	"\x12DataCleanupPreview\x129\n" +
 	"\n" +
 	"checked_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\tcheckedAt\x125\n" +
 	"\x05hosts\x18\x02 \x03(\v2\x1f.ezdr.portal.v1.HostDataCleanupR\x05hosts\x12\x1a\n" +
-	"\bproblems\x18\x03 \x03(\tR\bproblems\"\xf4\x01\n" +
+	"\bproblems\x18\x03 \x03(\tR\bproblems\x12 \n" +
+	"\vfingerprint\x18\x04 \x01(\tR\vfingerprint\"\xf4\x01\n" +
 	"\x0fHostDataCleanup\x12\x17\n" +
 	"\ahost_id\x18\x01 \x01(\tR\x06hostId\x12\x1a\n" +
 	"\bhostname\x18\x02 \x01(\tR\bhostname\x12\x12\n" +
@@ -12335,9 +12366,10 @@ const file_ezdr_portal_v1_portal_proto_rawDesc = "" +
 	"\x1dPreviewTakeoverCleanupRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\"^\n" +
 	"\x1ePreviewTakeoverCleanupResponse\x12<\n" +
-	"\apreview\x18\x01 \x01(\v2\".ezdr.portal.v1.DataCleanupPreviewR\apreview\"6\n" +
+	"\apreview\x18\x01 \x01(\v2\".ezdr.portal.v1.DataCleanupPreviewR\apreview\"g\n" +
 	"\x1bStartTakeoverCleanupRequest\x12\x17\n" +
-	"\aplan_id\x18\x01 \x01(\tR\x06planId\"U\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12/\n" +
+	"\x13preview_fingerprint\x18\x02 \x01(\tR\x12previewFingerprint\"U\n" +
 	"\x1cStartTakeoverCleanupResponse\x125\n" +
 	"\acleanup\x18\x01 \x01(\v2\x1b.ezdr.portal.v1.DataCleanupR\acleanup\"e\n" +
 	"\x15GetDataCleanupRequest\x12\x17\n" +

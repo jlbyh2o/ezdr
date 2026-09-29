@@ -1111,6 +1111,8 @@ message DeletePlanRequest {
   bool delete_data = 2;
   // The plan's name, typed by the operator to confirm deleting data.
   string confirm_name = 3;
+  // With delete_data: the fingerprint of the reviewed preview.
+  string preview_fingerprint = 4;
 }
 
 message DeletePlanResponse {}
@@ -1404,6 +1406,10 @@ message DataCleanupPreview {
   repeated HostDataCleanup hosts = 2;
   // What blocks the cleanup.
   repeated string problems = 3;
+  // Identifies what the cleanup would remove (not sizes or counts). A
+  // cleanup starts only with the fingerprint of the preview the operator
+  // reviewed, and only if nothing changed since.
+  string fingerprint = 4;
 }
 
 message HostDataCleanup {
@@ -1470,6 +1476,8 @@ message PreviewTakeoverCleanupResponse {
 
 message StartTakeoverCleanupRequest {
   string plan_id = 1;
+  // The fingerprint of the reviewed preview.
+  string preview_fingerprint = 2;
 }
 
 message StartTakeoverCleanupResponse {

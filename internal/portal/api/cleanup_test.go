@@ -90,7 +90,13 @@ func TestTakeoverCleanup(t *testing.T) {
 		p.Hosts[1].ReclaimBytes != 2<<20 {
 		t.Fatalf("preview = %v", p)
 	}
-	if _, err := svc.StartTakeoverCleanup(ctx, connect.NewRequest(&portalv1.StartTakeoverCleanupRequest{PlanId: id})); err != nil {
+	// Only the reviewed preview starts.
+	if _, err := svc.StartTakeoverCleanup(ctx, connect.NewRequest(&portalv1.StartTakeoverCleanupRequest{PlanId: id,
+		PreviewFingerprint: "stale"})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+		t.Errorf("start with another preview: %v", err)
+	}
+	if _, err := svc.StartTakeoverCleanup(ctx, connect.NewRequest(&portalv1.StartTakeoverCleanupRequest{PlanId: id,
+		PreviewFingerprint: p.Fingerprint})); err != nil {
 		t.Fatal(err)
 	}
 	c := waitCleanup(ctx, t, d, kind, id, portalv1.DataCleanupState_DATA_CLEANUP_STATE_COMPLETED)
@@ -114,7 +120,12 @@ func TestDeletePlanWithData(t *testing.T) {
 		t.Fatalf("takeover = %v", tk)
 	}
 	del := func(name string) error {
-		_, err := svc.DeletePlan(ctx, connect.NewRequest(&portalv1.DeletePlanRequest{Id: id, DeleteData: true, ConfirmName: name}))
+		var fp string
+		if pre, err := svc.PreviewPlanDataDeletion(ctx, connect.NewRequest(&portalv1.PreviewPlanDataDeletionRequest{PlanId: id})); err == nil {
+			fp = pre.Msg.Preview.Fingerprint
+		}
+		_, err := svc.DeletePlan(ctx, connect.NewRequest(&portalv1.DeletePlanRequest{Id: id, DeleteData: true, ConfirmName: name,
+			PreviewFingerprint: fp}))
 		return err
 	}
 	if err := del("Main"); connect.CodeOf(err) != connect.CodeFailedPrecondition {
@@ -125,6 +136,10 @@ func TestDeletePlanWithData(t *testing.T) {
 	}
 	if err := del("main"); connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Errorf("wrong confirmation: %v", err)
+	}
+	if _, err := svc.DeletePlan(ctx, connect.NewRequest(&portalv1.DeletePlanRequest{Id: id, DeleteData: true, ConfirmName: "Main",
+		PreviewFingerprint: "stale"})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+		t.Errorf("delete with another preview: %v", err)
 	}
 
 	// A problem on a host blocks it.
@@ -184,7 +199,12 @@ func TestCancelPlanDeletion(t *testing.T) {
 	dr.mu.Lock()
 	dr.failDataCleanup = 1
 	dr.mu.Unlock()
-	if _, err := svc.DeletePlan(ctx, connect.NewRequest(&portalv1.DeletePlanRequest{Id: id, DeleteData: true, ConfirmName: "Main"})); err != nil {
+	pre, err := svc.PreviewPlanDataDeletion(ctx, connect.NewRequest(&portalv1.PreviewPlanDataDeletionRequest{PlanId: id}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.DeletePlan(ctx, connect.NewRequest(&portalv1.DeletePlanRequest{Id: id, DeleteData: true, ConfirmName: "Main",
+		PreviewFingerprint: pre.Msg.Preview.Fingerprint})); err != nil {
 		t.Fatal(err)
 	}
 	waitCleanup(ctx, t, d, kind, id, portalv1.DataCleanupState_DATA_CLEANUP_STATE_FAILED)

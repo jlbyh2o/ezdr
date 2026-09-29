@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -101,7 +103,30 @@ func (d *Deps) scanCleanup(ctx context.Context, spec *planv1.PlanSpec, pri, dr r
 			}
 		}
 	}
+	preview.Fingerprint = fingerprint(preview)
 	return preview, nil
+}
+
+// fingerprint identifies what a preview would remove.
+func fingerprint(p *portalv1.DataCleanupPreview) string {
+	h := sha256.New()
+	for _, hc := range p.Hosts {
+		fmt.Fprintf(h, "host %q %q\n", hc.HostId, hc.ReleaseJobs)
+		for _, ds := range hc.Datasets {
+			fmt.Fprintf(h, "dataset %q %v %q %q\n", ds.Dataset, ds.Destroy, ds.Prefix, ds.EmptyParentsBelow)
+		}
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+// checkFingerprint refuses to start a cleanup that differs from the
+// preview the operator reviewed.
+func checkFingerprint(p *portalv1.DataCleanupPreview, reviewed string) error {
+	if reviewed == "" || reviewed != p.Fingerprint {
+		return connect.NewError(connect.CodeFailedPrecondition,
+			errors.New("what would be removed changed since the preview; review it again"))
+	}
+	return nil
 }
 
 // empty reports whether a preview has nothing to remove.
@@ -205,6 +230,9 @@ func (s PlanService) StartTakeoverCleanup(ctx context.Context, req *connect.Requ
 	}
 	p, err := s.takeoverPreview(ctx, sp, spec)
 	if err != nil {
+		return nil, err
+	}
+	if err := checkFingerprint(p, req.Msg.PreviewFingerprint); err != nil {
 		return nil, err
 	}
 	c, err := s.startCleanup(ctx, sp, portalv1.DataCleanupKind_DATA_CLEANUP_KIND_TAKEOVER, p)

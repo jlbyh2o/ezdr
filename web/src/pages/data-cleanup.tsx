@@ -184,12 +184,19 @@ export function DeletePlanDialog({ plan, onClose, onDeleted }: { plan: Plan; onC
     setBusy(true)
     setError(undefined)
     try {
-      await planClient.deletePlan({ id: plan.id, deleteData: withData, confirmName: typed.trim() })
+      await planClient.deletePlan({
+        id: plan.id,
+        deleteData: withData,
+        confirmName: typed.trim(),
+        previewFingerprint: preview?.fingerprint ?? '',
+      })
       if (withData) onClose()
       else onDeleted()
     } catch (err) {
       setError(errorMessage(err))
       setBusy(false)
+      // What would be removed may have changed: show it again.
+      if (withData) void planClient.previewPlanDataDeletion({ planId: plan.id }).then((r) => setPreview(r.preview))
     }
   }
 
@@ -372,11 +379,13 @@ function TakeoverCleanupDialog({ planId, onClose, onStarted }: { planId: string;
     setBusy(true)
     setError(undefined)
     try {
-      await planClient.startTakeoverCleanup({ planId })
+      await planClient.startTakeoverCleanup({ planId, previewFingerprint: preview?.fingerprint ?? '' })
       onStarted()
     } catch (err) {
       setError(errorMessage(err))
       setBusy(false)
+      // What would be removed may have changed: show it again.
+      void planClient.previewTakeoverCleanup({ planId }).then((r) => setPreview(r.preview))
     }
   }
 
