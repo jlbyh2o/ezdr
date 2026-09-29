@@ -125,7 +125,9 @@ func run(ctx context.Context, dataDir, listen string, reset, fast, empty bool) e
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /dev/signin", func(w http.ResponseWriter, r *http.Request) { signIn(w, r, d) })
 	mux.Handle("/", portal.PublicHandler(d, web.FS()))
-	srv := &http.Server{Addr: listen, Handler: mux, ReadHeaderTimeout: 10 * time.Second}
+	// Requests come through the Vite dev server on the same machine.
+	local := []netip.Prefix{netip.MustParsePrefix("127.0.0.0/8"), netip.MustParsePrefix("::1/128")}
+	srv := &http.Server{Addr: listen, Handler: api.WithSourceAddress(local, mux), ReadHeaderTimeout: 10 * time.Second}
 	go func() {
 		<-ctx.Done()
 		shutdown, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)

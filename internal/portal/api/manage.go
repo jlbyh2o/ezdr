@@ -203,11 +203,15 @@ func (s HostService) SetGuestExcluded(ctx context.Context, req *connect.Request[
 	if err != nil {
 		return nil, internalError(err)
 	}
-	action := "guest.protect"
+	action, what := "guest.protect", "no longer marked unprotected"
 	if m.Excluded {
-		action = "guest.unprotect"
+		action, what = "guest.unprotect", "marked unprotected"
 	}
-	s.audit(ctx, u.Username, action, fmt.Sprintf("host:%s/guest:%d", m.HostId, m.Vmid), "")
+	name := m.HostId
+	if h, err := s.Store.HostByID(ctx, m.HostId); err == nil {
+		name = h.Hostname
+	}
+	s.audit(ctx, u.Username, action, fmt.Sprintf("host:%s/guest:%d", m.HostId, m.Vmid), fmt.Sprintf("%s: guest %d %s", name, m.Vmid, what))
 	return connect.NewResponse(&portalv1.SetGuestExcludedResponse{}), nil
 }
 
