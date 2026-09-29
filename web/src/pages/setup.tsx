@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { ErrorAlert } from '@/components/error-alert'
+import { LogoMark } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -64,10 +65,23 @@ export function SetupPage({ onDone }: { onDone: () => void }) {
   )
 }
 
+// CenteredCard frames the screens before sign-in: setup, sign-in, and
+// two-factor authentication.
 export function CenteredCard({ children }: { children: React.ReactNode }) {
   return (
-    <main className="flex min-h-svh items-center justify-center p-4">
-      <Card className="w-full max-w-md">{children}</Card>
+    <main className="relative flex min-h-svh flex-col items-center justify-center gap-6 overflow-hidden p-4">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-primary/10 to-transparent dark:from-primary/15"
+      />
+      <div className="relative flex items-center gap-3">
+        <LogoMark className="size-10" />
+        <div className="grid leading-tight">
+          <span className="text-xl font-semibold tracking-tight">EZDR</span>
+          <span className="text-sm text-muted-foreground">Disaster recovery for Proxmox VE</span>
+        </div>
+      </div>
+      <Card className="relative w-full max-w-md shadow-lg">{children}</Card>
     </main>
   )
 }

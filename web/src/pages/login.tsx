@@ -131,7 +131,7 @@ export function LoginPage({ onSignedIn }: { onSignedIn: (u: User) => void }) {
   return (
     <CenteredCard>
       <CardHeader>
-        <CardTitle>Sign in to EZDR</CardTitle>
+        <CardTitle>Sign in</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={submitPassword} className="grid gap-4">

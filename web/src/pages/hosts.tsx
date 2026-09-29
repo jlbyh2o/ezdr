@@ -1,5 +1,5 @@
-import { KeyRound, TriangleAlert } from 'lucide-react'
-import { Link } from 'react-router'
+import { Server, TriangleAlert } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
 import {
@@ -13,90 +13,127 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { StatusBadge } from '@/components/status-badge'
+import { Segmented } from '@/components/segmented'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { Host } from '@/gen/ezdr/portal/v1/portal_pb'
-import { hostClient } from '@/lib/api'
+import { hostClient, planClient } from '@/lib/api'
 import { formatDateTime, formatRelative } from '@/lib/format'
 import { usePoll } from '@/lib/use-poll'
 import { AddHostDialog } from '@/pages/add-host-dialog'
 import { PageHeader } from '@/pages/layout'
+import { TokensTable } from '@/pages/tokens'
+
+type Tab = 'hosts' | 'tokens'
 
 export function HostsPage() {
-  const { data, error, reload } = usePoll(async () => (await hostClient.listHosts({})).hosts, 10_000)
+  const [params, setParams] = useSearchParams()
+  const tab: Tab = params.get('tab') === 'tokens' ? 'tokens' : 'hosts'
+  const { data, error, reload } = usePoll(async () => {
+    const [hosts, plans] = await Promise.all([hostClient.listHosts({}), planClient.listPlans({})])
+    return { hosts: hosts.hosts, plans: plans.plans }
+  }, 10_000)
+  const role = (h: Host) => {
+    const primary = data?.plans.some((p) => p.primaryHostname === h.hostname)
+    const dr = data?.plans.some((p) => p.drHostname === h.hostname)
+    return primary && dr ? 'Primary and DR host' : primary ? 'Primary' : dr ? 'DR host' : 'Not in a plan'
+  }
 
   return (
     <>
-      <PageHeader title="Hosts" description="Proxmox VE hosts enrolled in this portal.">
-        <Button variant="outline" render={<Link to="/tokens" />}>
-          <KeyRound /> Enrollment tokens
-        </Button>
+      <PageHeader title="Hosts" description="Proxmox VE hosts enrolled in this portal, and the tokens that enroll them.">
         <AddHostDialog onCreated={() => void reload()} />
       </PageHeader>
-      <ErrorAlert message={error} />
-      {data && data.length === 0 && (
-        <p className="py-12 text-center text-muted-foreground">No hosts yet. Use “Add host” to enroll your first one.</p>
-      )}
-      {data && data.length > 0 && (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Host</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Guests</TableHead>
-              <TableHead>Tunnel address</TableHead>
-              <TableHead>Proxmox VE</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Enrolled</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((h) => (
-              <TableRow key={h.id}>
-                <TableCell className="font-medium">
-                  <Link to={`/hosts/${h.id}`} className="hover:underline">
-                    {h.hostname}
-                  </Link>
-                  {h.duplicateMachineId && (
-                    <div className="flex items-center gap-1 text-xs text-warning-foreground">
-                      <TriangleAlert className="size-3" /> Same machine ID as another host; remove the stale one.
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {h.online ? (
-                    <StatusBadge tone="success">Online</StatusBadge>
-                  ) : (
-                    <StatusBadge tone="destructive" title={`Last seen ${formatDateTime(h.lastSeenAt)}`}>
-                      Offline · {formatRelative(h.lastSeenAt)}
-                    </StatusBadge>
-                  )}
-                </TableCell>
-                <TableCell className="text-xs">
-                  {!h.hasInventory ? (
-                    <span className="text-muted-foreground">—</span>
-                  ) : (
-                    <>
-                      {h.guestCount}
-                      {h.guestsNotReady > 0 && (
-                        <span className="text-destructive"> · {h.guestsNotReady} not ready</span>
+      <Segmented
+        label="Show"
+        value={tab}
+        onChange={(t) => setParams(t === 'tokens' ? { tab: 'tokens' } : {})}
+        options={[
+          { value: 'hosts', label: 'Hosts', count: data?.hosts.length },
+          { value: 'tokens', label: 'Enrollment tokens' },
+        ]}
+      />
+      {tab === 'tokens' ? (
+        <TokensTable />
+      ) : (
+        <>
+          <ErrorAlert message={error} />
+          {data && data.hosts.length === 0 && (
+            <div className="grid justify-items-center gap-2 py-16 text-center text-sm text-muted-foreground">
+              <Server className="size-8" />
+              No hosts yet. Use “Add host” to enroll a primary host and a DR host.
+            </div>
+          )}
+          {data && data.hosts.length > 0 && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Host</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Guests</TableHead>
+                  <TableHead>Proxmox VE</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Last seen</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.hosts.map((h) => (
+                  <TableRow key={h.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2.5">
+                        <Server
+                          className={`size-5 shrink-0 ${h.online ? 'text-success' : 'text-destructive'}`}
+                          role="img"
+                          aria-label={h.online ? 'Online' : 'Offline'}
+                        >
+                          <title>{h.online ? 'Online' : 'Offline'}</title>
+                        </Server>
+                        <div className="grid">
+                          <Link to={`/hosts/${h.id}`} className="font-medium hover:underline">
+                            {h.hostname}
+                          </Link>
+                          <span className="font-mono text-xs text-muted-foreground">{h.tunnelAddress}</span>
+                        </div>
+                      </div>
+                      {h.duplicateMachineId && (
+                        <div className="mt-1 flex items-center gap-1 text-xs text-warning-foreground">
+                          <TriangleAlert className="size-3" /> Same machine ID as another host; remove the stale one.
+                        </div>
                       )}
-                    </>
-                  )}
-                </TableCell>
-                <TableCell className="font-mono text-xs">{h.tunnelAddress}</TableCell>
-                <TableCell className="text-xs">{pveShort(h.pveVersion)}</TableCell>
-                <TableCell className="text-xs">{h.clientVersion}</TableCell>
-                <TableCell className="text-xs">{formatDateTime(h.enrolledAt)}</TableCell>
-                <TableCell className="text-right">
-                  <RemoveHostButton host={h} onRemoved={() => void reload()} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {role(h)}
+                      {h.planCount > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          {h.planCount} plan{h.planCount === 1 ? '' : 's'}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {!h.hasInventory ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : (
+                        <>
+                          {h.guestCount}
+                          {h.guestsNotReady > 0 && <div className="text-xs text-destructive">{h.guestsNotReady} not ready</div>}
+                        </>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs">{pveShort(h.pveVersion)}</TableCell>
+                    <TableCell className="text-xs">{h.clientVersion || '—'}</TableCell>
+                    <TableCell className="text-xs" title={formatDateTime(h.lastSeenAt)}>
+                      {h.online ? <span className="text-success">Online now</span> : formatRelative(h.lastSeenAt)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <RemoveHostButton host={h} onRemoved={() => void reload()} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </>
       )}
     </>
   )

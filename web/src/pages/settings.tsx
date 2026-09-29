@@ -74,13 +74,16 @@ export function SettingsPage() {
   const smtp = settings.smtp ?? create(SmtpSettingsSchema)
   return (
     <>
-      <PageHeader title="Settings" description="Where alerts are sent. Passwords and secrets are stored encrypted and never shown again.">
+      <PageHeader
+        title="Settings"
+        description="Where alerts are sent, and the DNS provider failovers use. Passwords, secrets, and tokens are stored encrypted and never shown again."
+      >
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => void test()} disabled={busy}>
-            <Send /> Send test
+            <Send /> Send test alert
           </Button>
           <Button onClick={() => void save()} disabled={busy}>
-            Save
+            Save alert settings
           </Button>
         </div>
       </PageHeader>

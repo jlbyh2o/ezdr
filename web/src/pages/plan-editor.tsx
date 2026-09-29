@@ -4,6 +4,7 @@ import { createContext, Fragment, useCallback, useContext, useEffect, useRef, us
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
+import { GuestStatus } from '@/components/guest-status'
 import { NativeSelect } from '@/components/native-select'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -28,14 +29,14 @@ import {
   RetentionTierSchema,
   Severity,
 } from '@/gen/ezdr/plan/v1/plan_pb'
-import { type GetHostInventoryResponse, type GuestExclusion, type Host, type Plan, PlanState, type ZreplSetup } from '@/gen/ezdr/portal/v1/portal_pb'
+import { type GetHostInventoryResponse, type Host, type Plan, PlanState, type ZreplSetup } from '@/gen/ezdr/portal/v1/portal_pb'
 import { HostStatusPanel, PlanActions, StateBadge } from '@/pages/plan-actions'
 import { PlanDnsCard } from '@/pages/plan-dns'
 import { PlanHistoryCard } from '@/pages/plan-history'
 import { PlanStateCard, PlanStatusCard } from '@/pages/plan-status'
 import { TestFailoverCard } from '@/pages/test-failover'
 import { errorMessage, hostClient, planClient } from '@/lib/api'
-import { formatBytes, formatDateTime, formatDuration } from '@/lib/format'
+import { formatBytes, formatDuration } from '@/lib/format'
 import { describeInterval, drPresets, grid, primaryPresets, splitPeriod, units } from '@/lib/retention'
 import { Field } from '@/pages/setup'
 
@@ -1096,52 +1097,6 @@ function GuestsCard({
         </TableBody>
       </Table>
     </Section>
-  )
-}
-
-// GuestStatus says whether a guest is protected, and lets a guest in no
-// plan be marked unprotected (a deliberate choice, so plans stop warning)
-// or back.
-function GuestStatus({
-  protectedHere,
-  inOtherPlan,
-  template,
-  exclusion,
-  setExcluded,
-}: {
-  protectedHere: boolean
-  inOtherPlan: boolean
-  template: boolean
-  exclusion?: GuestExclusion
-  setExcluded: (on: boolean) => Promise<void>
-}) {
-  const [busy, setBusy] = useState(false)
-  const run = async (on: boolean) => {
-    setBusy(true)
-    await setExcluded(on)
-    setBusy(false)
-  }
-  if (template) return <span className="text-muted-foreground">Template</span>
-  if (protectedHere || inOtherPlan) return <span className="text-success">Protected</span>
-  if (exclusion) {
-    return (
-      <span className="inline-flex items-center gap-2">
-        <span className="text-muted-foreground" title={`Marked by ${exclusion.by}, ${formatDateTime(exclusion.at)}`}>
-          Unprotected
-        </span>
-        <Button variant="ghost" size="xs" disabled={busy} onClick={() => void run(false)}>
-          Undo
-        </Button>
-      </span>
-    )
-  }
-  return (
-    <span className="inline-flex items-center gap-2">
-      <span className="text-warning-foreground">Unconfigured</span>
-      <Button variant="outline" size="xs" disabled={busy} onClick={() => void run(true)} title="Stop warning about this guest">
-        Mark unprotected
-      </Button>
-    </span>
   )
 }
 

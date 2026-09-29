@@ -220,11 +220,17 @@ the plan page with the usual activation (or takeover) preview.
 
 ## 7. Other pages
 
-- **Hosts:** a denser table with status colors, role (primary, DR, both),
-  plans, and last seen, plus the tokens section. Host detail keeps its tabs
-  with the new styling.
-- **Alerts, Audit log, Settings:** restyled, with filters where useful
-  (alerts by state and plan, audit by kind).
+- **Hosts:** a denser table with the status icon's color, role (primary,
+  DR host, both, or none), plans, guests, and last seen, and an Enrollment
+  tokens tab (`/tokens` redirects to it). Host detail keeps its tabs; its
+  guests show whether they're protected (with the plan), unconfigured
+  ("Mark unprotected"), or unprotected ("Undo"), so guests of hosts in no
+  plan can be marked too.
+- **Alerts:** Firing / Resolved / All, severity, links to the plan and
+  host, and how long resolved alerts lasted.
+- **Audit log:** filters by kind (operations, plans, hosts and guests,
+  sign-ins, settings), a search, and older events on request.
+- **Settings:** unchanged apart from clearer wording.
 - **Sign-in and setup:** restyled with the new theme.
 
 ## 8. Backend changes

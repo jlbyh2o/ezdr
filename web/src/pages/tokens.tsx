@@ -1,3 +1,5 @@
+import { Navigate } from 'react-router'
+
 import { ErrorAlert } from '@/components/error-alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -6,7 +8,6 @@ import type { EnrollmentToken } from '@/gen/ezdr/portal/v1/portal_pb'
 import { tokenClient } from '@/lib/api'
 import { formatDateTime, toDate } from '@/lib/format'
 import { usePoll } from '@/lib/use-poll'
-import { PageHeader } from '@/pages/layout'
 
 function tokenState(t: EnrollmentToken): 'active' | 'used' | 'revoked' | 'expired' {
   if (t.usedAt) return 'used'
@@ -16,20 +17,23 @@ function tokenState(t: EnrollmentToken): 'active' | 'used' | 'revoked' | 'expire
   return 'active'
 }
 
+// TokensPage moved to the Hosts page's Enrollment tokens tab.
 export function TokensPage() {
-  const { data, error, reload } = usePoll(async () => (await tokenClient.listTokens({})).tokens, 30_000)
+  return <Navigate to="/hosts?tab=tokens" replace />
+}
 
+// TokensTable lists enrollment tokens and revokes active ones.
+export function TokensTable() {
+  const { data, error, reload } = usePoll(async () => (await tokenClient.listTokens({})).tokens, 30_000)
   async function revoke(id: string) {
     await tokenClient.revokeToken({ id })
     void reload()
   }
-
   return (
     <>
-      <PageHeader
-        title="Enrollment tokens"
-        description="Single-use tokens created with “Add host”. Revoke any you no longer need."
-      />
+      <p className="text-sm text-muted-foreground">
+        Single-use tokens created with “Add host”. A token is used up when a host enrolls with it; revoke any you no longer need.
+      </p>
       <ErrorAlert message={error} />
       {data && data.length === 0 && <p className="py-12 text-center text-muted-foreground">No tokens yet.</p>}
       {data && data.length > 0 && (

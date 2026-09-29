@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
+import { GuestStatus } from '@/components/guest-status'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { StatusBadge } from '@/components/status-badge'
 import { Badge } from '@/components/ui/badge'
@@ -49,7 +50,7 @@ export function HostDetailPage() {
   const inv = data?.inventory
   return (
     <>
-      <Link to="/hosts" className="flex items-center gap-1 pt-4 text-sm text-muted-foreground hover:text-foreground">
+      <Link to="/hosts" className="flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> Hosts
       </Link>
       <PageHeader
@@ -83,12 +84,39 @@ export function HostDetailPage() {
           </AlertDescription>
         </Alert>
       )}
-      {inv && <InventoryView inv={inv} guestPlans={data?.guestPlans ?? {}} />}
+      {inv && (
+        <InventoryView
+          inv={inv}
+          guestPlans={data?.guestPlans ?? {}}
+          excluded={data?.excludedGuests ?? {}}
+          setExcluded={async (vmid, excluded) => {
+            try {
+              await hostClient.setGuestExcluded({ hostId: id, vmid, excluded })
+              await reload()
+            } catch (err) {
+              setRefreshError(errorMessage(err))
+            }
+          }}
+        />
+      )}
     </>
   )
 }
 
-function InventoryView({ inv, guestPlans }: { inv: Inventory; guestPlans: GuestPlans }) {
+type Excluded = GetHostInventoryResponse['excludedGuests']
+type SetExcluded = (vmid: number, excluded: boolean) => Promise<void>
+
+function InventoryView({
+  inv,
+  guestPlans,
+  excluded,
+  setExcluded,
+}: {
+  inv: Inventory
+  guestPlans: GuestPlans
+  excluded: Excluded
+  setExcluded: SetExcluded
+}) {
   const h = inv.host
   const notReady = inv.guests.filter((g) => !g.ready).length
   return (
@@ -115,7 +143,7 @@ function InventoryView({ inv, guestPlans }: { inv: Inventory; guestPlans: GuestP
           <TabsTrigger value="zrepl">zrepl</TabsTrigger>
         </TabsList>
         <TabsContent value="guests">
-          <GuestsTable guests={inv.guests} plans={guestPlans} />
+          <GuestsTable guests={inv.guests} plans={guestPlans} excluded={excluded} setExcluded={setExcluded} />
         </TabsContent>
         <TabsContent value="storage">
           <StorageView inv={inv} />
@@ -149,7 +177,17 @@ const readinessLabel: Record<Readiness, string> = {
 
 type GuestPlans = GetHostInventoryResponse['guestPlans']
 
-function GuestsTable({ guests, plans }: { guests: Guest[]; plans: GuestPlans }) {
+function GuestsTable({
+  guests,
+  plans,
+  excluded,
+  setExcluded,
+}: {
+  guests: Guest[]
+  plans: GuestPlans
+  excluded: Excluded
+  setExcluded: SetExcluded
+}) {
   if (guests.length === 0) return <p className="py-8 text-center text-muted-foreground">No guests on this host.</p>
   return (
     <Table>
@@ -162,7 +200,7 @@ function GuestsTable({ guests, plans }: { guests: Guest[]; plans: GuestPlans }) 
           <TableHead>Disks</TableHead>
           <TableHead>Network</TableHead>
           <TableHead>Replication</TableHead>
-          <TableHead>Plan</TableHead>
+          <TableHead>Protection</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -213,13 +251,14 @@ function GuestsTable({ guests, plans }: { guests: Guest[]; plans: GuestPlans }) 
               ))}
             </TableCell>
             <TableCell className="text-xs">
-              {plans[g.vmid] ? (
-                <Link to={`/plans/${plans[g.vmid].id}`} className="hover:underline">
-                  {plans[g.vmid].name}
-                </Link>
-              ) : (
-                <span className="text-muted-foreground">unprotected</span>
-              )}
+              <GuestStatus
+                protectedHere={false}
+                inOtherPlan={false}
+                plan={plans[g.vmid]}
+                template={g.template}
+                exclusion={excluded[g.vmid]}
+                setExcluded={(on) => setExcluded(g.vmid, on)}
+              />
             </TableCell>
           </TableRow>
         ))}
