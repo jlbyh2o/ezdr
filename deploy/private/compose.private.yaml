@@ -1,0 +1,60 @@
+# Optional: the EZDR portal with its web UI reachable only on a private
+# address (for example, a NetBird or other VPN address), while hosts' EZDR
+# tunnels still use the server's public address. Caddy gets a Let's Encrypt
+# certificate through Cloudflare's DNS, so no inbound web port is needed.
+# See "Option 3" in docs/deployment.md.
+#
+# 1. Copy ../.env.example to .env here and set EZDR_DOMAIN, EZDR_VERSION,
+#    EZDR_PRIVATE_IP, EZDR_WG_ENDPOINT, EZDR_TUNNEL_PREFIX, and
+#    CLOUDFLARE_API_TOKEN.
+# 2. Allow inbound UDP 51820 on the public address (TCP 443 only on the
+#    private one).
+# 3. docker compose -f compose.private.yaml up -d --build
+
+services:
+  caddy:
+    build:
+      dockerfile: Dockerfile.caddy
+    image: ezdr-caddy-cloudflare
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    read_only: true
+    tmpfs: [/tmp]
+    # Only on the private address: Docker's published ports bypass host
+    # firewall rules, so the binding is what keeps the web UI private.
+    ports:
+      - "${EZDR_PRIVATE_IP:?set EZDR_PRIVATE_IP in .env}:443:443"
+      - "${EZDR_PRIVATE_IP}:443:443/udp"
+    environment:
+      EZDR_DOMAIN: ${EZDR_DOMAIN:?set EZDR_DOMAIN in .env}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:?set CLOUDFLARE_API_TOKEN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  portal:
+    image: ghcr.io/jlbyh2o/ezdr-portal:${EZDR_VERSION:?set EZDR_VERSION in .env}
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    environment:
+      EZDR_PUBLIC_URL: https://${EZDR_DOMAIN}
+      # Hosts' tunnels go to the public address, not the name's private one.
+      EZDR_WG_ENDPOINT: ${EZDR_WG_ENDPOINT:?set EZDR_WG_ENDPOINT (public address:51820) in .env}
+      # Away from ranges the VPN uses (NetBird and Tailscale use 100.64.0.0/10).
+      EZDR_TUNNEL_PREFIX: ${EZDR_TUNNEL_PREFIX:?set EZDR_TUNNEL_PREFIX in .env}
+      EZDR_SITE_TUNNEL_PREFIX: ${EZDR_SITE_TUNNEL_PREFIX:?set EZDR_SITE_TUNNEL_PREFIX in .env}
+    ports:
+      - "51820:51820/udp"
+    volumes:
+      - portal-data:/data
+
+volumes:
+  caddy-data:
+  caddy-config:
+  portal-data:

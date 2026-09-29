@@ -1,0 +1,17 @@
+# The web UI on a private address only; the certificate comes from Let's
+# Encrypt's DNS challenge through Cloudflare. See compose.private.yaml.
+{
+	# Nothing listens on port 80.
+	auto_https disable_redirects
+}
+
+{$EZDR_DOMAIN} {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+		# Check the challenge record on public resolvers, not the VPN's.
+		resolvers 1.1.1.1 1.0.0.1
+	}
+	encode zstd gzip
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy portal:8080
+}

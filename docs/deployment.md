@@ -56,6 +56,39 @@ portal's log (`docker compose -f compose.self-signed.yaml logs portal | grep
 sha256_fingerprint`). Otherwise someone who can intercept the connection
 could capture your password and code. Prefer option 1 for production.
 
+### Option 3 (optional): web UI only on a private network
+
+For a portal whose web UI should be reachable only over a VPN (for example,
+NetBird or Tailscale), while hosts' EZDR tunnels still use the server's
+public address. Caddy gets a Let's Encrypt certificate through Cloudflare's
+DNS, so the server needs no inbound web port. The files are in
+[`deploy/private/`](../deploy/private); Caddy is built locally from the
+official images with the Cloudflare DNS module.
+
+Requirements:
+
+- The portal's name in a Cloudflare zone, with an A record pointing to the
+  server's VPN address.
+- A Cloudflare API token with **Zone: DNS: Edit** on that zone, used only
+  for the certificate (separate from the token for DNS failover).
+- Hosts that can reach the VPN address while they enroll (for example, as
+  VPN peers). After enrolling, they only use the WireGuard port.
+- EZDR's tunnel ranges outside anything the hosts use, including the VPN's
+  (NetBird and Tailscale use `100.64.0.0/10`, which EZDR's defaults are in).
+
+```sh
+cd deploy/private
+cp .env.example .env    # set the domain, version, VPN address, public WireGuard endpoint, tunnel ranges, and token
+docker compose -f compose.private.yaml up -d --build
+```
+
+Allow inbound UDP 51820 on the public address; the web UI listens only on
+`EZDR_PRIVATE_IP` (Docker's published ports bypass host firewall rules, so
+the binding is what keeps it private). If the VPN interface can come up
+after Docker at boot, let the server bind addresses that aren't up yet:
+`echo net.ipv4.ip_nonlocal_bind=1 > /etc/sysctl.d/90-ezdr.conf && sysctl
+--system`. The first sign-in and enrollment work as below, over the VPN.
+
 ## First sign-in
 
 1. Find the one-time setup code in the portal's log:

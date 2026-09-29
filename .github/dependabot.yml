@@ -22,3 +22,10 @@ updates:
     groups:
       web:
         patterns: ["*"]
+  - package-ecosystem: docker
+    directories: [/deploy, /deploy/private]
+    schedule:
+      interval: monthly
+    groups:
+      images:
+        patterns: ["*"]
