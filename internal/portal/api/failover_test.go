@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -133,23 +134,56 @@ func TestUnplannedFailover(t *testing.T) {
 func TestBreakGlassReport(t *testing.T) {
 	d, ctx, planID, _, _ := failoverFixture(t)
 	hctx := context.WithValue(ctx, hostKey{}, store.Host{ID: "dr1", Hostname: "dr1"})
-	if _, err := (ClientService{Deps: d}).ReportStatus(hctx, connect.NewRequest(&clientv1.ReportStatusRequest{
-		BreakGlass: []*clientv1.BreakGlassFailover{{PlanId: planID, User: "root", At: timestamppb.Now(), Started: []uint32{101}}},
-	})); err != nil {
-		t.Fatal(err)
+	report := func() {
+		t.Helper()
+		if _, err := (ClientService{Deps: d}).ReportStatus(hctx, connect.NewRequest(&clientv1.ReportStatusRequest{
+			BreakGlass: []*clientv1.BreakGlassFailover{{PlanId: planID, User: "root", At: timestamppb.Now(), Started: []uint32{101}}},
+		})); err != nil {
+			t.Fatal(err)
+		}
 	}
-	sp, _ := d.Store.PlanByID(ctx, planID)
-	if sp.State != store.PlanFailedOver {
+	// The host reports it until the plan is failed over: one record.
+	report()
+	report()
+	rows, err := d.Store.Failovers(ctx, planID)
+	if err != nil || len(rows) != 1 {
+		t.Fatalf("failovers = %d, %v", len(rows), err)
+	}
+
+	// A report alone doesn't fail the plan over or lock the primary's
+	// guests: an administrator confirms it.
+	if sp, _ := d.Store.PlanByID(ctx, planID); sp.State != store.PlanActive {
 		t.Fatalf("plan state = %s", sp.State)
 	}
 	_, f, err := d.loadFailover(ctx, planID)
-	if err != nil || !f.BreakGlass || f.StartedBy != "root@dr1" || f.Guests[0].Status != "running" {
+	if err != nil || !breakGlassPending(f) || f.StartedBy != "root@dr1" || f.Guests[0].Status != "running" {
 		t.Errorf("failover = %v, %v", f, err)
+	}
+	if ds, _ := d.desiredState(ctx, "pve1"); len(ds.LockedGuests) != 0 {
+		t.Errorf("primary locked before confirmation: %v", ds.LockedGuests)
+	}
+	conds, err := NewAlertEngine(d).conditions(ctx, time.Now())
+	if err != nil || !slices.ContainsFunc(conds, func(c condition) bool { return c.Key == "breakglass:"+planID }) {
+		t.Errorf("no alert for the pending failover: %v, %v", conds, err)
+	}
+	svc := FailoverService{Deps: d}
+	if _, err := svc.StartFailover(ctx, connect.NewRequest(&portalv1.StartFailoverRequest{PlanId: planID, ConfirmName: "Main"})); connect.CodeOf(err) != connect.CodeFailedPrecondition {
+		t.Errorf("another failover while one awaits confirmation: %v", err)
+	}
+
+	if _, err := svc.ConfirmFailover(ctx, connect.NewRequest(&portalv1.ConfirmFailoverRequest{PlanId: planID})); err != nil {
+		t.Fatal(err)
+	}
+	if sp, _ := d.Store.PlanByID(ctx, planID); sp.State != store.PlanFailedOver {
+		t.Fatalf("plan state after confirmation = %s", sp.State)
+	}
+	if ds, _ := d.desiredState(ctx, "pve1"); len(ds.LockedGuests) != 1 {
+		t.Errorf("primary locked guests = %v", ds.LockedGuests)
 	}
 	if ds, _ := d.desiredState(ctx, "dr1"); len(ds.FailedOverPlans) != 1 || ds.FailedOverPlans[0] != planID {
 		t.Errorf("DR failed-over plans = %v", ds.FailedOverPlans)
 	}
-	// A report from a host that isn't the plan's DR host is ignored.
+	// A report from a host that isn't the plan's DR host is refused.
 	other := context.WithValue(ctx, hostKey{}, store.Host{ID: "pve1", Hostname: "pve1"})
 	if err := d.recordBreakGlass(other, store.Host{ID: "pve1", Hostname: "pve1"}, &clientv1.BreakGlassFailover{PlanId: planID}); err == nil {
 		t.Error("accepted a break-glass report from the primary")

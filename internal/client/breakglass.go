@@ -56,7 +56,7 @@ func BreakGlassFailover(ctx context.Context, in io.Reader, out io.Writer, planAr
 	fmt.Fprintln(out, "This starts the plan's guests on this host from their replicas, without the portal:")
 	fmt.Fprintln(out, "  - replication for the plan stops, and the replicas become the guests' disks;")
 	fmt.Fprintln(out, "  - changes on the primary after the newest replicated snapshot are lost;")
-	fmt.Fprintln(out, "  - the primary's copies are locked when it next reaches the portal.")
+	fmt.Fprintln(out, "  - the primary's copies are locked once an administrator confirms the failover in the portal.")
 	fmt.Fprintln(out, "Only do this if the primary is down or unreachable.")
 	fmt.Fprintln(out)
 	if newest, err := r.NewestSnapshot(ctx, rec.PlanId); err != nil {
@@ -139,6 +139,7 @@ func BreakGlassFailover(ctx context.Context, in io.Reader, out io.Writer, planAr
 			fmt.Fprintf(out, "  %s %s -> %s\n", d.Name, d.Type, d.FailoverValue)
 		}
 	}
-	fmt.Fprintln(out, "\nDone. When the portal is reachable again, this host reports the failover, and the plan shows as failed over.")
+	fmt.Fprintln(out, "\nDone. When the portal is reachable again, this host reports the failover. Confirm it there to lock the")
+	fmt.Fprintln(out, "primary's copies: until then, they could start on the primary too.")
 	return nil
 }

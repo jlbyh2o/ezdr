@@ -220,11 +220,22 @@ export function FailoverProgress({ failover: f }: { failover: Failover }) {
           )}
         </div>
       )}
-      {f.state === FailoverState.AWAITING_CONFIRMATION && (
+      {f.state === FailoverState.AWAITING_CONFIRMATION && !f.breakGlass && (
         <Alert>
           <TriangleAlert />
           <AlertTitle>The guests run on the DR host</AlertTitle>
           <AlertDescription>Verify them, then confirm. Switching DNS points the records below at the DR site.</AlertDescription>
+        </Alert>
+      )}
+      {f.state === FailoverState.AWAITING_CONFIRMATION && f.breakGlass && (
+        <Alert variant="destructive">
+          <TriangleAlert />
+          <AlertTitle>The DR host reports a break-glass failover</AlertTitle>
+          <AlertDescription>
+            Verify the guests on the DR host, then confirm. Confirming marks the plan failed over: the primary's copies are shut down and
+            locked, and replication stays stopped. Until then, they could start on the primary too. Switching DNS points the records
+            below at the DR site.
+          </AlertDescription>
         </Alert>
       )}
       {f.state === FailoverState.COMPLETED && (

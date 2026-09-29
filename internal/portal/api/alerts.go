@@ -273,6 +273,14 @@ func (e *AlertEngine) conditions(ctx context.Context, now time.Time) ([]conditio
 			continue
 		}
 		watched[p.PrimaryHostID], watched[p.DRHostID] = true, true
+		if _, f, err := e.loadFailover(ctx, p.ID); err == nil && breakGlassPending(f) {
+			out = append(out, condition{plan: p.Name, Alert: store.Alert{
+				Key: "breakglass:" + p.ID, Severity: "critical", PlanID: p.ID, HostID: p.DRHostID,
+				Title: "Break-glass failover of plan " + p.Name + " awaits confirmation",
+				Message: "The DR host reports that its guests were started with the break-glass command. " +
+					"Verify them, then confirm the failover in the portal: until then, the primary's guests aren't locked and could start too.",
+			}})
+		}
 		if p.State != store.PlanActive {
 			continue
 		}

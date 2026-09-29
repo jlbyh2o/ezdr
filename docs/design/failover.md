@@ -170,9 +170,14 @@ ezdr failover --plan <name>
   ignores the plan's jobs in its desired state, so the portal can't
   re-enable replication into the now-writable replicas.
 - When the DR host reconnects, it reports the break-glass failover. The
-  portal marks the plan failed over, writes the audit record (with the local
-  time and user), and runs the DNS drift check, which shows whether the
-  records were changed. The primary is locked when it reconnects (5.1).
+  portal records it as awaiting confirmation, writes the audit record (with
+  the local time and user), raises a critical alert, and runs the DNS drift
+  check, which shows whether the records were changed. An administrator
+  verifies the guests and confirms, optionally switching DNS: only then is
+  the plan failed over and the primary locked (5.1). A report alone can't
+  stop the primary's guests, so a compromised DR host can't use one to take
+  production down; until the confirmation, the primary's guests could start
+  too if it comes back.
 
 ## 8. Security
 
