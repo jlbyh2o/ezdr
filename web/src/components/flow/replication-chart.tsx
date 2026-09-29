@@ -29,8 +29,19 @@ export function ReplicationChart({ overview }: { overview: GetOverviewResponse }
 }
 
 function Chart({ overview }: { overview: GetOverviewResponse }) {
-  const { nodes, edges, height } = useMemo(() => buildChart(overview), [overview])
-  const { fitView } = useReactFlow()
+  const { fitView, getInternalNode } = useReactFlow()
+  // Each poll brings new node objects. Without the size React Flow measured,
+  // it forgets where their handles are and every edge unmounts until it
+  // measures again: each edge's <svg> is replaced, which restarts the pulses
+  // moving along it. Nodes whose size changes are measured again anyway.
+  const { nodes, edges, height } = useMemo(() => {
+    const chart = buildChart(overview)
+    for (const n of chart.nodes) {
+      const m = getInternalNode(n.id)?.measured
+      if (m?.width !== undefined && m.height !== undefined) n.measured = { width: m.width, height: m.height }
+    }
+    return chart
+  }, [overview, getInternalNode])
   const initialized = useNodesInitialized()
   const box = useRef<HTMLDivElement>(null)
   const [hover, setHover] = useState<{ id: string; x: number; y: number }>()

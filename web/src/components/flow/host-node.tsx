@@ -1,5 +1,6 @@
-import { Handle, type NodeProps, Position } from '@xyflow/react'
+import { Handle, type NodeProps, Position, useUpdateNodeInternals } from '@xyflow/react'
 import { Box, FlaskConical, Lock, Monitor, Server, Settings } from 'lucide-react'
+import { useEffect } from 'react'
 import { Link } from 'react-router'
 
 import { type GuestCopy, guestHandle, type HostNode, linkState, type Section, size, toneColor } from '@/components/flow/chart-model'
@@ -28,8 +29,14 @@ const sideText = { primary: 'Primary', dr: 'DR host', none: 'Not in a plan' }
 
 // HostNode draws a host with its guests grouped by plan. Heights come from
 // size, so buildChart can lay nodes out before they render.
-export function HostNodeView({ data }: NodeProps<HostNode>) {
+export function HostNodeView({ id, data }: NodeProps<HostNode>) {
   const { host, side, alsoOther, sections, tests, unconfigured, unprotected, configureAt } = data
+  // The chart keeps each node's measured size across polls, so React Flow
+  // only measures again when the size changes: tell it when the handles
+  // change without that, such as a guest moving between plans.
+  const updateNodeInternals = useUpdateNodeInternals()
+  const handles = sections.map((s) => s.guests.map((g) => guestHandle(s.plan.id, g.vmid)).join()).join('|')
+  useEffect(() => updateNodeInternals(id), [handles, id, updateNodeInternals])
   return (
     <div className="rounded-lg border bg-card text-card-foreground shadow-sm" style={{ width: size.width }}>
       <div className="flex items-center gap-2.5 border-b pr-2 pl-3" style={{ height: size.header }}>
