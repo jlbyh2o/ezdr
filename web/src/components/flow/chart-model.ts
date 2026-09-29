@@ -76,7 +76,6 @@ export const size = {
   guest: 30,
   sectionGap: 8,
   padding: 10,
-  unprotectedMax: 4,
 }
 
 const failoverStates = [PlanState.FAILING_OVER, PlanState.FAILED_OVER, PlanState.FAILING_BACK]
@@ -105,7 +104,7 @@ export function nodeHeight(d: HostNodeData): number {
   let h = size.header + size.padding
   for (const s of d.sections) h += size.sectionHeader + Math.max(1, s.guests.length) * size.guest + size.sectionGap
   for (const list of [...d.tests.map((t) => t.guests), d.unconfigured, d.unprotected]) {
-    if (list.length > 0) h += size.sectionHeader + Math.min(list.length, size.unprotectedMax + 1) * size.guest + size.sectionGap
+    if (list.length > 0) h += size.sectionHeader + list.length * size.guest + size.sectionGap
   }
   return h
 }

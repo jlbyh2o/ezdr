@@ -66,24 +66,17 @@ export function HostNodeView({ data }: NodeProps<HostNode>) {
   )
 }
 
-// LooseGuests lists guests in no plan, up to a few, then a count.
+// LooseGuests lists guests in no plan, all of them.
 function LooseGuests({ title, guests, to }: { title: string; guests: GuestCopy[]; to: string }) {
   if (guests.length === 0) return null
-  const hidden = guests.length - size.unprotectedMax
-  const shown = hidden > 1 ? guests.slice(0, size.unprotectedMax) : guests
   return (
     <div style={{ marginBottom: size.sectionGap }}>
       <div className="flex items-center text-xs text-muted-foreground" style={{ height: size.sectionHeader }}>
         {title} ({guests.length})
       </div>
-      {shown.map((g) => (
+      {guests.map((g) => (
         <GuestRow key={g.vmid} guest={g} to={to} />
       ))}
-      {hidden > 1 && (
-        <Link to={to} className="flex items-center px-2 text-xs text-muted-foreground hover:text-foreground" style={{ height: size.guest }}>
-          and {hidden} more
-        </Link>
-      )}
     </div>
   )
 }
