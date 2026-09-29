@@ -102,9 +102,10 @@ sure it's talking to the real portal:
   automatically; there is nothing to configure.
 - **Other private certificates:** if the portal sits behind a proxy with a
   private certificate, the admin sets `EZDR_TLS_PIN`. It's embedded in every
-  token, and the client accepts only a certificate chain containing that
-  public key. The pinned certificate must be one the server actually presents
-  and must not rotate. (Caddy's `tls internal` rotates its certificates and
+  token. The client accepts the portal's certificate only if it has that
+  public key, or if it verifies (for the portal's host name) up to a
+  certificate the server presents with that key. The pinned certificate must
+  be one the server actually presents and must not rotate. (Caddy's `tls internal` rotates its certificates and
   doesn't send its root, so it can't be pinned; use self-signed mode instead.)
 
 ## 4. Enrollment flow

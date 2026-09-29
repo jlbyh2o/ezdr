@@ -1,13 +1,19 @@
 package client
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/base64"
 	"errors"
+	"math/big"
 	"net/netip"
 	"testing"
+	"time"
 )
 
 func TestPVEMajor(t *testing.T) {
@@ -38,16 +44,72 @@ func TestFirstOverlap(t *testing.T) {
 }
 
 func TestVerifyPin(t *testing.T) {
-	cert := &x509.Certificate{RawSubjectPublicKeyInfo: []byte("spki")}
-	sum := sha256.Sum256([]byte("spki"))
-	pin := base64.StdEncoding.EncodeToString(sum[:])
-	cs := tls.ConnectionState{PeerCertificates: []*x509.Certificate{cert}}
-	if err := verifyPin(cs, pin); err != nil {
-		t.Errorf("matching pin rejected: %v", err)
+	ca := newTestCert(t, nil, "EZDR test CA", true)
+	leaf := newTestCert(t, ca, "portal.example.com", false)
+	other := newTestCert(t, nil, "portal.example.com", false)
+	pinOf := func(c *testCert) string {
+		sum := sha256.Sum256(c.cert.RawSubjectPublicKeyInfo)
+		return base64.StdEncoding.EncodeToString(sum[:])
 	}
-	if err := verifyPin(cs, "AAAA"); err == nil {
-		t.Error("wrong pin accepted")
+	state := func(name string, chain ...*testCert) tls.ConnectionState {
+		cs := tls.ConnectionState{ServerName: name}
+		for _, c := range chain {
+			cs.PeerCertificates = append(cs.PeerCertificates, c.cert)
+		}
+		return cs
 	}
+	for _, tc := range []struct {
+		name string
+		cs   tls.ConnectionState
+		pin  string
+		ok   bool
+	}{
+		{"pinned leaf", state("portal.example.com", other), pinOf(other), true},
+		{"wrong pin", state("portal.example.com", other), "AAAA", false},
+		{"pinned CA", state("portal.example.com", leaf, ca), pinOf(ca), true},
+		// Anyone can send a copy of the pinned certificate after their own.
+		{"pinned leaf after another", state("portal.example.com", other, leaf), pinOf(leaf), false},
+		{"pinned CA after another", state("portal.example.com", other, ca), pinOf(ca), false},
+		{"pinned CA, other name", state("evil.example.com", leaf, ca), pinOf(ca), false},
+	} {
+		if err := verifyPin(tc.cs, tc.pin); (err == nil) != tc.ok {
+			t.Errorf("%s: verifyPin = %v", tc.name, err)
+		}
+	}
+}
+
+type testCert struct {
+	cert *x509.Certificate
+	key  *ecdsa.PrivateKey
+}
+
+// newTestCert creates a certificate for name, signed by parent (self-signed if
+// nil).
+func newTestCert(t *testing.T, parent *testCert, name string, isCA bool) *testCert {
+	t.Helper()
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpl := &x509.Certificate{SerialNumber: big.NewInt(1), Subject: pkix.Name{CommonName: name},
+		NotBefore: time.Now().Add(-time.Hour), NotAfter: time.Now().Add(time.Hour),
+		KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign, BasicConstraintsValid: true, IsCA: isCA}
+	if !isCA {
+		tmpl.DNSNames, tmpl.ExtKeyUsage = []string{name}, []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth}
+	}
+	signer, signerKey := tmpl, key
+	if parent != nil {
+		signer, signerKey = parent.cert, parent.key
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, signer, &key.PublicKey, signerKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cert, err := x509.ParseCertificate(der)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return &testCert{cert: cert, key: key}
 }
 
 func TestConfigRoundTrip(t *testing.T) {
