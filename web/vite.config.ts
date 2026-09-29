@@ -16,9 +16,11 @@ export default defineConfig({
     chunkSizeWarningLimit: 800,
   },
   server: {
-    // During development, forward API calls to a locally running portal.
+    // During development, forward API calls to the development portal
+    // (go run ./cmd/ezdr-devportal). The Host header stays localhost:5173,
+    // so the portal's same-origin check passes.
     proxy: {
-      '/api': 'http://localhost:8080',
+      '^/(ezdr\\.|dev/|api/)': { target: 'http://127.0.0.1:8080', changeOrigin: false },
     },
   },
 })

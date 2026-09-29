@@ -110,13 +110,7 @@ func Run(ctx context.Context, cfg Config, ui fs.FS) error {
 		}
 	}()
 	go func() { errc <- private.Serve(tunnelLn) }()
-	go cleanupSessions(ctx, st)
-	go api.NewAlertEngine(d).Run(ctx)
-	go d.ResumeTakeovers(ctx)
-	go d.RunTestSupervisor(ctx)
-	go d.ResumeFailovers(ctx)
-	go d.ResumeFailbacks(ctx)
-	go d.RunDNSChecker(ctx)
+	StartBackground(ctx, d)
 
 	select {
 	case err := <-errc:
@@ -131,6 +125,18 @@ func Run(ctx context.Context, cfg Config, ui fs.FS) error {
 		return err
 	}
 	return nil
+}
+
+// StartBackground starts the portal's background work: session cleanup,
+// alerts, DNS checks, and resuming or supervising operations.
+func StartBackground(ctx context.Context, d *api.Deps) {
+	go cleanupSessions(ctx, d.Store)
+	go api.NewAlertEngine(d).Run(ctx)
+	go d.ResumeTakeovers(ctx)
+	go d.RunTestSupervisor(ctx)
+	go d.ResumeFailovers(ctx)
+	go d.ResumeFailbacks(ctx)
+	go d.RunDNSChecker(ctx)
 }
 
 // startTunnel starts WireGuard with the portal's persistent key and adds a

@@ -55,9 +55,23 @@ Common tasks:
 | `make lint` | Run Go and web linters |
 | `make fmt` | Format Go code |
 
-For web UI development, run the portal (`go run ./cmd/ezdr-portal`) and, in
-another terminal, `pnpm dev` in `web/`. The Vite dev server forwards `/api`
-requests to the portal on port 8080.
+For web UI development, run the development portal and, in another terminal,
+the Vite dev server:
+
+```sh
+go run ./cmd/ezdr-devportal          # add -reset to start over, -fast for more activity
+cd web && pnpm dev
+```
+
+Then open <http://localhost:5173/dev/signin>, which signs you in without a
+password. The development portal keeps its data in `.devportal/` and
+simulates hosts in-process: on first start it seeds six hosts and six plans,
+then brings the plans into different states through the real services (active,
+lagging, paused, draft, failed over, and one running a test failover).
+Simulated hosts replicate every minute and answer every action, so tests,
+failovers, and failbacks can be run from the UI. It never contacts a real
+host. The Vite dev server forwards API requests (`/ezdr.*`) and `/dev/` to it
+on port 8080.
 
 The Go code builds and tests without Node.js: without the `webui` build tag,
 the portal serves a placeholder page instead of the real UI.
@@ -68,6 +82,7 @@ the portal serves a placeholder page instead of the real UI.
 | --- | --- |
 | `cmd/ezdr/` | Client and command-line interface for Proxmox VE hosts |
 | `cmd/ezdr-portal/` | Web portal server |
+| `cmd/ezdr-devportal/` | Portal with simulated hosts and fake data, for UI development |
 | `internal/` | Shared Go packages |
 | `web/` | Portal web UI (React, TypeScript, Vite) |
 | `deploy/` | Container image and Compose file for the portal |

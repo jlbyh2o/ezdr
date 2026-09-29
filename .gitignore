@@ -22,3 +22,4 @@ wg*.conf
 .idea/
 .vscode/
 .DS_Store
+/.devportal/
