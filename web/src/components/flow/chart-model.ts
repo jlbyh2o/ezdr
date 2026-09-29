@@ -5,6 +5,7 @@ import {
   type GetOverviewResponse,
   HealthState,
   type OverviewGuest,
+  type OverviewGuestReplication,
   type OverviewHost,
   type OverviewPlan,
   PlanState,
@@ -44,7 +45,14 @@ export type HostNodeData = {
 }
 
 export type HostNode = Node<HostNodeData, 'host'>
-export type PlanEdge = Edge<{ plan: OverviewPlan; vmid: number }, 'plan'>
+export type GuestEdgeData = {
+  plan: OverviewPlan
+  guest: GuestCopy
+  replication?: OverviewGuestReplication
+  primaryHostname: string
+  drHostname: string
+}
+export type PlanEdge = Edge<GuestEdgeData, 'plan'>
 
 // Sizes in pixels, shared with the host node's styles so the layout can
 // compute each node's height.
@@ -212,7 +220,13 @@ export function buildChart(ov: GetOverviewResponse): { nodes: HostNode[]; edges:
         sourceHandle: guestHandle(plan.id, vmid),
         target: `dr:${plan.drHostId}`,
         targetHandle: guestHandle(plan.id, vmid),
-        data: { plan, vmid },
+        data: {
+          plan,
+          guest: copy(guestOf(plan.primaryHostId, vmid), vmid, 'standby'),
+          replication: plan.guests.find((g) => g.vmid === vmid),
+          primaryHostname: hosts.get(plan.primaryHostId)!.hostname,
+          drHostname: hosts.get(plan.drHostId)!.hostname,
+        },
       })),
     )
   return { nodes, edges, height }
@@ -225,6 +239,16 @@ export type LinkState = {
   label: string
   dashed: boolean
   flow: 'forward' | 'reverse' | null
+}
+
+// guestLink is a plan's link state for one guest: data only pulses along
+// the lines of guests being copied, when the portal knows which.
+export function guestLink(plan: OverviewPlan, replication?: OverviewGuestReplication): LinkState {
+  const st = linkState(plan)
+  if (st.flow && plan.state === PlanState.ACTIVE && plan.guests.length > 0 && !replication?.transferring) {
+    return { ...st, flow: null }
+  }
+  return st
 }
 
 export function linkState(plan: OverviewPlan): LinkState {

@@ -1,9 +1,10 @@
 import '@xyflow/react/dist/base.css'
 
 import { ReactFlow, ReactFlowProvider, useNodesInitialized, useReactFlow } from '@xyflow/react'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { buildChart } from '@/components/flow/chart-model'
+import { buildChart, type PlanEdge } from '@/components/flow/chart-model'
+import { GuestCard } from '@/components/flow/guest-card'
 import { HostNodeView } from '@/components/flow/host-node'
 import { PlanEdgeView } from '@/components/flow/plan-edge'
 import type { GetOverviewResponse } from '@/gen/ezdr/portal/v1/portal_pb'
@@ -11,8 +12,9 @@ import type { GetOverviewResponse } from '@/gen/ezdr/portal/v1/portal_pb'
 const nodeTypes = { host: HostNodeView }
 const edgeTypes = { plan: PlanEdgeView }
 const fitOptions = { padding: 0.04, maxZoom: 1 }
-// React Flow only passes pointer events to nodes with a handler; the links
-// inside the nodes do the navigating.
+// React Flow only passes pointer events to nodes and edges with a click
+// handler; links inside the nodes do the navigating, and edges show a card
+// on hover.
 const noop = () => undefined
 
 // ReplicationChart shows where every guest replicates: primary hosts on the
@@ -31,6 +33,9 @@ function Chart({ overview }: { overview: GetOverviewResponse }) {
   const { fitView } = useReactFlow()
   const initialized = useNodesInitialized()
   const box = useRef<HTMLDivElement>(null)
+  const [hover, setHover] = useState<{ id: string; x: number; y: number }>()
+  const hovered = hover && edges.find((e) => e.id === hover.id)
+  const track = (event: React.MouseEvent, edge: PlanEdge) => setHover({ id: edge.id, x: event.clientX, y: event.clientY })
 
   // Refit when the layout or the available width changes.
   const layout = nodes.map((n) => `${n.id}@${n.position.y}`).join()
@@ -59,6 +64,10 @@ function Chart({ overview }: { overview: GetOverviewResponse }) {
         edgesFocusable={false}
         elementsSelectable={false}
         onNodeClick={noop}
+        onEdgeClick={noop}
+        onEdgeMouseEnter={track}
+        onEdgeMouseMove={track}
+        onEdgeMouseLeave={() => setHover(undefined)}
         panOnDrag={false}
         panOnScroll={false}
         zoomOnScroll={false}
@@ -67,6 +76,7 @@ function Chart({ overview }: { overview: GetOverviewResponse }) {
         preventScrolling={false}
         proOptions={{ hideAttribution: true }}
       />
+      {hover && hovered?.data && <GuestCard data={hovered.data} x={hover.x} y={hover.y} />}
     </div>
   )
 }

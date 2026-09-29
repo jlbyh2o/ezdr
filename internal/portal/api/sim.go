@@ -421,12 +421,13 @@ func (s *Sim) jobStatus(hostID string, p *simPull, src simSource, now time.Time)
 		js.AttemptStartedAt, js.AttemptFinishedAt = timestamppb.New(p.lastStart), timestamppb.New(p.lastEnd)
 	}
 	msg := s.failing[jobPrefixOf(p.job.Name)]
-	for _, dataset := range src.datasets {
+	for i, dataset := range src.datasets {
 		ds := &clientv1.DatasetStatus{Dataset: dataset, State: "done", Error: msg}
 		if snap, ok := s.latest(hostID, p.job.ReceiveDataset+"/"+dataset); ok {
 			ds.LatestSnapshot, ds.LatestSnapshotAt = snap.name, timestamppb.New(snap.at)
 		}
-		if sending {
+		// Only some disks change between snapshots; the first always does.
+		if sending && (i == 0 || simHash(p.sending.String()+dataset)%3 != 0) {
 			per := p.bytes / uint64(max(1, len(src.datasets)))
 			frac := min(1, float64(now.Sub(p.sending))/float64(max(1, p.duration)))
 			ds.State, ds.BytesExpected, ds.BytesReplicated = "stepping", per, uint64(float64(per)*frac)

@@ -5,6 +5,7 @@ import {
   Circle,
   FlaskConical,
   Loader2,
+  MoveRight,
   RotateCcw,
   Server,
   ShieldCheck,
@@ -102,6 +103,9 @@ function Legend() {
           <span className="-ml-3 size-2 animate-pulse rounded-full bg-success" />
         </span>
         Copying data
+      </span>
+      <span className={item}>
+        <MoveRight className="size-4" /> Replication direction
       </span>
     </div>
   )

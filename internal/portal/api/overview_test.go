@@ -38,7 +38,8 @@ func TestOverview(t *testing.T) {
 		t.Helper()
 		js := &clientv1.JobStatus{Name: planJobPrefix(id) + "local-zfs_pull", Type: "pull", State: "fan-out-filesystems",
 			AttemptStartedAt: timestamppb.New(time.Now().Add(-time.Minute)),
-			Datasets:         []*clientv1.DatasetStatus{{Dataset: "rpool/subvol-101-disk-0", BytesExpected: 100, BytesReplicated: 40}}}
+			Datasets: []*clientv1.DatasetStatus{{Dataset: "rpool/subvol-101-disk-0", State: "stepping", BytesExpected: 100, BytesReplicated: 40,
+				LatestSnapshot: "zrepl_1", LatestSnapshotAt: timestamppb.New(time.Now().Add(-5 * time.Minute))}}}
 		if finished {
 			js.State, js.AttemptFinishedAt = "done", timestamppb.Now()
 		}
@@ -77,8 +78,19 @@ func TestOverview(t *testing.T) {
 		t.Errorf("transfer = %v", tr)
 	}
 
+	if len(p.Guests) != 1 {
+		t.Fatalf("guest replication = %v", p.Guests)
+	}
+	if g := p.Guests[0]; g.Vmid != 101 || g.Disks != 1 || !g.Transferring || g.BytesDone != 40 || g.LatestSnapshot != "zrepl_1" {
+		t.Errorf("guest replication = %v", g)
+	}
+
 	report(true)
-	if tr := get().Plans[0].Transfer; tr != nil {
-		t.Errorf("finished transfer still shown: %v", tr)
+	p = get().Plans[0]
+	if p.Transfer != nil {
+		t.Errorf("finished transfer still shown: %v", p.Transfer)
+	}
+	if g := p.Guests[0]; g.Transferring || g.LastReplicatedAt == nil {
+		t.Errorf("guest replication after the transfer = %v", g)
 	}
 }

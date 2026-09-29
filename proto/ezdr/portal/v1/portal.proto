@@ -1249,6 +1249,24 @@ message OverviewPlan {
   bool pending_changes = 10;
   // When the latest test failover started, if any.
   google.protobuf.Timestamp last_test_at = 11;
+  // Replication of each protected guest (active plans).
+  repeated OverviewGuestReplication guests = 12;
+}
+
+// OverviewGuestReplication sums up a guest's disks.
+message OverviewGuestReplication {
+  uint32 vmid = 1;
+  // The oldest of its disks' newest replicated snapshots: every disk is
+  // replicated up to at least this time.
+  google.protobuf.Timestamp last_replicated_at = 2;
+  string latest_snapshot = 3;
+  // Disks being copied right now, and their progress.
+  bool transferring = 4;
+  uint64 bytes_expected = 5;
+  uint64 bytes_done = 6;
+  uint32 disks = 7;
+  // Replication errors of its disks.
+  repeated string errors = 8;
 }
 
 message OverviewTransfer {

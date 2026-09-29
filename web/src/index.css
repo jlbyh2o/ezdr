@@ -143,3 +143,8 @@
     @apply font-sans;
     }
 }
+/* The overview chart: widen a guest's line while the pointer is on it. */
+.react-flow__edge:hover .ezdr-line {
+  stroke-width: 3.5px !important;
+  opacity: 1 !important;
+}

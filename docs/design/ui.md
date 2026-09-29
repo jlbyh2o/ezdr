@@ -94,17 +94,22 @@ what to do next.
 - **Unprotected guests** (in no plan) appear on their host dimmed, with a
   dashed outline and no edge. The host shows "N unprotected".
 - **Edges** run from each guest's copy on the primary to its copy on the
-  DR host, one per guest.
+  DR host, one per guest, with an **arrow** showing the direction the plan
+  copies data (toward the DR host; back toward the primary while failing
+  back).
   - Color follows the plan's health (green, yellow, red; gray when paused
     or inactive); each plan's section header, on both hosts, shows its
     status (RPO, lagging, failed over, and so on).
-  - The plan's edges **pulse in the direction data moves** while a
-    transfer runs: replication (primary to DR) or a failback copy (DR to
-    primary). During a failover, they're blue and animated.
+  - A guest's edge **pulses in the direction data moves** while its disks
+    are being copied: replication (primary to DR) or a failback copy (DR
+    to primary). During a failover, the plan's edges are blue and
+    animated.
   - While a transfer runs, the section headers show progress (percent of
     the expected bytes).
-- **Hover** on a guest or edge shows details: the guest's state, its plan,
-  and the plan's status and transfer progress.
+- **Hover** on a guest shows its state and plan. Hovering its edge shows a
+  card at once, next to the pointer: direction, plan status, when the
+  guest was last replicated (the oldest of its disks' newest snapshots),
+  the snapshot, copy progress, the alert threshold, and errors.
 - **Click** a host to open its page, a plan name or guest to open the plan.
 - The chart uses **React Flow** (`@xyflow/react`) with a computed layout;
   pan, zoom, and dragging are off. Animations respect

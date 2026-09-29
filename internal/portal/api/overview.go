@@ -170,7 +170,70 @@ func (s OverviewService) overviewPlan(ctx context.Context, sp store.Plan, testin
 	case portalv1.PlanState_PLAN_STATE_FAILING_BACK:
 		op.Transfer, err = s.failbackTransfer(ctx, sp.ID)
 	}
-	return op, err
+	if err != nil {
+		return nil, err
+	}
+	if len(health.Datasets) > 0 {
+		op.Guests = s.guestReplication(ctx, spec, health.Datasets, op.Transfer != nil)
+	}
+	return op, nil
+}
+
+// guestReplication sums up the replication of each guest's disks, found
+// through the primary's inventory.
+func (s OverviewService) guestReplication(ctx context.Context, spec *planv1.PlanSpec, datasets []*portalv1.DatasetHealth, transferring bool) []*portalv1.OverviewGuestReplication {
+	stored, err := s.Store.HostInventory(ctx, spec.PrimaryHostId)
+	if err != nil {
+		return nil
+	}
+	inv := &inventoryv1.Inventory{}
+	if err := proto.Unmarshal(stored.Data, inv); err != nil {
+		return nil
+	}
+	owner := map[string]uint32{}
+	for _, g := range inv.Guests {
+		for _, d := range g.Disks {
+			if d.ZfsDataset != "" {
+				owner[d.ZfsDataset] = g.Vmid
+			}
+		}
+	}
+	byVMID := map[uint32]*portalv1.OverviewGuestReplication{}
+	var out []*portalv1.OverviewGuestReplication
+	for _, pg := range spec.Guests {
+		r := &portalv1.OverviewGuestReplication{Vmid: pg.Vmid}
+		byVMID[pg.Vmid] = r
+		out = append(out, r)
+	}
+	missing := map[uint32]bool{}
+	for _, ds := range datasets {
+		vmid := owner[ds.Dataset]
+		r := byVMID[vmid]
+		if r == nil {
+			continue
+		}
+		r.Disks++
+		if ds.Error != "" {
+			r.Errors = append(r.Errors, ds.Error)
+		}
+		// A disk not replicated yet means the guest isn't either.
+		if ds.LatestSnapshotAt == nil {
+			missing[vmid] = true
+		} else if r.LastReplicatedAt == nil || ds.LatestSnapshotAt.AsTime().Before(r.LastReplicatedAt.AsTime()) {
+			r.LastReplicatedAt, r.LatestSnapshot = ds.LatestSnapshotAt, ds.LatestSnapshot
+		}
+		if transferring && (ds.State == "stepping" || ds.BytesReplicated < ds.BytesExpected) {
+			r.Transferring = true
+			r.BytesExpected += ds.BytesExpected
+			r.BytesDone += ds.BytesReplicated
+		}
+	}
+	for _, r := range out {
+		if missing[r.Vmid] {
+			r.LastReplicatedAt, r.LatestSnapshot = nil, ""
+		}
+	}
+	return out
 }
 
 // replicationTransfer reports a running replication of the plan's pull jobs,
