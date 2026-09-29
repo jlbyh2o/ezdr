@@ -510,8 +510,8 @@ func (d *Deps) verifyTakeover(ctx context.Context, row *store.Takeover, spec *pl
 			err, (time.Duration(spec.IntervalSeconds) * time.Second).String())
 	}
 	progress := func(msg string) {
-		t.Steps[stepVerify].Detail = fmt.Sprintf("%s; waiting up to %s (until %s UTC) for every dataset to arrive incrementally: %s",
-			started, timeout.Round(time.Minute), deadline.UTC().Format("15:04"), msg)
+		t.Steps[stepVerify].Detail = fmt.Sprintf("%s; waiting up to %d minutes (until %s UTC) for every dataset to arrive incrementally: %s",
+			started, int(timeout.Round(time.Minute).Minutes()), deadline.UTC().Format("15:04"), msg)
 		t.Steps[stepVerify].UpdatedAt = timestamppb.Now()
 		if err := d.saveTakeover(ctx, *row, t); err != nil {
 			slog.Warn("save takeover progress", "plan", planID, "err", err)
