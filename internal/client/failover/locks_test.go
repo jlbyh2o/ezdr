@@ -96,3 +96,17 @@ func TestUnlock(t *testing.T) {
 		t.Errorf("events = %v", events)
 	}
 }
+
+func TestState(t *testing.T) {
+	r, _ := testRunner(t)
+	write(t, filepath.Join(r.PVE, "qemu-server", "201.conf"), "lock: migrate\nname: app\ntags: ezdr-failed-over;ezdr-onboot\n")
+	write(t, filepath.Join(r.PVE, "lxc", "101.conf"), "#Failed over from pve1 by EZDR (plan Main, ezdr-failover-abc) at 2026-09-29T00:00:00Z\nhostname: web\n")
+	write(t, filepath.Join(r.PVE, "lxc", "102.conf"), "hostname: db\nlock: backup\n")
+	st, err := r.State()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(st.Locked) != 1 || st.Locked[0] != 201 || len(st.FailedOver) != 1 || st.FailedOver[0] != 101 {
+		t.Errorf("state = %+v", st)
+	}
+}

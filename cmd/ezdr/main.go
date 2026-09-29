@@ -22,7 +22,8 @@ const usage = `Usage: ezdr <command> [options]
 Commands:
   enroll <token>   Join this host to an EZDR portal
   status           Show enrollment and connection status
-  unenroll         Remove EZDR from this host
+  unenroll         Remove EZDR's setup from this host, keeping the program
+  uninstall        Remove EZDR from this host completely
   failover --plan <name>
                    Break-glass failover on the DR host when the portal is down
   run              Run the client service (used by systemd)
@@ -49,7 +50,9 @@ func main() {
 	case "status":
 		err = client.Status(ctx, os.Stdout)
 	case "unenroll":
-		err = unenroll(ctx, args)
+		err = remove(ctx, "unenroll", args)
+	case "uninstall":
+		err = remove(ctx, "uninstall", args)
 	case "run":
 		err = client.Run(ctx)
 	case "boot-guard":
@@ -98,13 +101,18 @@ func enroll(ctx context.Context, args []string) error {
 	})
 }
 
-func unenroll(ctx context.Context, args []string) error {
-	fs := flag.NewFlagSet("unenroll", flag.ContinueOnError)
+func remove(ctx context.Context, cmd string, args []string) error {
+	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
+	yes := fs.Bool("yes", false, "don't ask for confirmation")
+	force := fs.Bool("force", false, "remove EZDR even during a failover or test failover")
+	// Used by the package's pre-removal script.
+	pkg := fs.Bool("package-removal", false, "")
 	if err := fs.Parse(args); err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Usage: ezdr %s [--yes] [--force]\n", cmd)
+		return flag.ErrHelp
 	}
-	return client.Unenroll(ctx, os.Stdout)
+	return client.Remove(ctx, client.RemoveOptions{Yes: *yes, Force: *force, Package: *pkg, Uninstall: cmd == "uninstall", Out: os.Stdout})
 }
 
 // reorder moves flags before positional arguments, so both

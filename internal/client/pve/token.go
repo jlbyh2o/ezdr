@@ -76,12 +76,28 @@ func EnsureToken(ctx context.Context) (bool, error) {
 // RemoveToken deletes the API user, which also removes its token and
 // permissions. A missing user is not an error.
 func RemoveToken(ctx context.Context) error {
-	_, err := pveum(ctx, "user", "delete", User)
-	if err != nil && strings.Contains(err.Error(), "does not exist") {
-		return nil
+	// The token's permission goes first: deleting the user alone can leave
+	// it behind, and Proxmox then warns about it in every command.
+	_, _ = pveum(ctx, "acl", "delete", "/", "--tokens", TokenID, "--roles", Role)
+	_, _ = pveum(ctx, "user", "token", "remove", User, TokenName)
+	if _, err := pveum(ctx, "user", "delete", User); err != nil && !strings.Contains(err.Error(), "does not exist") {
+		return err
 	}
-	return err
+	// A permission left by an earlier removal goes with the user: add it
+	// back briefly to delete it.
+	if b, err := os.ReadFile(userConfig); err == nil && strings.Contains(string(b), TokenID) {
+		if _, err := pveum(ctx, "user", "add", User); err != nil {
+			return err
+		}
+		if _, err := pveum(ctx, "user", "delete", User); err != nil {
+			return err
+		}
+	}
+	return nil
 }
+
+// userConfig is Proxmox's user and permission configuration.
+const userConfig = "/etc/pve/user.cfg"
 
 func pveum(ctx context.Context, args ...string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)

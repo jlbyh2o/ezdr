@@ -97,9 +97,33 @@ when to fail over. Treat the portal server as critical infrastructure:
 The host appears as online within a few seconds. Each token works for one host
 and expires (after one hour by default).
 
-To remove a host, select **Remove** in the portal; it's disconnected
-immediately. Then run `ezdr unenroll` on the host to remove the client's
-service, interface, and configuration.
+## Remove EZDR from a host
+
+1. Fail back any failed-over plan that uses the host, and end running test
+   failovers. (To also delete a plan's replicas, delete the plan with its
+   data first.)
+2. In the portal, select **Remove** on the host; it's disconnected
+   immediately.
+3. On the host, run `ezdr uninstall` (or `apt purge ezdr`).
+
+Uninstalling removes EZDR's service, its wait before Proxmox starts guests
+at boot, its zrepl jobs (releasing their holds, and removing their include
+from `/etc/zrepl/zrepl.yml`), the test failover storage, the WireGuard
+interfaces, the Proxmox VE API user, and `/etc/ezdr` and `/var/lib/ezdr`.
+Replicas, snapshots, zrepl, and guest configurations stay. It refuses while
+the host is part of a failover or test failover, and explains what to do;
+`--force` proceeds anyway (a failed-over primary's guests are unlocked).
+`ezdr unenroll` does the same but keeps the program installed, for enrolling
+again.
+
+## Guests at boot
+
+On a plan's primary, Proxmox waits before starting guests at boot until the
+EZDR client has heard from the portal (usually a few seconds). If the plan
+was failed over while the primary was down, its guests stay stopped and
+locked, so they don't run at both sites. If the portal can't be reached,
+the guests start as usual after 5 minutes; set `boot_guard_timeout_seconds`
+in `/etc/ezdr/config.json` to change that.
 
 ## Guests at boot
 

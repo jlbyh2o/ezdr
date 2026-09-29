@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -357,5 +358,50 @@ func TestPrimaryFingerprints(t *testing.T) {
 	// A second key appended to the file is seen.
 	if got := primaryFingerprints(one + key("FEDCBA9876543210FEDCBA9876543210FEDCBA98", "76543210FEDCBA9876543210FEDCBA9876543210")); len(got) != 2 {
 		t.Errorf("two keys: %v", got)
+	}
+}
+
+func TestRemoveEZDR(t *testing.T) {
+	p := testPaths(t)
+	if _, err := EnsureCertificate(p, "ezdr-self"); err != nil {
+		t.Fatal(err)
+	}
+	// A hand-written job next to EZDR's.
+	if err := os.WriteFile(p.MainConfig, []byte("# mine\njobs:\n- name: mine\n  type: snap\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	f := &fakeRunner{}
+	a := &Applier{Paths: p, Run: f.run, Now: time.Now}
+	ctx := context.Background()
+	if err := a.Apply(ctx, sampleZrepl(t)); err != nil {
+		t.Fatal(err)
+	}
+
+	f.calls = nil
+	r, err := a.RemoveEZDR(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ := os.ReadFile(p.MainConfig)
+	if strings.Contains(string(b), p.JobsDir) || !strings.Contains(string(b), "name: mine") || strings.Contains(string(b), "include") {
+		t.Errorf("main configuration:\n%s", b)
+	}
+	if _, err := os.Stat(p.JobsDir); !os.IsNotExist(err) {
+		t.Error("jobs directory left behind")
+	}
+	if r.Backup == "" || strings.Join(r.Jobs, ",") != "ezdr_abcd1234_local-zfs,ezdr_abcd1234_local-zfs_pull" {
+		t.Errorf("removal = %+v", r)
+	}
+	// zrepl restarts without EZDR's jobs before their holds are released.
+	restart, release := slices.Index(f.calls, "systemctl restart zrepl"),
+		slices.Index(f.calls, "zrepl zfs-abstraction release-all --job ezdr_abcd1234_local-zfs_pull")
+	if restart < 0 || release < restart {
+		t.Errorf("calls = %v", f.calls)
+	}
+
+	// Again: nothing left to do.
+	f.calls = nil
+	if r, err := a.RemoveEZDR(ctx); err != nil || r.Backup != "" || len(r.Jobs) != 0 || f.did("zrepl zfs-abstraction") {
+		t.Errorf("second removal: %+v, %v, %v", r, err, f.calls)
 	}
 }
