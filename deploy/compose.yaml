@@ -10,6 +10,11 @@ services:
   caddy:
     image: caddy:2.11
     restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    read_only: true
+    tmpfs: [/tmp]
     ports:
       - "80:80"
       - "443:443"
@@ -22,8 +27,13 @@ services:
       - caddy-config:/config
 
   portal:
-    image: ghcr.io/jlbyh2o/ezdr-portal:${EZDR_VERSION:-latest}
+    image: ghcr.io/jlbyh2o/ezdr-portal:${EZDR_VERSION:?set EZDR_VERSION in .env}
     restart: unless-stopped
+    # The portal needs no privileges: its WireGuard runs in userspace.
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
     environment:
       EZDR_PUBLIC_URL: https://${EZDR_DOMAIN}
     ports:

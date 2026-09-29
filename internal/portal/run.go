@@ -2,6 +2,7 @@ package portal
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jlbyh2o/ezdr/internal/portal/api"
@@ -82,7 +84,10 @@ func Run(ctx context.Context, cfg Config, ui fs.FS) error {
 		}
 		d.TLSPin = pin
 		public.TLSConfig = &tls.Config{Certificates: []tls.Certificate{cert}, MinVersion: tls.VersionTLS12}
-		slog.Info("serving HTTPS with a self-signed certificate", "pin", pin)
+		// Browsers show the certificate's SHA-256 fingerprint: compare it
+		// before signing in.
+		sum := sha256.Sum256(cert.Certificate[0])
+		slog.Info("serving HTTPS with a self-signed certificate", "pin", pin, "sha256_fingerprint", colonHex(sum[:]))
 	}
 
 	tunnelLn, err := tun.Listen(TunnelAPIPort)
@@ -192,4 +197,14 @@ func cleanupSessions(ctx context.Context, st *store.Store) {
 			}
 		}
 	}
+}
+
+// colonHex formats b as uppercase hex bytes separated by colons, as browsers
+// show certificate fingerprints.
+func colonHex(b []byte) string {
+	parts := make([]string, len(b))
+	for i, c := range b {
+		parts[i] = fmt.Sprintf("%02X", c)
+	}
+	return strings.Join(parts, ":")
 }

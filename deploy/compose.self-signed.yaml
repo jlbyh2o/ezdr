@@ -10,8 +10,13 @@
 
 services:
   portal:
-    image: ghcr.io/jlbyh2o/ezdr-portal:${EZDR_VERSION:-latest}
+    image: ghcr.io/jlbyh2o/ezdr-portal:${EZDR_VERSION:?set EZDR_VERSION in .env}
     restart: unless-stopped
+    # The portal needs no privileges: its WireGuard runs in userspace.
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
     environment:
       EZDR_PUBLIC_URL: https://${EZDR_DOMAIN:?set EZDR_DOMAIN in .env}
       EZDR_TLS: self-signed
