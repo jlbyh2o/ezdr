@@ -5,6 +5,7 @@ package guestconfig
 
 import (
 	"fmt"
+	"maps"
 	"regexp"
 	"slices"
 	"strings"
@@ -57,6 +58,9 @@ var (
 	// Settings that can't be carried to another host.
 	dropKey = regexp.MustCompile(`^(hostpci\d+|usb\d+|dev\d+|unused\d+|lock|parent|hookscript)$`)
 	uuidPat = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+	// A Linux interface name: what a NIC's bridge option may be set to.
+	bridgePat = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.-]{0,14}$`)
+	tagPat    = regexp.MustCompile(`^[A-Za-z0-9_+.-]*$`)
 )
 
 // Rewrite applies m to a configuration (without snapshot sections).
@@ -67,6 +71,20 @@ func Rewrite(conf string, m Mapping) (Result, error) {
 	if m.Type == "qemu" && !uuidPat.MatchString(m.VMGenID) {
 		return Result{}, fmt.Errorf("invalid VM generation ID %q", m.VMGenID)
 	}
+	// The values set here come from elsewhere: each must stay one value on
+	// one line.
+	for _, b := range append(slices.Collect(maps.Values(m.Bridges)), m.Bridge) {
+		if b != "" && !bridgePat.MatchString(b) {
+			return Result{}, fmt.Errorf("invalid bridge %q", b)
+		}
+	}
+	if !tagPat.MatchString(m.Tag) {
+		return Result{}, fmt.Errorf("invalid tag %q", m.Tag)
+	}
+	if strings.ContainsAny(m.Name, "\r\n") {
+		return Result{}, fmt.Errorf("invalid name %q", m.Name)
+	}
+	m.Note = strings.Join(strings.Fields(m.Note), " ")
 	var res Result
 	var desc, out []string
 	used := map[string]bool{}

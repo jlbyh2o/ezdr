@@ -1,6 +1,7 @@
 package guestconfig
 
 import (
+	"cmp"
 	"strings"
 	"testing"
 )
@@ -111,6 +112,23 @@ func TestRewriteErrors(t *testing.T) {
 	}
 	if _, err := Rewrite("garbage\n", base); err == nil {
 		t.Error("accepted an unreadable line")
+	}
+	// Values set from elsewhere can't add lines or options.
+	for _, bad := range []Mapping{
+		{Bridge: "vmbr0\nargs: -x"}, {Bridge: "vmbr0,firewall=0"}, {Bridges: map[string]string{"vmbr1": "a b"}},
+		{Tag: "t\nargs: -x"}, {Name: "a\nargs: -x"},
+	} {
+		m := base
+		m.Bridge, m.Bridges, m.Tag, m.Name = cmp.Or(bad.Bridge, base.Bridge), bad.Bridges, bad.Tag, bad.Name
+		if _, err := Rewrite("name: a\n", m); err == nil {
+			t.Errorf("accepted %+v", bad)
+		}
+	}
+	m = base
+	m.Note = "from pve1\nargs: -x\r"
+	res, err := Rewrite("name: a\n", m)
+	if err != nil || res.Config != "#from pve1 args: -x\nname: a\nonboot: 0\nvmgenid: "+base.VMGenID+"\n" {
+		t.Errorf("note not kept on one line: %q, %v", res.Config, err)
 	}
 }
 

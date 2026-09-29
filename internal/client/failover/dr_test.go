@@ -196,3 +196,16 @@ func TestBreakGlassMarkersAndJobs(t *testing.T) {
 		t.Errorf("marker kept: %v", ms)
 	}
 }
+
+func TestCloudInitDrive(t *testing.T) {
+	for conf, want := range map[string]string{
+		"scsi0: local-zfs:vm-201-disk-0\nide2: local-zfs:vm-201-cloudinit,media=cdrom\n": "ide2",
+		"ide2: local:iso/debian.iso,media=cdrom\n":                                       "",
+		// The key becomes a qm set option: nothing but a drive key.
+		"args: local-zfs:vm-201-cloudinit,media=cdrom\n": "",
+	} {
+		if key, _ := cloudInitDrive(conf); key != want {
+			t.Errorf("cloudInitDrive(%q) = %q, want %q", conf, key, want)
+		}
+	}
+}

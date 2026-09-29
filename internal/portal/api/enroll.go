@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/netip"
+	"regexp"
 
 	"connectrpc.com/connect"
 
@@ -56,8 +57,15 @@ func validateFacts(f *enrollv1.HostFacts) error {
 			return fmt.Errorf("%s is too long", name)
 		}
 	}
+	// The hostname appears in guest configurations and zrepl settings on
+	// other hosts.
+	if !hostnamePattern.MatchString(f.Hostname) {
+		return fmt.Errorf("hostname %q isn't a valid host name", f.Hostname)
+	}
 	return nil
 }
+
+var hostnamePattern = regexp.MustCompile(`^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$`)
 
 // Enroll uses a token and registers the host.
 func (s EnrollmentService) Enroll(ctx context.Context, req *connect.Request[enrollv1.EnrollRequest]) (*connect.Response[enrollv1.EnrollResponse], error) {

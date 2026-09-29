@@ -223,14 +223,18 @@ func (r *Runner) ensureCloudInit(ctx context.Context, vmid uint32, original stri
 	return nil
 }
 
+var cloudInitKey = regexp.MustCompile(`^(ide|sata|scsi)\d+$`)
+
 // cloudInitDrive returns the key and volume of a VM configuration's
 // cloud-init drive, if it has one.
 func cloudInitDrive(conf string) (string, string) {
 	for line := range strings.SplitSeq(conf, "\n") {
 		key, v, ok := strings.Cut(line, ":")
 		vol, opts, _ := strings.Cut(strings.TrimSpace(v), ",")
-		if ok && strings.Contains(vol, "cloudinit") && strings.Contains(opts, "media=cdrom") {
-			return strings.TrimSpace(key), vol
+		key = strings.TrimSpace(key)
+		// The key is passed to qm set as an option: only drive keys.
+		if ok && cloudInitKey.MatchString(key) && strings.Contains(vol, "cloudinit") && strings.Contains(opts, "media=cdrom") {
+			return key, vol
 		}
 	}
 	return "", ""
