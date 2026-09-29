@@ -16,9 +16,9 @@ import { lazy, Suspense, useState } from 'react'
 import { Link } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
+import { RPO } from '@/components/rpo'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   type GetOverviewResponse,
   HealthState,
@@ -204,21 +204,6 @@ function Tiles({ ov }: { ov: GetOverviewResponse }) {
         tone={ov.firingAlerts > 0 ? 'destructive' : 'success'}
       />
     </div>
-  )
-}
-
-// RPO explains the term on hover.
-function RPO() {
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={<abbr className="cursor-help underline decoration-dotted underline-offset-2">RPO</abbr>}
-      />
-      <TooltipContent className="max-w-72">
-        Recovery Point Objective: how much recent data a failover would lose right now. It's the age of the oldest
-        disk's newest copy on the DR host.
-      </TooltipContent>
-    </Tooltip>
   )
 }
 

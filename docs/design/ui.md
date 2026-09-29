@@ -147,9 +147,15 @@ The page stays a single page, reorganized:
 - **Sticky save bar:** with unsaved edits, a bar at the bottom shows
   "Unsaved changes" with Discard and Save. On an active plan it explains
   that saved edits are pending until applied, as today.
+- **Status:** replication health for active plans; for other states, what
+  the plan is doing (paused, failing over or back, failed over: since
+  when, the final snapshot, guests running at the DR site).
 - **History:** a table of the plan's operations (takeover, tests,
   failovers, failbacks) with when, who, result, and a link to each
-  operation's page. It replaces the separate test history table.
+  operation's page. It replaces the separate test history table (built
+  with the operation pages, section 5).
+- Validation issues name their section, so the menu and the cards mark
+  where each problem is, and choosing an issue opens its section.
 - Stale copy is fixed (the DNS section's "comes with failover (phase 6)").
 
 ### 4.1 Actions

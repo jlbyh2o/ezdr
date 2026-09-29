@@ -1,21 +1,10 @@
 import { clone, create } from '@bufbuild/protobuf'
-import { ArrowLeft, CircleAlert, Plus, Trash2, TriangleAlert } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { ArrowLeft, ArrowRight, ChevronRight, CircleAlert, Plus, Trash2, TriangleAlert } from 'lucide-react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
 
 import { ErrorAlert } from '@/components/error-alert'
 import { NativeSelect } from '@/components/native-select'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -42,19 +31,115 @@ import {
 import { type GetHostInventoryResponse, type Host, type Plan, PlanState, type ZreplSetup } from '@/gen/ezdr/portal/v1/portal_pb'
 import { HostStatusPanel, PlanActions, StateBadge } from '@/pages/plan-actions'
 import { PlanDnsCard } from '@/pages/plan-dns'
-import { PlanStatusCard } from '@/pages/plan-status'
+import { PlanStateCard, PlanStatusCard } from '@/pages/plan-status'
 import { TestFailoverCard } from '@/pages/test-failover'
 import { errorMessage, hostClient, planClient } from '@/lib/api'
-import { drPresets, grid, primaryPresets, splitPeriod, units } from '@/lib/retention'
-import { PageHeader } from '@/pages/layout'
+import { formatDuration } from '@/lib/format'
+import { describeInterval, drPresets, grid, primaryPresets, splitPeriod, units } from '@/lib/retention'
 import { Field } from '@/pages/setup'
 
 type Update = (fn: (s: PlanSpec) => void) => void
+
+// The page's sections, in order. Settings sections match the validation
+// issues' sections (planv1.Issue.section).
+type SectionId =
+  | 'status'
+  | 'tests'
+  | 'general'
+  | 'takeover'
+  | 'guests'
+  | 'mappings'
+  | 'network'
+  | 'schedule'
+  | 'startup'
+  | 'dns'
+  | 'advanced'
+
+const sectionTitles: Record<SectionId, string> = {
+  status: 'Status',
+  tests: 'Test failover',
+  general: 'General',
+  takeover: 'Existing zrepl setup',
+  guests: 'Guests',
+  mappings: 'Mappings',
+  network: 'Replication network',
+  schedule: 'Schedule and retention',
+  startup: 'Startup order',
+  dns: 'DNS records',
+  advanced: 'Advanced',
+}
+
+const sectionElementId = (id: string) => `section-${id}`
+
+// Sections tells the settings cards whether they're open and which issues
+// they have.
+type SectionsState = {
+  isOpen: (id: SectionId) => boolean
+  toggle: (id: SectionId) => void
+  issues: Issue[]
+}
+
+const Sections = createContext<SectionsState>({ isOpen: () => true, toggle: () => undefined, issues: [] })
+
+function counts(issues: Issue[]) {
+  return {
+    errors: issues.filter((i) => i.severity === Severity.ERROR).length,
+    warnings: issues.filter((i) => i.severity === Severity.WARNING).length,
+  }
+}
+
+// chosen is the section last picked in the menu: it stays highlighted while
+// the page scrolls to it (a section near the bottom may never reach the
+// top), until the user scrolls by hand.
+let chosen: string | undefined
+
+function scrollToSection(id: string) {
+  chosen = id
+  // After the section has rendered open.
+  requestAnimationFrame(() => document.getElementById(sectionElementId(id))?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+}
+
+// useActiveSection returns the section at the top of the viewport, or the
+// one just chosen in the menu.
+function useActiveSection(ids: string[]) {
+  const [active, setActive] = useState<string>()
+  // ids is a new array on every render; key tracks its content.
+  const key = ids.join()
+  useEffect(() => {
+    const list = key.split(',')
+    const update = () => {
+      if (chosen && list.includes(chosen)) {
+        setActive(chosen)
+        return
+      }
+      let current = list[0]
+      for (const id of list) {
+        const el = document.getElementById(sectionElementId(id))
+        if (el && el.getBoundingClientRect().top <= 120) current = id
+      }
+      setActive(current)
+    }
+    const byHand = () => {
+      chosen = undefined
+    }
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    for (const e of ['wheel', 'touchmove', 'keydown'] as const) window.addEventListener(e, byHand, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+      for (const e of ['wheel', 'touchmove', 'keydown'] as const) window.removeEventListener(e, byHand)
+    }
+  }, [key])
+  return active
+}
 
 export function PlanEditorPage() {
   const { id } = useParams()
   const isNew = !id
   const navigate = useNavigate()
+  const { hash } = useLocation()
   const [spec, setSpec] = useState<PlanSpec>()
   const [plan, setPlan] = useState<Plan>()
   const [dirty, setDirty] = useState(false)
@@ -65,6 +150,8 @@ export function PlanEditorPage() {
   const [error, setError] = useState<string>()
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<Date>()
+  const [opened, setOpened] = useState<Partial<Record<SectionId, boolean>>>({})
+  const [startTest, setStartTest] = useState(0)
 
   // Load the plan (or defaults for a new one) and the host list.
   useEffect(() => {
@@ -120,6 +207,14 @@ export function PlanEditorPage() {
     return () => clearTimeout(validateTimer.current)
   }, [spec, id])
 
+  // Warn before leaving the page with unsaved changes.
+  useEffect(() => {
+    if (!dirty) return
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty])
+
   const update: Update = (fn) => {
     setDirty(true)
     setSpec((prev) => {
@@ -153,13 +248,14 @@ export function PlanEditorPage() {
     try {
       if (isNew) {
         const r = await planClient.createPlan({ spec })
+        setDirty(false)
         navigate(`/plans/${r.plan?.id}`, { replace: true })
-      } else {
-        const r = await planClient.updatePlan({ id, spec })
-        setIssues(r.issues)
-        setPlan(r.plan)
-        setSavedAt(new Date())
+        return
       }
+      const r = await planClient.updatePlan({ id, spec })
+      setIssues(r.issues)
+      setPlan(r.plan)
+      setSavedAt(new Date())
       setDirty(false)
     } catch (err) {
       setError(errorMessage(err))
@@ -168,59 +264,144 @@ export function PlanEditorPage() {
     }
   }
 
-  async function remove() {
-    try {
-      await planClient.deletePlan({ id })
+  async function discard() {
+    if (isNew) {
       navigate('/plans')
+      return
+    }
+    try {
+      const r = await planClient.getPlan({ id })
+      setPlan(r.plan)
+      if (r.plan?.spec) setSpec(r.plan.spec)
+      setDirty(false)
     } catch (err) {
       setError(errorMessage(err))
     }
   }
 
-  if (!spec) return <ErrorAlert message={error} />
+  // Sections with errors open, and stay open once fixed.
+  const errorSections = issues.filter((i) => i.severity === Severity.ERROR).map((i) => i.section as SectionId)
+  const errorKey = [...new Set(errorSections)].sort().join()
+  const [seenErrors, setSeenErrors] = useState('')
+  if (errorKey !== seenErrors) {
+    setSeenErrors(errorKey)
+    if (errorKey) {
+      setOpened((o) => {
+        const next = { ...o }
+        for (const s of errorKey.split(',') as SectionId[]) next[s] ??= true
+        return next
+      })
+    }
+  }
+
+  const isOpen = useCallback((s: SectionId) => isNew || (opened[s] ?? false), [isNew, opened])
+  const toggle = useCallback((s: SectionId) => setOpened((o) => ({ ...o, [s]: !(o[s] ?? false) })), [])
+  const open = (s: SectionId) => {
+    setOpened((o) => ({ ...o, [s]: true }))
+    scrollToSection(s)
+  }
+
   const primaryInv = primaryId ? primary?.inventory : undefined
   const drInv = drId ? dr?.inventory : undefined
+  const guests = spec?.guests.length ?? 0
+  const showStatus = !!plan && plan.state !== PlanState.DRAFT
+  const showTests = plan?.state === PlanState.ACTIVE || plan?.state === PlanState.PAUSED
+  const showTakeover = !!primaryInv && !!drInv && (!plan || plan.state === PlanState.DRAFT)
+  const visible: SectionId[] = [
+    ...(showStatus ? (['status'] as const) : []),
+    ...(showTests ? (['tests'] as const) : []),
+    'general',
+    ...(showTakeover && spec?.takeover ? (['takeover'] as const) : []),
+    ...(primaryInv ? (['guests'] as const) : []),
+    ...(primaryInv && drInv && guests > 0 ? (['mappings'] as const) : []),
+    ...(primaryInv ? (['network'] as const) : []),
+    'schedule',
+    ...(primaryInv && guests > 0 ? (['startup', 'dns'] as const) : []),
+    'advanced',
+  ]
+  const active = useActiveSection(visible)
+
+  // Open and show the section in the address (for example, #guests from
+  // the overview's guest settings), once it exists.
+  const target = hash.slice(1) as SectionId
+  const targetVisible = visible.includes(target)
+  const [seenTarget, setSeenTarget] = useState('')
+  if (targetVisible && target !== seenTarget) {
+    setSeenTarget(target)
+    setOpened((o) => ({ ...o, [target]: true }))
+  }
+  useEffect(() => {
+    if (targetVisible) scrollToSection(target)
+  }, [target, targetVisible])
+
+  if (!spec) return <ErrorAlert message={error} />
+  const hostname = (hid: string) => hosts.find((h) => h.id === hid)?.hostname
+  const { errors } = counts(issues)
 
   return (
-    <>
-      <Link to="/plans" className="flex items-center gap-1 pt-4 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="size-4" /> DR plans
-      </Link>
-      <PageHeader
-        title={isNew ? 'New DR plan' : spec.name || 'DR plan'}
-        description={
-          !plan || plan.state === PlanState.DRAFT
-            ? 'Drafts are saved without changing the hosts. Activate the plan to start replication.'
-            : 'Edits to an active plan are saved as pending changes; replication keeps its applied settings until you apply them.'
-        }
-      >
-        <div className="flex items-center gap-2">
-          {plan && <StateBadge state={plan.state} pending={plan.pendingChanges} />}
-          {savedAt && <span className="text-xs text-muted-foreground">Saved {savedAt.toLocaleTimeString()}</span>}
-          {plan?.state === PlanState.DRAFT && <DeletePlanButton name={spec.name} onDelete={() => void remove()} />}
-          <Button variant={plan ? 'outline' : 'default'} onClick={() => void save()} disabled={saving}>
-            {isNew ? 'Create plan' : 'Save'}
-          </Button>
+    <Sections.Provider value={{ isOpen, toggle, issues }}>
+      <div className="grid gap-3">
+        <Link to="/plans" className="flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="size-4" /> DR plans
+        </Link>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="grid gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight">{isNew ? 'New DR plan' : spec.name || 'DR plan'}</h1>
+              {plan && <StateBadge state={plan.state} pending={plan.pendingChanges} />}
+              {savedAt && !dirty && <span className="text-xs text-muted-foreground">Saved {savedAt.toLocaleTimeString()}</span>}
+            </div>
+            <p className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+              {spec.primaryHostId && spec.drHostId ? (
+                <>
+                  {hostname(spec.primaryHostId)} <ArrowRight className="size-3.5" /> {hostname(spec.drHostId)}
+                </>
+              ) : (
+                'Choose a primary host and a DR host.'
+              )}
+              {spec.description && <span>· {spec.description}</span>}
+            </p>
+          </div>
+          {plan && (
+            <PlanActions
+              plan={plan}
+              dirty={dirty}
+              onChanged={(p) => {
+                setPlan(p)
+                if (p.spec) setSpec(p.spec)
+              }}
+              onStartTest={() => {
+                open('tests')
+                setStartTest((n) => n + 1)
+              }}
+              onDeleted={() => navigate('/plans')}
+            />
+          )}
         </div>
-      </PageHeader>
-      {plan && (
-        <PlanActions
-          plan={plan}
-          dirty={dirty}
-          onChanged={(p) => {
-            setPlan(p)
-            if (p.spec) setSpec(p.spec)
-          }}
-        />
-      )}
+      </div>
       <ErrorAlert message={error} />
-      <div className="grid items-start gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="grid gap-4">
-          {plan && <PlanStatusCard plan={plan} />}
-          {plan && <PlanDnsCard plan={plan} />}
-          {plan && <TestFailoverCard plan={plan} />}
+      <div className="grid items-start gap-6 lg:grid-cols-[230px_minmax(0,1fr)]">
+        <aside className="hidden gap-4 lg:sticky lg:top-16 lg:grid lg:max-h-[calc(100svh-5rem)] lg:overflow-y-auto">
+          <SectionNav ids={visible} active={active} issues={issues} onSelect={open} />
+          {plan && <HostStatusPanel plan={plan} />}
+          <ValidationPanel issues={issues} onSelect={open} />
+        </aside>
+        <div className="grid min-w-0 gap-4">
+          {showStatus && plan && (
+            <div id={sectionElementId('status')} className="grid scroll-mt-16 gap-4">
+              <PlanStatusCard plan={plan} />
+              <PlanStateCard plan={plan} drHostname={hostname(plan.spec?.drHostId ?? '')} />
+              <PlanDnsCard plan={plan} />
+            </div>
+          )}
+          {showTests && plan && (
+            <div id={sectionElementId('tests')} className="scroll-mt-16">
+              <TestFailoverCard plan={plan} startSignal={startTest} />
+            </div>
+          )}
+          {(showStatus || showTests) && <h2 className="pt-2 text-lg font-semibold tracking-tight">Settings</h2>}
           <GeneralCard spec={spec} hosts={hosts} update={update} updateAndSuggest={updateAndSuggest} />
-          {primaryInv && drInv && (!plan || plan.state === PlanState.DRAFT) && (
+          {showTakeover && primaryInv && drInv && (
             <TakeoverCard
               spec={spec}
               inventoriesAt={`${primary?.receivedAt?.seconds}/${dr?.receivedAt?.seconds}`}
@@ -234,54 +415,127 @@ export function PlanEditorPage() {
           {primaryInv && (
             <GuestsCard spec={spec} inv={primaryInv} guestPlans={primary?.guestPlans ?? {}} planId={id} updateAndSuggest={updateAndSuggest} />
           )}
-          {primaryInv && drInv && spec.guests.length > 0 && (
+          {primaryInv && drInv && guests > 0 && (
             <MappingsCard spec={spec} primaryInv={primaryInv} drInv={drInv} update={update} updateAndSuggest={updateAndSuggest} />
           )}
           {primaryInv && <NetworkCard spec={spec} update={update} />}
           <ScheduleCard spec={spec} update={update} />
-          {primaryInv && spec.guests.length > 0 && <StartupCard spec={spec} inv={primaryInv} update={update} />}
-          {primaryInv && spec.guests.length > 0 && <DnsCard spec={spec} inv={primaryInv} update={update} />}
+          {primaryInv && guests > 0 && <StartupCard spec={spec} inv={primaryInv} update={update} />}
+          {primaryInv && guests > 0 && <DnsCard spec={spec} inv={primaryInv} update={update} />}
           <AdvancedCard spec={spec} update={update} />
-        </div>
-        <div className="grid gap-4 lg:sticky lg:top-4">
-          {plan && <HostStatusPanel plan={plan} />}
-          <ValidationPanel issues={issues} />
+          <div className="lg:hidden">
+            <ValidationPanel issues={issues} onSelect={open} />
+          </div>
+          {(dirty || isNew) && (
+            <div className="sticky bottom-4 z-20 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border bg-card/95 px-4 py-3 shadow-lg backdrop-blur">
+              <div className="grid">
+                <span className="text-sm font-medium">{isNew ? 'New plan, not saved yet' : 'Unsaved changes'}</span>
+                <span className="text-xs text-muted-foreground">
+                  {errors > 0 && (
+                    <span className="text-destructive">
+                      {errors} error{errors === 1 ? '' : 's'} to fix before activation.{' '}
+                    </span>
+                  )}
+                  {!plan || plan.state === PlanState.DRAFT
+                    ? 'Drafts are saved without changing the hosts.'
+                    : 'Saved changes stay pending until you apply them.'}
+                </span>
+              </div>
+              <div className="ml-auto flex gap-2">
+                <Button variant="ghost" onClick={() => void discard()}>
+                  {isNew ? 'Cancel' : 'Discard'}
+                </Button>
+                <Button onClick={() => void save()} disabled={saving}>
+                  {isNew ? 'Create plan' : 'Save'}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    </>
+    </Sections.Provider>
   )
 }
 
-function DeletePlanButton({ name, onDelete }: { name: string; onDelete: () => void }) {
+// SectionNav lists the page's sections, marks the one in view and those
+// with issues, and jumps to one when chosen.
+function SectionNav({
+  ids,
+  active,
+  issues,
+  onSelect,
+}: {
+  ids: SectionId[]
+  active?: string
+  issues: Issue[]
+  onSelect: (id: SectionId) => void
+}) {
+  const settingsStart = ids.findIndex((i) => i !== 'status' && i !== 'tests')
   return (
-    <AlertDialog>
-      <AlertDialogTrigger render={<Button variant="ghost" />}>
-        <Trash2 /> Delete
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete plan {name}?</AlertDialogTitle>
-          <AlertDialogDescription>The plan's settings are removed. Its guests are no longer protected by it.</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onClick={onDelete}>
-            Delete plan
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <nav className="grid gap-0.5 text-sm" aria-label="Plan sections">
+      {ids.map((id, n) => {
+        const { errors, warnings } = counts(issues.filter((i) => i.section === id))
+        return (
+          <div key={id}>
+            {n === settingsStart && n > 0 && <div className="mt-3 mb-1 px-2 text-xs font-medium text-muted-foreground">Settings</div>}
+            <button
+              type="button"
+              onClick={() => onSelect(id)}
+              className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${
+                active === id ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+              }`}
+            >
+              <span className="truncate">{sectionTitles[id]}</span>
+              {errors > 0 ? (
+                <CircleAlert className="ml-auto size-3.5 shrink-0 text-destructive" aria-label={`${errors} errors`} />
+              ) : warnings > 0 ? (
+                <TriangleAlert className="ml-auto size-3.5 shrink-0 text-warning-foreground" aria-label={`${warnings} warnings`} />
+              ) : null}
+            </button>
+          </div>
+        )
+      })}
+    </nav>
   )
 }
 
-function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+// Section is a settings card that collapses to a one-line summary.
+function Section({
+  id,
+  description,
+  summary,
+  children,
+}: {
+  id: SectionId
+  description?: string
+  summary: React.ReactNode
+  children: React.ReactNode
+}) {
+  const { isOpen, toggle, issues } = useContext(Sections)
+  const open = isOpen(id)
+  const { errors, warnings } = counts(issues.filter((i) => i.section === id))
   return (
-    <Card>
+    <Card id={sectionElementId(id)} className="scroll-mt-16">
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        <button type="button" className="flex w-full items-start gap-2 text-left" aria-expanded={open} onClick={() => toggle(id)}>
+          <ChevronRight className={`mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform ${open ? 'rotate-90' : ''}`} />
+          <div className="grid min-w-0 flex-1 gap-1">
+            <CardTitle>{sectionTitles[id]}</CardTitle>
+            <CardDescription className={open ? '' : 'truncate'}>{open ? description : summary}</CardDescription>
+          </div>
+          {errors > 0 && (
+            <Badge variant="destructive">
+              {errors} error{errors === 1 ? '' : 's'}
+            </Badge>
+          )}
+          {warnings > 0 && (
+            <Badge variant="warning">
+              {warnings} warning{warnings === 1 ? '' : 's'}
+            </Badge>
+          )}
+        </button>
       </CardHeader>
-      <CardContent className="grid gap-4">{children}</CardContent>
+      {open && <CardContent className="grid gap-4">{children}</CardContent>}
     </Card>
   )
 }
@@ -302,8 +556,12 @@ function GeneralCard({
     s.networkMappings = []
     s.testBridge = ''
   }
+  const name = (hid: string) => hosts.find((h) => h.id === hid)?.hostname ?? 'not chosen'
   return (
-    <Section title="General">
+    <Section
+      id="general"
+      summary={`${spec.name || 'Unnamed'} · ${name(spec.primaryHostId)} → ${name(spec.drHostId)}${spec.description ? ` · ${spec.description}` : ''}`}
+    >
       <div className="grid gap-4 sm:grid-cols-2">
         <Field id="name" label="Name">
           <Input id="name" value={spec.name} onChange={(e) => update((s) => (s.name = e.target.value))} maxLength={100} />
@@ -400,7 +658,8 @@ function TakeoverCard({
   if (!t && setups.length === 0 && !error) return null
   return (
     <Section
-      title="Existing zrepl setup"
+      id="takeover"
+      summary={t ? `Taking over ${t.sourceJob} → ${t.pullJob}` : `${setups.length} hand-written setup${setups.length === 1 ? '' : 's'} found`}
       description={
         t
           ? 'Activating this plan takes over the hand-written zrepl jobs below. A preflight checks that replication continues incrementally before anything changes.'
@@ -499,7 +758,15 @@ function GuestsCard({
   }
 
   return (
-    <Section title="Guests" description={`${spec.guests.length} of ${inv.guests.length} guests on ${inv.host?.hostname} selected.`}>
+    <Section
+      id="guests"
+      description={`${spec.guests.length} of ${inv.guests.length} guests on ${inv.host?.hostname} selected.`}
+      summary={
+        spec.guests.length === 0
+          ? 'No guests selected'
+          : `${spec.guests.length} guest${spec.guests.length === 1 ? '' : 's'}: ${spec.guests.map((g) => guestName(inv, g.vmid)).join(', ')}`
+      }
+    >
       <div className="flex gap-2">
         <Button variant="outline" size="sm" onClick={selectAllReplicable}>
           Select all replicable
@@ -574,7 +841,15 @@ function MappingsCard({
   const bridges = drInv.interfaces.filter((i) => i.type === 'bridge')
   const primaryName = primaryInv.host?.hostname ?? 'primary'
   return (
-    <Section title="Mappings" description="Where protected guests' disks and networks go on the DR host.">
+    <Section
+      id="mappings"
+      description="Where protected guests' disks and networks go on the DR host."
+      summary={[
+        ...spec.storageMappings.map((m) => `${m.sourceStorage} → ${m.targetStorage || '?'}`),
+        ...spec.networkMappings.map((m) => `${m.sourceBridge} → ${m.targetBridge || '?'}`),
+        spec.testBridge ? `test bridge ${spec.testBridge}` : 'no test bridge',
+      ].join(' · ')}
+    >
       <div className="grid gap-2">
         <Label>Storage</Label>
         {spec.storageMappings.map((m, i) => (
@@ -661,7 +936,17 @@ function NetworkCard({ spec, update }: { spec: PlanSpec; update: Update }) {
       if (s.network?.path.case === 'tunnel') fn(s.network.path.value)
     })
   return (
-    <Section title="Replication network" description="How the DR host reaches the primary's zrepl jobs. zrepl connections always use TLS with each host's own certificate.">
+    <Section
+      id="network"
+      description="How the DR host reaches the primary's zrepl jobs. zrepl connections always use TLS with each host's own certificate."
+      summary={
+        existing
+          ? `Existing network · ${existing.primaryAddress || 'address not set'}:${existing.port || '?'}`
+          : tunnel
+            ? `EZDR tunnel · the ${tunnel.listener === EzdrTunnel_Listener.PRIMARY ? 'primary' : 'DR host'} listens on ${tunnel.endpoint || 'an endpoint not set'}`
+            : 'Not chosen'
+      }
+    >
       <div className="grid gap-2 text-sm">
         <label className="flex items-center gap-2">
           <input
@@ -797,7 +1082,10 @@ function NetworkCard({ spec, update }: { spec: PlanSpec; update: Update }) {
 function ScheduleCard({ spec, update }: { spec: PlanSpec; update: Update }) {
   const minutes = Math.round(spec.intervalSeconds / 60)
   return (
-    <Section title="Schedule and retention">
+    <Section
+      id="schedule"
+      summary={`Snapshots ${describeInterval(spec.intervalSeconds || 60)} · alert after ${formatDuration(spec.rpoAlertSeconds || spec.intervalSeconds * 3)} · DR keeps ${grid(spec.drRetention) || 'nothing'} · primary keeps ${grid(spec.primaryRetention) || 'nothing'}`}
+    >
       <div className="grid gap-2">
         <Label htmlFor="interval">Snapshot interval (minutes)</Label>
         <div className="flex flex-wrap items-center gap-2">
@@ -964,7 +1252,11 @@ function guestName(inv: Inventory, vmid: number) {
 function StartupCard({ spec, inv, update }: { spec: PlanSpec; inv: Inventory; update: Update }) {
   const order = [...spec.guests].sort((a, b) => a.startupOrder - b.startupOrder || a.vmid - b.vmid)
   return (
-    <Section title="Startup order" description="At failover, guests start in ascending order; equal orders start together.">
+    <Section
+      id="startup"
+      description="At failover, guests start in ascending order; equal orders start together."
+      summary={order.map((g) => guestName(inv, g.vmid)).join(' → ')}
+    >
       <Table>
         <TableHeader>
           <TableRow>
@@ -1019,7 +1311,14 @@ const recordTypes = [
 
 function DnsCard({ spec, inv, update }: { spec: PlanSpec; inv: Inventory; update: Update }) {
   return (
-    <Section title="DNS records" description="Public records to switch at failover. Switching them automatically comes with failover (phase 6).">
+    <Section
+      id="dns"
+      description="Public records to switch at failover. When you confirm a failover or a failback, EZDR can switch them through the DNS provider set in Settings."
+      summary={(() => {
+        const n = spec.guests.reduce((sum, g) => sum + g.dnsRecords.length, 0)
+        return n === 0 ? 'No records' : `${n} record${n === 1 ? '' : 's'}: ${spec.guests.flatMap((g) => g.dnsRecords.map((r) => r.name)).join(', ')}`
+      })()}
+    >
       {spec.guests.map((g, gi) => (
         <div key={g.vmid} className="grid gap-2 border-b pb-3 last:border-b-0">
           <div className="flex items-center justify-between">
@@ -1083,7 +1382,10 @@ function DnsCard({ spec, inv, update }: { spec: PlanSpec; inv: Inventory; update
 
 function AdvancedCard({ spec, update }: { spec: PlanSpec; update: Update }) {
   return (
-    <Section title="Advanced">
+    <Section
+      id="advanced"
+      summary={`Prefix ${spec.snapshotPrefix || '?'} · test IDs +${spec.testVmidOffset || 10000} · test limit ${formatDuration(spec.testTimeLimitSeconds || 8 * 3600)} · shutdown timeout ${spec.shutdownTimeoutSeconds || 300}s`}
+    >
       <Field id="prefix" label="Snapshot prefix">
         <Input
           id="prefix"
@@ -1145,29 +1447,36 @@ function AdvancedCard({ spec, update }: { spec: PlanSpec; update: Update }) {
   )
 }
 
-function ValidationPanel({ issues }: { issues: Issue[] }) {
-  const errors = issues.filter((i) => i.severity === Severity.ERROR)
-  const warnings = issues.filter((i) => i.severity === Severity.WARNING)
+function ValidationPanel({ issues, onSelect }: { issues: Issue[]; onSelect: (id: SectionId) => void }) {
+  const { errors } = counts(issues)
+  const sorted = [...issues].sort((a, b) => a.severity - b.severity)
   return (
-    <Card>
+    <Card size="sm">
       <CardHeader>
         <CardTitle>Validation</CardTitle>
         <CardDescription>
-          {errors.length === 0 ? 'No errors.' : `${errors.length} error${errors.length === 1 ? '' : 's'} to fix before activation.`}
+          {errors === 0 ? 'No errors.' : `${errors} error${errors === 1 ? '' : 's'} to fix before activation.`}
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-2 text-sm">
-        {errors.map((i, n) => (
-          <div key={`e${n}`} className="flex gap-2 text-destructive">
-            <CircleAlert className="mt-0.5 size-4 shrink-0" /> {i.message}
-          </div>
-        ))}
-        {warnings.map((i, n) => (
-          <div key={`w${n}`} className="flex gap-2 text-warning-foreground">
-            <TriangleAlert className="mt-0.5 size-4 shrink-0" /> {i.message}
-          </div>
-        ))}
-      </CardContent>
+      {sorted.length > 0 && (
+        <CardContent className="grid gap-1 text-xs">
+          {sorted.map((i, n) => {
+            const Icon = i.severity === Severity.ERROR ? CircleAlert : TriangleAlert
+            return (
+              <button
+                key={n}
+                type="button"
+                onClick={() => i.section && onSelect(i.section as SectionId)}
+                className={`flex gap-1.5 rounded px-1 py-0.5 text-left hover:bg-muted ${
+                  i.severity === Severity.ERROR ? 'text-destructive' : 'text-warning-foreground'
+                }`}
+              >
+                <Icon className="mt-0.5 size-3.5 shrink-0" /> {i.message}
+              </button>
+            )
+          })}
+        </CardContent>
+      )}
     </Card>
   )
 }

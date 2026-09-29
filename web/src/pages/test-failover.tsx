@@ -53,9 +53,16 @@ function testTone(state: TestState): Tone {
 
 // TestFailoverCard shows an active or paused plan's current test failover
 // and its history, and starts new tests.
-export function TestFailoverCard({ plan }: { plan: Plan }) {
+// startSignal opens the start dialog each time it changes (from the plan
+// page's header).
+export function TestFailoverCard({ plan, startSignal = 0 }: { plan: Plan; startSignal?: number }) {
   const { data, error, reload } = usePoll(() => testClient.listTests({ planId: plan.id }), 5000)
   const [starting, setStarting] = useState(false)
+  const [seenSignal, setSeenSignal] = useState(startSignal)
+  if (startSignal !== seenSignal) {
+    setSeenSignal(startSignal)
+    setStarting(true)
+  }
   if (plan.state !== PlanState.ACTIVE && plan.state !== PlanState.PAUSED) return null
   const tests = data?.tests ?? []
   const current = tests.find((t) => activeStates.includes(t.state))

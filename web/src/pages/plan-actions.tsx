@@ -1,4 +1,4 @@
-import { CheckCircle2, CircleAlert, Loader2, Pause, Play, Power, Rocket, ShieldAlert, Undo2 } from 'lucide-react'
+import { CheckCircle2, CircleAlert, Ellipsis, FlaskConical, Loader2, Pause, Play, Power, Rocket, ShieldAlert, Trash2, Undo2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { ErrorAlert } from '@/components/error-alert'
@@ -12,11 +12,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Separator } from '@/components/ui/separator'
 import {
   Dialog,
   DialogContent,
@@ -135,49 +136,37 @@ function ChangesDialog({
   )
 }
 
-function ConfirmButton({
-  label,
-  icon,
-  title,
-  description,
-  onConfirm,
-  destructive,
-}: {
-  label: string
-  icon: React.ReactNode
+type Confirm = {
   title: string
   description: string
-  onConfirm: () => void
+  label: string
   destructive?: boolean
-}) {
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger render={<Button variant="outline" />}>
-        {icon} {label}
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction variant={destructive ? 'destructive' : 'default'} onClick={onConfirm}>
-            {label}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
+  run: () => Promise<unknown>
 }
 
-// PlanActions shows the lifecycle actions for the plan's state.
-export function PlanActions({ plan, onChanged, dirty }: { plan: Plan; onChanged: (p: Plan) => void; dirty: boolean }) {
+// PlanActions shows the plan's actions for its state: the main ones as
+// buttons, routine ones in a menu, and Fail over set apart.
+export function PlanActions({
+  plan,
+  onChanged,
+  dirty,
+  onStartTest,
+  onDeleted,
+}: {
+  plan: Plan
+  onChanged: (p: Plan) => void
+  dirty: boolean
+  onStartTest: () => void
+  onDeleted: () => void
+}) {
   const [dialog, setDialog] = useState<'activate' | 'apply' | 'takeover' | 'failover' | 'failback'>()
+  const [confirm, setConfirm] = useState<Confirm>()
   const failingBack = plan.state === PlanState.FAILING_BACK
   const failedOver = plan.state === PlanState.FAILING_OVER || plan.state === PlanState.FAILED_OVER || failingBack
   const adopted = !!plan.spec?.takeover
+  const name = plan.spec?.name
   const [error, setError] = useState<string>()
+  const saveFirst = dirty ? 'Save your changes first' : undefined
 
   async function act(fn: () => Promise<{ plan?: Plan }>) {
     setError(undefined)
@@ -189,60 +178,154 @@ export function PlanActions({ plan, onChanged, dirty }: { plan: Plan; onChanged:
     }
   }
 
+  const pending = plan.state !== PlanState.DRAFT && !failedOver && plan.pendingChanges
+  const menu: { label: string; icon: React.ReactNode; onClick: () => void; destructive?: boolean }[] = []
+  if (pending) {
+    menu.push({ label: 'Discard changes', icon: <Undo2 />, onClick: () => void act(() => planClient.discardPlanChanges({ id: plan.id })) })
+  }
+  if (plan.state === PlanState.ACTIVE) {
+    menu.push({
+      label: 'Pause',
+      icon: <Pause />,
+      onClick: () =>
+        setConfirm({
+          title: `Pause ${name}?`,
+          description:
+            "Snapshots and replication stop on both hosts. Replicas, snapshots, and zrepl's bookmarks are kept, so resuming continues incrementally.",
+          label: 'Pause',
+          run: () => act(() => planClient.pausePlan({ id: plan.id })),
+        }),
+    })
+  }
+  if (plan.state === PlanState.PAUSED) {
+    menu.push({ label: 'Resume', icon: <Play />, onClick: () => void act(() => planClient.resumePlan({ id: plan.id })) })
+  }
+  if (plan.state !== PlanState.DRAFT && !failedOver) {
+    menu.push({
+      label: 'Deactivate',
+      icon: <Power />,
+      destructive: true,
+      onClick: () =>
+        setConfirm({
+          title: `Deactivate ${name}?`,
+          description:
+            "EZDR's zrepl jobs for this plan are removed from both hosts and the plan returns to draft. Replicas and snapshots are never deleted.",
+          label: 'Deactivate',
+          destructive: true,
+          run: () => act(() => planClient.deactivatePlan({ id: plan.id })),
+        }),
+    })
+  }
+  if (plan.state === PlanState.DRAFT) {
+    menu.push({
+      label: 'Delete plan',
+      icon: <Trash2 />,
+      destructive: true,
+      onClick: () =>
+        setConfirm({
+          title: `Delete ${name}?`,
+          description: "The plan's settings are removed. Its guests are no longer protected by it.",
+          label: 'Delete plan',
+          destructive: true,
+          run: async () => {
+            try {
+              await planClient.deletePlan({ id: plan.id })
+              onDeleted()
+            } catch (err) {
+              setError(errorMessage(err))
+            }
+          },
+        }),
+    })
+  }
+
   return (
     <div className="grid justify-items-end gap-2">
       <div className="flex flex-wrap items-center justify-end gap-2">
         {plan.state === PlanState.DRAFT && (
-          <Button onClick={() => setDialog(adopted ? 'takeover' : 'activate')} disabled={dirty} title={dirty ? 'Save first' : undefined}>
+          <Button onClick={() => setDialog(adopted ? 'takeover' : 'activate')} disabled={dirty} title={saveFirst}>
             <Rocket /> {adopted ? 'Take over' : 'Activate'}
           </Button>
         )}
-        {(plan.state === PlanState.ACTIVE || plan.state === PlanState.PAUSED || failedOver) && (
-          <Button variant={failedOver ? 'outline' : 'destructive'} onClick={() => setDialog('failover')}>
-            <ShieldAlert /> {failedOver ? 'Failover status' : 'Fail over'}
+        {pending && (
+          <Button onClick={() => setDialog('apply')} disabled={dirty} title={saveFirst}>
+            <CheckCircle2 /> Apply changes
           </Button>
         )}
-        {(plan.state === PlanState.FAILED_OVER || failingBack) && (
-          <Button onClick={() => setDialog('failback')}>
-            <Undo2 /> {failingBack ? 'Failback status' : 'Fail back'}
+        {(plan.state === PlanState.ACTIVE || plan.state === PlanState.PAUSED) && (
+          <Button variant={pending ? 'outline' : 'default'} onClick={onStartTest}>
+            <FlaskConical /> Test failover
           </Button>
         )}
-        {plan.state !== PlanState.DRAFT && !failedOver && plan.pendingChanges && (
+        {plan.state === PlanState.FAILING_OVER && (
+          <Button onClick={() => setDialog('failover')}>
+            <Loader2 className="animate-spin" /> Failover status
+          </Button>
+        )}
+        {plan.state === PlanState.FAILED_OVER && (
           <>
-            <Button onClick={() => setDialog('apply')} disabled={dirty} title={dirty ? 'Save first' : undefined}>
-              Apply changes
+            <Button variant="outline" onClick={() => setDialog('failover')}>
+              <ShieldAlert /> Failover details
             </Button>
-            <Button variant="ghost" onClick={() => void act(() => planClient.discardPlanChanges({ id: plan.id }))} disabled={dirty}>
-              Discard changes
+            <Button onClick={() => setDialog('failback')}>
+              <Undo2 /> Fail back
             </Button>
           </>
         )}
-        {plan.state === PlanState.ACTIVE && (
-          <ConfirmButton
-            label="Pause"
-            icon={<Pause />}
-            title={`Pause ${plan.spec?.name}?`}
-            description="Snapshots and replication stop on both hosts. Replicas, snapshots, and zrepl's bookmarks are kept, so resuming continues incrementally."
-            onConfirm={() => void act(() => planClient.pausePlan({ id: plan.id }))}
-          />
-        )}
-        {plan.state === PlanState.PAUSED && (
-          <Button variant="outline" onClick={() => void act(() => planClient.resumePlan({ id: plan.id }))}>
-            <Play /> Resume
+        {failingBack && (
+          <Button onClick={() => setDialog('failback')}>
+            <Loader2 className="animate-spin" /> Failback status
           </Button>
         )}
-        {plan.state !== PlanState.DRAFT && !failedOver && (
-          <ConfirmButton
-            label="Deactivate"
-            icon={<Power />}
-            destructive
-            title={`Deactivate ${plan.spec?.name}?`}
-            description="EZDR's zrepl jobs for this plan are removed from both hosts and the plan returns to draft. Replicas and snapshots are never deleted."
-            onConfirm={() => void act(() => planClient.deactivatePlan({ id: plan.id }))}
-          />
+        {menu.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="outline" size="icon" aria-label="More actions" />}>
+              <Ellipsis />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-44">
+              {menu.map((m) => (
+                <DropdownMenuItem key={m.label} variant={m.destructive ? 'destructive' : 'default'} onClick={m.onClick}>
+                  {m.icon} {m.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        {(plan.state === PlanState.ACTIVE || plan.state === PlanState.PAUSED) && (
+          <>
+            <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-6" />
+            <Button
+              variant="outline"
+              className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => setDialog('failover')}
+            >
+              <ShieldAlert /> Fail over
+            </Button>
+          </>
         )}
       </div>
       <ErrorAlert message={error} />
+      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(undefined)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirm?.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirm?.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant={confirm?.destructive ? 'destructive' : 'default'}
+              onClick={() => {
+                const c = confirm
+                setConfirm(undefined)
+                void c?.run()
+              }}
+            >
+              {confirm?.label}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <ChangesDialog
         plan={plan}
         title={`Activate ${plan.spec?.name}`}
