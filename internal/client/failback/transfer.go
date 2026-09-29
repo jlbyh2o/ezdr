@@ -25,6 +25,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -134,31 +135,66 @@ func (t *Transfer) Receive(ctx context.Context, m *clientv1.FailbackReceive) (*c
 		<-actx.Done()
 		_ = ln.Close()
 	}()
-	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			if ctx.Err() != nil {
-				return nil, ctx.Err()
+	// Handshakes run concurrently, so connections that stall can't keep
+	// the DR host out; the first peer that passes the TLS check is served.
+	won, acceptErr := make(chan *tls.Conn, 1), make(chan error, 1)
+	var claimed atomic.Bool
+	slots := make(chan struct{}, maxHandshakes)
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				acceptErr <- err
+				return
 			}
-			if actx.Err() != nil {
-				return nil, fmt.Errorf("the DR host didn't connect within %s", wait)
+			select {
+			case slots <- struct{}{}:
+			default:
+				_ = conn.Close()
+				continue
 			}
-			return nil, err
+			go func() {
+				defer func() { <-slots }()
+				tc := tls.Server(conn, cfg)
+				hctx, hcancel := context.WithTimeout(actx, 30*time.Second)
+				err := tc.HandshakeContext(hctx)
+				hcancel()
+				if err != nil {
+					slog.Warn("refused a failback connection", "from", conn.RemoteAddr(), "err", err)
+					_ = conn.Close()
+					return
+				}
+				if !claimed.CompareAndSwap(false, true) {
+					_ = tc.Close()
+					return
+				}
+				won <- tc
+			}()
 		}
-		tc := tls.Server(conn, cfg)
-		hctx, hcancel := context.WithTimeout(actx, 30*time.Second)
-		err = tc.HandshakeContext(hctx)
-		hcancel()
-		if err != nil {
-			slog.Warn("refused a failback connection", "from", conn.RemoteAddr(), "err", err)
-			_ = conn.Close()
-			continue
+	}()
+	var tc *tls.Conn
+	select {
+	case tc = <-won:
+	case err := <-acceptErr:
+		if claimed.Load() {
+			tc = <-won // the DR host got in just as the wait ended
+			break
 		}
-		_ = ln.Close()
-		defer tc.Close() //nolint:errcheck // done with the connection
-		return t.serve(ctx, newFramer(tc), targets)
+		switch {
+		case ctx.Err() != nil:
+			return nil, ctx.Err()
+		case actx.Err() != nil:
+			return nil, fmt.Errorf("the DR host didn't connect within %s", wait)
+		}
+		return nil, err
 	}
+	_ = ln.Close()
+	defer tc.Close() //nolint:errcheck // done with the connection
+	return t.serve(ctx, newFramer(tc), targets)
 }
+
+// maxHandshakes limits concurrent handshakes on a failback listener.
+const maxHandshakes = 16
 
 // serve receives the datasets the DR host sends until it quits.
 func (t *Transfer) serve(ctx context.Context, f *framer, targets map[string]*clientv1.FailbackTarget) (*clientv1.FailbackTransfer, error) {

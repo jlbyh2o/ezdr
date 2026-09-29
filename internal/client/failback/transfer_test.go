@@ -250,3 +250,38 @@ func TestReceiveTimeout(t *testing.T) {
 		t.Errorf("err = %v", err)
 	}
 }
+
+func TestStalledConnections(t *testing.T) {
+	primary, dr := newHost(t, "ezdr-p"), newHost(t, "ezdr-d")
+	addr := freePort(t)
+	target := []*clientv1.FailbackTarget{{Dataset: "rpool/data/vm-201-disk-0", FromSnapshot: "zrepl_1"}}
+	src := []*clientv1.FailbackSource{{Replica: "tank/r/rpool/data/vm-201-disk-0", Dataset: "rpool/data/vm-201-disk-0",
+		FromSnapshot: "zrepl_1", ToSnapshot: "zrepl_2"}}
+	done := make(chan error, 1)
+	go func() {
+		_, err := primary.transfer().Receive(context.Background(), &clientv1.FailbackReceive{
+			ListenAddress: addr, Peer: &clientv1.Peer{CertificatePem: dr.pem}, Datasets: target, ConnectTimeoutSeconds: 20})
+		done <- err
+	}()
+	// Connections that never start a handshake don't keep the DR host out.
+	for range 3 {
+		var conn net.Conn
+		for {
+			var err error
+			if conn, err = net.Dial("tcp", addr); err == nil {
+				break
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+		defer conn.Close() //nolint:errcheck // test
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if _, err := dr.transfer().Send(ctx, &clientv1.FailbackSend{
+		Address: addr, Peer: &clientv1.Peer{CertificatePem: primary.pem}, Datasets: src}); err != nil {
+		t.Errorf("send: %v", err)
+	}
+	if err := <-done; err != nil {
+		t.Errorf("receive: %v", err)
+	}
+}
