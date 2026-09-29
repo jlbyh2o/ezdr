@@ -156,6 +156,8 @@ func handleAction(ctx context.Context, api clientv1connect.ClientServiceClient, 
 		go app.failoverAction(ctx, a)
 	case *clientv1.Action_FailbackReceive, *clientv1.Action_FailbackSend:
 		go app.failbackAction(ctx, a)
+	case *clientv1.Action_DataScan, *clientv1.Action_DataCleanup:
+		go app.cleanupAction(ctx, a)
 	default:
 		slog.Warn("rejected unsupported action", "action", a.Id)
 		fail("unsupported action; upgrade the ezdr client")

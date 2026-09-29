@@ -66,7 +66,57 @@ message Action {
     FailbackSend failback_send = 21;
     FailbackCleanup failback_cleanup = 22;
     FailbackCheckGuest failback_check_guest = 23;
+    DataScan data_scan = 24;
+    DataCleanup data_cleanup = 25;
   }
+}
+
+// DataScan (either host) reports what DataCleanup would remove, changing
+// nothing. See docs/design/cleanup.md.
+message DataScan {
+  repeated DataTarget targets = 1;
+  // zrepl jobs whose holds and cursor bookmarks don't block the cleanup
+  // (DataCleanup releases them first).
+  repeated string release_jobs = 2;
+}
+
+// DataCleanup (either host) releases the jobs' holds and cursors, then
+// removes the targets. It scans first and fails, removing nothing, if any
+// target has problems.
+message DataCleanup {
+  repeated DataTarget targets = 1;
+  repeated string release_jobs = 2;
+}
+
+// DataTarget is a dataset to clean up.
+message DataTarget {
+  string dataset = 1;
+  // Destroy the dataset with its snapshots (a replica). Otherwise only its
+  // snapshots and bookmarks whose names start with prefix are removed.
+  bool destroy = 2;
+  string prefix = 3;
+  // With destroy: also destroy parents left empty, up to but not including
+  // this dataset (the receive dataset).
+  string empty_parents_below = 4;
+}
+
+message DataScanResult {
+  repeated DatasetScan datasets = 1;
+}
+
+// DatasetScan is what cleaning up one target would do.
+message DatasetScan {
+  string dataset = 1;
+  bool exists = 2;
+  // Space the cleanup frees.
+  uint64 reclaim_bytes = 3;
+  // Snapshots and bookmarks the cleanup removes.
+  uint32 snapshots = 4;
+  uint32 bookmarks = 5;
+  // Snapshots kept because they have clones or holds of other tools.
+  repeated string skipped = 6;
+  // What blocks the cleanup, such as clones or a guest using the dataset.
+  repeated string problems = 7;
 }
 
 // The Failback* actions copy a failed-over plan's changes from the DR host
@@ -577,6 +627,8 @@ message AckActionRequest {
   TestGuestCheck guest_check = 7;
   // Result of a FailbackReceive or FailbackSend action.
   FailbackTransfer transfer = 8;
+  // Result of a DataScan action.
+  DataScanResult data_scan = 9;
 }
 
 message AckActionResponse {}

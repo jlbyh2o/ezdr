@@ -145,3 +145,28 @@ func (a *applier) failbackAction(ctx context.Context, act *clientv1.Action) {
 		slog.Warn("acknowledge action", "action", act.Id, "err", err)
 	}
 }
+
+// cleanupAction scans or cleans up replicated data and acknowledges it.
+func (a *applier) cleanupAction(ctx context.Context, act *clientv1.Action) {
+	ctx = context.WithoutCancel(ctx)
+	a.cleanupMu.Lock()
+	defer a.cleanupMu.Unlock()
+	ack := &clientv1.AckActionRequest{ActionId: act.Id}
+	var err error
+	switch k := act.Kind.(type) {
+	case *clientv1.Action_DataScan:
+		ack.DataScan, err = a.cleanup.Scan(ctx, k.DataScan.Targets, k.DataScan.ReleaseJobs)
+	case *clientv1.Action_DataCleanup:
+		ack.Output, err = a.cleanup.Clean(ctx, k.DataCleanup.Targets, k.DataCleanup.ReleaseJobs)
+	}
+	ack.Succeeded = err == nil
+	if err != nil {
+		ack.Message = err.Error()
+		slog.Error("cleanup action failed", "action", act.Id, "err", err)
+	} else {
+		slog.Info("cleanup action completed", "action", act.Id)
+	}
+	if _, err := a.api.AckAction(ctx, connect.NewRequest(ack)); err != nil {
+		slog.Warn("acknowledge action", "action", act.Id, "err", err)
+	}
+}

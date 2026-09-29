@@ -16,6 +16,7 @@ import (
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
+	"github.com/jlbyh2o/ezdr/internal/client/cleanup"
 	"github.com/jlbyh2o/ezdr/internal/client/failback"
 	"github.com/jlbyh2o/ezdr/internal/client/failover"
 	"github.com/jlbyh2o/ezdr/internal/client/guests"
@@ -57,13 +58,16 @@ type applier struct {
 	// they never hold up failover actions.
 	failbackMu sync.Mutex
 	failback   *failback.Transfer
+	// cleanupMu serializes data scans and cleanups.
+	cleanupMu sync.Mutex
+	cleanup   *cleanup.Runner
 	// guestEvents are lock enforcement events not yet reported.
 	guestEvents []string
 }
 
 func newApplier(api clientv1connect.ClientServiceClient, cert string, siteKey wgtypes.Key) *applier {
 	return &applier{api: api, zrepl: zrepl.NewApplier(), tests: testfailover.NewRunner(), failover: failover.NewRunner(),
-		failback: failback.NewTransfer(), cert: cert, siteKey: siteKey,
+		failback: failback.NewTransfer(), cleanup: cleanup.NewRunner(), cert: cert, siteKey: siteKey,
 		wake: make(chan struct{}, 1)}
 }
 
