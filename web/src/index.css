@@ -148,3 +148,18 @@
   stroke-width: 3.5px !important;
   opacity: 1 !important;
 }
+
+/* Native controls (select lists, checkboxes, date pickers) follow the theme,
+   including the options list some browsers draw from the select's own
+   colors. */
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+select option,
+select optgroup {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+}

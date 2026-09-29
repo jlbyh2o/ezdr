@@ -1209,7 +1209,7 @@ function RetentionEditor({
                   value={t.count || ''}
                   onChange={(e) => edit(i, (x) => (x.count = Math.max(0, Math.round(Number(e.target.value)))))}
                 />
-                <span>periods</span>
+                <span>{unitLabel(unit, t.count)}</span>
               </>
             )}
             <label className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -1243,6 +1243,12 @@ function RetentionEditor({
       </div>
     </div>
   )
+}
+
+// unitLabel names a retention unit, singular for 1 ("1 hour", "24 hours").
+function unitLabel(unitSeconds: number, n: number) {
+  const label = units.find((u) => u.seconds === unitSeconds)?.label ?? 'periods'
+  return n === 1 ? label.replace(/s$/, '') : label
 }
 
 function guestName(inv: Inventory, vmid: number) {
