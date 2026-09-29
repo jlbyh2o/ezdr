@@ -44,7 +44,7 @@ export type HostNodeData = {
 }
 
 export type HostNode = Node<HostNodeData, 'host'>
-export type PlanEdge = Edge<{ plan: OverviewPlan }, 'plan'>
+export type PlanEdge = Edge<{ plan: OverviewPlan; vmid: number }, 'plan'>
 
 // Sizes in pixels, shared with the host node's styles so the layout can
 // compute each node's height.
@@ -75,6 +75,10 @@ function copy(g: OverviewGuest | undefined, vmid: number, role: GuestRole, fallb
 
 function running(g?: OverviewGuest): boolean {
   return g?.status === 'running' && !g.lock
+}
+
+export function guestHandle(planId: string, vmid: number): string {
+  return `${planId}:${vmid}`
 }
 
 // nodeHeight matches how HostNode renders its data.
@@ -196,17 +200,21 @@ export function buildChart(ov: GetOverviewResponse): { nodes: HostNode[]; edges:
     height = y + rowHeight
   }
 
+  // One edge per guest, from its copy on the primary to its copy on the DR
+  // host.
   const edges: PlanEdge[] = plans
     .filter((p) => primaryIds.includes(p.primaryHostId) && drIds.includes(p.drHostId))
-    .map((plan) => ({
-      id: `plan:${plan.id}`,
-      type: 'plan',
-      source: `primary:${plan.primaryHostId}`,
-      sourceHandle: plan.id,
-      target: `dr:${plan.drHostId}`,
-      targetHandle: plan.id,
-      data: { plan },
-    }))
+    .flatMap((plan) =>
+      plan.vmids.map((vmid) => ({
+        id: `guest:${plan.id}:${vmid}`,
+        type: 'plan' as const,
+        source: `primary:${plan.primaryHostId}`,
+        sourceHandle: guestHandle(plan.id, vmid),
+        target: `dr:${plan.drHostId}`,
+        targetHandle: guestHandle(plan.id, vmid),
+        data: { plan, vmid },
+      })),
+    )
   return { nodes, edges, height }
 }
 

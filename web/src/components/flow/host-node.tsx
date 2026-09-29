@@ -2,7 +2,7 @@ import { Handle, type NodeProps, Position } from '@xyflow/react'
 import { Box, FlaskConical, Lock, Monitor, Server } from 'lucide-react'
 import { Link } from 'react-router'
 
-import { type GuestCopy, type HostNode, type Section, size } from '@/components/flow/chart-model'
+import { type GuestCopy, guestHandle, type HostNode, linkState, type Section, size, toneColor } from '@/components/flow/chart-model'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatRelative } from '@/lib/format'
 
@@ -81,42 +81,67 @@ export function HostNodeView({ data }: NodeProps<HostNode>) {
 
 function PlanSection({ section, side }: { section: Section; side: 'primary' | 'dr' | 'none' }) {
   const { plan, guests } = section
+  const st = linkState(plan)
   return (
     <div style={{ marginBottom: size.sectionGap }}>
-      <div className="relative flex items-center gap-2 text-xs" style={{ height: size.sectionHeader }}>
-        <Link to={`/plans/${plan.id}`} className="truncate font-medium hover:underline">
+      <div className="flex items-center gap-2 text-xs" style={{ height: size.sectionHeader }}>
+        <Link to={`/plans/${plan.id}`} className="shrink-0 font-medium hover:underline">
           {plan.name}
         </Link>
         {plan.testing && side === 'dr' && (
-          <span className="flex items-center gap-1 rounded-full bg-info/12 px-1.5 py-0.5 text-[11px] text-info">
-            <FlaskConical className="size-3" /> Test running
+          <span className="flex shrink-0 items-center gap-1 rounded-full bg-info/12 px-1.5 py-0.5 text-[11px] text-info">
+            <FlaskConical className="size-3" /> Test
           </span>
         )}
-        {side === 'primary' && (
-          <Handle type="source" id={plan.id} position={Position.Right} isConnectable={false} className="opacity-0" style={{ right: -12 }} />
-        )}
-        {side === 'dr' && (
-          <Handle type="target" id={plan.id} position={Position.Left} isConnectable={false} className="opacity-0" style={{ left: -12 }} />
-        )}
+        <span className="ml-auto flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground" title={plan.health?.message}>
+          <span className="size-1.5 shrink-0 rounded-full" style={{ background: toneColor[st.tone] }} />
+          <span className="truncate">{st.label}</span>
+        </span>
       </div>
       {guests.length === 0 ? (
         <div className="flex items-center px-2 text-xs text-muted-foreground" style={{ height: size.guest }}>
           No guests
         </div>
       ) : (
-        guests.map((g) => <GuestRow key={g.vmid} guest={g} to={`/plans/${plan.id}`} planName={plan.name} />)
+        guests.map((g) => (
+          <GuestRow
+            key={g.vmid}
+            guest={g}
+            to={`/plans/${plan.id}`}
+            planName={plan.name}
+            handle={side === 'primary' || side === 'dr' ? { side, id: guestHandle(plan.id, g.vmid) } : undefined}
+          />
+        ))
       )}
     </div>
   )
 }
 
-function GuestRow({ guest, to, planName }: { guest: GuestCopy; to: string; planName?: string }) {
+function GuestRow({
+  guest,
+  to,
+  planName,
+  handle,
+}: {
+  guest: GuestCopy
+  to: string
+  planName?: string
+  // Where the guest's edge attaches: the right side on the primary, the
+  // left side on the DR host.
+  handle?: { side: 'primary' | 'dr'; id: string }
+}) {
   const Icon = guest.vm ? Monitor : Box
   return (
     <Tooltip>
       <TooltipTrigger
         render={
-          <Link to={to} className="block" style={{ height: size.guest, paddingTop: 2, paddingBottom: 2 }}>
+          <Link to={to} className="relative block" style={{ height: size.guest, paddingTop: 2, paddingBottom: 2 }}>
+            {handle?.side === 'primary' && (
+              <Handle type="source" id={handle.id} position={Position.Right} isConnectable={false} className="opacity-0" style={{ right: -11 }} />
+            )}
+            {handle?.side === 'dr' && (
+              <Handle type="target" id={handle.id} position={Position.Left} isConnectable={false} className="opacity-0" style={{ left: -11 }} />
+            )}
             <span
               className={`flex h-full items-center gap-2 rounded-md border-[1.5px] px-2 text-xs hover:brightness-95 dark:hover:brightness-125 ${roleStyle[guest.role]}`}
             >

@@ -1,17 +1,15 @@
-import { BaseEdge, EdgeLabelRenderer, type EdgeProps, getBezierPath } from '@xyflow/react'
-import { Link } from 'react-router'
+import { BaseEdge, type EdgeProps, getBezierPath } from '@xyflow/react'
 
 import { linkState, type PlanEdge, toneColor } from '@/components/flow/chart-model'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { formatBytes, formatDuration, formatRelative } from '@/lib/format'
+import { formatBytes } from '@/lib/format'
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
 
-// PlanEdge connects a plan's section on the primary to its section on the
-// DR host. While data moves, pulses travel along it in the direction of the
-// copy.
+// PlanEdge connects a guest on the primary to its copy on the DR host, in
+// its plan's color. While the plan's data moves, pulses travel along it in
+// the direction of the copy.
 export function PlanEdgeView({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data }: EdgeProps<PlanEdge>) {
-  const [path, labelX, labelY] = getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition })
+  const [path] = getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition })
   if (!data) return null
   const { plan } = data
   const st = linkState(plan)
@@ -34,11 +32,11 @@ export function PlanEdgeView({ id, sourceX, sourceY, targetX, targetY, sourcePos
         }}
       />
       {animate &&
-        [0, 1, 2].map((i) => (
+        [0, 1].map((i) => (
           <circle key={i} r={4} fill={color}>
             <animateMotion
               dur="1.8s"
-              begin={`-${i * 0.6}s`}
+              begin={`-${i * 0.9}s`}
               repeatCount="indefinite"
               path={path}
               keyPoints={st.flow === 'reverse' ? '1;0' : '0;1'}
@@ -47,50 +45,13 @@ export function PlanEdgeView({ id, sourceX, sourceY, targetX, targetY, sourcePos
             />
           </circle>
         ))}
-      <EdgeLabelRenderer>
-        <div
-          className="nodrag nopan absolute"
-          style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`, pointerEvents: 'all' }}
-        >
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Link
-                  to={`/plans/${plan.id}`}
-                  className="flex max-w-56 flex-col items-center rounded-md border bg-card px-2.5 py-1 text-center shadow-sm hover:bg-muted"
-                >
-                  <span className="truncate text-xs font-medium">{plan.name}</span>
-                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <span className="size-1.5 shrink-0 rounded-full" style={{ background: color }} />
-                    <span className="truncate">{st.label}</span>
-                  </span>
-                </Link>
-              }
-            />
-            <TooltipContent>
-              <div className="grid gap-0.5">
-                <span className="font-medium">{plan.name}</span>
-                {plan.health?.message && <span>{plan.health.message}</span>}
-                {plan.health?.lastReplicationAt && (
-                  <span>Last replication {formatRelative(plan.health.lastReplicationAt)}</span>
-                )}
-                {!!plan.health?.rpoAlertSeconds && (
-                  <span>Alert when older than {formatDuration(plan.health.rpoAlertSeconds)}</span>
-                )}
-                {t && (
-                  <span>
-                    {t.bytesExpected > 0n
-                      ? `Copied ${formatBytes(t.bytesDone)} of ${formatBytes(t.bytesExpected)}`
-                      : `Copied ${formatBytes(t.bytesDone)}`}
-                    {t.startedAt ? `, started ${formatRelative(t.startedAt)}` : ''}
-                  </span>
-                )}
-                {plan.pendingChanges && <span>Has changes not applied yet</span>}
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </EdgeLabelRenderer>
+      {/* A wide invisible path, so hovering near the line shows what it is. */}
+      <path d={path} fill="none" stroke="transparent" strokeWidth={12}>
+        <title>
+          {`${plan.name}, guest ${data.vmid}: ${st.label}`}
+          {t ? ` (${t.bytesExpected > 0n ? `${formatBytes(t.bytesDone)} of ${formatBytes(t.bytesExpected)}` : formatBytes(t.bytesDone)})` : ''}
+        </title>
+      </path>
     </>
   )
 }

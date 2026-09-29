@@ -93,19 +93,19 @@ what to do next.
     the DR host's copy ("test running").
 - **Unprotected guests** (in no plan) appear on their host dimmed, with a
   dashed outline and no edge. The host shows "N unprotected".
-- **Edges** run from each guest's primary copy to its DR copy, grouped per
-  plan (one bundle per plan, labeled with the plan's name and RPO).
+- **Edges** run from each guest's copy on the primary to its copy on the
+  DR host, one per guest.
   - Color follows the plan's health (green, yellow, red; gray when paused
-    or inactive).
-  - The edge **pulses in the direction data moves** while a transfer runs:
-    replication (primary to DR) or a failback copy (DR to primary). During
-    a failover or test, the edge is blue and animated.
-  - While a transfer runs, the label shows progress (bytes sent of
-    expected).
-- **Hover** on a host, guest, or edge shows details: RPO age and threshold,
-  last replication, transfer progress, errors, plan state.
-- **Click** a host to open its page, an edge or plan label to open the
-  plan, a guest to open its plan at the Guests section.
+    or inactive); each plan's section header, on both hosts, shows its
+    status (RPO, lagging, failed over, and so on).
+  - The plan's edges **pulse in the direction data moves** while a
+    transfer runs: replication (primary to DR) or a failback copy (DR to
+    primary). During a failover, they're blue and animated.
+  - While a transfer runs, the section headers show progress (percent of
+    the expected bytes).
+- **Hover** on a guest or edge shows details: the guest's state, its plan,
+  and the plan's status and transfer progress.
+- **Click** a host to open its page, a plan name or guest to open the plan.
 - The chart uses **React Flow** (`@xyflow/react`) with a computed layout;
   pan, zoom, and dragging are off. Animations respect
   `prefers-reduced-motion` (edges then show a static "transferring" style).
