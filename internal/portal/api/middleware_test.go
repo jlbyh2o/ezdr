@@ -1,10 +1,13 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
 	"testing"
+
+	"connectrpc.com/connect"
 )
 
 func TestSourceAddress(t *testing.T) {
@@ -32,5 +35,27 @@ func TestSourceAddress(t *testing.T) {
 		if got.String() != tc.want {
 			t.Errorf("%s: source = %s, want %s", tc.name, got, tc.want)
 		}
+	}
+}
+
+// specConn is a streaming connection that only knows its procedure.
+type specConn struct {
+	connect.StreamingHandlerConn
+	procedure string
+}
+
+func (c specConn) Spec() connect.Spec { return connect.Spec{Procedure: c.procedure} }
+
+func TestRequireUserStreaming(t *testing.T) {
+	var called bool
+	h := RequireUser("/public").WrapStreamingHandler(func(context.Context, connect.StreamingHandlerConn) error {
+		called = true
+		return nil
+	})
+	if err := h(context.Background(), specConn{procedure: "/private"}); connect.CodeOf(err) != connect.CodeUnauthenticated || called {
+		t.Errorf("signed-out stream: %v, called %v", err, called)
+	}
+	if err := h(context.Background(), specConn{procedure: "/public"}); err != nil || !called {
+		t.Errorf("public stream: %v, called %v", err, called)
 	}
 }

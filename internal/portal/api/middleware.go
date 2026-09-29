@@ -104,12 +104,36 @@ func RequireUser(public ...string) connect.Interceptor {
 	for _, p := range public {
 		allowed[p] = true
 	}
-	return connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			if _, ok := auth.UserFrom(ctx); !ok && !allowed[req.Spec().Procedure] {
-				return nil, connect.NewError(connect.CodeUnauthenticated, errNotSignedIn)
-			}
-			return next(ctx, req)
+	return requireUser{allowed: allowed}
+}
+
+type requireUser struct{ allowed map[string]bool }
+
+func (r requireUser) check(ctx context.Context, procedure string) error {
+	if _, ok := auth.UserFrom(ctx); !ok && !r.allowed[procedure] {
+		return connect.NewError(connect.CodeUnauthenticated, errNotSignedIn)
+	}
+	return nil
+}
+
+func (r requireUser) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+		if err := r.check(ctx, req.Spec().Procedure); err != nil {
+			return nil, err
 		}
-	})
+		return next(ctx, req)
+	}
+}
+
+func (r requireUser) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+	return next
+}
+
+func (r requireUser) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
+		if err := r.check(ctx, conn.Spec().Procedure); err != nil {
+			return err
+		}
+		return next(ctx, conn)
+	}
 }
