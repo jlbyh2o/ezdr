@@ -160,15 +160,6 @@ locked, so they don't run at both sites. If the portal can't be reached,
 the guests start as usual after 5 minutes; set `boot_guard_timeout_seconds`
 in `/etc/ezdr/config.json` to change that.
 
-## Guests at boot
-
-On a plan's primary, Proxmox waits before starting guests at boot until the
-EZDR client has heard from the portal (usually a few seconds). If the plan
-was failed over while the primary was down, its guests stay stopped and
-locked, so they don't run at both sites. If the portal can't be reached,
-the guests start as usual after 5 minutes; set `boot_guard_timeout_seconds`
-in `/etc/ezdr/config.json` to change that.
-
 ## Back up the portal
 
 Back up the `portal-data` volume. It contains:

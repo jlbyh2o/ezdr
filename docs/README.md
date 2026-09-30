@@ -17,6 +17,8 @@ and managing disaster recovery between Proxmox VE hosts that use ZFS storage.
 | [Failover](design/failover.md) | Design for planned, unplanned, and break-glass failovers, split-brain locks, and DNS switching (phase 6). |
 | [Failback](design/failback.md) | Design for returning workloads to the primary (phase 7). |
 | [Cleanup](design/cleanup.md) | Design for deleting a plan's replicated data and cleaning up after a takeover. |
+| [Guest storage figures](design/guest-storage.md) | Design for showing each guest's allocated and used storage. |
+| [Uninstalling the client](design/uninstall.md) | Design for removing EZDR from a host cleanly. |
 | [Web UI](design/ui.md) | Design for the portal's web interface. |
 | [Test lab](development/test-lab.md) | Recommended nested Proxmox VE lab for development and testing. |
 

@@ -1,8 +1,7 @@
 # EZDR Architecture
 
-> **Status:** Draft. This document describes the intended high-level design.
-> Implementation details will be captured in separate documents as they are
-> decided.
+> **Status:** Current. This document gives the high-level design; each
+> feature's design document in [docs/design/](design/) has the details.
 
 ## 1. Overview
 

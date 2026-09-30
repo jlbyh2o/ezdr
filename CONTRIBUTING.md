@@ -2,7 +2,11 @@
 
 Thanks for your interest in EZDR. The project is in its early stages, so the
 design is still moving; opening an issue to discuss a change before starting
-work is the best way to avoid wasted effort.
+work is the best way to avoid wasted effort. For questions and open-ended
+ideas, use [Discussions](https://github.com/jlbyh2o/ezdr/discussions).
+
+Everyone taking part is expected to follow the
+[code of conduct](CODE_OF_CONDUCT.md).
 
 ## Developer Certificate of Origin
 
@@ -85,7 +89,9 @@ the portal serves a placeholder page instead of the real UI.
 | `cmd/ezdr-devportal/` | Portal with simulated hosts and fake data, for UI development |
 | `internal/` | Shared Go packages |
 | `web/` | Portal web UI (React, TypeScript, Vite) |
-| `deploy/` | Container image and Compose file for the portal |
+| `proto/` | Protocol Buffers definitions for the portal's APIs |
+| `deploy/` | Container image and Compose files for the portal |
+| `packaging/` | Client `.deb` scripts, systemd unit, and install script |
 | `docs/` | Architecture and development documentation |
 
 ## Testing against Proxmox VE
