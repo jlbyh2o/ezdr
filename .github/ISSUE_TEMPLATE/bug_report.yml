@@ -1,0 +1,77 @@
+name: Bug report
+description: Something in EZDR doesn't work as expected.
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a problem. For security
+        vulnerabilities, please use the
+        [private reporting form](https://github.com/jlbyh2o/ezdr/security/advisories/new)
+        instead of this one.
+
+        Before posting logs or configuration, remove anything private:
+        domain names, public IP addresses, API tokens, and enrollment tokens.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Create a plan with ...
+        2. Run a test failover ...
+        3. ...
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Portal installation or upgrade
+        - Host enrollment or client
+        - Inventory
+        - DR plans
+        - Replication or zrepl takeover
+        - Test failover
+        - Failover or break-glass failover
+        - Failback
+        - DNS switching
+        - Alerts
+        - Web UI
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: ezdr-version
+    attributes:
+      label: EZDR version
+      description: The portal's `EZDR_VERSION` in `.env`, and each host's client version (`ezdr version`, or the Hosts page).
+      placeholder: portal 0.1.2, clients 0.1.2
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Proxmox VE, ZFS, and zrepl versions
+      description: Shown on each host's page in the portal.
+      placeholder: Proxmox VE 9.0.10, ZFS 2.3.4, zrepl 0.7.0
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Portal: `docker compose logs portal`. Host: `journalctl -u ezdr` and `ezdr status`.
+        Only include the relevant part.
+      render: text
+    validations:
+      required: false

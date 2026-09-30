@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Ask a question
+    url: https://github.com/jlbyh2o/ezdr/discussions/categories/q-a
+    about: Questions about setting up or using EZDR.
+  - name: Report a security vulnerability
+    url: https://github.com/jlbyh2o/ezdr/security/advisories/new
+    about: Please report vulnerabilities privately, not in a public issue.
+  - name: Documentation
+    url: https://github.com/jlbyh2o/ezdr/blob/master/docs/README.md
+    about: Deployment guide, architecture, and design documents.
