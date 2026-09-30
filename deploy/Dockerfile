@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 
-FROM node:24.21.0-alpine AS web
+FROM node:26.10.0-alpine AS web
 WORKDIR /src/web
-RUN corepack enable
+RUN npm install -g corepack && corepack enable
 COPY web/package.json web/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY web/ ./
