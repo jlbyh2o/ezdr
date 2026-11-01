@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:26.10.0-alpine AS web
+FROM node:26.13.0-alpine AS web
 WORKDIR /src/web
 RUN npm install -g corepack && corepack enable
 COPY web/package.json web/pnpm-lock.yaml ./
@@ -8,7 +8,7 @@ RUN pnpm install --frozen-lockfile
 COPY web/ ./
 RUN pnpm build
 
-FROM golang:1.27.1-alpine AS build
+FROM golang:1.27.3-alpine AS build
 WORKDIR /src
 COPY go.mod go.sum* ./
 RUN go mod download
